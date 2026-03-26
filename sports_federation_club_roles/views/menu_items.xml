@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add menu items under Federation > Configuration -->
+    <menuitem id="menu_federation_club_role_type"
+              name="Club Role Types"
+              parent="sports_federation_base.menu_federation_master_data"
+              action="action_federation_club_role_type"
+              sequence="30"/>
+
+    <menuitem id="menu_federation_club_representative"
+              name="Club Representatives"
+              parent="sports_federation_base.menu_federation_master_data"
+              action="action_federation_club_representative"
+              sequence="40"/>
+
+</odoo>

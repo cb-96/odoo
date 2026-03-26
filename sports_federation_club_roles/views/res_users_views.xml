@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extend user form with representative roles -->
+    <record id="view_res_users_form_representatives" model="ir.ui.view">
+        <field name="name">res.users.form.representatives</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <!-- Add representative roles stat button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_federation_representatives"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-shield"
+                        attrs="{'invisible': [('representative_count', '=', 0)]}">
+                    <field name="representative_count" widget="statinfo" string="Club Roles"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

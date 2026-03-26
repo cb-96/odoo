@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Default club role types -->
+    <record id="role_type_competition_contact" model="federation.club.role.type">
+        <field name="name">Competition Contact</field>
+        <field name="code">competition_contact</field>
+        <field name="sequence">10</field>
+        <field name="is_primary">True</field>
+        <field name="is_competition_contact">True</field>
+        <field name="description">Responsible for competition-related matters, scheduling, and match coordination.</field>
+    </record>
+
+    <record id="role_type_finance_contact" model="federation.club.role.type">
+        <field name="name">Finance Contact</field>
+        <field name="code">finance_contact</field>
+        <field name="sequence">20</field>
+        <field name="is_primary">True</field>
+        <field name="is_finance_contact">True</field>
+        <field name="description">Responsible for financial matters, invoices, and payments.</field>
+    </record>
+
+    <record id="role_type_safeguarding_contact" model="federation.club.role.type">
+        <field name="name">Safeguarding Contact</field>
+        <field name="code">safeguarding_contact</field>
+        <field name="sequence">30</field>
+        <field name="is_primary">True</field>
+        <field name="is_safeguarding_contact">True</field>
+        <field name="description">Responsible for safeguarding matters, child protection, and welfare.</field>
+    </record>
+
+    <record id="role_type_president" model="federation.club.role.type">
+        <field name="name">President</field>
+        <field name="code">president</field>
+        <field name="sequence">40</field>
+        <field name="is_primary">True</field>
+        <field name="description">Club president or chairman.</field>
+    </record>
+
+    <record id="role_type_secretary" model="federation.club.role.type">
+        <field name="name">Secretary</field>
+        <field name="code">secretary</field>
+        <field name="sequence">50</field>
+        <field name="is_primary">False</field>
+        <field name="description">Club secretary handling administrative tasks.</field>
+    </record>
+
+    <record id="role_type_admin" model="federation.club.role.type">
+        <field name="name">Administrator</field>
+        <field name="code">admin</field>
+        <field name="sequence">60</field>
+        <field name="is_primary">False</field>
+        <field name="description">Club administrator with general management responsibilities.</field>
+    </record>
+
+    <record id="role_type_other" model="federation.club.role.type">
+        <field name="name">Other</field>
+        <field name="code">other</field>
+        <field name="sequence">70</field>
+        <field name="is_primary">False</field>
+        <field name="description">Other role not covered by the standard categories.</field>
+    </record>
+
+</odoo>

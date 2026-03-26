@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form view -->
+    <record id="view_federation_club_role_type_form" model="ir.ui.view">
+        <field name="name">federation.club.role.type.form</field>
+        <field name="model">federation.club.role.type</field>
+        <field name="arch" type="xml">
+            <form string="Club Role Type">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Role Name"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="Code"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Configuration">
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                            <field name="is_primary"/>
+                        </group>
+                        <group string="Contact Categories">
+                            <field name="is_competition_contact"/>
+                            <field name="is_finance_contact"/>
+                            <field name="is_safeguarding_contact"/>
+                        </group>
+                    </group>
+                    <separator string="Description"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="view_federation_club_role_type_tree" model="ir.ui.view">
+        <field name="name">federation.club.role.type.tree</field>
+        <field name="model">federation.club.role.type</field>
+        <field name="arch" type="xml">
+            <tree string="Club Role Types">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_primary"/>
+                <field name="is_competition_contact"/>
+                <field name="is_finance_contact"/>
+                <field name="is_safeguarding_contact"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_federation_club_role_type_search" model="ir.ui.view">
+        <field name="name">federation.club.role.type.search</field>
+        <field name="model">federation.club.role.type</field>
+        <field name="arch" type="xml">
+            <search string="Search Club Role Types">
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="primary" string="Primary Roles" domain="[('is_primary', '=', True)]"/>
+                <filter name="competition" string="Competition Contacts" domain="[('is_competition_contact', '=', True)]"/>
+                <filter name="finance" string="Finance Contacts" domain="[('is_finance_contact', '=', True)]"/>
+                <filter name="safeguarding" string="Safeguarding Contacts" domain="[('is_safeguarding_contact', '=', True)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_club_role_type" model="ir.actions.act_window">
+        <field name="name">Club Role Types</field>
+        <field name="res_model">federation.club.role.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_club_role_type_search"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_match_referee_form" model="ir.ui.view">
+        <field name="name">federation.match.referee.form</field>
+        <field name="model">federation.match.referee</field>
+        <field name="arch" type="xml">
+            <form string="Match Referee Assignment">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_done" string="Done" type="object" class="btn-secondary"
+                            attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            attrs="{'invisible': [('state', 'in', ('done', 'cancelled'))]}"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Assignment">
+                            <field name="match_id"/>
+                            <field name="tournament_id"/>
+                            <field name="role"/>
+                        </group>
+                        <group string="Referee">
+                            <field name="referee_id"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_match_referee_tree" model="ir.ui.view">
+        <field name="name">federation.match.referee.tree</field>
+        <field name="model">federation.match.referee</field>
+        <field name="arch" type="xml">
+            <tree string="Match Referee Assignments">
+                <field name="match_id"/>
+                <field name="tournament_id"/>
+                <field name="referee_id"/>
+                <field name="role"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_match_referee_search" model="ir.ui.view">
+        <field name="name">federation.match.referee.search</field>
+        <field name="model">federation.match.referee</field>
+        <field name="arch" type="xml">
+            <search string="Search Assignments">
+                <field name="match_id"/>
+                <field name="referee_id"/>
+                <field name="tournament_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="done" string="Done" domain="[('state', '=', 'done')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="match" string="Match" context="{'group_by': 'match_id'}"/>
+                    <filter name="referee" string="Referee" context="{'group_by': 'referee_id'}"/>
+                    <filter name="tournament" string="Tournament" context="{'group_by': 'tournament_id'}"/>
+                    <filter name="role" string="Role" context="{'group_by': 'role'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_match_referee_action" model="ir.actions.act_window">
+        <field name="name">Match Referee Assignments</field>
+        <field name="res_model">federation.match.referee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_match_referee_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Assign referees to matches.
+            </p>
+        </field>
+    </record>
+
+</odoo>

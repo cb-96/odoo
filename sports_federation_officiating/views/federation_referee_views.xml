@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_referee_form" model="ir.ui.view">
+        <field name="name">federation.referee.form</field>
+        <field name="model">federation.referee</field>
+        <field name="arch" type="xml">
+            <form string="Referee">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_referee_certification_action)d" type="action"
+                                class="oe_stat_button" icon="fa-certificate"
+                                context="{'search_default_referee_id': active_id}">
+                            <field name="certification_count" widget="statinfo" string="Certifications"/>
+                        </button>
+                        <button name="%(federation_match_referee_action)d" type="action"
+                                class="oe_stat_button" icon="fa-futbol-o"
+                                context="{'search_default_referee_id': active_id}">
+                            <field name="assignment_count" widget="statinfo" string="Assignments"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Referee Name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Contact">
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="mobile" widget="phone"/>
+                        </group>
+                        <group string="Certification">
+                            <field name="certification_level"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_referee_tree" model="ir.ui.view">
+        <field name="name">federation.referee.tree</field>
+        <field name="model">federation.referee</field>
+        <field name="arch" type="xml">
+            <tree string="Referees">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="certification_level"/>
+                <field name="certification_count"/>
+                <field name="assignment_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_referee_search" model="ir.ui.view">
+        <field name="name">federation.referee.search</field>
+        <field name="model">federation.referee</field>
+        <field name="arch" type="xml">
+            <search string="Search Referees">
+                <field name="name"/>
+                <field name="email"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="level" string="Certification Level" context="{'group_by': 'certification_level'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_referee_action" model="ir.actions.act_window">
+        <field name="name">Referees</field>
+        <field name="res_model">federation.referee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_referee_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register your first referee.
+            </p>
+        </field>
+    </record>
+
+</odoo>

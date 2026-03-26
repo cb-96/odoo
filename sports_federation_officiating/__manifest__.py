@@ -1,0 +1,21 @@
+{
+    "name": "Sports Federation Officiating",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Referee management and match assignments",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": ["sports_federation_base", "sports_federation_tournament", "sports_federation_people"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/federation_referee_views.xml",
+        "views/federation_referee_certification_views.xml",
+        "views/federation_match_referee_views.xml",
+        "views/menu_items.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 25,
+}

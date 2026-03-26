@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_federation_officiating"
+              name="Officiating"
+              parent="sports_federation_base.menu_federation_root"
+              sequence="60"/>
+
+    <menuitem id="menu_federation_referee"
+              name="Referees"
+              parent="menu_federation_officiating"
+              action="federation_referee_action"
+              sequence="10"/>
+
+    <menuitem id="menu_federation_officiating_config"
+              name="Configuration"
+              parent="menu_federation_officiating"
+              sequence="20"/>
+
+    <menuitem id="menu_federation_referee_certification"
+              name="Certifications"
+              parent="menu_federation_officiating_config"
+              action="federation_referee_certification_action"
+              sequence="10"/>
+
+    <menuitem id="menu_federation_match_referee"
+              name="Match Assignments"
+              parent="menu_federation_officiating"
+              action="federation_match_referee_action"
+              sequence="30"/>
+
+</odoo>

@@ -1,0 +1,45 @@
+from odoo import api, fields, models
+
+
+class FederationReferee(models.Model):
+    _name = "federation.referee"
+    _description = "Federation Referee"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "name"
+
+    name = fields.Char(string="Name", required=True, tracking=True)
+    active = fields.Boolean(default=True)
+    email = fields.Char(string="Email")
+    phone = fields.Char(string="Phone")
+    mobile = fields.Char(string="Mobile")
+    certification_level = fields.Selection(
+        [
+            ("local", "Local"),
+            ("regional", "Regional"),
+            ("national", "National"),
+            ("international", "International"),
+        ],
+        string="Certification Level",
+        tracking=True,
+    )
+    notes = fields.Text(string="Notes")
+
+    certification_ids = fields.One2many(
+        "federation.referee.certification", "referee_id", string="Certifications"
+    )
+    match_assignment_ids = fields.One2many(
+        "federation.match.referee", "referee_id", string="Match Assignments"
+    )
+
+    certification_count = fields.Integer(
+        string="Certification Count", compute="_compute_counts", store=True
+    )
+    assignment_count = fields.Integer(
+        string="Assignment Count", compute="_compute_counts", store=True
+    )
+
+    @api.depends("certification_ids", "match_assignment_ids")
+    def _compute_counts(self):
+        for rec in self:
+            rec.certification_count = len(rec.certification_ids)
+            rec.assignment_count = len(rec.match_assignment_ids)

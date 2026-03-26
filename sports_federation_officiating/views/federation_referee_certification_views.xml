@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_referee_certification_form" model="ir.ui.view">
+        <field name="name">federation.referee.certification.form</field>
+        <field name="model">federation.referee.certification</field>
+        <field name="arch" type="xml">
+            <form string="Referee Certification">
+                <div class="oe_title">
+                    <h1><field name="name" placeholder="Certification Number"/></h1>
+                </div>
+                <group>
+                    <group string="General">
+                        <field name="referee_id"/>
+                        <field name="level"/>
+                        <field name="issuing_body"/>
+                    </group>
+                    <group string="Validity">
+                        <field name="issue_date"/>
+                        <field name="expiry_date"/>
+                        <field name="active"/>
+                    </group>
+                </group>
+                <separator string="Notes"/>
+                <field name="notes"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_referee_certification_tree" model="ir.ui.view">
+        <field name="name">federation.referee.certification.tree</field>
+        <field name="model">federation.referee.certification</field>
+        <field name="arch" type="xml">
+            <tree string="Referee Certifications">
+                <field name="name"/>
+                <field name="referee_id"/>
+                <field name="level"/>
+                <field name="issue_date"/>
+                <field name="expiry_date"/>
+                <field name="issuing_body"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_referee_certification_search" model="ir.ui.view">
+        <field name="name">federation.referee.certification.search</field>
+        <field name="model">federation.referee.certification</field>
+        <field name="arch" type="xml">
+            <search string="Search Certifications">
+                <field name="name"/>
+                <field name="referee_id"/>
+                <field name="issuing_body"/>
+                <group expand="0" string="Group By">
+                    <filter name="referee" string="Referee" context="{'group_by': 'referee_id'}"/>
+                    <filter name="level" string="Level" context="{'group_by': 'level'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_referee_certification_action" model="ir.actions.act_window">
+        <field name="name">Referee Certifications</field>
+        <field name="res_model">federation.referee.certification</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_referee_certification_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first referee certification.
+            </p>
+        </field>
+    </record>
+
+</odoo>

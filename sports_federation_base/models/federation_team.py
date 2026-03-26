@@ -1,0 +1,61 @@
+from odoo import api, fields, models
+
+
+class FederationTeam(models.Model):
+    _name = "federation.team"
+    _description = "Federation Team"
+    _inherit = ["mail.thread"]
+    _order = "name"
+
+    name = fields.Char(string="Team Name", required=True, tracking=True)
+    code = fields.Char(string="Code", copy=False)
+    active = fields.Boolean(default=True)
+    club_id = fields.Many2one(
+        "federation.club", string="Club", required=True, tracking=True, ondelete="cascade"
+    )
+    category = fields.Selection(
+        [
+            ("senior", "Senior"),
+            ("youth", "Youth"),
+            ("junior", "Junior"),
+            ("cadet", "Cadet"),
+            ("mini", "Mini"),
+        ],
+        string="Category",
+        default="senior",
+        tracking=True,
+    )
+    gender = fields.Selection(
+        [("male", "Male"), ("female", "Female"), ("mixed", "Mixed")],
+        string="Gender",
+        default="male",
+    )
+    email = fields.Char(string="Email")
+    phone = fields.Char(string="Phone")
+    logo = fields.Binary(string="Logo")
+    notes = fields.Text(string="Notes")
+
+    registration_ids = fields.One2many(
+        "federation.season.registration", "team_id", string="Registrations"
+    )
+    registration_count = fields.Integer(
+        string="Registration Count", compute="_compute_registration_count", store=True
+    )
+
+    _sql_constraints = [
+        ("code_unique", "UNIQUE(code)", "Team code must be unique."),
+    ]
+
+    @api.depends("registration_ids")
+    def _compute_registration_count(self):
+        for rec in self:
+            rec.registration_count = len(rec.registration_ids)
+
+    @api.model
+    def name_search(self, name="", args=None, operator="ilike", limit=100):
+        args = args or []
+        if name:
+            domain = ["|", ("name", operator, name), ("code", operator, name)]
+            recs = self.search(domain + args, limit=limit)
+            return recs.name_get()
+        return super().name_search(name, args, operator, limit)

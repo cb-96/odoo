@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_club_form" model="ir.ui.view">
+        <field name="name">federation.club.form</field>
+        <field name="model">federation.club</field>
+        <field name="arch" type="xml">
+            <form string="Club">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_team_action)d"
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-users"
+                                context="{'search_default_club_id': active_id}">
+                            <field name="team_count" widget="statinfo" string="Teams"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="logo" widget="image" class="oe_avatar" options="{'preview_image': 'logo'}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Club Name"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="Code"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Contact">
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="mobile" widget="phone"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                        <group string="Address">
+                            <field name="street"/>
+                            <field name="street2"/>
+                            <field name="city"/>
+                            <field name="state_id"/>
+                            <field name="zip"/>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="General">
+                            <field name="founded_date"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_club_tree" model="ir.ui.view">
+        <field name="name">federation.club.tree</field>
+        <field name="model">federation.club</field>
+        <field name="arch" type="xml">
+            <tree string="Clubs">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="team_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_club_search" model="ir.ui.view">
+        <field name="name">federation.club.search</field>
+        <field name="model">federation.club</field>
+        <field name="arch" type="xml">
+            <search string="Search Clubs">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>
+                    <filter name="city" string="City" context="{'group_by': 'city'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_club_action" model="ir.actions.act_window">
+        <field name="name">Federation Clubs</field>
+        <field name="res_model">federation.club</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_club_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first federation club.
+            </p>
+        </field>
+    </record>
+
+</odoo>

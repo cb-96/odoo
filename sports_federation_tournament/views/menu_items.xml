@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_federation_tournament"
+              name="Tournaments"
+              parent="sports_federation_base.menu_federation_root"
+              action="federation_tournament_action"
+              sequence="40"/>
+
+    <menuitem id="menu_federation_tournament_config"
+              name="Configuration"
+              parent="menu_federation_tournament"
+              sequence="10"/>
+
+    <menuitem id="menu_federation_tournament_stages"
+              name="Stages"
+              parent="menu_federation_tournament_config"
+              action="federation_tournament_stage_action"
+              sequence="10"/>
+
+    <menuitem id="menu_federation_tournament_groups"
+              name="Groups"
+              parent="menu_federation_tournament_config"
+              action="federation_tournament_group_action"
+              sequence="20"/>
+
+    <menuitem id="menu_federation_tournament_participants"
+              name="Participants"
+              parent="menu_federation_tournament"
+              action="federation_tournament_participant_action"
+              sequence="20"/>
+
+    <menuitem id="menu_federation_matches"
+              name="Matches"
+              parent="menu_federation_tournament"
+              action="federation_match_action"
+              sequence="30"/>
+
+</odoo>

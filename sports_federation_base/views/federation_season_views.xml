@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_season_form" model="ir.ui.view">
+        <field name="name">federation.season.form</field>
+        <field name="model">federation.season</field>
+        <field name="arch" type="xml">
+            <form string="Season">
+                <header>
+                    <button name="action_open" string="Open" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_close" string="Close" type="object" class="btn-secondary"
+                            attrs="{'invisible': [('state', '!=', 'open')]}"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            attrs="{'invisible': [('state', 'in', ('closed', 'cancelled'))]}"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_season_registration_action)d"
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o"
+                                context="{'search_default_season_id': active_id}">
+                            <field name="registration_count" widget="statinfo" string="Registrations"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Season Name"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="Code"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Period">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_season_tree" model="ir.ui.view">
+        <field name="name">federation.season.tree</field>
+        <field name="model">federation.season</field>
+        <field name="arch" type="xml">
+            <tree string="Seasons">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state"/>
+                <field name="registration_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_season_search" model="ir.ui.view">
+        <field name="name">federation.season.search</field>
+        <field name="model">federation.season</field>
+        <field name="arch" type="xml">
+            <search string="Search Seasons">
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
+                <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_season_action" model="ir.actions.act_window">
+        <field name="name">Federation Seasons</field>
+        <field name="res_model">federation.season</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_season_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first federation season.
+            </p>
+        </field>
+    </record>
+
+</odoo>

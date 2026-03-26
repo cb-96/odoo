@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_player_license_form" model="ir.ui.view">
+        <field name="name">federation.player.license.form</field>
+        <field name="model">federation.player.license</field>
+        <field name="arch" type="xml">
+            <form string="Player License">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            attrs="{'invisible': [('state', 'in', ('cancelled',))]}"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="License Number"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Player">
+                            <field name="player_id"/>
+                            <field name="club_id"/>
+                            <field name="season_id"/>
+                        </group>
+                        <group string="Validity">
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                            <field name="category"/>
+                        </group>
+                    </group>
+                    <separator string="Eligibility Notes"/>
+                    <field name="eligibility_notes"/>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_player_license_tree" model="ir.ui.view">
+        <field name="name">federation.player.license.tree</field>
+        <field name="model">federation.player.license</field>
+        <field name="arch" type="xml">
+            <tree string="Player Licenses">
+                <field name="name"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="season_id"/>
+                <field name="issue_date"/>
+                <field name="expiry_date"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_player_license_search" model="ir.ui.view">
+        <field name="name">federation.player.license.search</field>
+        <field name="model">federation.player.license</field>
+        <field name="arch" type="xml">
+            <search string="Search Licenses">
+                <field name="name"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="season_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
+                <filter name="expired" string="Expired" domain="[('state', '=', 'expired')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="player" string="Player" context="{'group_by': 'player_id'}"/>
+                    <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_player_license_action" model="ir.actions.act_window">
+        <field name="name">Player Licenses</field>
+        <field name="res_model">federation.player.license</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_player_license_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first player license.
+            </p>
+        </field>
+    </record>
+
+</odoo>

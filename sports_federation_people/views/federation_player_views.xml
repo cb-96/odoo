@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_player_form" model="ir.ui.view">
+        <field name="name">federation.player.form</field>
+        <field name="model">federation.player</field>
+        <field name="arch" type="xml">
+            <form string="Player">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'inactive')]}"/>
+                    <button name="action_deactivate" string="Deactivate" type="object"
+                            attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                    <button name="action_suspend" string="Suspend" type="object"
+                            attrs="{'invisible': [('state', 'in', ('suspended',))]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,inactive"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_player_license_action)d" type="action"
+                                class="oe_stat_button" icon="fa-id-card"
+                                context="{'search_default_player_id': active_id}">
+                            <field name="license_count" widget="statinfo" string="Licenses"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="photo" widget="image" class="oe_avatar" options="{'preview_image': 'photo'}"/>
+                    <div class="oe_title">
+                        <label for="first_name"/>
+                        <div class="o_row">
+                            <h1><field name="first_name" placeholder="First Name"/></h1>
+                            <h1><field name="last_name" placeholder="Last Name"/></h1>
+                        </div>
+                    </div>
+                    <group>
+                        <group string="Personal">
+                            <field name="birth_date"/>
+                            <field name="gender"/>
+                            <field name="nationality_id"/>
+                        </group>
+                        <group string="Club">
+                            <field name="club_id"/>
+                            <field name="team_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Contact">
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="mobile" widget="phone"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_player_tree" model="ir.ui.view">
+        <field name="name">federation.player.tree</field>
+        <field name="model">federation.player</field>
+        <field name="arch" type="xml">
+            <tree string="Players">
+                <field name="last_name"/>
+                <field name="first_name"/>
+                <field name="birth_date"/>
+                <field name="gender"/>
+                <field name="club_id"/>
+                <field name="state"/>
+                <field name="license_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_player_search" model="ir.ui.view">
+        <field name="name">federation.player.search</field>
+        <field name="model">federation.player</field>
+        <field name="arch" type="xml">
+            <search string="Search Players">
+                <field name="first_name"/>
+                <field name="last_name"/>
+                <field name="club_id"/>
+                <field name="nationality_id"/>
+                <filter name="active_players" string="Active" domain="[('state', '=', 'active')]"/>
+                <filter name="inactive_players" string="Inactive" domain="[('state', '=', 'inactive')]"/>
+                <filter name="suspended" string="Suspended" domain="[('state', '=', 'suspended')]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="gender" string="Gender" context="{'group_by': 'gender'}"/>
+                    <filter name="nationality" string="Nationality" context="{'group_by': 'nationality_id'}"/>
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_player_action" model="ir.actions.act_window">
+        <field name="name">Players</field>
+        <field name="res_model">federation.player</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_player_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register your first player.
+            </p>
+        </field>
+    </record>
+
+</odoo>

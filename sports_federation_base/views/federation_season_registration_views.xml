@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_season_registration_form" model="ir.ui.view">
+        <field name="name">federation.season.registration.form</field>
+        <field name="model">federation.season.registration</field>
+        <field name="arch" type="xml">
+            <form string="Season Registration">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Registration">
+                            <field name="season_id"/>
+                            <field name="team_id"/>
+                            <field name="club_id"/>
+                            <field name="division"/>
+                        </group>
+                        <group string="Details">
+                            <field name="registration_date"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_season_registration_tree" model="ir.ui.view">
+        <field name="name">federation.season.registration.tree</field>
+        <field name="model">federation.season.registration</field>
+        <field name="arch" type="xml">
+            <tree string="Season Registrations">
+                <field name="name"/>
+                <field name="season_id"/>
+                <field name="team_id"/>
+                <field name="club_id"/>
+                <field name="division"/>
+                <field name="registration_date"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_season_registration_search" model="ir.ui.view">
+        <field name="name">federation.season.registration.search</field>
+        <field name="model">federation.season.registration</field>
+        <field name="arch" type="xml">
+            <search string="Search Registrations">
+                <field name="name"/>
+                <field name="season_id"/>
+                <field name="team_id"/>
+                <field name="club_id"/>
+                <field name="division"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="division" string="Division" context="{'group_by': 'division'}"/>
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_season_registration_action" model="ir.actions.act_window">
+        <field name="name">Season Registrations</field>
+        <field name="res_model">federation.season.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_season_registration_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first season registration.
+            </p>
+        </field>
+    </record>
+
+</odoo>

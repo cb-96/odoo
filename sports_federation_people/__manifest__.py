@@ -1,0 +1,21 @@
+{
+    "name": "Sports Federation People",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Player master data and license management",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": ["sports_federation_base"],
+    "data": [
+        "security/ir.model.access.csv",
+        "data/ir_sequence.xml",
+        "views/federation_player_views.xml",
+        "views/federation_player_license_views.xml",
+        "views/menu_items.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 15,
+}

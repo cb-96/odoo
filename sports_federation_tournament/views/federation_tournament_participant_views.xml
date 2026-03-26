@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_tournament_participant_form" model="ir.ui.view">
+        <field name="name">federation.tournament.participant.form</field>
+        <field name="model">federation.tournament.participant</field>
+        <field name="arch" type="xml">
+            <form string="Tournament Participant">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'registered')]}"/>
+                    <button name="action_withdraw" string="Withdraw" type="object"
+                            attrs="{'invisible': [('state', 'in', ('withdrawn',))]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="registered,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Tournament">
+                            <field name="tournament_id"/>
+                            <field name="team_id"/>
+                            <field name="club_id"/>
+                        </group>
+                        <group string="Assignment">
+                            <field name="stage_id"/>
+                            <field name="group_id"/>
+                            <field name="seed"/>
+                            <field name="registration_date"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_tournament_participant_tree" model="ir.ui.view">
+        <field name="name">federation.tournament.participant.tree</field>
+        <field name="model">federation.tournament.participant</field>
+        <field name="arch" type="xml">
+            <tree string="Tournament Participants">
+                <field name="team_id"/>
+                <field name="club_id"/>
+                <field name="tournament_id"/>
+                <field name="stage_id"/>
+                <field name="group_id"/>
+                <field name="seed"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_tournament_participant_search" model="ir.ui.view">
+        <field name="name">federation.tournament.participant.search</field>
+        <field name="model">federation.tournament.participant</field>
+        <field name="arch" type="xml">
+            <search string="Search Participants">
+                <field name="team_id"/>
+                <field name="tournament_id"/>
+                <field name="stage_id"/>
+                <field name="group_id"/>
+                <filter name="registered" string="Registered" domain="[('state', '=', 'registered')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="withdrawn" string="Withdrawn" domain="[('state', '=', 'withdrawn')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="tournament" string="Tournament" context="{'group_by': 'tournament_id'}"/>
+                    <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="stage" string="Stage" context="{'group_by': 'stage_id'}"/>
+                    <filter name="group" string="Group" context="{'group_by': 'group_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_tournament_participant_action" model="ir.actions.act_window">
+        <field name="name">Tournament Participants</field>
+        <field name="res_model">federation.tournament.participant</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_tournament_participant_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register your first tournament participant.
+            </p>
+        </field>
+    </record>
+
+</odoo>

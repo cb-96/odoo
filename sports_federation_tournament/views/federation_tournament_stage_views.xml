@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_tournament_stage_form" model="ir.ui.view">
+        <field name="name">federation.tournament.stage.form</field>
+        <field name="model">federation.tournament.stage</field>
+        <field name="arch" type="xml">
+            <form string="Tournament Stage">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_tournament_group_action)d" type="action"
+                                class="oe_stat_button" icon="fa-object-group"
+                                context="{'search_default_stage_id': active_id}">
+                            <field name="group_count" widget="statinfo" string="Groups"/>
+                        </button>
+                        <button name="%(federation_match_action)d" type="action"
+                                class="oe_stat_button" icon="fa-futbol-o"
+                                context="{'search_default_stage_id': active_id}">
+                            <field name="match_count" widget="statinfo" string="Matches"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Stage Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="General">
+                            <field name="tournament_id"/>
+                            <field name="sequence"/>
+                            <field name="stage_type"/>
+                        </group>
+                        <group string="Schedule">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_tournament_stage_tree" model="ir.ui.view">
+        <field name="name">federation.tournament.stage.tree</field>
+        <field name="model">federation.tournament.stage</field>
+        <field name="arch" type="xml">
+            <tree string="Tournament Stages">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="tournament_id"/>
+                <field name="stage_type"/>
+                <field name="date_start"/>
+                <field name="group_count"/>
+                <field name="match_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_tournament_stage_search" model="ir.ui.view">
+        <field name="name">federation.tournament.stage.search</field>
+        <field name="model">federation.tournament.stage</field>
+        <field name="arch" type="xml">
+            <search string="Search Stages">
+                <field name="name"/>
+                <field name="tournament_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="tournament" string="Tournament" context="{'group_by': 'tournament_id'}"/>
+                    <filter name="type" string="Type" context="{'group_by': 'stage_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_tournament_stage_action" model="ir.actions.act_window">
+        <field name="name">Tournament Stages</field>
+        <field name="res_model">federation.tournament.stage</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_tournament_stage_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first tournament stage.
+            </p>
+        </field>
+    </record>
+
+</odoo>

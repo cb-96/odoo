@@ -1,0 +1,23 @@
+{
+    "name": "Sports Federation Tournament",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Tournaments, stages, groups, participants, and matches",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": ["sports_federation_base"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/federation_tournament_views.xml",
+        "views/federation_tournament_stage_views.xml",
+        "views/federation_tournament_group_views.xml",
+        "views/federation_tournament_participant_views.xml",
+        "views/federation_match_views.xml",
+        "views/menu_items.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 20,
+}

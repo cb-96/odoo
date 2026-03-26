@@ -1,0 +1,15 @@
+{
+    "name": "Sports Federation Competition Engine",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Competition engine scaffold for schedule generation and standings",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": ["sports_federation_tournament"],
+    "data": [],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 30,
+}

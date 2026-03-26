@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add competition generation buttons to tournament form header -->
+    <record id="view_federation_tournament_form_competition_buttons" model="ir.ui.view">
+        <field name="name">federation.tournament.form.competition.buttons</field>
+        <field name="model">federation.tournament</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="%(action_round_robin_wizard)d" string="Generate Round-Robin" type="action"
+                        class="btn-primary" attrs="{'invisible': [('state', 'not in', ('open', 'in_progress'))]}"
+                        context="{'default_tournament_id': active_id}"/>
+                <button name="%(action_knockout_wizard)d" string="Generate Knockout" type="action"
+                        class="btn-primary" attrs="{'invisible': [('state', 'not in', ('open', 'in_progress'))]}"
+                        context="{'default_tournament_id': active_id}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

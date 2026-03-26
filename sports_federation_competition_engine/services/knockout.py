@@ -37,8 +37,8 @@ class KnockoutService(models.AbstractModel):
 
         teams = self._apply_seeding(participants, options.get("seeding", "seed"))
         bracket_size = self._determine_bracket_size(len(teams), options.get("bracket_size", "natural"))
-        teams, bye_teams = self._handle_byes(teams, bracket_size)
-        matches = self._create_first_round(tournament, stage, teams, options)
+        first_round_pairs = self._build_first_round(teams, bracket_size)
+        matches = self._create_matches(tournament, stage, first_round_pairs, options)
 
         _logger.info(
             "Generated %d knockout matches for tournament %s, stage %s (bracket size %d)",
@@ -58,6 +58,7 @@ class KnockoutService(models.AbstractModel):
             raise UserError(_("Existing matches found. Enable overwrite to replace."))
 
     def _apply_seeding(self, participants, seeding):
+        """Return teams ordered by seeding method."""
         if seeding == "random":
             teams = [p.team_id for p in participants]
             random.shuffle(teams)
@@ -69,29 +70,65 @@ class KnockoutService(models.AbstractModel):
             return [p.team_id for p in participants]
 
     def _determine_bracket_size(self, count, mode):
+        """Return bracket size: either natural or next power of two."""
         if mode == "power_of_two":
             return 2 ** math.ceil(math.log2(count))
         return count
 
-    def _handle_byes(self, teams, bracket_size):
-        if len(teams) >= bracket_size:
-            return teams[:bracket_size], []
-        bye_count = bracket_size - len(teams)
-        bye_teams = teams[-bye_count:] if bye_count > 0 else []
-        return teams, bye_teams
+    def _build_first_round(self, teams, bracket_size):
+        """
+        Build first round pairings with proper bye placement.
 
-    def _create_first_round(self, tournament, stage, teams, options):
+        For seeded brackets with byes:
+        - Top seeds get byes (advance automatically)
+        - Remaining teams are paired using standard bracket seeding:
+          1 vs N, 2 vs N-1, etc.
+
+        Returns list of (home, away) tuples for actual matches.
+        Byes are not returned as matches (team advances automatically).
+        """
+        n_actual = len(teams)
+        
+        if n_actual >= bracket_size:
+            # No byes needed, pair directly
+            half = bracket_size // 2
+            pairs = []
+            for i in range(half):
+                pairs.append((teams[i], teams[bracket_size - 1 - i]))
+            return pairs
+
+        # Need byes: bracket_size > n_actual
+        bye_count = bracket_size - n_actual
+        
+        # Top seeds get byes: teams[0..bye_count-1] advance automatically
+        # Remaining teams play first round
+        teams_with_byes = teams[:bye_count]  # These advance, no match
+        teams_playing = teams[bye_count:]     # These play first round
+        
+        # Number of matches in first round
+        n_playing = len(teams_playing)
+        half = n_playing // 2
+        
+        # Pair bottom teams: standard bracket seeding
+        # e.g., 8 teams, 2 byes: teams_playing has 6 teams
+        # Pair: seed(bye_count+1) vs seed(n_actual), seed(bye_count+2) vs seed(n_actual-1), etc.
+        pairs = []
+        for i in range(half):
+            home = teams_playing[i]
+            away = teams_playing[n_playing - 1 - i]
+            pairs.append((home, away))
+        
+        return pairs
+
+    def _create_matches(self, tournament, stage, pairs, options):
+        """Create federation.match records for first round pairings."""
         Match = self.env["federation.match"]
         matches = []
-        n = len(teams)
-        half = n // 2
         start_dt = options.get("start_datetime")
         interval = options.get("interval_hours", 0)
         venue = options.get("venue", "")
 
-        for i in range(half):
-            home = teams[i]
-            away = teams[n - 1 - i]
+        for i, (home, away) in enumerate(pairs):
             vals = {
                 "tournament_id": tournament.id,
                 "stage_id": stage.id,

@@ -62,10 +62,17 @@ class RoundRobinService(models.AbstractModel):
             ))
 
     def _generate_pairings(self, teams, double_round):
+        """
+        Generate round-robin pairings using the circle method.
+
+        The algorithm fixes the first team and rotates the rest.
+        For odd participant counts, a bye (False) is added.
+        Home/away alternates by round to ensure fairness.
+        """
         n = len(teams)
         has_bye = n % 2 == 1
         if has_bye:
-            teams = teams + [False]
+            teams = list(teams) + [False]
             n += 1
 
         rounds = n - 1
@@ -74,21 +81,21 @@ class RoundRobinService(models.AbstractModel):
         all_pairings = []
 
         for round_num in range(rounds):
-            round_matches = []
             for i in range(half):
                 home = working[i]
                 away = working[n - 1 - i]
                 if home and away:
+                    # Alternate home/away by round for fairness
                     if round_num % 2 == 0:
-                        round_matches.append((home, away))
+                        all_pairings.append((home, away))
                     else:
-                        round_matches.append((away, home))
-            all_pairings.extend(round_matches)
+                        all_pairings.append((away, home))
+            # Rotate: keep first fixed, rotate rest clockwise
             working = [working[0]] + [working[-1]] + working[1:-1]
 
         if double_round:
-            reversed = [(away, home) for home, away in all_pairings]
-            all_pairings.extend(reversed)
+            reversed_pairings = [(away, home) for home, away in all_pairings]
+            all_pairings.extend(reversed_pairings)
 
         return all_pairings
 

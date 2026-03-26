@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Portal navigation: add federation links to sidebar            -->
+    <!-- ============================================================ -->
+
+    <template id="portal_my_home_federation" name="Federation Portal Home"
+              inherit_id="portal.portal_my_home" priority="30">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="sports_federation_portal.portal_federation_links"/>
+        </xpath>
+    </template>
+
+    <template id="portal_federation_links" name="Federation Portal Links">
+        <div class="row" t-if="federation_representative">
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-shield me-2"/>My Club
+                        </h5>
+                        <p class="card-text">View your club information and teams.</p>
+                        <a href="/my/club" class="btn btn-outline-primary btn-sm">View Club</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-users me-2"/>My Teams
+                        </h5>
+                        <p class="card-text">View and manage your club's teams.</p>
+                        <a href="/my/teams" class="btn btn-outline-primary btn-sm">View Teams</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-calendar me-2"/>Season Registrations
+                        </h5>
+                        <p class="card-text">Register teams for seasons and track status.</p>
+                        <a href="/my/season-registrations" class="btn btn-outline-primary btn-sm">View Registrations</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-trophy me-2"/>Tournament Registrations
+                        </h5>
+                        <p class="card-text">Register teams for tournaments and track status.</p>
+                        <a href="/my/tournament-registrations" class="btn btn-outline-primary btn-sm">View Registrations</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" t-if="not federation_representative">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle me-2"/>
+                    You are not currently assigned as a club representative.
+                    Please contact the federation for access.
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- My Club Page                                                  -->
+    <!-- ============================================================ -->
+
+    <template id="portal_my_club" name="My Club">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-shield me-2"/>My Club</h2>
+                    </div>
+                </div>
+
+                <div t-if="error" class="alert alert-warning">
+                    <t t-esc="error"/>
+                </div>
+
+                <t t-if="club">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title"><t t-esc="club.name"/></h4>
+                                    <table class="table table-sm">
+                                        <tr t-if="club.code">
+                                            <th style="width:150px">Code</th>
+                                            <td><t t-esc="club.code"/></td>
+                                        </tr>
+                                        <tr t-if="club.email">
+                                            <th>Email</th>
+                                            <td><t t-esc="club.email"/></td>
+                                        </tr>
+                                        <tr t-if="club.phone">
+                                            <th>Phone</th>
+                                            <td><t t-esc="club.phone"/></td>
+                                        </tr>
+                                        <tr t-if="club.city or club.country_id">
+                                            <th>Location</th>
+                                            <td>
+                                                <t t-esc="club.city"/>
+                                                <t t-if="club.city and club.country_id">, </t>
+                                                <t t-if="club.country_id" t-esc="club.country_id.name"/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="club.website">
+                                            <th>Website</th>
+                                            <td><a t-att-href="club.website" t-esc="club.website"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Quick Links</h5>
+                                    <a href="/my/teams" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                        <i class="fa fa-users me-1"/> View Teams
+                                    </a>
+                                    <a href="/my/season-registrations" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                        <i class="fa fa-calendar me-1"/> Season Registrations
+                                    </a>
+                                    <a href="/my/tournament-registrations" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                        <i class="fa fa-trophy me-1"/> Tournament Registrations
+                                    </a>
+                                    <a href="/tournaments" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fa fa-search me-1"/> Browse Tournaments
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teams Summary -->
+                    <div class="row mt-4" t-if="teams">
+                        <div class="col-12">
+                            <h4>Teams (<t t-esc="len(teams)"/>)</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Category</th>
+                                        <th>Gender</th>
+                                        <th>Registrations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="teams" t-as="team">
+                                        <tr>
+                                            <td><t t-esc="team.name"/></td>
+                                            <td><t t-esc="dict(team._fields['category'].selection).get(team.category) if team.category else ''"/></td>
+                                            <td><t t-esc="dict(team._fields['gender'].selection).get(team.gender) if team.gender else ''"/></td>
+                                            <td><t t-esc="team.registration_count"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- My Teams Page                                                 -->
+    <!-- ============================================================ -->
+
+    <template id="portal_my_teams" name="My Teams">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-users me-2"/>My Teams</h2>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Team Name</th>
+                                    <th>Club</th>
+                                    <th>Category</th>
+                                    <th>Gender</th>
+                                    <th>Registrations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="teams" t-as="team">
+                                    <tr>
+                                        <td><t t-esc="team.name"/></td>
+                                        <td><t t-esc="team.club_id.name"/></td>
+                                        <td><t t-esc="dict(team._fields['category'].selection).get(team.category) if team.category else ''"/></td>
+                                        <td><t t-esc="dict(team._fields['gender'].selection).get(team.gender) if team.gender else ''"/></td>
+                                        <td><t t-esc="team.registration_count"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-if="not teams" class="text-center py-4">
+                            <p class="text-muted">No teams found for your club.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- My Season Registrations Page                                  -->
+    <!-- ============================================================ -->
+
+    <template id="portal_my_season_registrations" name="My Season Registrations">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-calendar me-2"/>My Season Registrations</h2>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/my/season-registration/new" class="btn btn-primary">
+                            <i class="fa fa-plus me-1"/> New Registration
+                        </a>
+                    </div>
+                </div>
+
+                <div t-if="success" class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Season</th>
+                                    <th>Team</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="registrations" t-as="reg">
+                                    <tr>
+                                        <td><t t-esc="reg.name"/></td>
+                                        <td><t t-esc="reg.season_id.name"/></td>
+                                        <td><t t-esc="reg.team_id.name"/></td>
+                                        <td><t t-esc="reg.registration_date" t-options='{"widget": "date"}'/></td>
+                                        <td>
+                                            <span class="badge"
+                                                  t-att-class="'bg-warning' if reg.state == 'submitted' else 'bg-success' if reg.state == 'confirmed' else 'bg-secondary' if reg.state == 'draft' else 'bg-danger'">
+                                                <t t-esc="dict(reg._fields['state'].selection).get(reg.state)"/>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <form t-if="reg.state in ('draft', 'submitted')"
+                                                  t-attf-action="/my/season-registration/#{reg.id}/cancel"
+                                                  method="POST" class="d-inline">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('Cancel this registration?')">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                            <t t-if="reg.rejection_reason">
+                                                <span class="text-danger small" t-esc="reg.rejection_reason"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-if="not registrations" class="text-center py-4">
+                            <p class="text-muted">No season registrations found.</p>
+                            <a href="/my/season-registration/new" class="btn btn-primary">
+                                Register a Team for a Season
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="pager">
+                    <t t-call="portal.pager"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- My Tournament Registrations Page                              -->
+    <!-- ============================================================ -->
+
+    <template id="portal_my_tournament_registrations" name="My Tournament Registrations">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-trophy me-2"/>My Tournament Registrations</h2>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/tournaments" class="btn btn-primary">
+                            <i class="fa fa-plus me-1"/> Browse Tournaments
+                        </a>
+                    </div>
+                </div>
+
+                <div t-if="success" class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Tournament</th>
+                                    <th>Team</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="registrations" t-as="reg">
+                                    <tr>
+                                        <td><t t-esc="reg.name"/></td>
+                                        <td>
+                                            <a t-attf-href="/tournament/#{reg.tournament_id.id}">
+                                                <t t-esc="reg.tournament_id.name"/>
+                                            </a>
+                                        </td>
+                                        <td><t t-esc="reg.team_id.name"/></td>
+                                        <td><t t-esc="reg.registration_date" t-options='{"widget": "date"}'/></td>
+                                        <td>
+                                            <span class="badge"
+                                                  t-att-class="'bg-warning' if reg.state == 'submitted' else 'bg-success' if reg.state == 'confirmed' else 'bg-secondary' if reg.state == 'draft' else 'bg-danger' if reg.state == 'rejected' else 'bg-dark'">
+                                                <t t-esc="dict(reg._fields['state'].selection).get(reg.state)"/>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <form t-if="reg.state in ('draft', 'submitted')"
+                                                  t-attf-action="/my/tournament-registration/#{reg.id}/cancel"
+                                                  method="POST" class="d-inline">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('Cancel this registration?')">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                            <t t-if="reg.rejection_reason">
+                                                <span class="text-danger small" t-esc="reg.rejection_reason"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-if="not registrations" class="text-center py-4">
+                            <p class="text-muted">No tournament registrations found.</p>
+                            <a href="/tournaments" class="btn btn-primary">
+                                Browse Tournaments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="pager">
+                    <t t-call="portal.pager"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- Season Registration Form                                      -->
+    <!-- ============================================================ -->
+
+    <template id="portal_season_registration_form" name="New Season Registration">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-calendar-plus me-2"/>New Season Registration</h2>
+                    </div>
+                </div>
+
+                <div t-if="error" class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form action="/my/season-registration/new" method="POST">
+                            <input type="hidden" name="csrf_token"
+                                   t-att-value="request.csrf_token()"/>
+
+                            <div class="mb-3">
+                                <label for="season_id" class="form-label">Season <span class="text-danger">*</span></label>
+                                <select name="season_id" id="season_id" class="form-select" required="1">
+                                    <option value="">-- Select a season --</option>
+                                    <t t-foreach="seasons" t-as="season">
+                                        <option t-att-value="season.id">
+                                            <t t-esc="season.name"/>
+                                            (<t t-esc="season.date_start" t-options='{"widget": "date"}'/>
+                                            - <t t-esc="season.date_end" t-options='{"widget": "date"}'/>)
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="team_id" class="form-label">Team <span class="text-danger">*</span></label>
+                                <select name="team_id" id="team_id" class="form-select" required="1">
+                                    <option value="">-- Select a team --</option>
+                                    <t t-foreach="teams" t-as="team">
+                                        <option t-att-value="team.id">
+                                            <t t-esc="team.name"/>
+                                            (<t t-esc="team.club_id.name"/>)
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes (optional)</label>
+                                <textarea name="notes" id="notes" class="form-control" rows="3"
+                                          placeholder="Any additional information..."/>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-paper-plane me-1"/> Submit Registration
+                            </button>
+                            <a href="/my/season-registrations" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

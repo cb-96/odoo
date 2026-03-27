@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_discipline" model="ir.module.category">
+        <field name="name">Discipline</field>
+        <field name="description">Sports Federation Discipline Management</field>
+        <field name="sequence">20</field>
+        <field name="parent_id" ref="sports_federation_base.module_category_sports_federation"/>
+    </record>
+
+    <record id="group_federation_discipline_user" model="res.groups">
+        <field name="name">Discipline User</field>
+        <field name="category_id" ref="module_category_discipline"/>
+        <field name="implied_ids" eval="[(4, ref('sports_federation_base.group_federation_user'))]"/>
+    </record>
+
+    <record id="group_federation_discipline_manager" model="res.groups">
+        <field name="name">Discipline Manager</field>
+        <field name="category_id" ref="module_category_discipline"/>
+        <field name="implied_ids" eval="[(4, ref('group_federation_discipline_user'))]"/>
+    </record>
+</odoo>

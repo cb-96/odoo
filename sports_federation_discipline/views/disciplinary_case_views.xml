@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_disciplinary_case_tree" model="ir.ui.view">
+        <field name="name">federation.disciplinary.case.tree</field>
+        <field name="model">federation.disciplinary.case</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="state"/>
+                <field name="subject_player_id"/>
+                <field name="subject_club_id"/>
+                <field name="subject_referee_id"/>
+                <field name="opened_on"/>
+                <field name="decided_on"/>
+                <field name="responsible_user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_disciplinary_case_form" model="ir.ui.view">
+        <field name="name">federation.disciplinary.case.form</field>
+        <field name="model">federation.disciplinary.case</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit_review" string="Submit for Review" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_decide" string="Decide" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'under_review')]}"/>
+                    <button name="action_mark_appealed" string="Mark as Appealed" type="object" attrs="{'invisible': [('state', '!=', 'decided')]}"/>
+                    <button name="action_close" string="Close" type="object" attrs="{'invisible': [('state', 'in', ['draft', 'closed'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,under_review,decided,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="reference"/>
+                            <field name="opened_on"/>
+                            <field name="decided_on"/>
+                            <field name="closed_on"/>
+                            <field name="responsible_user_id"/>
+                        </group>
+                        <group>
+                            <field name="subject_player_id"/>
+                            <field name="subject_club_id"/>
+                            <field name="subject_referee_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Incidents" name="incidents">
+                            <field name="incident_ids"/>
+                        </page>
+                        <page string="Sanctions" name="sanctions">
+                            <field name="sanction_ids"/>
+                        </page>
+                        <page string="Suspensions" name="suspensions">
+                            <field name="suspension_ids"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <group>
+                                <field name="summary"/>
+                                <field name="notes"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_disciplinary_case_search" model="ir.ui.view">
+        <field name="name">federation.disciplinary.case.search</field>
+        <field name="model">federation.disciplinary.case</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="subject_player_id"/>
+                <field name="subject_club_id"/>
+                <field name="subject_referee_id"/>
+                <field name="responsible_user_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Under Review" name="under_review" domain="[('state', '=', 'under_review')]"/>
+                <filter string="Decided" name="decided" domain="[('state', '=', 'decided')]"/>
+                <filter string="Appealed" name="appealed" domain="[('state', '=', 'appealed')]"/>
+                <filter string="Closed" name="closed" domain="[('state', '=', 'closed')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_federation_disciplinary_case" model="ir.actions.act_window">
+        <field name="name">Disciplinary Cases</field>
+        <field name="res_model">federation.disciplinary.case</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

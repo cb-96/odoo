@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_sanction_tree" model="ir.ui.view">
+        <field name="name">federation.sanction.tree</field>
+        <field name="model">federation.sanction</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="case_id"/>
+                <field name="sanction_type"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+                <field name="effective_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_sanction_form" model="ir.ui.view">
+        <field name="name">federation.sanction.form</field>
+        <field name="model">federation.sanction</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="case_id"/>
+                            <field name="sanction_type"/>
+                            <field name="effective_date"/>
+                        </group>
+                        <group>
+                            <field name="player_id"/>
+                            <field name="club_id"/>
+                            <field name="referee_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_sanction_search" model="ir.ui.view">
+        <field name="name">federation.sanction.search</field>
+        <field name="model">federation.sanction</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="case_id"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <filter string="Warning" name="warning" domain="[('sanction_type', '=', 'warning')]"/>
+                <filter string="Fine" name="fine" domain="[('sanction_type', '=', 'fine')]"/>
+                <filter string="Suspension" name="suspension" domain="[('sanction_type', '=', 'suspension')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_federation_sanction" model="ir.actions.act_window">
+        <field name="name">Sanctions</field>
+        <field name="res_model">federation.sanction</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

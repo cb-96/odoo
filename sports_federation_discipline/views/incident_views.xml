@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_incident_tree" model="ir.ui.view">
+        <field name="name">federation.match.incident.tree</field>
+        <field name="model">federation.match.incident</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="match_id"/>
+                <field name="incident_type"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <field name="minute_text"/>
+                <field name="date_reported"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_incident_form" model="ir.ui.view">
+        <field name="name">federation.match.incident.form</field>
+        <field name="model">federation.match.incident</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="match_id"/>
+                            <field name="incident_type"/>
+                            <field name="minute_text"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="player_id"/>
+                            <field name="club_id"/>
+                            <field name="referee_id"/>
+                            <field name="date_reported"/>
+                            <field name="reported_by_user_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    <group>
+                        <field name="case_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_incident_search" model="ir.ui.view">
+        <field name="name">federation.match.incident.search</field>
+        <field name="model">federation.match.incident</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="match_id"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <field name="case_id"/>
+                <filter string="New" name="new" domain="[('status', '=', 'new')]"/>
+                <filter string="Attached" name="attached" domain="[('status', '=', 'attached')]"/>
+                <filter string="Closed" name="closed" domain="[('status', '=', 'closed')]"/>
+                <separator/>
+                <filter string="Yellow Card" name="yellow_card" domain="[('incident_type', '=', 'yellow_card')]"/>
+                <filter string="Red Card" name="red_card" domain="[('incident_type', '=', 'red_card')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_federation_incident" model="ir.actions.act_window">
+        <field name="name">Match Incidents</field>
+        <field name="res_model">federation.match.incident</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

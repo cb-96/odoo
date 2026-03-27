@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_qualification_rule_form" model="ir.ui.view">
+        <field name="name">federation.qualification.rule.form</field>
+        <field name="model">federation.qualification.rule</field>
+        <field name="arch" type="xml">
+            <form string="Qualification Rule">
+                <group>
+                    <group>
+                        <field name="rule_set_id"/>
+                        <field name="sequence"/>
+                        <field name="qualification_type"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="Values">
+                        <field name="value_integer"
+                               attrs="{'invisible': [('qualification_type', 'not in', ('top_n', 'min_points', 'min_position'))]}"/>
+                        <field name="value_percent"
+                               attrs="{'invisible': [('qualification_type', '!=', 'top_percent')]}"/>
+                        <field name="target_stage_id"/>
+                    </group>
+                </group>
+                <separator string="Rule Name"/>
+                <field name="name"/>
+                <separator string="Description"/>
+                <field name="description"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_qualification_rule_tree" model="ir.ui.view">
+        <field name="name">federation.qualification.rule.tree</field>
+        <field name="model">federation.qualification.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Qualification Rules">
+                <field name="rule_set_id"/>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="qualification_type"/>
+                <field name="value_integer"/>
+                <field name="value_percent"/>
+                <field name="target_stage_id"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="federation_qualification_rule_action" model="ir.actions.act_window">
+        <field name="name">Qualification Rules</field>
+        <field name="res_model">federation.qualification.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

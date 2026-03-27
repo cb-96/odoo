@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_points_rule_form" model="ir.ui.view">
+        <field name="name">federation.points.rule.form</field>
+        <field name="model">federation.points.rule</field>
+        <field name="arch" type="xml">
+            <form string="Points Rule">
+                <group>
+                    <group>
+                        <field name="rule_set_id"/>
+                        <field name="result_type"/>
+                        <field name="points"/>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_points_rule_tree" model="ir.ui.view">
+        <field name="name">federation.points.rule.tree</field>
+        <field name="model">federation.points.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Points Rules">
+                <field name="rule_set_id"/>
+                <field name="result_type"/>
+                <field name="points"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="federation_points_rule_action" model="ir.actions.act_window">
+        <field name="name">Points Rules</field>
+        <field name="res_model">federation.points.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

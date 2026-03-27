@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_tie_break_rule_form" model="ir.ui.view">
+        <field name="name">federation.tie_break.rule.form</field>
+        <field name="model">federation.tie_break.rule</field>
+        <field name="arch" type="xml">
+            <form string="Tie-Break Rule">
+                <group>
+                    <group>
+                        <field name="rule_set_id"/>
+                        <field name="sequence"/>
+                        <field name="tie_break_type"/>
+                        <field name="reverse_order"/>
+                    </group>
+                </group>
+                <separator string="Description"/>
+                <field name="description"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_tie_break_rule_tree" model="ir.ui.view">
+        <field name="name">federation.tie_break.rule.tree</field>
+        <field name="model">federation.tie_break.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Tie-Break Rules">
+                <field name="rule_set_id"/>
+                <field name="sequence" widget="handle"/>
+                <field name="tie_break_type"/>
+                <field name="description"/>
+                <field name="reverse_order"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="federation_tie_break_rule_action" model="ir.actions.act_window">
+        <field name="name">Tie-Break Rules</field>
+        <field name="res_model">federation.tie_break.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

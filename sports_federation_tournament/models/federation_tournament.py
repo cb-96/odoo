@@ -39,6 +39,19 @@ class FederationTournament(models.Model):
         tracking=True,
     )
     max_participants = fields.Integer(string="Max Participants", tracking=True)
+    competition_id = fields.Many2one(
+        "federation.competition",
+        string="Competition",
+        tracking=True,
+        ondelete="set null",
+    )
+    rule_set_id = fields.Many2one(
+        "federation.rule.set",
+        string="Rule Set",
+        tracking=True,
+        ondelete="set null",
+        help="Competition rules to apply. If set on the linked competition, that rule set is used by default.",
+    )
     notes = fields.Text(string="Notes")
 
     stage_ids = fields.One2many("federation.tournament.stage", "tournament_id", string="Stages")

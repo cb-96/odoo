@@ -27,6 +27,8 @@
                             <field name="team_id"/>
                             <field name="club_id"/>
                             <field name="division"/>
+                            <field name="competition_id"/>
+                            <field name="rule_set_id"/>
                         </group>
                         <group string="Details">
                             <field name="registration_date"/>
@@ -49,6 +51,8 @@
                 <field name="team_id"/>
                 <field name="club_id"/>
                 <field name="division"/>
+                <field name="competition_id" optional="hide"/>
+                <field name="rule_set_id" optional="hide"/>
                 <field name="registration_date"/>
                 <field name="state"/>
             </tree>
@@ -65,6 +69,8 @@
                 <field name="team_id"/>
                 <field name="club_id"/>
                 <field name="division"/>
+                <field name="competition_id"/>
+                <field name="rule_set_id"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
@@ -72,6 +78,7 @@
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="division" string="Division" context="{'group_by': 'division'}"/>
+                    <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                 </group>
             </search>

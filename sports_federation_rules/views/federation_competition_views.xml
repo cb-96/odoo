@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_competition_form" model="ir.ui.view">
+        <field name="name">federation.competition.form</field>
+        <field name="model">federation.competition</field>
+        <field name="arch" type="xml">
+            <form string="Competition">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_close" string="Close" type="object" class="btn-secondary"
+                            attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            attrs="{'invisible': [('state', '!=', 'closed')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(federation_tournament_action)d" type="action"
+                                class="oe_stat_button" icon="fa-trophy"
+                                context="{'search_default_competition_id': active_id}">
+                            <field name="tournament_count" widget="statinfo" string="Tournaments"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Competition Name"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="Code"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="General">
+                            <field name="competition_type"/>
+                            <field name="season_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Rules">
+                            <field name="rule_set_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_competition_tree" model="ir.ui.view">
+        <field name="name">federation.competition.tree</field>
+        <field name="model">federation.competition</field>
+        <field name="arch" type="xml">
+            <tree string="Competitions">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="competition_type"/>
+                <field name="season_id"/>
+                <field name="rule_set_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_competition_search" model="ir.ui.view">
+        <field name="name">federation.competition.search</field>
+        <field name="model">federation.competition</field>
+        <field name="arch" type="xml">
+            <search string="Search Competitions">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="season_id"/>
+                <field name="rule_set_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
+                <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="rule_set" string="Rule Set" context="{'group_by': 'rule_set_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_competition_action" model="ir.actions.act_window">
+        <field name="name">Competitions</field>
+        <field name="res_model">federation.competition</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_competition_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define your first competition.
+            </p>
+        </field>
+    </record>
+
+</odoo>

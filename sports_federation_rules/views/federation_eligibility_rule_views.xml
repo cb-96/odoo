@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_eligibility_rule_form" model="ir.ui.view">
+        <field name="name">federation.eligibility.rule.form</field>
+        <field name="model">federation.eligibility.rule</field>
+        <field name="arch" type="xml">
+            <form string="Eligibility Rule">
+                <group>
+                    <group>
+                        <field name="rule_set_id"/>
+                        <field name="sequence"/>
+                        <field name="eligibility_type"/>
+                        <field name="active"/>
+                        <field name="is_placeholder"/>
+                    </group>
+                    <group string="Constraints">
+                        <field name="age_limit"
+                               attrs="{'invisible': [('eligibility_type', 'not in', ('age_min', 'age_max'))]}"/>
+                        <field name="allowed_categories"
+                               attrs="{'invisible': [('eligibility_type', '!=', 'gender')]}"/>
+                    </group>
+                </group>
+                <separator string="Rule Name"/>
+                <field name="name"/>
+                <separator string="Description"/>
+                <field name="description"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_eligibility_rule_tree" model="ir.ui.view">
+        <field name="name">federation.eligibility.rule.tree</field>
+        <field name="model">federation.eligibility.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Eligibility Rules">
+                <field name="rule_set_id"/>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="eligibility_type"/>
+                <field name="is_placeholder"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="federation_eligibility_rule_action" model="ir.actions.act_window">
+        <field name="name">Eligibility Rules</field>
+        <field name="res_model">federation.eligibility.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

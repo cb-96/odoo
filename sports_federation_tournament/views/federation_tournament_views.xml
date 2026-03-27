@@ -58,6 +58,8 @@
                             <field name="season_id"/>
                             <field name="location"/>
                             <field name="max_participants"/>
+                            <field name="competition_id"/>
+                            <field name="rule_set_id"/>
                         </group>
                     </group>
                     <separator string="Notes"/>

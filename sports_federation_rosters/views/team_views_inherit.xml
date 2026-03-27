@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_team_form_inherit_roster" model="ir.ui.view">
+        <field name="name">federation.team.form.inherit.roster</field>
+        <field name="model">federation.team</field>
+        <field name="inherit_id" ref="sports_federation_base.view_federation_team_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="%(action_federation_team_roster)d" type="action" class="oe_stat_button" icon="fa-users">
+                    <field name="roster_count" string="Rosters" widget="statinfo"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_federation_team_form_inherit_roster_fields" model="ir.ui.view">
+        <field name="name">federation.team.form.inherit.roster.fields</field>
+        <field name="model">federation.team</field>
+        <field name="inherit_id" ref="sports_federation_base.view_federation_team_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="roster_ids" invisible="1"/>
+                <field name="roster_count" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_match_form_inherit_sheet" model="ir.ui.view">
+        <field name="name">federation.match.form.inherit.sheet</field>
+        <field name="model">federation.match</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="%(action_federation_match_sheet)d" type="action" class="oe_stat_button" icon="fa-file-text-o">
+                    <field name="match_sheet_count" string="Sheets" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Match Sheets" name="match_sheets">
+                    <field name="match_sheet_ids">
+                        <list>
+                            <field name="name"/>
+                            <field name="team_id"/>
+                            <field name="side"/>
+                            <field name="state"/>
+                            <field name="line_count"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_player_form_inherit_roster" model="ir.ui.view">
+        <field name="name">federation.player.form.inherit.roster</field>
+        <field name="model">federation.player</field>
+        <field name="inherit_id" ref="sports_federation_people.view_federation_player_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Roster Lines" name="roster_lines">
+                    <field name="roster_line_ids">
+                        <list>
+                            <field name="roster_id"/>
+                            <field name="status"/>
+                            <field name="jersey_number"/>
+                            <field name="is_captain"/>
+                            <field name="is_vice_captain"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="eligible"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Match Sheet Lines" name="match_sheet_lines">
+                    <field name="match_sheet_line_ids">
+                        <list>
+                            <field name="match_sheet_id"/>
+                            <field name="is_starter"/>
+                            <field name="is_substitute"/>
+                            <field name="is_captain"/>
+                            <field name="jersey_number"/>
+                            <field name="eligible"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,371 @@
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+
+
+class FederationStanding(models.Model):
+    _name = "federation.standing"
+    _description = "Federation Standing"
+    _inherit = ["mail.thread"]
+    _order = "name"
+
+    name = fields.Char(required=True, tracking=True)
+    active = fields.Boolean(default=True)
+    tournament_id = fields.Many2one(
+        "federation.tournament",
+        string="Tournament",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    stage_id = fields.Many2one(
+        "federation.tournament.stage",
+        string="Stage",
+        ondelete="cascade",
+        index=True,
+    )
+    group_id = fields.Many2one(
+        "federation.tournament.group",
+        string="Group",
+        ondelete="cascade",
+        index=True,
+    )
+    competition_id = fields.Many2one(
+        "federation.competition",
+        string="Competition",
+        ondelete="set null",
+        index=True,
+    )
+    rule_set_id = fields.Many2one(
+        "federation.rule.set",
+        string="Rule Set",
+        ondelete="set null",
+        index=True,
+    )
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("computed", "Computed"),
+            ("frozen", "Frozen"),
+        ],
+        default="draft",
+        required=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many(
+        "federation.standing.line",
+        "standing_id",
+        string="Lines",
+    )
+    line_count = fields.Integer(
+        compute="_compute_line_count",
+        string="Line Count",
+    )
+    computed_on = fields.Datetime(
+        string="Computed On",
+        readonly=True,
+    )
+    notes = fields.Text(string="Notes")
+
+    _sql_constraints = [
+        (
+            "unique_tournament_stage_group_name",
+            "UNIQUE(tournament_id, stage_id, group_id, name)",
+            "A standing with this name already exists for this tournament/stage/group.",
+        ),
+    ]
+
+    @api.depends("line_ids")
+    def _compute_line_count(self):
+        for record in self:
+            record.line_count = len(record.line_ids)
+
+    @api.constrains("group_id", "stage_id")
+    def _check_group_stage_consistency(self):
+        for record in self:
+            if record.group_id and not record.stage_id:
+                raise ValidationError(
+                    "Group cannot be set without a Stage."
+                )
+            if record.group_id and record.stage_id:
+                if record.group_id.stage_id != record.stage_id:
+                    raise ValidationError(
+                        "Group must belong to the selected Stage."
+                    )
+
+    @api.constrains("stage_id", "tournament_id")
+    def _check_stage_tournament_consistency(self):
+        for record in self:
+            if record.stage_id and record.tournament_id:
+                if record.stage_id.tournament_id != record.tournament_id:
+                    raise ValidationError(
+                        "Stage must belong to the selected Tournament."
+                    )
+
+    def _get_rule_set(self):
+        """Get the effective rule set for points calculation."""
+        self.ensure_one()
+        if self.rule_set_id:
+            return self.rule_set_id
+        if self.stage_id and self.stage_id.rule_set_id:
+            return self.stage_id.rule_set_id
+        if self.tournament_id and self.tournament_id.rule_set_id:
+            return self.tournament_id.rule_set_id
+        if self.competition_id and self.competition_id.rule_set_id:
+            return self.competition_id.rule_set_id
+        return False
+
+    def _get_points_values(self):
+        """Get points values for win/draw/loss."""
+        self.ensure_one()
+        rule_set = self._get_rule_set()
+        if rule_set:
+            return {
+                "win": rule_set.points_win or 3,
+                "draw": rule_set.points_draw or 1,
+                "loss": rule_set.points_loss or 0,
+            }
+        # Default fallback
+        return {"win": 3, "draw": 1, "loss": 0}
+
+    def _get_relevant_matches(self):
+        """Get matches relevant for this standing computation."""
+        self.ensure_one()
+        domain = [
+            ("tournament_id", "=", self.tournament_id.id),
+            ("state", "=", "done"),
+            ("home_team_id", "!=", False),
+            ("away_team_id", "!=", False),
+        ]
+        if self.stage_id:
+            domain.append(("stage_id", "=", self.stage_id.id))
+        if self.group_id:
+            domain.append(("group_id", "=", self.group_id.id))
+        return self.env["federation.match"].search(domain)
+
+    def _get_participants(self):
+        """Get participants for this standing."""
+        self.ensure_one()
+        domain = [
+            ("tournament_id", "=", self.tournament_id.id),
+        ]
+        if self.stage_id:
+            domain.append(("stage_id", "=", self.stage_id.id))
+        if self.group_id:
+            domain.append(("group_id", "=", self.group_id.id))
+        return self.env["federation.tournament.participant"].search(domain)
+
+    def _build_standing_table(self):
+        """Build the standing table from matches.
+        
+        Returns a dict keyed by participant_id with stats.
+        """
+        self.ensure_one()
+        matches = self._get_relevant_matches()
+        points_values = self._get_points_values()
+
+        # Initialize stats for all participants
+        participants = self._get_participants()
+        stats = {}
+        for participant in participants:
+            stats[participant.id] = {
+                "played": 0,
+                "won": 0,
+                "drawn": 0,
+                "lost": 0,
+                "score_for": 0,
+                "score_against": 0,
+            }
+
+        # Process matches
+        for match in matches:
+            # Find participants for home and away teams
+            home_participant = participants.filtered(
+                lambda p: p.team_id == match.home_team_id
+            )
+            away_participant = participants.filtered(
+                lambda p: p.team_id == match.away_team_id
+            )
+
+            if not home_participant or not away_participant:
+                continue
+
+            home_pid = home_participant.id
+            away_pid = away_participant.id
+
+            # Update played count
+            stats[home_pid]["played"] += 1
+            stats[away_pid]["played"] += 1
+
+            # Update scores
+            stats[home_pid]["score_for"] += match.home_score
+            stats[home_pid]["score_against"] += match.away_score
+            stats[away_pid]["score_for"] += match.away_score
+            stats[away_pid]["score_against"] += match.home_score
+
+            # Update win/draw/loss
+            if match.home_score > match.away_score:
+                stats[home_pid]["won"] += 1
+                stats[away_pid]["lost"] += 1
+            elif match.away_score > match.home_score:
+                stats[away_pid]["won"] += 1
+                stats[home_pid]["lost"] += 1
+            else:
+                stats[home_pid]["drawn"] += 1
+                stats[away_pid]["drawn"] += 1
+
+        # Calculate points
+        for pid in stats:
+            stats[pid]["points"] = (
+                stats[pid]["won"] * points_values["win"]
+                + stats[pid]["drawn"] * points_values["draw"]
+                + stats[pid]["lost"] * points_values["loss"]
+            )
+
+        return stats
+
+    def _sort_standings(self, stats):
+        """Sort standings according to the specified order.
+        
+        Order:
+        1. points desc
+        2. wins desc
+        3. score_for - score_against desc
+        4. score_for desc
+        5. team display name asc
+        """
+        participants = self._get_participants()
+        participant_map = {p.id: p for p in participants}
+
+        # Build list of (participant_id, stats) tuples for sorting
+        items = list(stats.items())
+
+        def sort_key(item):
+            pid, s = item
+            participant = participant_map.get(pid)
+            team_name = participant.team_id.name if participant else ""
+            return (
+                -s["points"],
+                -s["won"],
+                -(s["score_for"] - s["score_against"]),
+                -s["score_for"],
+                team_name,
+            )
+
+        items.sort(key=sort_key)
+        return items
+
+    def action_recompute(self):
+        """Recompute the standing from matches."""
+        for record in self:
+            if record.state == "frozen":
+                if not self.env.context.get("force_recompute"):
+                    raise ValidationError(
+                        "Cannot recompute a frozen standing. "
+                        "Use force_recompute context to override."
+                    )
+
+            # Get sorted standings
+            stats = record._build_standing_table()
+            sorted_items = record._sort_standings(stats)
+            participants = record._get_participants()
+            participant_map = {p.id: p for p in participants}
+
+            # Delete existing lines
+            record.line_ids.unlink()
+
+            # Create new lines with ranks
+            rank = 1
+            for pid, s in sorted_items:
+                participant = participant_map.get(pid)
+                if participant:
+                    self.env["federation.standing.line"].create({
+                        "standing_id": record.id,
+                        "participant_id": pid,
+                        "rank": rank,
+                        "played": s["played"],
+                        "won": s["won"],
+                        "drawn": s["drawn"],
+                        "lost": s["lost"],
+                        "score_for": s["score_for"],
+                        "score_against": s["score_against"],
+                        "points": s["points"],
+                    })
+                    rank += 1
+
+            record.write({
+                "state": "computed",
+                "computed_on": fields.Datetime.now(),
+            })
+
+    def action_freeze(self):
+        """Freeze the standing to prevent recomputation."""
+        for record in self:
+            record.state = "frozen"
+
+    def action_unfreeze(self):
+        """Unfreeze the standing to allow recomputation."""
+        for record in self:
+            if record.state == "frozen":
+                record.state = "computed"
+
+
+class FederationStandingLine(models.Model):
+    _name = "federation.standing.line"
+    _description = "Federation Standing Line"
+    _order = "rank, id"
+
+    standing_id = fields.Many2one(
+        "federation.standing",
+        string="Standing",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    participant_id = fields.Many2one(
+        "federation.tournament.participant",
+        string="Participant",
+        required=True,
+        ondelete="restrict",
+        index=True,
+    )
+    team_id = fields.Many2one(
+        "federation.team",
+        string="Team",
+        related="participant_id.team_id",
+        store=True,
+    )
+    club_id = fields.Many2one(
+        "federation.club",
+        string="Club",
+        related="participant_id.club_id",
+        store=True,
+    )
+    rank = fields.Integer(string="Rank")
+    played = fields.Integer(string="Played", default=0)
+    won = fields.Integer(string="Won", default=0)
+    drawn = fields.Integer(string="Drawn", default=0)
+    lost = fields.Integer(string="Lost", default=0)
+    score_for = fields.Integer(string="GF", default=0)
+    score_against = fields.Integer(string="GA", default=0)
+    score_diff = fields.Integer(
+        string="GD",
+        compute="_compute_score_diff",
+        store=True,
+    )
+    points = fields.Integer(string="Points", default=0)
+    qualified = fields.Boolean(string="Qualified", default=False)
+    eliminated = fields.Boolean(string="Eliminated", default=False)
+    note = fields.Char(string="Note")
+
+    _sql_constraints = [
+        (
+            "unique_standing_participant",
+            "UNIQUE(standing_id, participant_id)",
+            "A standing line already exists for this participant.",
+        ),
+    ]
+
+    @api.depends("score_for", "score_against")
+    def _compute_score_diff(self):
+        for record in self:
+            record.score_diff = record.score_for - record.score_against

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_tournament_form_inherit_standing" model="ir.ui.view">
+        <field name="name">federation.tournament.form.inherit.standing</field>
+        <field name="model">federation.tournament</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="%(action_federation_standing)d" type="action" class="oe_stat_button" icon="fa-trophy" context="{'search_default_tournament_id': active_id}">
+                    <field name="standing_count" string="Standings" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='match_count']" position="after">
+                <field name="standing_ids" invisible="1"/>
+                <field name="standing_count" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_federation_standing_user,federation.standing user,model_federation_standing,sports_federation_base.group_federation_user,1,1,0,0
+access_federation_standing_manager,federation.standing manager,model_federation_standing,sports_federation_base.group_federation_manager,1,1,1,1
+access_federation_standing_line_user,federation.standing.line user,model_federation_standing_line,sports_federation_base.group_federation_user,1,0,0,0
+access_federation_standing_line_manager,federation.standing.line manager,model_federation_standing_line,sports_federation_base.group_federation_manager,1,1,1,1

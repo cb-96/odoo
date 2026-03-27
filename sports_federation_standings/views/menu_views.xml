@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_federation_standings"
+              name="Standings"
+              parent="sports_federation_tournament.menu_federation_competitions"
+              action="action_federation_standing"
+              sequence="30"/>
+</odoo>

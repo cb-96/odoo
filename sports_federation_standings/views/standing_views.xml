@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_standing_tree" model="ir.ui.view">
+        <field name="name">federation.standing.tree</field>
+        <field name="model">federation.standing</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="tournament_id"/>
+                <field name="stage_id"/>
+                <field name="group_id"/>
+                <field name="rule_set_id"/>
+                <field name="state"/>
+                <field name="computed_on"/>
+                <field name="line_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_standing_form" model="ir.ui.view">
+        <field name="name">federation.standing.form</field>
+        <field name="model">federation.standing</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_recompute" string="Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '=', 'frozen')]}"/>
+                    <button name="action_recompute" string="Force Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" context="{'force_recompute': True}" attrs="{'invisible': [('state', '!=', 'frozen')]}"/>
+                    <button name="action_freeze" string="Freeze" type="object" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '!=', 'computed')]}"/>
+                    <button name="action_unfreeze" string="Unfreeze" type="object" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '!=', 'frozen')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed,frozen"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_federation_standing_line)d" type="action" class="oe_stat_button" icon="fa-list" attrs="{'invisible': [('line_count', '=', 0)]}">
+                            <field name="line_count" string="Lines" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="tournament_id"/>
+                            <field name="stage_id"/>
+                            <field name="group_id"/>
+                        </group>
+                        <group>
+                            <field name="competition_id"/>
+                            <field name="rule_set_id"/>
+                            <field name="computed_on"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lines" name="lines">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="rank"/>
+                                    <field name="team_id"/>
+                                    <field name="played"/>
+                                    <field name="won"/>
+                                    <field name="drawn"/>
+                                    <field name="lost"/>
+                                    <field name="score_for"/>
+                                    <field name="score_against"/>
+                                    <field name="score_diff"/>
+                                    <field name="points"/>
+                                    <field name="qualified"/>
+                                    <field name="eliminated"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_standing_line_tree" model="ir.ui.view">
+        <field name="name">federation.standing.line.tree</field>
+        <field name="model">federation.standing.line</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="rank"/>
+                <field name="team_id"/>
+                <field name="club_id"/>
+                <field name="played"/>
+                <field name="won"/>
+                <field name="drawn"/>
+                <field name="lost"/>
+                <field name="score_for"/>
+                <field name="score_against"/>
+                <field name="score_diff"/>
+                <field name="points"/>
+                <field name="qualified"/>
+                <field name="eliminated"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_standing" model="ir.actions.act_window">
+        <field name="name">Standings</field>
+        <field name="res_model">federation.standing</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_federation_standing_line" model="ir.actions.act_window">
+        <field name="name">Standing Lines</field>
+        <field name="res_model">federation.standing.line</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('standing_id', '=', active_id)]</field>
+    </record>
+</odoo>

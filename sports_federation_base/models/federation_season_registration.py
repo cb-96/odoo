@@ -19,20 +19,6 @@ class FederationSeasonRegistration(models.Model):
         "federation.club", string="Club", related="team_id.club_id", store=True, readonly=True
     )
     division = fields.Char(string="Division / Competition")
-    competition_id = fields.Many2one(
-        "federation.competition",
-        string="Competition",
-        tracking=True,
-        ondelete="set null",
-        help="Competition this registration applies to.",
-    )
-    rule_set_id = fields.Many2one(
-        "federation.rule.set",
-        string="Rule Set",
-        tracking=True,
-        ondelete="set null",
-        help="Competition rules for this registration. Auto-populated from competition if set.",
-    )
     registration_date = fields.Date(
         string="Registration Date", default=fields.Date.context_today, required=True
     )

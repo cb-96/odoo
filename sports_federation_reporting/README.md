@@ -12,3 +12,19 @@ Reporting models for federation data
 - `sports_federation_discipline`
 - `sports_federation_compliance`
 - `sports_federation_finance_bridge`
+
+## Models
+| Model | Chatter | Description |
+|-------|---------|-------------|
+| `federation.report.participation` |  | Federation Participation Report |
+| `federation.report.officiating` |  | Federation Officiating Report |
+| `federation.report.compliance` |  | Federation Compliance Report |
+| `federation.report.finance` |  | Federation Finance Report |
+
+## Menus
+- Federation
+  - Reporting
+    - Participation
+    - Officiating
+    - Compliance
+    - Finance

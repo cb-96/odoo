@@ -9,3 +9,15 @@ Record billable and reimbursable federation events without accounting integratio
 - `sports_federation_tournament`
 - `sports_federation_officiating`
 - `sports_federation_discipline`
+
+## Models
+| Model | Chatter | Description |
+|-------|---------|-------------|
+| `federation.fee.type` |  | Federation Fee Type |
+| `federation.finance.event` |  | Federation Finance Event |
+
+## Menus
+- Federation
+  - Finance
+    - Fee Types
+    - Finance Events

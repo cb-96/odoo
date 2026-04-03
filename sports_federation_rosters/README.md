@@ -9,3 +9,15 @@ Season/competition-bound team rosters and match sheets
 - `sports_federation_tournament`
 - `sports_federation_rules`
 - `mail`
+
+## Models
+| Model | Chatter | Description |
+|-------|---------|-------------|
+| `federation.team.roster` | ✓ | Team Roster |
+| `federation.match.sheet` |  | Match Sheet |
+
+## Menus
+- Federation
+  - Competitions
+    - Rosters
+    - Match Sheets

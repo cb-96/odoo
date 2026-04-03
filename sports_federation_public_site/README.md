@@ -9,3 +9,10 @@ Public website pages for competitions, standings, and results
 - `sports_federation_standings`
 - `sports_federation_venues`
 - `sports_federation_result_control`
+
+## Models
+This module contains only website controllers and templates.
+
+## Menus
+- Website Main Menu
+  - Competitions

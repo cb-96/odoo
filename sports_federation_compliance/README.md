@@ -10,3 +10,17 @@ Document requirements, submissions, and compliance checks
 - `sports_federation_venues`
 - `sports_federation_club_roles`
 - `mail`
+
+## Models
+| Model | Chatter | Description |
+|-------|---------|-------------|
+| `federation.document.requirement` |  | Federation Document Requirement |
+| `federation.document.submission` | ✓ | Federation Document Submission |
+| `federation.compliance.check` |  | Federation Compliance Check |
+
+## Menus
+- Federation
+  - Compliance
+    - Requirements
+    - Submissions
+    - Checks

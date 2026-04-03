@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Imports submenu -->
+    <menuitem id="menu_federation_imports"
+              name="Imports"
+              parent="sports_federation_base.menu_federation_administration"
+              sequence="10"/>
+
+    <!-- Import Clubs -->
+    <menuitem id="menu_federation_import_clubs"
+              name="Import Clubs"
+              parent="menu_federation_imports"
+              action="action_federation_import_clubs_wizard"
+              sequence="10"/>
+
+    <!-- Import Players -->
+    <menuitem id="menu_federation_import_players"
+              name="Import Players"
+              parent="menu_federation_imports"
+              action="action_federation_import_players_wizard"
+              sequence="20"/>
+
+    <!-- Import Teams -->
+    <menuitem id="menu_federation_import_teams"
+              name="Import Teams"
+              parent="menu_federation_imports"
+              action="action_federation_import_teams_wizard"
+              sequence="30"/>
+
+    <!-- Import Tournament Participants -->
+    <menuitem id="menu_federation_import_tournament_participants"
+              name="Import Tournament Participants"
+              parent="menu_federation_imports"
+              action="action_federation_import_tournament_participants_wizard"
+              sequence="40"/>
+
+</odoo>

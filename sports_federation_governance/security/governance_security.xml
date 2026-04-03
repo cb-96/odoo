@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Governance User Group -->
+    <record id="group_governance_user" model="res.groups">
+        <field name="name">Governance User</field>
+        <field name="category_id" ref="base.module_category_sports"/>
+        <field name="comment">Can create and read override requests and audit notes</field>
+    </record>
+
+    <!-- Governance Approver Group (implies user) -->
+    <record id="group_governance_approver" model="res.groups">
+        <field name="name">Governance Approver</field>
+        <field name="category_id" ref="base.module_category_sports"/>
+        <field name="comment">Can approve, reject, and close override requests</field>
+        <field name="implied_ids" eval="[(4, ref('group_governance_user'))]"/>
+    </record>
+
+</odoo>

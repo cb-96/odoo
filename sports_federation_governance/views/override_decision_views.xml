@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_override_decision_form" model="ir.ui.view">
+        <field name="name">federation.override.decision.form</field>
+        <field name="model">federation.override.decision</field>
+        <field name="arch" type="xml">
+            <form string="Override Decision">
+                <group>
+                    <group>
+                        <field name="request_id"/>
+                        <field name="decision"/>
+                    </group>
+                    <group>
+                        <field name="decided_by_id"/>
+                        <field name="decided_on"/>
+                    </group>
+                </group>
+                <group string="Note">
+                    <field name="note" nolabel="1"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_override_decision_tree" model="ir.ui.view">
+        <field name="name">federation.override.decision.tree</field>
+        <field name="model">federation.override.decision</field>
+        <field name="arch" type="xml">
+            <list string="Override Decisions">
+                <field name="request_id"/>
+                <field name="decision"/>
+                <field name="decided_by_id"/>
+                <field name="decided_on"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

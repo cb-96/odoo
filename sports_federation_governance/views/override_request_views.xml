@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_override_request_form" model="ir.ui.view">
+        <field name="name">federation.override.request.form</field>
+        <field name="model">federation.override.request</field>
+        <field name="arch" type="xml">
+            <form string="Override Request">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'submitted')]}"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-warning"
+                            attrs="{'invisible': [('state', '!=', 'submitted')]}"/>
+                    <button name="action_mark_implemented" string="Mark Implemented" type="object"
+                            attrs="{'invisible': [('state', '!=', 'approved')]}"/>
+                    <button name="action_close" string="Close" type="object"
+                            attrs="{'invisible': [('state', 'not in', ('implemented', 'rejected'))]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,implemented"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="General">
+                            <field name="name"/>
+                            <field name="request_type"/>
+                            <field name="state" invisible="1"/>
+                        </group>
+                        <group string="Request Details">
+                            <field name="requested_by_id"/>
+                            <field name="requested_on"/>
+                        </group>
+                    </group>
+                    <group string="Target">
+                        <field name="target_model"/>
+                        <field name="target_res_id"/>
+                    </group>
+                    <group string="Reason">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="Implementation" attrs="{'invisible': [('state', 'not in', ('approved', 'implemented'))]}">
+                        <field name="implementation_note" nolabel="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Decisions" name="decisions">
+                            <field name="decision_ids">
+                                <list editable="bottom">
+                                    <field name="decision"/>
+                                    <field name="decided_by_id"/>
+                                    <field name="decided_on"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Audit Notes" name="audit_notes">
+                            <field name="audit_note_ids">
+                                <list editable="bottom">
+                                    <field name="author_id"/>
+                                    <field name="created_on"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_override_request_tree" model="ir.ui.view">
+        <field name="name">federation.override.request.tree</field>
+        <field name="model">federation.override.request</field>
+        <field name="arch" type="xml">
+            <list string="Override Requests">
+                <field name="name"/>
+                <field name="request_type"/>
+                <field name="target_model"/>
+                <field name="requested_by_id"/>
+                <field name="requested_on"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_federation_override_request_search" model="ir.ui.view">
+        <field name="name">federation.override.request.search</field>
+        <field name="model">federation.override.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Override Requests">
+                <field name="name"/>
+                <field name="target_model"/>
+                <field name="requested_by_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="submitted" string="Submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <filter name="implemented" string="Implemented" domain="[('state', '=', 'implemented')]"/>
+                <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <separator/>
+                <filter name="manual_seeding" string="Manual Seeding" domain="[('request_type', '=', 'manual_seeding')]"/>
+                <filter name="eligibility_waiver" string="Eligibility Waiver" domain="[('request_type', '=', 'eligibility_waiver')]"/>
+                <filter name="late_registration" string="Late Registration" domain="[('request_type', '=', 'late_registration')]"/>
+                <filter name="result_correction" string="Result Correction" domain="[('request_type', '=', 'result_correction')]"/>
+                <filter name="standing_adjustment" string="Standing Adjustment" domain="[('request_type', '=', 'standing_adjustment')]"/>
+                <filter name="admin_forfeit" string="Admin Forfeit" domain="[('request_type', '=', 'admin_forfeit')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_request_type" string="Request Type" context="{'group_by': 'request_type'}"/>
+                    <filter name="group_requested_by" string="Requested By" context="{'group_by': 'requested_by_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_override_request" model="ir.actions.act_window">
+        <field name="name">Override Requests</field>
+        <field name="res_model">federation.override.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_override_request_search"/>
+    </record>
+
+</odoo>

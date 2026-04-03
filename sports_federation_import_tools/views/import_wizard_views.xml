@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Import Clubs Wizard Form -->
+    <record id="view_federation_import_clubs_wizard_form" model="ir.ui.view">
+        <field name="name">federation.import.clubs.wizard.form</field>
+        <field name="model">federation.import.clubs.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Clubs">
+                <group>
+                    <group>
+                        <field name="upload_file" filename="upload_filename"/>
+                        <field name="upload_filename" invisible="1"/>
+                        <field name="dry_run"/>
+                    </group>
+                    <group attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <field name="line_count"/>
+                        <field name="success_count"/>
+                        <field name="error_count"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('result_message', '=', False)]}">
+                    <field name="result_message" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_parse_and_import" string="Parse &amp; Import" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import Players Wizard Form -->
+    <record id="view_federation_import_players_wizard_form" model="ir.ui.view">
+        <field name="name">federation.import.players.wizard.form</field>
+        <field name="model">federation.import.players.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Players">
+                <group>
+                    <group>
+                        <field name="upload_file" filename="upload_filename"/>
+                        <field name="upload_filename" invisible="1"/>
+                        <field name="dry_run"/>
+                    </group>
+                    <group attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <field name="line_count"/>
+                        <field name="success_count"/>
+                        <field name="error_count"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('result_message', '=', False)]}">
+                    <field name="result_message" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_parse_and_import" string="Parse &amp; Import" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import Teams Wizard Form -->
+    <record id="view_federation_import_teams_wizard_form" model="ir.ui.view">
+        <field name="name">federation.import.teams.wizard.form</field>
+        <field name="model">federation.import.teams.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Teams">
+                <group>
+                    <group>
+                        <field name="upload_file" filename="upload_filename"/>
+                        <field name="upload_filename" invisible="1"/>
+                        <field name="dry_run"/>
+                    </group>
+                    <group attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <field name="line_count"/>
+                        <field name="success_count"/>
+                        <field name="error_count"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('result_message', '=', False)]}">
+                    <field name="result_message" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_parse_and_import" string="Parse &amp; Import" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import Tournament Participants Wizard Form -->
+    <record id="view_federation_import_tournament_participants_wizard_form" model="ir.ui.view">
+        <field name="name">federation.import.tournament.participants.wizard.form</field>
+        <field name="model">federation.import.tournament.participants.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Tournament Participants">
+                <group>
+                    <group>
+                        <field name="upload_file" filename="upload_filename"/>
+                        <field name="upload_filename" invisible="1"/>
+                        <field name="dry_run"/>
+                    </group>
+                    <group attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <field name="line_count"/>
+                        <field name="success_count"/>
+                        <field name="error_count"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('result_message', '=', False)]}">
+                    <field name="result_message" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_parse_and_import" string="Parse &amp; Import" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_federation_import_clubs_wizard" model="ir.actions.act_window">
+        <field name="name">Import Clubs</field>
+        <field name="res_model">federation.import.clubs.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_federation_import_players_wizard" model="ir.actions.act_window">
+        <field name="name">Import Players</field>
+        <field name="res_model">federation.import.players.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_federation_import_teams_wizard" model="ir.actions.act_window">
+        <field name="name">Import Teams</field>
+        <field name="res_model">federation.import.teams.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_federation_import_tournament_participants_wizard" model="ir.actions.act_window">
+        <field name="name">Import Tournament Participants</field>
+        <field name="res_model">federation.import.tournament.participants.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_federation_report_participation_tree" model="ir.ui.view">
+        <field name="name">federation.report.participation.tree</field>
+        <field name="model">federation.report.participation</field>
+        <field name="arch" type="xml">
+            <list string="Participation Report">
+                <field name="season_id"/>
+                <field name="club_id"/>
+                <field name="team_count"/>
+                <field name="player_count"/>
+                <field name="tournament_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_federation_report_participation_pivot" model="ir.ui.view">
+        <field name="name">federation.report.participation.pivot</field>
+        <field name="model">federation.report.participation</field>
+        <field name="arch" type="xml">
+            <pivot string="Participation Report">
+                <field name="season_id" type="row"/>
+                <field name="club_id" type="row"/>
+                <field name="team_count" type="measure"/>
+                <field name="player_count" type="measure"/>
+                <field name="tournament_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_report_participation" model="ir.actions.act_window">
+        <field name="name">Participation Report</field>
+        <field name="res_model">federation.report.participation</field>
+        <field name="view_mode">list,pivot</field>
+    </record>
+
+</odoo>

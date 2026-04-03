@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_federation_report_officiating_tree" model="ir.ui.view">
+        <field name="name">federation.report.officiating.tree</field>
+        <field name="model">federation.report.officiating</field>
+        <field name="arch" type="xml">
+            <list string="Officiating Report">
+                <field name="referee_id"/>
+                <field name="certification_level"/>
+                <field name="assignment_count"/>
+                <field name="completed_assignment_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_federation_report_officiating_pivot" model="ir.ui.view">
+        <field name="name">federation.report.officiating.pivot</field>
+        <field name="model">federation.report.officiating</field>
+        <field name="arch" type="xml">
+            <pivot string="Officiating Report">
+                <field name="referee_id" type="row"/>
+                <field name="assignment_count" type="measure"/>
+                <field name="completed_assignment_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_report_officiating" model="ir.actions.act_window">
+        <field name="name">Officiating Report</field>
+        <field name="res_model">federation.report.officiating</field>
+        <field name="view_mode">list,pivot</field>
+    </record>
+
+</odoo>

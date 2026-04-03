@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_report_participation_user,federation.report.participation.user,model_federation_report_participation,sports_federation_base.group_federation_user,1,0,0,0
+access_report_officiating_user,federation.report.officiating.user,model_federation_report_officiating,sports_federation_base.group_federation_user,1,0,0,0
+access_report_compliance_user,federation.report.compliance.user,model_federation_report_compliance,sports_federation_base.group_federation_user,1,0,0,0
+access_report_finance_user,federation.report.finance.user,model_federation_report_finance,sports_federation_base.group_federation_user,1,0,0,0

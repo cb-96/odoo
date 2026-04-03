@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_federation_report_finance_tree" model="ir.ui.view">
+        <field name="name">federation.report.finance.tree</field>
+        <field name="model">federation.report.finance</field>
+        <field name="arch" type="xml">
+            <list string="Finance Report">
+                <field name="fee_type_id"/>
+                <field name="state"/>
+                <field name="event_count"/>
+                <field name="total_amount"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_federation_report_finance_pivot" model="ir.ui.view">
+        <field name="name">federation.report.finance.pivot</field>
+        <field name="model">federation.report.finance</field>
+        <field name="arch" type="xml">
+            <pivot string="Finance Report">
+                <field name="fee_type_id" type="row"/>
+                <field name="state" type="row"/>
+                <field name="event_count" type="measure"/>
+                <field name="total_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_report_finance" model="ir.actions.act_window">
+        <field name="name">Finance Report</field>
+        <field name="res_model">federation.report.finance</field>
+        <field name="view_mode">list,pivot</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Reporting submenu -->
+    <menuitem id="menu_federation_reporting"
+              name="Reporting"
+              parent="sports_federation_base.menu_federation"
+              sequence="110"/>
+
+    <!-- Participation Report -->
+    <menuitem id="menu_federation_report_participation"
+              name="Participation"
+              parent="menu_federation_reporting"
+              action="action_federation_report_participation"
+              sequence="10"/>
+
+    <!-- Officiating Report -->
+    <menuitem id="menu_federation_report_officiating"
+              name="Officiating"
+              parent="menu_federation_reporting"
+              action="action_federation_report_officiating"
+              sequence="20"/>
+
+    <!-- Compliance Report -->
+    <menuitem id="menu_federation_report_compliance"
+              name="Compliance"
+              parent="menu_federation_reporting"
+              action="action_federation_report_compliance"
+              sequence="30"/>
+
+    <!-- Finance Report -->
+    <menuitem id="menu_federation_report_finance"
+              name="Finance"
+              parent="menu_federation_reporting"
+              action="action_federation_report_finance"
+              sequence="40"/>
+
+</odoo>

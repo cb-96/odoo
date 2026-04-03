@@ -20,6 +20,7 @@ class FederationMatchResultControl(models.Model):
         default="draft",
         required=True,
         tracking=True,
+        index=True,
     )
     result_submitted_by_id = fields.Many2one(
         "res.users",

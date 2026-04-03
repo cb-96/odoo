@@ -32,6 +32,7 @@ class FederationDocumentSubmission(models.Model):
         required=True,
         ondelete="restrict",
         tracking=True,
+        index=True,
     )
     target_model = fields.Selection(
         selection=TARGET_MODEL_SELECTION,
@@ -71,6 +72,14 @@ class FederationDocumentSubmission(models.Model):
         ondelete="cascade",
         index=True,
     )
+    status = fields.Selection(
+        selection=STATUS_SELECTION,
+        string="Status",
+        default="draft",
+        required=True,
+        tracking=True,
+        index=True,
+    )
 
     attachment_ids = fields.Many2many(
         "ir.attachment",
@@ -78,13 +87,6 @@ class FederationDocumentSubmission(models.Model):
     )
     issue_date = fields.Date(string="Issue Date", tracking=True)
     expiry_date = fields.Date(string="Expiry Date", tracking=True)
-    status = fields.Selection(
-        selection=STATUS_SELECTION,
-        string="Status",
-        default="draft",
-        required=True,
-        tracking=True,
-    )
     reviewer_id = fields.Many2one(
         "res.users",
         string="Reviewer",
@@ -177,6 +179,16 @@ class FederationDocumentSubmission(models.Model):
                 if rec.expiry_date < rec.issue_date:
                     raise ValidationError(
                         "Expiry date cannot be before issue date."
+                    )
+
+    @api.constrains("requirement_id", "expiry_date")
+    def _check_expiry_date_required(self):
+        """Ensure expiry_date is set when requirement requires it."""
+        for rec in self:
+            if rec.requirement_id and rec.requirement_id.requires_expiry_date:
+                if not rec.expiry_date:
+                    raise ValidationError(
+                        f"Expiry date is required for requirement '{rec.requirement_id.name}'."
                     )
 
     def is_expired(self):

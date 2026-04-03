@@ -62,6 +62,14 @@ class FederationFinanceEvent(models.Model):
     external_ref = fields.Char()
     notes = fields.Text()
 
+    _sql_constraints = [
+        (
+            "unique_finance_event",
+            "UNIQUE(fee_type_id, source_model, source_res_id)",
+            "A finance event already exists for this fee type and source record.",
+        ),
+    ]
+
     @api.constrains("amount")
     def _check_amount(self):
         for record in self:

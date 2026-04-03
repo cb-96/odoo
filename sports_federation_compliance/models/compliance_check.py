@@ -28,6 +28,7 @@ class FederationComplianceCheck(models.Model):
         selection=TARGET_MODEL_SELECTION,
         string="Target Model",
         required=True,
+        index=True,
     )
 
     # Target entity fields - exactly one must be set
@@ -66,11 +67,13 @@ class FederationComplianceCheck(models.Model):
         selection=STATUS_SELECTION,
         string="Status",
         required=True,
+        index=True,
     )
     requirement_id = fields.Many2one(
         "federation.document.requirement",
         string="Requirement",
         required=True,
+        index=True,
     )
     submission_id = fields.Many2one(
         "federation.document.submission",

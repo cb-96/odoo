@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_notification_log_form" model="ir.ui.view">
+        <field name="name">federation.notification.log.form</field>
+        <field name="model">federation.notification.log</field>
+        <field name="arch" type="xml">
+            <form string="Notification Log">
+                <sheet>
+                    <group>
+                        <group string="General">
+                            <field name="name"/>
+                            <field name="notification_type"/>
+                            <field name="state"/>
+                            <field name="sent_on"/>
+                        </group>
+                        <group string="Target">
+                            <field name="target_model"/>
+                            <field name="target_res_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Recipient">
+                            <field name="recipient_partner_id"/>
+                            <field name="recipient_email"/>
+                        </group>
+                        <group string="Template">
+                            <field name="template_xmlid"/>
+                        </group>
+                    </group>
+                    <group string="Message">
+                        <field name="message" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_notification_log_tree" model="ir.ui.view">
+        <field name="name">federation.notification.log.tree</field>
+        <field name="model">federation.notification.log</field>
+        <field name="arch" type="xml">
+            <list string="Notification Logs">
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="notification_type"/>
+                <field name="target_model"/>
+                <field name="recipient_email"/>
+                <field name="state"/>
+                <field name="sent_on"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_federation_notification_log_search" model="ir.ui.view">
+        <field name="name">federation.notification.log.search</field>
+        <field name="model">federation.notification.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Notification Logs">
+                <field name="name"/>
+                <field name="target_model"/>
+                <field name="recipient_email"/>
+                <filter name="email" string="Email" domain="[('notification_type', '=', 'email')]"/>
+                <filter name="activity" string="Activity" domain="[('notification_type', '=', 'activity')]"/>
+                <filter name="other" string="Other" domain="[('notification_type', '=', 'other')]"/>
+                <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="sent" string="Sent" domain="[('state', '=', 'sent')]"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_notification_log" model="ir.actions.act_window">
+        <field name="name">Notification Logs</field>
+        <field name="res_model">federation.notification.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_notification_log_search"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_document_requirement_form" model="ir.ui.view">
+        <field name="name">federation.document.requirement.form</field>
+        <field name="model">federation.document.requirement</field>
+        <field name="arch" type="xml">
+            <form string="Document Requirement">
+                <sheet>
+                    <group>
+                        <group string="General Information">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="target_model"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Configuration">
+                            <field name="required_for_all"/>
+                            <field name="requires_expiry_date"/>
+                            <field name="validity_days" invisible="not requires_expiry_date"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_document_requirement_tree" model="ir.ui.view">
+        <field name="name">federation.document.requirement.tree</field>
+        <field name="model">federation.document.requirement</field>
+        <field name="arch" type="xml">
+            <list string="Document Requirements">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="target_model"/>
+                <field name="required_for_all"/>
+                <field name="requires_expiry_date"/>
+                <field name="validity_days"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_federation_document_requirement_search" model="ir.ui.view">
+        <field name="name">federation.document.requirement.search</field>
+        <field name="model">federation.document.requirement</field>
+        <field name="arch" type="xml">
+            <search string="Search Document Requirements">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="target_model"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="club" string="Club" domain="[('target_model', '=', 'federation.club')]"/>
+                <filter name="player" string="Player" domain="[('target_model', '=', 'federation.player')]"/>
+                <filter name="referee" string="Referee" domain="[('target_model', '=', 'federation.referee')]"/>
+                <filter name="venue" string="Venue" domain="[('target_model', '=', 'federation.venue')]"/>
+                <filter name="representative" string="Representative" domain="[('target_model', '=', 'federation.club.representative')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_document_requirement" model="ir.actions.act_window">
+        <field name="name">Document Requirements</field>
+        <field name="res_model">federation.document.requirement</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_document_requirement_search"/>
+    </record>
+
+</odoo>

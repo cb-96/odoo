@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_fee_type_form" model="ir.ui.view">
+        <field name="name">federation.fee.type.form</field>
+        <field name="model">federation.fee.type</field>
+        <field name="arch" type="xml">
+            <form string="Fee Type">
+                <sheet>
+                    <group>
+                        <group string="General">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="category"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Amount">
+                            <field name="default_amount"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_fee_type_tree" model="ir.ui.view">
+        <field name="name">federation.fee.type.tree</field>
+        <field name="model">federation.fee.type</field>
+        <field name="arch" type="xml">
+            <list string="Fee Types">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="category"/>
+                <field name="default_amount"/>
+                <field name="currency_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_federation_fee_type_search" model="ir.ui.view">
+        <field name="name">federation.fee.type.search</field>
+        <field name="model">federation.fee.type</field>
+        <field name="arch" type="xml">
+            <search string="Search Fee Types">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="registration" string="Registration" domain="[('category', '=', 'registration')]"/>
+                <filter name="license" string="License" domain="[('category', '=', 'license')]"/>
+                <filter name="fine" string="Fine" domain="[('category', '=', 'fine')]"/>
+                <filter name="reimbursement" string="Reimbursement" domain="[('category', '=', 'reimbursement')]"/>
+                <filter name="other" string="Other" domain="[('category', '=', 'other')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_fee_type" model="ir.actions.act_window">
+        <field name="name">Fee Types</field>
+        <field name="res_model">federation.fee.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_fee_type_search"/>
+    </record>
+
+</odoo>

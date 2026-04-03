@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Administration submenu -->
+    <menuitem id="menu_federation_administration"
+              name="Administration"
+              parent="sports_federation_base.menu_federation"
+              sequence="100"/>
+
+    <!-- Notification Logs -->
+    <menuitem id="menu_federation_notification_log"
+              name="Notification Logs"
+              parent="menu_federation_administration"
+              action="action_federation_notification_log"
+              sequence="10"/>
+
+</odoo>

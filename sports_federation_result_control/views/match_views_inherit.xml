@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Match Form to add Result Control -->
+    <record id="view_federation_match_form_inherit_result_control" model="ir.ui.view">
+        <field name="name">federation.match.form.inherit.result.control</field>
+        <field name="model">federation.match</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_form"/>
+        <field name="arch" type="xml">
+            <!-- Add result control buttons in header -->
+            <xpath expr="//header" position="inside">
+                <field name="result_state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved"/>
+            </xpath>
+            <!-- Add result control buttons -->
+            <xpath expr="//header/button[@name='action_draft']" position="after">
+                <button name="action_submit_result" string="Submit Result" type="object" class="btn-primary"
+                        attrs="{'invisible': [('result_state', '!=', 'draft')]}"/>
+                <button name="action_verify_result" string="Verify Result" type="object" class="btn-primary"
+                        attrs="{'invisible': [('result_state', '!=', 'submitted')]}"/>
+                <button name="action_approve_result" string="Approve Result" type="object" class="btn-primary"
+                        attrs="{'invisible': [('result_state', '!=', 'verified')]}"/>
+                <button name="action_contest_result" string="Contest Result" type="object" class="btn-warning"
+                        attrs="{'invisible': [('result_state', 'not in', ('submitted', 'verified', 'approved'))]}"/>
+                <button name="action_correct_result" string="Correct Result" type="object"
+                        attrs="{'invisible': [('result_state', 'not in', ('contested', 'approved'))]}"/>
+                <button name="action_reset_result_to_draft" string="Reset to Draft" type="object"
+                        attrs="{'invisible': [('result_state', '=', 'draft')]}"/>
+            </xpath>
+            <!-- Add result control section in body -->
+            <xpath expr="//sheet/group[2]" position="after">
+                <group string="Result Control">
+                    <group>
+                        <field name="result_state"/>
+                        <field name="include_in_official_standings"/>
+                    </group>
+                    <group>
+                        <field name="result_submitted_by_id"/>
+                        <field name="result_submitted_on"/>
+                        <field name="result_verified_by_id"/>
+                        <field name="result_verified_on"/>
+                        <field name="result_approved_by_id"/>
+                        <field name="result_approved_on"/>
+                    </group>
+                </group>
+                <group string="Contest/Correction" attrs="{'invisible': [('result_state', 'not in', ('contested', 'corrected'))]}">
+                    <field name="result_contest_reason" attrs="{'invisible': [('result_state', '!=', 'contested')]}"/>
+                    <field name="result_correction_reason" attrs="{'invisible': [('result_state', '!=', 'corrected')]}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Match Tree to add result_state column -->
+    <record id="view_federation_match_tree_inherit_result_control" model="ir.ui.view">
+        <field name="name">federation.match.tree.inherit.result.control</field>
+        <field name="model">federation.match</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="result_state" optional="show"/>
+                <field name="include_in_official_standings" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Match Search to add result_state filter -->
+    <record id="view_federation_match_search_inherit_result_control" model="ir.ui.view">
+        <field name="name">federation.match.search.inherit.result.control</field>
+        <field name="model">federation.match</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='cancelled']" position="after">
+                <separator/>
+                <filter name="result_draft" string="Result Draft" domain="[('result_state', '=', 'draft')]"/>
+                <filter name="result_submitted" string="Result Submitted" domain="[('result_state', '=', 'submitted')]"/>
+                <filter name="result_verified" string="Result Verified" domain="[('result_state', '=', 'verified')]"/>
+                <filter name="result_approved" string="Result Approved" domain="[('result_state', '=', 'approved')]"/>
+                <filter name="result_contested" string="Result Contested" domain="[('result_state', '=', 'contested')]"/>
+                <filter name="result_corrected" string="Result Corrected" domain="[('result_state', '=', 'corrected')]"/>
+            </xpath>
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter name="result_state" string="Result State" context="{'group_by': 'result_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

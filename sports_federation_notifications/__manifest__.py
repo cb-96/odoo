@@ -1,0 +1,27 @@
+{
+    "name": "Sports Federation Notifications",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Centralized federation notification helpers, templates, and scheduled reminders",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": [
+        "sports_federation_base",
+        "sports_federation_people",
+        "sports_federation_tournament",
+        "sports_federation_club_roles",
+        "mail",
+    ],
+    "data": [
+        "security/ir.model.access.csv",
+        "data/mail_templates.xml",
+        "data/ir_cron.xml",
+        "views/notification_log_views.xml",
+        "views/menu_views.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 35,
+}

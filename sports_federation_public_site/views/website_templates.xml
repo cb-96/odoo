@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Competitions List Page -->
+    <template id="page_competitions" name="Competitions">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <h1 class="mb-4">Competitions</h1>
+                <div class="row">
+                    <t t-foreach="tournaments" t-as="tournament">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a t-attf-href="/competitions/{{tournament.id}}">
+                                            <t t-esc="tournament.name"/>
+                                        </a>
+                                    </h5>
+                                    <p class="card-text text-muted">
+                                        <t t-if="tournament.date_start">
+                                            <t t-esc="tournament.date_start.strftime('%b %d, %Y')"/>
+                                            <t t-if="tournament.date_end">
+                                                - <t t-esc="tournament.date_end.strftime('%b %d, %Y')"/>
+                                            </t>
+                                        </t>
+                                    </p>
+                                    <p class="card-text text-muted" t-if="tournament.venue_id">
+                                        <i class="fa fa-map-marker"/> <t t-esc="tournament.venue_id.name"/>
+                                    </p>
+                                    <div t-if="tournament.public_description" class="card-text">
+                                        <t t-raw="tournament.public_description[:150]"/>
+                                        <t t-if="len(tournament.public_description) > 150">...</t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="not tournaments" class="alert alert-info">
+                    No competitions are currently published.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Competition Detail Page -->
+    <template id="page_competition_detail" name="Competition Detail">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item active" t-esc="tournament.name"/>
+                    </ol>
+                </nav>
+                <h1 class="mb-4" t-esc="tournament.name"/>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p>
+                            <strong>Start Date:</strong>
+                            <t t-if="tournament.date_start">
+                                <t t-esc="tournament.date_start.strftime('%b %d, %Y')"/>
+                            </t>
+                        </p>
+                        <p>
+                            <strong>End Date:</strong>
+                            <t t-if="tournament.date_end">
+                                <t t-esc="tournament.date_end.strftime('%b %d, %Y')"/>
+                            </t>
+                        </p>
+                        <p t-if="tournament.venue_id">
+                            <strong>Venue:</strong> <t t-esc="tournament.venue_id.name"/>
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <a t-if="tournament.show_public_standings"
+                           t-attf-href="/competitions/{{tournament.id}}/standings"
+                           class="btn btn-outline-primary mr-2">
+                            <i class="fa fa-table"/> Standings
+                        </a>
+                        <a t-if="tournament.show_public_results"
+                           t-attf-href="/competitions/{{tournament.id}}/results"
+                           class="btn btn-outline-primary">
+                            <i class="fa fa-list"/> Results
+                        </a>
+                    </div>
+                </div>
+                <div t-if="tournament.public_description" class="mb-4">
+                    <h3>About</h3>
+                    <div t-raw="tournament.public_description"/>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Competition Standings Page -->
+    <template id="page_competition_standings" name="Competition Standings">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item active">Standings</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4">
+                    <t t-esc="tournament.name"/> - Standings
+                </h1>
+                <t t-foreach="standings" t-as="standing">
+                    <div class="mb-5">
+                        <h3 t-if="standing.public_title" t-esc="standing.public_title"/>
+                        <h3 t-else="" t-esc="standing.name"/>
+                        <t t-if="standing.stage_id">
+                            <p class="text-muted">Stage: <t t-esc="standing.stage_id.name"/></p>
+                        </t>
+                        <t t-if="standing.group_id">
+                            <p class="text-muted">Group: <t t-esc="standing.group_id.name"/></p>
+                        </t>
+                        <table class="table table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Team</th>
+                                    <th>Played</th>
+                                    <th>Won</th>
+                                    <th>Drawn</th>
+                                    <th>Lost</th>
+                                    <th>GF</th>
+                                    <th>GA</th>
+                                    <th>GD</th>
+                                    <th>Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="standing.line_ids" t-as="line">
+                                    <tr>
+                                        <td t-esc="line.rank"/>
+                                        <td t-esc="line.team_id.name"/>
+                                        <td t-esc="line.played"/>
+                                        <td t-esc="line.won"/>
+                                        <td t-esc="line.drawn"/>
+                                        <td t-esc="line.lost"/>
+                                        <td t-esc="line.score_for"/>
+                                        <td t-esc="line.score_against"/>
+                                        <td t-esc="line.score_diff"/>
+                                        <td><strong t-esc="line.points"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+                <div t-if="not standings" class="alert alert-info">
+                    No standings are currently published for this competition.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Competition Results Page -->
+    <template id="page_competition_results" name="Competition Results">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item active">Results</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4">
+                    <t t-esc="tournament.name"/> - Results
+                </h1>
+                <div t-if="matches" class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Home Team</th>
+                                <th>Score</th>
+                                <th>Away Team</th>
+                                <th>Venue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="matches" t-as="match">
+                                <tr>
+                                    <td>
+                                        <t t-if="match.date_scheduled">
+                                            <t t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                                        </t>
+                                    </td>
+                                    <td t-esc="match.home_team_id.name"/>
+                                    <td class="text-center">
+                                        <strong>
+                                            <t t-esc="match.home_score"/> - <t t-esc="match.away_score"/>
+                                        </strong>
+                                    </td>
+                                    <td t-esc="match.away_team_id.name"/>
+                                    <td>
+                                        <t t-if="match.venue_id" t-esc="match.venue_id.name"/>
+                                        <t t-elif="match.venue" t-esc="match.venue"/>
+                                        <t t-if="match.playing_area_id">
+                                            (<t t-esc="match.playing_area_id.name"/>)
+                                        </t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                <div t-if="not matches" class="alert alert-info">
+                    No approved results are available for this competition.
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

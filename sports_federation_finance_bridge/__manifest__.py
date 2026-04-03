@@ -1,0 +1,26 @@
+{
+    "name": "Sports Federation Finance Bridge",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Record billable and reimbursable federation events without accounting integration",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": [
+        "sports_federation_base",
+        "sports_federation_people",
+        "sports_federation_tournament",
+        "sports_federation_officiating",
+        "sports_federation_discipline",
+    ],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/fee_type_views.xml",
+        "views/finance_event_views.xml",
+        "views/menu_views.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 55,
+}

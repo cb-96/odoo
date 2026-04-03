@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_federation_document_submission_form" model="ir.ui.view">
+        <field name="name">federation.document.submission.form</field>
+        <field name="model">federation.document.submission</field>
+        <field name="arch" type="xml">
+            <form string="Document Submission">
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            class="btn-primary" invisible="status != 'draft'"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-primary" invisible="status not in ('submitted', 'replacement_requested')"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            class="btn-warning" invisible="status not in ('submitted', 'replacement_requested')"/>
+                    <button name="action_request_replacement" string="Request Replacement" type="object"
+                            invisible="status != 'approved'"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="status not in ('rejected', 'replacement_requested')"/>
+                    <field name="status" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                    </div>
+                    <widget name="web_ribbon" title="Expired" bg_color="text-bg-danger"
+                            invisible="not is_expired()"/>
+                    <group>
+                        <group string="General Information">
+                            <field name="name"/>
+                            <field name="requirement_id"/>
+                            <field name="target_model" readonly="1"/>
+                        </group>
+                        <group string="Review Information">
+                            <field name="reviewer_id" readonly="1"/>
+                            <field name="reviewed_on" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Target Entity">
+                        <field name="club_id" invisible="target_model != 'federation.club'"
+                               required="target_model == 'federation.club'"/>
+                        <field name="player_id" invisible="target_model != 'federation.player'"
+                               required="target_model == 'federation.player'"/>
+                        <field name="referee_id" invisible="target_model != 'federation.referee'"
+                               required="target_model == 'federation.referee'"/>
+                        <field name="venue_id" invisible="target_model != 'federation.venue'"
+                               required="target_model == 'federation.venue'"/>
+                        <field name="club_representative_id" invisible="target_model != 'federation.club.representative'"
+                               required="target_model == 'federation.club.representative'"/>
+                    </group>
+                    <group>
+                        <group string="Dates">
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                        </group>
+                    </group>
+                    <group string="Attachments">
+                        <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_federation_document_submission_tree" model="ir.ui.view">
+        <field name="name">federation.document.submission.tree</field>
+        <field name="model">federation.document.submission</field>
+        <field name="arch" type="xml">
+            <list string="Document Submissions">
+                <field name="name"/>
+                <field name="requirement_id"/>
+                <field name="target_model" optional="show"/>
+                <field name="target_display"/>
+                <field name="issue_date"/>
+                <field name="expiry_date"/>
+                <field name="status"/>
+                <field name="reviewer_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_federation_document_submission_search" model="ir.ui.view">
+        <field name="name">federation.document.submission.search</field>
+        <field name="model">federation.document.submission</field>
+        <field name="arch" type="xml">
+            <search string="Search Document Submissions">
+                <field name="name"/>
+                <field name="requirement_id"/>
+                <field name="club_id"/>
+                <field name="player_id"/>
+                <field name="referee_id"/>
+                <field name="venue_id"/>
+                <field name="club_representative_id"/>
+                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
+                <filter name="submitted" string="Submitted" domain="[('status', '=', 'submitted')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <filter name="expired" string="Expired" domain="[('status', '=', 'expired')]"/>
+                <separator/>
+                <filter name="club" string="Club" domain="[('target_model', '=', 'federation.club')]"/>
+                <filter name="player" string="Player" domain="[('target_model', '=', 'federation.player')]"/>
+                <filter name="referee" string="Referee" domain="[('target_model', '=', 'federation.referee')]"/>
+                <filter name="venue" string="Venue" domain="[('target_model', '=', 'federation.venue')]"/>
+                <filter name="representative" string="Representative" domain="[('target_model', '=', 'federation.club.representative')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_requirement" string="Requirement" context="{'group_by': 'requirement_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_federation_document_submission" model="ir.actions.act_window">
+        <field name="name">Document Submissions</field>
+        <field name="res_model">federation.document.submission</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_document_submission_search"/>
+    </record>
+
+</odoo>

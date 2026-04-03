@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Parent Menu: Federation -->
+    <!-- This will be added under the existing Federation menu -->
+
+    <!-- Compliance Submenu -->
+    <menuitem id="menu_federation_compliance"
+              name="Compliance"
+              parent="sports_federation_base.menu_federation"
+              sequence="50"
+              groups="sports_federation_base.group_federation_user,sports_federation_base.group_federation_manager"/>
+
+    <!-- Document Requirements -->
+    <menuitem id="menu_federation_document_requirement"
+              name="Requirements"
+              parent="menu_federation_compliance"
+              action="action_federation_document_requirement"
+              sequence="10"/>
+
+    <!-- Document Submissions -->
+    <menuitem id="menu_federation_document_submission"
+              name="Submissions"
+              parent="menu_federation_compliance"
+              action="action_federation_document_submission"
+              sequence="20"/>
+
+    <!-- Compliance Checks -->
+    <menuitem id="menu_federation_compliance_check"
+              name="Checks"
+              parent="menu_federation_compliance"
+              action="action_federation_compliance_check"
+              sequence="30"/>
+
+</odoo>

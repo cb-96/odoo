@@ -1,0 +1,28 @@
+{
+    "name": "Sports Federation Compliance",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Document requirements, submissions, and compliance checks",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": [
+        "sports_federation_base",
+        "sports_federation_people",
+        "sports_federation_officiating",
+        "sports_federation_venues",
+        "sports_federation_club_roles",
+        "mail",
+    ],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/document_requirement_views.xml",
+        "views/document_submission_views.xml",
+        "views/compliance_check_views.xml",
+        "views/menu_views.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 65,
+}

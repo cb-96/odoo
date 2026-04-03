@@ -1,0 +1,27 @@
+{
+    "name": "Sports Federation Public Site",
+    "version": "19.0.1.0.0",
+    "category": "Sports",
+    "summary": "Public website pages for competitions, standings, and results",
+    "author": "Sports Federation",
+    "website": "",
+    "license": "LGPL-3",
+    "depends": [
+        "website",
+        "sports_federation_tournament",
+        "sports_federation_standings",
+        "sports_federation_venues",
+        "sports_federation_result_control",
+    ],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/website_templates.xml",
+        "views/website_menu.xml",
+        "views/tournament_views_inherit.xml",
+        "views/standing_views_inherit.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "auto_install": False,
+    "sequence": 70,
+}

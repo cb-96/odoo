@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Result Validator Group -->
+    <record id="group_result_validator" model="res.groups">
+        <field name="name">Result Validator</field>
+        <field name="category_id" ref="base.module_category_sports"/>
+        <field name="comment">Can verify match results</field>
+    </record>
+
+    <!-- Result Approver Group (implies validator) -->
+    <record id="group_result_approver" model="res.groups">
+        <field name="name">Result Approver</field>
+        <field name="category_id" ref="base.module_category_sports"/>
+        <field name="comment">Can approve match results and reset to draft</field>
+        <field name="implied_ids" eval="[(4, ref('group_result_validator'))]"/>
+    </record>
+
+</odoo>

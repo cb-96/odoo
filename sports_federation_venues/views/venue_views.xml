@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_venue_form" model="ir.ui.view">
+        <field name="name">federation.venue.form</field>
+        <field name="model">federation.venue</field>
+        <field name="arch" type="xml">
+            <form string="Venue">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_federation_playing_area)d" type="action" class="oe_stat_button" icon="fa-th">
+                            <field name="playing_area_count" string="Playing Areas" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Venue Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Address">
+                            <field name="street"/>
+                            <field name="street2"/>
+                            <field name="zip"/>
+                            <field name="city"/>
+                            <field name="country_id"/>
+                        </group>
+                        <group string="Contact">
+                            <field name="contact_name"/>
+                            <field name="contact_email"/>
+                            <field name="contact_phone"/>
+                        </group>
+                        <group string="Details">
+                            <field name="capacity"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Playing Areas" name="playing_areas">
+                            <field name="playing_area_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="capacity"/>
+                                    <field name="surface_type"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Equipment &amp; Notes" name="notes">
+                            <group>
+                                <field name="equipment_notes" nolabel="1"/>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_venue_tree" model="ir.ui.view">
+        <field name="name">federation.venue.tree</field>
+        <field name="model">federation.venue</field>
+        <field name="arch" type="xml">
+            <tree string="Venues">
+                <field name="name"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="contact_name"/>
+                <field name="capacity"/>
+                <field name="playing_area_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_venue_search" model="ir.ui.view">
+        <field name="name">federation.venue.search</field>
+        <field name="model">federation.venue</field>
+        <field name="arch" type="xml">
+            <search string="Search Venues">
+                <field name="name"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="contact_name"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="city" string="City" context="{'group_by': 'city'}"/>
+                    <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_venue_action" model="ir.actions.act_window">
+        <field name="name">Venues</field>
+        <field name="res_model">federation.venue</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_federation_venue_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first venue.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_federation_playing_area" model="ir.actions.act_window">
+        <field name="name">Playing Areas</field>
+        <field name="res_model">federation.playing.area</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('venue_id', '=', active_id)]</field>
+        <field name="context">{'default_venue_id': active_id}</field>
+    </record>
+
+    <record id="view_federation_playing_area_tree" model="ir.ui.view">
+        <field name="name">federation.playing.area.tree</field>
+        <field name="model">federation.playing.area</field>
+        <field name="arch" type="xml">
+            <tree string="Playing Areas">
+                <field name="name"/>
+                <field name="venue_id"/>
+                <field name="code"/>
+                <field name="capacity"/>
+                <field name="surface_type"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_federation_playing_area_form" model="ir.ui.view">
+        <field name="name">federation.playing.area.form</field>
+        <field name="model">federation.playing.area</field>
+        <field name="arch" type="xml">
+            <form string="Playing Area">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Playing Area Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="venue_id"/>
+                            <field name="code"/>
+                            <field name="capacity"/>
+                        </group>
+                        <group>
+                            <field name="surface_type"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_playing_area_search" model="ir.ui.view">
+        <field name="name">federation.playing.area.search</field>
+        <field name="model">federation.playing.area</field>
+        <field name="arch" type="xml">
+            <search string="Search Playing Areas">
+                <field name="name"/>
+                <field name="venue_id"/>
+                <field name="code"/>
+                <filter name="indoor" string="Indoor" domain="[('surface_type', '=', 'indoor')]"/>
+                <filter name="outdoor" string="Outdoor" domain="[('surface_type', '=', 'outdoor')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="venue" string="Venue" context="{'group_by': 'venue_id'}"/>
+                    <filter name="surface_type" string="Surface Type" context="{'group_by': 'surface_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

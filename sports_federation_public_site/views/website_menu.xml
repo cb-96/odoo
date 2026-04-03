@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Website Menu for Competitions -->
+    <record id="menu_website_competitions" model="website.menu">
+        <field name="name">Competitions</field>
+        <field name="url">/competitions</field>
+        <field name="parent_id" ref="website.main_menu"/>
+        <field name="sequence" type="int">50</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Standing Form to add Website fields -->
+    <record id="view_federation_standing_form_inherit_public_site" model="ir.ui.view">
+        <field name="name">federation.standing.form.inherit.public.site</field>
+        <field name="model">federation.standing</field>
+        <field name="inherit_id" ref="sports_federation_standings.view_federation_standing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Website" name="website">
+                    <group>
+                        <group string="Publication">
+                            <field name="website_published"/>
+                            <field name="public_title"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

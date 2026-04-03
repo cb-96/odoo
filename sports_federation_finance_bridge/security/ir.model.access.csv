@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fee_type_user,federation.fee.type.user,model_federation_fee_type,sports_federation_base.group_federation_user,1,0,0,0
+access_fee_type_manager,federation.fee.type.manager,model_federation_fee_type,sports_federation_base.group_federation_manager,1,1,1,1
+access_finance_event_user,federation.finance.event.user,model_federation_finance_event,sports_federation_base.group_federation_user,1,0,0,0
+access_finance_event_manager,federation.finance.event.manager,model_federation_finance_event,sports_federation_base.group_federation_manager,1,1,1,1

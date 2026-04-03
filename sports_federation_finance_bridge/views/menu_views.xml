@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Finance submenu -->
+    <menuitem id="menu_federation_finance"
+              name="Finance"
+              parent="sports_federation_base.menu_federation"
+              sequence="80"/>
+
+    <!-- Fee Types -->
+    <menuitem id="menu_federation_fee_type"
+              name="Fee Types"
+              parent="menu_federation_finance"
+              action="action_federation_fee_type"
+              sequence="10"/>
+
+    <!-- Finance Events -->
+    <menuitem id="menu_federation_finance_event"
+              name="Finance Events"
+              parent="menu_federation_finance"
+              action="action_federation_finance_event"
+              sequence="20"/>
+
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_federation_venues"
+              name="Venues"
+              parent="sports_federation_base.menu_federation_root"
+              action="federation_venue_action"
+              sequence="50"/>
+
+</odoo>

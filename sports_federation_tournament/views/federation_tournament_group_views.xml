@@ -40,18 +40,18 @@
         </field>
     </record>
 
-    <record id="view_federation_tournament_group_tree" model="ir.ui.view">
-        <field name="name">federation.tournament.group.tree</field>
+    <record id="view_federation_tournament_group_list" model="ir.ui.view">
+        <field name="name">federation.tournament.group.list</field>
         <field name="model">federation.tournament.group</field>
         <field name="arch" type="xml">
-            <tree string="Tournament Groups">
+            <list string="Tournament Groups">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="stage_id"/>
                 <field name="max_participants"/>
                 <field name="participant_count"/>
                 <field name="match_count"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -74,7 +74,7 @@
     <record id="federation_tournament_group_action" model="ir.actions.act_window">
         <field name="name">Tournament Groups</field>
         <field name="res_model">federation.tournament.group</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_tournament_group_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

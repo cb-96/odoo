@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree view -->
-    <record id="view_federation_tournament_registration_tree" model="ir.ui.view">
-        <field name="name">federation.tournament.registration.tree</field>
+    <!-- List view -->
+    <record id="view_federation_tournament_registration_list" model="ir.ui.view">
+        <field name="name">federation.tournament.registration.list</field>
         <field name="model">federation.tournament.registration</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="tournament_id"/>
                 <field name="team_id"/>
@@ -18,7 +18,7 @@
                        decoration-warning="state == 'submitted'"
                        decoration-danger="state == 'rejected'"
                        decoration-info="state == 'draft'"/>
-            </tree>
+            </list>
         </field>
     </record>
 

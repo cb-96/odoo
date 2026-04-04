@@ -57,12 +57,12 @@
         </field>
     </record>
 
-    <!-- Tree view -->
-    <record id="view_federation_club_representative_tree" model="ir.ui.view">
-        <field name="name">federation.club.representative.tree</field>
+    <!-- List view -->
+    <record id="view_federation_club_representative_list" model="ir.ui.view">
+        <field name="name">federation.club.representative.list</field>
         <field name="model">federation.club.representative</field>
         <field name="arch" type="xml">
-            <tree string="Club Representatives">
+            <list string="Club Representatives">
                 <field name="club_id"/>
                 <field name="partner_id"/>
                 <field name="user_id"/>
@@ -72,7 +72,7 @@
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="active" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 

@@ -38,12 +38,12 @@
         </field>
     </record>
 
-    <!-- Tree view -->
-    <record id="view_federation_club_role_type_tree" model="ir.ui.view">
-        <field name="name">federation.club.role.type.tree</field>
+    <!-- List view -->
+    <record id="view_federation_club_role_type_list" model="ir.ui.view">
+        <field name="name">federation.club.role.type.list</field>
         <field name="model">federation.club.role.type</field>
         <field name="arch" type="xml">
-            <tree string="Club Role Types">
+            <list string="Club Role Types">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -52,7 +52,7 @@
                 <field name="is_finance_contact"/>
                 <field name="is_safeguarding_contact"/>
                 <field name="active" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 

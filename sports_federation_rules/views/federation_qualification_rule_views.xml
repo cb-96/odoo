@@ -29,11 +29,11 @@
         </field>
     </record>
 
-    <record id="view_federation_qualification_rule_tree" model="ir.ui.view">
-        <field name="name">federation.qualification.rule.tree</field>
+    <record id="view_federation_qualification_rule_list" model="ir.ui.view">
+        <field name="name">federation.qualification.rule.list</field>
         <field name="model">federation.qualification.rule</field>
         <field name="arch" type="xml">
-            <tree string="Qualification Rules">
+            <list string="Qualification Rules">
                 <field name="rule_set_id"/>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
@@ -42,14 +42,14 @@
                 <field name="value_percent"/>
                 <field name="target_stage_id"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
     <record id="federation_qualification_rule_action" model="ir.actions.act_window">
         <field name="name">Qualification Rules</field>
         <field name="res_model">federation.qualification.rule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>

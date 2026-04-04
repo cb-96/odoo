@@ -58,11 +58,11 @@
         </field>
     </record>
 
-    <record id="view_federation_match_tree" model="ir.ui.view">
-        <field name="name">federation.match.tree</field>
+    <record id="view_federation_match_list" model="ir.ui.view">
+        <field name="name">federation.match.list</field>
         <field name="model">federation.match</field>
         <field name="arch" type="xml">
-            <tree string="Matches">
+            <list string="Matches">
                 <field name="date_scheduled"/>
                 <field name="tournament_id"/>
                 <field name="stage_id"/>
@@ -72,7 +72,7 @@
                 <field name="away_score" invisible="1"/>
                 <field name="venue"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

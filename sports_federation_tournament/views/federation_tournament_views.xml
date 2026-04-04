@@ -74,11 +74,11 @@
         </field>
     </record>
 
-    <record id="view_federation_tournament_tree" model="ir.ui.view">
-        <field name="name">federation.tournament.tree</field>
+    <record id="view_federation_tournament_list" model="ir.ui.view">
+        <field name="name">federation.tournament.list</field>
         <field name="model">federation.tournament</field>
         <field name="arch" type="xml">
-            <tree string="Tournaments">
+            <list string="Tournaments">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="season_id"/>
@@ -86,7 +86,7 @@
                 <field name="tournament_type"/>
                 <field name="state"/>
                 <field name="participant_count"/>
-            </tree>
+            </list>
         </field>
     </record>
 

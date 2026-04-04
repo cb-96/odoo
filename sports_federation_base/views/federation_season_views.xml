@@ -56,18 +56,18 @@
         </field>
     </record>
 
-    <record id="view_federation_season_tree" model="ir.ui.view">
-        <field name="name">federation.season.tree</field>
+    <record id="view_federation_season_list" model="ir.ui.view">
+        <field name="name">federation.season.list</field>
         <field name="model">federation.season</field>
         <field name="arch" type="xml">
-            <tree string="Seasons">
+            <list string="Seasons">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="state"/>
                 <field name="registration_count"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -93,7 +93,7 @@
     <record id="federation_season_action" model="ir.actions.act_window">
         <field name="name">Federation Seasons</field>
         <field name="res_model">federation.season</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_season_search"/>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">

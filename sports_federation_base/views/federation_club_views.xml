@@ -62,11 +62,11 @@
         </field>
     </record>
 
-    <record id="view_federation_club_tree" model="ir.ui.view">
-        <field name="name">federation.club.tree</field>
+    <record id="view_federation_club_list" model="ir.ui.view">
+        <field name="name">federation.club.list</field>
         <field name="model">federation.club</field>
         <field name="arch" type="xml">
-            <tree string="Clubs">
+            <list string="Clubs">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="city"/>
@@ -74,7 +74,7 @@
                 <field name="email"/>
                 <field name="phone"/>
                 <field name="team_count"/>
-            </tree>
+            </list>
         </field>
     </record>
 

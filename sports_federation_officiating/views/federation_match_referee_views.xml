@@ -35,17 +35,17 @@
         </field>
     </record>
 
-    <record id="view_federation_match_referee_tree" model="ir.ui.view">
-        <field name="name">federation.match.referee.tree</field>
+    <record id="view_federation_match_referee_list" model="ir.ui.view">
+        <field name="name">federation.match.referee.list</field>
         <field name="model">federation.match.referee</field>
         <field name="arch" type="xml">
-            <tree string="Match Referee Assignments">
+            <list string="Match Referee Assignments">
                 <field name="match_id"/>
                 <field name="tournament_id"/>
                 <field name="referee_id"/>
                 <field name="role"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -73,7 +73,7 @@
     <record id="federation_match_referee_action" model="ir.actions.act_window">
         <field name="name">Match Referee Assignments</field>
         <field name="res_model">federation.match.referee</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_match_referee_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

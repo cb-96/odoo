@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree view -->
-    <record id="view_federation_club_representative_tree" model="ir.ui.view">
-        <field name="name">federation.club.representative.tree</field>
+    <!-- List view -->
+    <record id="view_federation_club_representative_list" model="ir.ui.view">
+        <field name="name">federation.club.representative.list</field>
         <field name="model">federation.club.representative</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="club_id"/>
                 <field name="user_id"/>
                 <field name="partner_id"/>
                 <field name="role"/>
                 <field name="active" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 

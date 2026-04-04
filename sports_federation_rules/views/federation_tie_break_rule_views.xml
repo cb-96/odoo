@@ -20,24 +20,24 @@
         </field>
     </record>
 
-    <record id="view_federation_tie_break_rule_tree" model="ir.ui.view">
-        <field name="name">federation.tie_break.rule.tree</field>
+    <record id="view_federation_tie_break_rule_list" model="ir.ui.view">
+        <field name="name">federation.tie_break.rule.list</field>
         <field name="model">federation.tie_break.rule</field>
         <field name="arch" type="xml">
-            <tree string="Tie-Break Rules">
+            <list string="Tie-Break Rules">
                 <field name="rule_set_id"/>
                 <field name="sequence" widget="handle"/>
                 <field name="tie_break_type"/>
                 <field name="description"/>
                 <field name="reverse_order"/>
-            </tree>
+            </list>
         </field>
     </record>
 
     <record id="federation_tie_break_rule_action" model="ir.actions.act_window">
         <field name="name">Tie-Break Rules</field>
         <field name="res_model">federation.tie_break.rule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>

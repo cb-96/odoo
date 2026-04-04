@@ -62,11 +62,11 @@
         </field>
     </record>
 
-    <record id="view_federation_competition_tree" model="ir.ui.view">
-        <field name="name">federation.competition.tree</field>
+    <record id="view_federation_competition_list" model="ir.ui.view">
+        <field name="name">federation.competition.list</field>
         <field name="model">federation.competition</field>
         <field name="arch" type="xml">
-            <tree string="Competitions">
+            <list string="Competitions">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -74,7 +74,7 @@
                 <field name="season_id"/>
                 <field name="rule_set_id"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

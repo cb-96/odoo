@@ -42,11 +42,11 @@
         </field>
     </record>
 
-    <record id="view_federation_player_license_tree" model="ir.ui.view">
-        <field name="name">federation.player.license.tree</field>
+    <record id="view_federation_player_license_list" model="ir.ui.view">
+        <field name="name">federation.player.license.list</field>
         <field name="model">federation.player.license</field>
         <field name="arch" type="xml">
-            <tree string="Player Licenses">
+            <list string="Player Licenses">
                 <field name="name"/>
                 <field name="player_id"/>
                 <field name="club_id"/>
@@ -54,7 +54,7 @@
                 <field name="issue_date"/>
                 <field name="expiry_date"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

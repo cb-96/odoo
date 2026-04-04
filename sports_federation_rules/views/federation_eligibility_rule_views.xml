@@ -29,25 +29,25 @@
         </field>
     </record>
 
-    <record id="view_federation_eligibility_rule_tree" model="ir.ui.view">
-        <field name="name">federation.eligibility.rule.tree</field>
+    <record id="view_federation_eligibility_rule_list" model="ir.ui.view">
+        <field name="name">federation.eligibility.rule.list</field>
         <field name="model">federation.eligibility.rule</field>
         <field name="arch" type="xml">
-            <tree string="Eligibility Rules">
+            <list string="Eligibility Rules">
                 <field name="rule_set_id"/>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="eligibility_type"/>
                 <field name="is_placeholder"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
     <record id="federation_eligibility_rule_action" model="ir.actions.act_window">
         <field name="name">Eligibility Rules</field>
         <field name="res_model">federation.eligibility.rule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>

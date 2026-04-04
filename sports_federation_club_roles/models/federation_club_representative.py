@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class FederationClubRepresentative(models.Model):
@@ -149,6 +149,28 @@ class FederationClubRepresentative(models.Model):
                         f"There is already a primary representative for "
                         f"'{rec.role_type_id.name}' at club '{rec.club_id.name}'."
                     )
+
+    def action_view_partner(self):
+        self.ensure_one()
+        return {
+            "name": _("Contact"),
+            "type": "ir.actions.act_window",
+            "res_model": "res.partner",
+            "res_id": self.partner_id.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_view_user(self):
+        self.ensure_one()
+        return {
+            "name": _("User"),
+            "type": "ir.actions.act_window",
+            "res_model": "res.users",
+            "res_id": self.user_id.id,
+            "view_mode": "form",
+            "target": "current",
+        }
 
     @api.model
     def _get_club_for_user(self, user=None):

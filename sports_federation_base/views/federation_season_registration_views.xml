@@ -64,7 +64,6 @@
                 <field name="season_id"/>
                 <field name="team_id"/>
                 <field name="club_id"/>
-                <field name="division"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>

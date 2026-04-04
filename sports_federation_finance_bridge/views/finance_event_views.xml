@@ -9,11 +9,11 @@
             <form string="Finance Event">
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_settle" string="Settle" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                            invisible="state != 'draft'"/>
+                    <button name="action_settle" string="Settle" type="object" class="btn-secondary"
+                            invisible="state != 'confirmed'"/>
                     <button name="action_cancel" string="Cancel" type="object"
-                            attrs="{'invisible': [('state', 'in', ('settled', 'cancelled'))]}"/>
+                            invisible="state in ('settled', 'cancelled')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,settled"/>
                 </header>
                 <sheet>

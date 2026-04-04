@@ -8,9 +8,9 @@
             <form string="Tournament Participant">
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'registered')]}"/>
+                            invisible="state != 'registered'"/>
                     <button name="action_withdraw" string="Withdraw" type="object"
-                            attrs="{'invisible': [('state', 'in', ('withdrawn',))]}"/>
+                            invisible="state in ('withdrawn',)"/>
                     <field name="state" widget="statusbar" statusbar_visible="registered,confirmed"/>
                 </header>
                 <sheet>

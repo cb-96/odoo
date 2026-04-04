@@ -25,14 +25,14 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_set_draft" string="Set to Draft" type="object" class="oe_highlight" attrs="{'invisible': [('status', '!=', 'active')]}"/>
-                    <button name="action_activate" string="Activate" type="object" class="oe_highlight" attrs="{'invisible': [('status', '!=', 'draft')]}"/>
-                    <button name="action_close" string="Close" type="object" attrs="{'invisible': [('status', '!=', 'active')]}"/>
+                    <button name="action_set_draft" string="Set to Draft" type="object" class="oe_highlight" invisible="status != 'active'"/>
+                    <button name="action_activate" string="Activate" type="object" class="oe_highlight" invisible="status != 'draft'"/>
+                    <button name="action_close" string="Close" type="object" invisible="status != 'active'"/>
                     <field name="status" widget="statusbar" statusbar_visible="draft,active,closed"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_federation_team_roster)d" type="action" class="oe_stat_button" icon="fa-users" attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <button name="%(action_federation_team_roster)d" type="action" class="oe_stat_button" icon="fa-users" invisible="line_count = 0">
                             <field name="line_count" string="Players" widget="statinfo"/>
                         </button>
                     </div>

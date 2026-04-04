@@ -23,15 +23,15 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_recompute" string="Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '=', 'frozen')]}"/>
-                    <button name="action_recompute" string="Force Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" context="{'force_recompute': True}" attrs="{'invisible': [('state', '!=', 'frozen')]}"/>
-                    <button name="action_freeze" string="Freeze" type="object" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '!=', 'computed')]}"/>
-                    <button name="action_unfreeze" string="Unfreeze" type="object" groups="sports_federation_base.group_federation_manager" attrs="{'invisible': [('state', '!=', 'frozen')]}"/>
+                    <button name="action_recompute" string="Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" invisible="state = 'frozen'"/>
+                    <button name="action_recompute" string="Force Recompute" type="object" class="oe_highlight" groups="sports_federation_base.group_federation_manager" context="{'force_recompute': True}" invisible="state != 'frozen'"/>
+                    <button name="action_freeze" string="Freeze" type="object" groups="sports_federation_base.group_federation_manager" invisible="state != 'computed'"/>
+                    <button name="action_unfreeze" string="Unfreeze" type="object" groups="sports_federation_base.group_federation_manager" invisible="state != 'frozen'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,computed,frozen"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_federation_standing_line)d" type="action" class="oe_stat_button" icon="fa-list" attrs="{'invisible': [('line_count', '=', 0)]}">
+                        <button name="%(action_federation_standing_line)d" type="action" class="oe_stat_button" icon="fa-list" invisible="line_count = 0">
                             <field name="line_count" string="Lines" widget="statinfo"/>
                         </button>
                     </div>

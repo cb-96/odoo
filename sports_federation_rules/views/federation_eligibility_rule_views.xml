@@ -16,9 +16,9 @@
                     </group>
                     <group string="Constraints">
                         <field name="age_limit"
-                               attrs="{'invisible': [('eligibility_type', 'not in', ('age_min', 'age_max'))]}"/>
+                               invisible="eligibility_type not in ('age_min', 'age_max')"/>
                         <field name="allowed_categories"
-                               attrs="{'invisible': [('eligibility_type', '!=', 'gender')]}"/>
+                               invisible="eligibility_type != 'gender'"/>
                     </group>
                 </group>
                 <separator string="Rule Name"/>

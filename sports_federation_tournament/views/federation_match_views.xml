@@ -8,15 +8,15 @@
             <form string="Match">
                 <header>
                     <button name="action_schedule" string="Schedule" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            invisible="state != 'draft'"/>
                     <button name="action_start" string="Start" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
+                            invisible="state != 'scheduled'"/>
                     <button name="action_done" string="Done" type="object" class="btn-secondary"
-                            attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                            invisible="state != 'in_progress'"/>
                     <button name="action_cancel" string="Cancel" type="object"
-                            attrs="{'invisible': [('state', 'in', ('done', 'cancelled'))]}"/>
+                            invisible="state in ('done', 'cancelled')"/>
                     <button name="action_draft" string="Reset to Draft" type="object"
-                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                            invisible="state != 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done"/>
                 </header>
                 <sheet>
@@ -39,11 +39,11 @@
                     <group>
                         <group string="Home">
                             <field name="home_team_id"/>
-                            <field name="home_score" attrs="{'invisible': [('state', 'not in', ('in_progress', 'done'))]}"/>
+                            <field name="home_score" invisible="state not in ('in_progress', 'done')"/>
                         </group>
                         <group string="Away">
                             <field name="away_team_id"/>
-                            <field name="away_score" attrs="{'invisible': [('state', 'not in', ('in_progress', 'done'))]}"/>
+                            <field name="away_score" invisible="state not in ('in_progress', 'done')"/>
                         </group>
                     </group>
                     <separator string="Notes"/>

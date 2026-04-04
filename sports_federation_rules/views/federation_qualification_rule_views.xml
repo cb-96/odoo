@@ -15,9 +15,9 @@
                     </group>
                     <group string="Values">
                         <field name="value_integer"
-                               attrs="{'invisible': [('qualification_type', 'not in', ('top_n', 'min_points', 'min_position'))]}"/>
+                               invisible="qualification_type not in ('top_n', 'min_points', 'min_position')"/>
                         <field name="value_percent"
-                               attrs="{'invisible': [('qualification_type', '!=', 'top_percent')]}"/>
+                               invisible="qualification_type != 'top_percent'"/>
                         <field name="target_stage_id"/>
                     </group>
                 </group>

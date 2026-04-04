@@ -9,15 +9,15 @@
             <form string="Override Request">
                 <header>
                     <button name="action_submit" string="Submit" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_approve" string="Approve" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'submitted')]}"/>
-                    <button name="action_reject" string="Reject" type="object" class="btn-warning"
-                            attrs="{'invisible': [('state', '!=', 'submitted')]}"/>
-                    <button name="action_mark_implemented" string="Mark Implemented" type="object"
-                            attrs="{'invisible': [('state', '!=', 'approved')]}"/>
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-success"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-danger"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_implement" string="Implement" type="object" class="btn-secondary"
+                            invisible="state != 'approved'"/>
                     <button name="action_close" string="Close" type="object"
-                            attrs="{'invisible': [('state', 'not in', ('implemented', 'rejected'))]}"/>
+                            invisible="state not in ('implemented', 'rejected')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,implemented"/>
                 </header>
                 <sheet>
@@ -39,7 +39,7 @@
                     <group string="Reason">
                         <field name="reason" nolabel="1"/>
                     </group>
-                    <group string="Implementation" attrs="{'invisible': [('state', 'not in', ('approved', 'implemented'))]}">
+                    <group string="Implementation" invisible="state not in ('approved', 'implemented')">
                         <field name="implementation_note" nolabel="1"/>
                     </group>
                     <notebook>

@@ -8,11 +8,11 @@
             <form string="Player">
                 <header>
                     <button name="action_activate" string="Activate" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'inactive')]}"/>
+                            invisible="state != 'inactive'"/>
                     <button name="action_deactivate" string="Deactivate" type="object"
-                            attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                            invisible="state != 'active'"/>
                     <button name="action_suspend" string="Suspend" type="object"
-                            attrs="{'invisible': [('state', 'in', ('suspended',))]}"/>
+                            invisible="state in ('suspended',)"/>
                     <field name="state" widget="statusbar" statusbar_visible="active,inactive"/>
                 </header>
                 <sheet>
@@ -24,7 +24,7 @@
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
-                            attrs="{'invisible': [('active', '=', True)]}"/>
+                            invisible="active = True"/>
                     <field name="photo" widget="image" class="oe_avatar" options="{'preview_image': 'photo'}"/>
                     <div class="oe_title">
                         <label for="first_name"/>

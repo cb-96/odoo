@@ -9,7 +9,7 @@
             <form string="Club Role Type">
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
-                            attrs="{'invisible': [('active', '=', True)]}"/>
+                            invisible="active = True"/>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1>

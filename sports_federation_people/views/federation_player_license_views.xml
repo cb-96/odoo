@@ -8,11 +8,11 @@
             <form string="Player License">
                 <header>
                     <button name="action_activate" string="Activate" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Cancel" type="object"
-                            attrs="{'invisible': [('state', 'in', ('cancelled',))]}"/>
+                            invisible="state in ('cancelled',)"/>
                     <button name="action_draft" string="Reset to Draft" type="object"
-                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                            invisible="state != 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,active"/>
                 </header>
                 <sheet>

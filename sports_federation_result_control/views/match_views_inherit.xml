@@ -14,17 +14,17 @@
             <!-- Add result control buttons -->
             <xpath expr="//header/button[@name='action_draft']" position="after">
                 <button name="action_submit_result" string="Submit Result" type="object" class="btn-primary"
-                        attrs="{'invisible': [('result_state', '!=', 'draft')]}"/>
+                        invisible="result_state != 'draft'"/>
                 <button name="action_verify_result" string="Verify Result" type="object" class="btn-primary"
-                        attrs="{'invisible': [('result_state', '!=', 'submitted')]}"/>
+                        invisible="result_state != 'submitted'"/>
                 <button name="action_approve_result" string="Approve Result" type="object" class="btn-primary"
-                        attrs="{'invisible': [('result_state', '!=', 'verified')]}"/>
+                        invisible="result_state != 'verified'"/>
                 <button name="action_contest_result" string="Contest Result" type="object" class="btn-warning"
-                        attrs="{'invisible': [('result_state', 'not in', ('submitted', 'verified', 'approved'))]}"/>
+                        invisible="result_state not in ('submitted', 'verified', 'approved')"/>
                 <button name="action_correct_result" string="Correct Result" type="object"
-                        attrs="{'invisible': [('result_state', 'not in', ('contested', 'approved'))]}"/>
+                        invisible="result_state not in ('contested', 'approved')"/>
                 <button name="action_reset_result_to_draft" string="Reset to Draft" type="object"
-                        attrs="{'invisible': [('result_state', '=', 'draft')]}"/>
+                        invisible="result_state = 'draft'"/>
             </xpath>
             <!-- Add result control section in body -->
             <xpath expr="//sheet/group[2]" position="after">
@@ -42,9 +42,9 @@
                         <field name="result_approved_on"/>
                     </group>
                 </group>
-                <group string="Contest/Correction" attrs="{'invisible': [('result_state', 'not in', ('contested', 'corrected'))]}">
-                    <field name="result_contest_reason" attrs="{'invisible': [('result_state', '!=', 'contested')]}"/>
-                    <field name="result_correction_reason" attrs="{'invisible': [('result_state', '!=', 'corrected')]}"/>
+                <group string="Contest/Correction" invisible="result_state not in ('contested', 'corrected')">
+                    <field name="result_contest_reason" invisible="result_state != 'contested'"/>
+                    <field name="result_correction_reason" invisible="result_state != 'corrected'"/>
                 </group>
             </xpath>
         </field>

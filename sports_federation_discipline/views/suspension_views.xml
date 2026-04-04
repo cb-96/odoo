@@ -21,8 +21,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_activate" string="Activate" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_cancel" string="Cancel" type="object" attrs="{'invisible': [('state', 'in', ['cancelled', 'expired'])]}"/>
+                    <button name="action_activate" string="Activate" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ['cancelled', 'expired']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,active,expired,cancelled"/>
                 </header>
                 <sheet>

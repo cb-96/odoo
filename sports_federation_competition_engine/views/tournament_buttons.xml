@@ -8,10 +8,10 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="%(action_round_robin_wizard)d" string="Generate Round-Robin" type="action"
-                        class="btn-primary" attrs="{'invisible': [('state', 'not in', ('open', 'in_progress'))]}"
+                        class="btn-primary" invisible="state not in ('open', 'in_progress')"
                         context="{'default_tournament_id': active_id}"/>
                 <button name="%(action_knockout_wizard)d" string="Generate Knockout" type="action"
-                        class="btn-primary" attrs="{'invisible': [('state', 'not in', ('open', 'in_progress'))]}"
+                        class="btn-primary" invisible="state not in ('open', 'in_progress')"
                         context="{'default_tournament_id': active_id}"/>
             </xpath>
         </field>

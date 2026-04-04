@@ -24,10 +24,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_submit_review" string="Submit for Review" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_decide" string="Decide" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'under_review')]}"/>
-                    <button name="action_mark_appealed" string="Mark as Appealed" type="object" attrs="{'invisible': [('state', '!=', 'decided')]}"/>
-                    <button name="action_close" string="Close" type="object" attrs="{'invisible': [('state', 'in', ['draft', 'closed'])]}"/>
+                    <button name="action_submit_review" string="Submit for Review" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_decide" string="Decide" type="object" class="oe_highlight" invisible="state != 'under_review'"/>
+                    <button name="action_mark_appealed" string="Mark as Appealed" type="object" invisible="state != 'decided'"/>
+                    <button name="action_close" string="Close" type="object" invisible="state in ['draft', 'closed']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,decided,closed"/>
                 </header>
                 <sheet>

@@ -8,15 +8,15 @@
             <form string="Tournament">
                 <header>
                     <button name="action_open" string="Open" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            invisible="state != 'draft'"/>
                     <button name="action_start" string="Start" type="object" class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'open')]}"/>
+                            invisible="state != 'open'"/>
                     <button name="action_close" string="Close" type="object" class="btn-secondary"
-                            attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                            invisible="state != 'in_progress'"/>
                     <button name="action_cancel" string="Cancel" type="object"
-                            attrs="{'invisible': [('state', 'in', ('closed', 'cancelled'))]}"/>
+                            invisible="state in ('closed', 'cancelled')"/>
                     <button name="action_draft" string="Reset to Draft" type="object"
-                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                            invisible="state != 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,open,in_progress,closed"/>
                 </header>
                 <sheet>
@@ -38,7 +38,7 @@
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
-                            attrs="{'invisible': [('active', '=', True)]}"/>
+                            invisible="active = True"/>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1>
@@ -52,7 +52,7 @@
                         <group string="Schedule">
                             <field name="tournament_type"/>
                             <field name="date_start"/>
-                            <field name="date_end" attrs="{'invisible': [('tournament_type', '=', 'single_day')]}"/>
+                            <field name="date_end" invisible="tournament_type = 'single_day'"/>
                         </group>
                         <group string="Details">
                             <field name="season_id"/>

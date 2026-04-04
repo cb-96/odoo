@@ -44,24 +44,20 @@
                 </button>
             </xpath>
 
-            <!-- Add representatives notebook page -->
+            <!-- Add representatives list before notes -->
             <xpath expr="//field[@name='notes']" position="before">
-                <notebook>
-                    <page string="Representatives" name="representatives">
-                        <field name="representative_ids">
-                            <tree editable="bottom">
-                                <field name="partner_id"/>
-                                <field name="user_id"/>
-                                <field name="role_type_id"/>
-                                <field name="is_primary"/>
-                                <field name="is_current"/>
-                                <field name="date_start"/>
-                                <field name="date_end"/>
-                                <field name="active" widget="boolean_toggle"/>
-                            </tree>
-                        </field>
-                    </page>
-                </notebook>
+                <field name="representative_ids" widget="one2many_list">
+                    <tree editable="bottom">
+                        <field name="partner_id"/>
+                        <field name="user_id"/>
+                        <field name="role_type_id"/>
+                        <field name="is_primary"/>
+                        <field name="is_current"/>
+                        <field name="date_start"/>
+                        <field name="date_end"/>
+                        <field name="active" widget="boolean_toggle"/>
+                    </tree>
+                </field>
             </xpath>
         </field>
     </record>

@@ -37,9 +37,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_notification_log_tree" model="ir.ui.view">
-        <field name="name">federation.notification.log.tree</field>
+    <!-- List View -->
+    <record id="view_federation_notification_log_list" model="ir.ui.view">
+        <field name="name">federation.notification.log.list</field>
         <field name="model">federation.notification.log</field>
         <field name="arch" type="xml">
             <list string="Notification Logs">

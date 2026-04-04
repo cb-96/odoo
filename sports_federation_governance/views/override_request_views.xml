@@ -69,9 +69,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_override_request_tree" model="ir.ui.view">
-        <field name="name">federation.override.request.tree</field>
+    <!-- List View -->
+    <record id="view_federation_override_request_list" model="ir.ui.view">
+        <field name="name">federation.override.request.list</field>
         <field name="model">federation.override.request</field>
         <field name="arch" type="xml">
             <list string="Override Requests">

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_sanction_tree" model="ir.ui.view">
-        <field name="name">federation.sanction.tree</field>
+    <record id="view_federation_sanction_list" model="ir.ui.view">
+        <field name="name">federation.sanction.list</field>
         <field name="model">federation.sanction</field>
         <field name="arch" type="xml">
             <list>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_disciplinary_case_tree" model="ir.ui.view">
-        <field name="name">federation.disciplinary.case.tree</field>
+    <record id="view_federation_disciplinary_case_list" model="ir.ui.view">
+        <field name="name">federation.disciplinary.case.list</field>
         <field name="model">federation.disciplinary.case</field>
         <field name="arch" type="xml">
             <list>

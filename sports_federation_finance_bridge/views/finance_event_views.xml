@@ -48,9 +48,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_finance_event_tree" model="ir.ui.view">
-        <field name="name">federation.finance.event.tree</field>
+    <!-- List View -->
+    <record id="view_federation_finance_event_list" model="ir.ui.view">
+        <field name="name">federation.finance.event.list</field>
         <field name="model">federation.finance.event</field>
         <field name="arch" type="xml">
             <list string="Finance Events">

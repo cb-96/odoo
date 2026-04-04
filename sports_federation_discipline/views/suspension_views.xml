@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_suspension_tree" model="ir.ui.view">
-        <field name="name">federation.suspension.tree</field>
+    <record id="view_federation_suspension_list" model="ir.ui.view">
+        <field name="name">federation.suspension.list</field>
         <field name="model">federation.suspension</field>
         <field name="arch" type="xml">
             <list>

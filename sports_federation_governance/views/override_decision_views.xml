@@ -24,9 +24,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_override_decision_tree" model="ir.ui.view">
-        <field name="name">federation.override.decision.tree</field>
+    <!-- List View -->
+    <record id="view_federation_override_decision_list" model="ir.ui.view">
+        <field name="name">federation.override.decision.list</field>
         <field name="model">federation.override.decision</field>
         <field name="arch" type="xml">
             <list string="Override Decisions">

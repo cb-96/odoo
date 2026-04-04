@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_incident_tree" model="ir.ui.view">
-        <field name="name">federation.match.incident.tree</field>
+    <record id="view_federation_incident_list" model="ir.ui.view">
+        <field name="name">federation.match.incident.list</field>
         <field name="model">federation.match.incident</field>
         <field name="arch" type="xml">
             <list>

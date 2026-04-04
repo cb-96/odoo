@@ -64,3 +64,12 @@ class FederationMatchReferee(models.Model):
     def action_draft(self):
         for rec in self:
             rec.state = "draft"
+
+
+class FederationMatchRefereeExtension(models.Model):
+    _inherit = "federation.match"
+
+    referee_assignment_ids = fields.One2many(
+        "federation.match.referee", "match_id", string="Referee Assignments"
+    )
+

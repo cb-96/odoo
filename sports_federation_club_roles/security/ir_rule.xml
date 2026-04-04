@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Record rules for portal ownership -->
-    <!-- Portal users can see their own representative records -->
-    <record id="rule_club_representative_portal_user" model="ir.rule">
-        <field name="name">Portal: own user representative records</field>
-        <field name="model_id" ref="model_federation_club_representative"/>
-        <field name="domain_force">[('user_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('sports_federation_portal.group_federation_portal_club'))]"/>
-    </record>
+    <!-- Portal-specific record rules are defined in sports_federation_portal. -->
 
 </odoo>
+

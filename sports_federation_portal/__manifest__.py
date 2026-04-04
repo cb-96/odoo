@@ -11,6 +11,7 @@
         "portal",
         "sports_federation_base",
         "sports_federation_tournament",
+        "sports_federation_club_roles",
     ],
     "data": [
         "security/res_groups.xml",

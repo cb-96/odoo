@@ -43,10 +43,6 @@ class FederationMatch(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    referee_assignment_ids = fields.One2many(
-        "federation.match.referee", "match_id", string="Referee Assignments"
-    )
-
     @api.depends("home_team_id", "away_team_id")
     def _compute_name(self):
         for rec in self:

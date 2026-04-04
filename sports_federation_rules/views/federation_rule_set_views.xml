@@ -114,7 +114,7 @@
                 <field name="name"/>
                 <field name="code"/>
                 <separator/>
-                <group string="Group By">
+                <group>
                     <filter name="seeding" string="Seeding Mode" context="{'group_by': 'seeding_mode'}"/>
                 </group>
             </search>

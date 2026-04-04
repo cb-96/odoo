@@ -75,7 +75,9 @@
                 <field name="club_id"/>
                 <field name="category"/>
                 <field name="gender"/>
-                <group expand="0" string="Group By">
+
+                <separator/>
+                <group>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="cat" string="Category" context="{'group_by': 'category'}"/>
                     <filter name="gen" string="Gender" context="{'group_by': 'gender'}"/>

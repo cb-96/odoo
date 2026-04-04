@@ -84,7 +84,8 @@
                 <filter name="referee" string="Referee" domain="[('target_model', '=', 'federation.referee')]"/>
                 <filter name="venue" string="Venue" domain="[('target_model', '=', 'federation.venue')]"/>
                 <filter name="representative" string="Representative" domain="[('target_model', '=', 'federation.club.representative')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
                     <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>
                     <filter name="group_requirement" string="Requirement" context="{'group_by': 'requirement_id'}"/>

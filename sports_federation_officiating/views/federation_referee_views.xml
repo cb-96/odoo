@@ -69,7 +69,8 @@
             <search string="Search Referees">
                 <field name="name"/>
                 <field name="email"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="level" string="Certification Level" context="{'group_by': 'certification_level'}"/>
                 </group>
             </search>

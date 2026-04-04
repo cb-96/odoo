@@ -89,7 +89,8 @@
                 <filter name="primary" string="Primary Contacts" domain="[('is_primary', '=', True)]"/>
                 <filter name="current" string="Currently Active" domain="[('is_current', '=', True)]"/>
 
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="role_type" string="Role Type" context="{'group_by': 'role_type_id'}"/>
                     <filter name="partner" string="Contact" context="{'group_by': 'partner_id'}"/>

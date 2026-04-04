@@ -43,7 +43,7 @@
     <record id="action_federation_club_representative" model="ir.actions.act_window">
         <field name="name">Club Representatives</field>
         <field name="res_model">federation.club.representative</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>

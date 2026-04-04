@@ -45,21 +45,23 @@
             </xpath>
 
             <!-- Add representatives notebook page -->
-            <xpath expr="//notebook" position="inside">
-                <page string="Representatives" name="representatives">
-                    <field name="representative_ids">
-                        <list editable="bottom">
-                            <field name="partner_id"/>
-                            <field name="user_id"/>
-                            <field name="role_type_id"/>
-                            <field name="is_primary"/>
-                            <field name="is_current"/>
-                            <field name="date_start"/>
-                            <field name="date_end"/>
-                            <field name="active" widget="boolean_toggle"/>
-                        </list>
-                    </field>
-                </page>
+            <xpath expr="//separator[@string='Notes']" position="before">
+                <notebook>
+                    <page string="Representatives" name="representatives">
+                        <field name="representative_ids">
+                            <tree editable="bottom">
+                                <field name="partner_id"/>
+                                <field name="user_id"/>
+                                <field name="role_type_id"/>
+                                <field name="is_primary"/>
+                                <field name="is_current"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
             </xpath>
         </field>
     </record>

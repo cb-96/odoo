@@ -53,8 +53,6 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="category"/>
-                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
-                <filter name="inactive" string="Inactive" domain="[('active', '=', false)]"/>
                 <separator/>
                 <filter name="registration" string="Registration" domain="[('category', '=', 'registration')]"/>
                 <filter name="license" string="License" domain="[('category', '=', 'license')]"/>

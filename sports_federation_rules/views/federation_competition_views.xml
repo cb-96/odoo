@@ -90,7 +90,6 @@
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
-                <filter name="archived" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>

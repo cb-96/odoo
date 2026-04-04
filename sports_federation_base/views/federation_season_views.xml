@@ -81,7 +81,8 @@
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
-                <group string="Group By">
+                <separator/>
+                <group>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                 </group>
             </search>

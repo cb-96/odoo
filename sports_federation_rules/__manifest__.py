@@ -9,13 +9,11 @@
     "depends": ["sports_federation_base"],
     "data": [
         "security/ir.model.access.csv",
-        "views/federation_competition_views.xml",
         "views/federation_rule_set_views.xml",
         "views/federation_points_rule_views.xml",
         "views/federation_tie_break_rule_views.xml",
         "views/federation_eligibility_rule_views.xml",
         "views/federation_qualification_rule_views.xml",
-        "views/federation_season_registration_views_inherit.xml",
         "views/menu_items.xml",
     ],
     "demo": [],

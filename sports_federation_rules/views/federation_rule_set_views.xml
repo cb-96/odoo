@@ -7,13 +7,6 @@
         <field name="arch" type="xml">
             <form string="Rule Set">
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_competition_action)d" type="action"
-                                class="oe_stat_button" icon="fa-trophy"
-                                context="{'search_default_rule_set_id': id}">
-                            <field name="competition_count" widget="statinfo" string="Competitions"/>
-                        </button>
-                    </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
                             invisible="active"/>
                     <div class="oe_title">
@@ -27,7 +20,6 @@
                     </div>
                     <group>
                         <group string="General">
-                            <field name="competition_id"/>
                             <field name="seeding_mode"/>
                         </group>
                         <group string="Default Points">
@@ -106,7 +98,6 @@
             <list string="Rule Sets">
                 <field name="name"/>
                 <field name="code"/>
-                <field name="competition_id"/>
                 <field name="points_win"/>
                 <field name="points_draw"/>
                 <field name="points_loss"/>
@@ -122,10 +113,8 @@
             <search string="Search Rule Sets">
                 <field name="name"/>
                 <field name="code"/>
-                <field name="competition_id"/>
                 <separator/>
-                <group>
-                    <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
+                <group string="Group By">
                     <filter name="seeding" string="Seeding Mode" context="{'group_by': 'seeding_mode'}"/>
                 </group>
             </search>

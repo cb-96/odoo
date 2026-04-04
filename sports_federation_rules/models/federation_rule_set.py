@@ -12,13 +12,6 @@ class FederationRuleSet(models.Model):
     code = fields.Char(string="Code", copy=False, tracking=True)
     active = fields.Boolean(default=True)
     description = fields.Text(string="Description")
-    competition_id = fields.Many2one(
-        "federation.competition",
-        string="Competition",
-        tracking=True,
-        ondelete="set null",
-        help="Optional link to a specific competition. Leave empty for reusable rule sets.",
-    )
 
     # Points configuration
     points_rule_ids = fields.One2many(
@@ -94,22 +87,9 @@ class FederationRuleSet(models.Model):
         "federation.qualification.rule", "rule_set_id", string="Qualification Rules"
     )
 
-    # Related
-    competition_ids = fields.One2many(
-        "federation.competition", "rule_set_id", string="Competitions Using This Rule Set"
-    )
-    competition_count = fields.Integer(
-        string="Competition Count", compute="_compute_competition_count", store=False
-    )
-
     _sql_constraints = [
         ("code_unique", "UNIQUE(code)", "Rule set code must be unique."),
     ]
-
-    @api.depends("competition_ids")
-    def _compute_competition_count(self):
-        for rec in self:
-            rec.competition_count = len(rec.competition_ids)
 
     @api.constrains("squad_min_size", "squad_max_size")
     def _check_squad_sizes(self):

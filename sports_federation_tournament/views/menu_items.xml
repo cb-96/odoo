@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <menuitem id="menu_federation_competition"
+              name="Competitions"
+              parent="sports_federation_base.menu_federation_root"
+              action="federation_competition_action"
+              sequence="25"/>
+
     <menuitem id="menu_federation_tournament"
               name="Tournaments"
               parent="sports_federation_base.menu_federation_root"

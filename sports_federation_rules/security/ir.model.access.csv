@@ -1,6 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_federation_competition_user,federation.competition.user,model_federation_competition,sports_federation_base.group_federation_user,1,0,0,0
-access_federation_competition_manager,federation.competition.manager,model_federation_competition,sports_federation_base.group_federation_manager,1,1,1,1
 access_federation_rule_set_user,federation.rule.set.user,model_federation_rule_set,sports_federation_base.group_federation_user,1,0,0,0
 access_federation_rule_set_manager,federation.rule.set.manager,model_federation_rule_set,sports_federation_base.group_federation_manager,1,1,1,1
 access_federation_points_rule_user,federation.points.rule.user,model_federation_points_rule,sports_federation_base.group_federation_user,1,0,0,0

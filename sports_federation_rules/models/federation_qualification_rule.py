@@ -40,10 +40,8 @@ class FederationQualificationRule(models.Model):
         string="Percentage Value",
         help="Percentage value for top-percentage rules.",
     )
-    target_stage_id = fields.Many2one(
-        "federation.tournament.stage",
+    target_stage_id = fields.Char(
         string="Target Stage",
-        ondelete="set null",
         help="The stage that qualified teams advance to. Extension point for later.",
     )
     active = fields.Boolean(default=True)

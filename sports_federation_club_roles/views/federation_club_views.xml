@@ -45,7 +45,7 @@
             </xpath>
 
             <!-- Add representatives notebook page -->
-            <xpath expr="//separator[@string='Notes']" position="before">
+            <xpath expr="//field[@name='notes']" position="before">
                 <notebook>
                     <page string="Representatives" name="representatives">
                         <field name="representative_ids">

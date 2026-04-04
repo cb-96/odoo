@@ -55,8 +55,8 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="target_model"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', false)]"/>
                 <separator/>
                 <filter name="club" string="Club" domain="[('target_model', '=', 'federation.club')]"/>
                 <filter name="player" string="Player" domain="[('target_model', '=', 'federation.player')]"/>

@@ -68,8 +68,8 @@
                 <filter name="competition" string="Competition Contacts" domain="[('is_competition_contact', '=', True)]"/>
                 <filter name="finance" string="Finance Contacts" domain="[('is_finance_contact', '=', True)]"/>
                 <filter name="safeguarding" string="Safeguarding Contacts" domain="[('is_safeguarding_contact', '=', True)]"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', false)]"/>
             </search>
         </field>
     </record>

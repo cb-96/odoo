@@ -83,8 +83,8 @@
                 <field name="city"/>
                 <field name="country_id"/>
                 <field name="contact_name"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="city" string="City" context="{'group_by': 'city'}"/>
                     <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>

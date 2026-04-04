@@ -81,8 +81,9 @@
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]" help="Show only active records"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', false)]" help="Show only archived records"/>
                 <group expand="0" string="Group By">
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                 </group>

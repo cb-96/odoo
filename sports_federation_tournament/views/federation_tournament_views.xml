@@ -103,7 +103,7 @@
                 <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
                 <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
                 <group expand="0" string="Group By">
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="type" string="Type" context="{'group_by': 'tournament_type'}"/>

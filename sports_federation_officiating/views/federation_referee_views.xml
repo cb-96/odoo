@@ -69,8 +69,8 @@
             <search string="Search Referees">
                 <field name="name"/>
                 <field name="email"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="level" string="Certification Level" context="{'group_by': 'certification_level'}"/>
                 </group>

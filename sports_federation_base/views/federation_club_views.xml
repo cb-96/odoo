@@ -87,8 +87,8 @@
                 <field name="code"/>
                 <field name="city"/>
                 <field name="country_id"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>
                     <filter name="city" string="City" context="{'group_by': 'city'}"/>

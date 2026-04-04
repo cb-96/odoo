@@ -88,8 +88,8 @@
                 <field name="role_type_id"/>
                 <filter name="primary" string="Primary Contacts" domain="[('is_primary', '=', True)]"/>
                 <filter name="current" string="Currently Active" domain="[('is_current', '=', True)]"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="role_type" string="Role Type" context="{'group_by': 'role_type_id'}"/>

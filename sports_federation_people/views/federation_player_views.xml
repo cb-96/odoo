@@ -91,7 +91,7 @@
                 <filter name="active_players" string="Active" domain="[('state', '=', 'active')]"/>
                 <filter name="inactive_players" string="Inactive" domain="[('state', '=', 'inactive')]"/>
                 <filter name="suspended" string="Suspended" domain="[('state', '=', 'suspended')]"/>
-                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="gender" string="Gender" context="{'group_by': 'gender'}"/>

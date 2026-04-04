@@ -123,8 +123,8 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="competition_id"/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="active" string="Active" domain="[('active', '=', true)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', false)]"/>
                 <group expand="0" string="Group By">
                     <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
                     <filter name="seeding" string="Seeding Mode" context="{'group_by': 'seeding_mode'}"/>

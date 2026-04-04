@@ -30,7 +30,7 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Club & Contact">
+                        <group string="Club and Contact">
                             <field name="club_id"/>
                             <field name="partner_id"/>
                             <field name="user_id"/>

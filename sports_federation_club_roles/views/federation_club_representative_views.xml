@@ -32,7 +32,7 @@
                     <group>
                         <group string="Club and Contact">
                             <field name="club_id"/>
-                            <field name="representative_ids"/>
+                            <field name="partner_id"/>
                             <field name="user_id"/>
                         </group>
                         <group string="Role">

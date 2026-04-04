@@ -72,7 +72,6 @@
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="division" string="Division" context="{'group_by': 'division'}"/>
-                    <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                 </group>
             </search>

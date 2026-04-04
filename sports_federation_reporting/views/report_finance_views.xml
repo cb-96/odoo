@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree View -->
-    <record id="view_federation_report_finance_tree" model="ir.ui.view">
-        <field name="name">federation.report.finance.tree</field>
+    <!-- List View -->
+    <record id="view_federation_report_finance_list" model="ir.ui.view">
+        <field name="name">federation.report.finance.list</field>
         <field name="model">federation.report.finance</field>
         <field name="arch" type="xml">
             <list string="Finance Report">

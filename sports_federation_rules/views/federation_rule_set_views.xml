@@ -123,7 +123,8 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="competition_id"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
                     <filter name="seeding" string="Seeding Mode" context="{'group_by': 'seeding_mode'}"/>
                 </group>

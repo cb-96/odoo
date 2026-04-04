@@ -28,9 +28,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_fee_type_tree" model="ir.ui.view">
-        <field name="name">federation.fee.type.tree</field>
+    <!-- List View -->
+    <record id="view_federation_fee_type_list" model="ir.ui.view">
+        <field name="name">federation.fee.type.list</field>
         <field name="model">federation.fee.type</field>
         <field name="arch" type="xml">
             <list string="Fee Types">
@@ -59,7 +59,8 @@
                 <filter name="fine" string="Fine" domain="[('category', '=', 'fine')]"/>
                 <filter name="reimbursement" string="Reimbursement" domain="[('category', '=', 'reimbursement')]"/>
                 <filter name="other" string="Other" domain="[('category', '=', 'other')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
                 </group>
             </search>

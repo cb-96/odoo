@@ -60,7 +60,8 @@
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="done" string="Done" domain="[('state', '=', 'done')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="match" string="Match" context="{'group_by': 'match_id'}"/>
                     <filter name="referee" string="Referee" context="{'group_by': 'referee_id'}"/>
                     <filter name="tournament" string="Tournament" context="{'group_by': 'tournament_id'}"/>

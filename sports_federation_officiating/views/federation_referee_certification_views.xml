@@ -50,7 +50,8 @@
                 <field name="name"/>
                 <field name="referee_id"/>
                 <field name="issuing_body"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="referee" string="Referee" context="{'group_by': 'referee_id'}"/>
                     <filter name="level" string="Level" context="{'group_by': 'level'}"/>
                 </group>

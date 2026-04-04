@@ -107,7 +107,8 @@
                 <filter name="result_correction" string="Result Correction" domain="[('request_type', '=', 'result_correction')]"/>
                 <filter name="standing_adjustment" string="Standing Adjustment" domain="[('request_type', '=', 'standing_adjustment')]"/>
                 <filter name="admin_forfeit" string="Admin Forfeit" domain="[('request_type', '=', 'admin_forfeit')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_request_type" string="Request Type" context="{'group_by': 'request_type'}"/>
                     <filter name="group_requested_by" string="Requested By" context="{'group_by': 'requested_by_id'}"/>

@@ -66,9 +66,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_document_submission_tree" model="ir.ui.view">
-        <field name="name">federation.document.submission.tree</field>
+    <!-- List View -->
+    <record id="view_federation_document_submission_list" model="ir.ui.view">
+        <field name="name">federation.document.submission.list</field>
         <field name="model">federation.document.submission</field>
         <field name="arch" type="xml">
             <list string="Document Submissions">

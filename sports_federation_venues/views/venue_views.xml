@@ -83,7 +83,8 @@
                 <field name="city"/>
                 <field name="country_id"/>
                 <field name="contact_name"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="city" string="City" context="{'group_by': 'city'}"/>
                     <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>
                 </group>
@@ -165,7 +166,8 @@
                 <field name="code"/>
                 <filter name="indoor" string="Indoor" domain="[('surface_type', '=', 'indoor')]"/>
                 <filter name="outdoor" string="Outdoor" domain="[('surface_type', '=', 'outdoor')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="venue" string="Venue" context="{'group_by': 'venue_id'}"/>
                     <filter name="surface_type" string="Surface Type" context="{'group_by': 'surface_type'}"/>
                 </group>

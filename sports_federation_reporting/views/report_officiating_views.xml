@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree View -->
-    <record id="view_federation_report_officiating_tree" model="ir.ui.view">
-        <field name="name">federation.report.officiating.tree</field>
+    <!-- List View -->
+    <record id="view_federation_report_officiating_list" model="ir.ui.view">
+        <field name="name">federation.report.officiating.list</field>
         <field name="model">federation.report.officiating</field>
         <field name="arch" type="xml">
             <list string="Officiating Report">

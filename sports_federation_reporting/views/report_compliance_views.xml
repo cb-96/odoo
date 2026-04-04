@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree View -->
-    <record id="view_federation_report_compliance_tree" model="ir.ui.view">
-        <field name="name">federation.report.compliance.tree</field>
+    <!-- List View -->
+    <record id="view_federation_report_compliance_list" model="ir.ui.view">
+        <field name="name">federation.report.compliance.list</field>
         <field name="model">federation.report.compliance</field>
         <field name="arch" type="xml">
             <list string="Compliance Report">

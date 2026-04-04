@@ -40,9 +40,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_compliance_check_tree" model="ir.ui.view">
-        <field name="name">federation.compliance.check.tree</field>
+    <!-- List View -->
+    <record id="view_federation_compliance_check_list" model="ir.ui.view">
+        <field name="name">federation.compliance.check.list</field>
         <field name="model">federation.compliance.check</field>
         <field name="arch" type="xml">
             <list string="Compliance Checks" decoration-danger="status == 'non_compliant'"

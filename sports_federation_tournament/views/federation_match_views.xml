@@ -92,7 +92,8 @@
                 <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter name="done" string="Done" domain="[('state', '=', 'done')]"/>
                 <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="tournament" string="Tournament" context="{'group_by': 'tournament_id'}"/>
                     <filter name="stage" string="Stage" context="{'group_by': 'stage_id'}"/>
                     <filter name="group" string="Group" context="{'group_by': 'group_id'}"/>
@@ -105,7 +106,7 @@
     <record id="federation_match_action" model="ir.actions.act_window">
         <field name="name">Matches</field>
         <field name="res_model">federation.match</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_match_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

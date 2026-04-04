@@ -85,7 +85,8 @@
                 <filter name="charge" string="Charge" domain="[('event_type', '=', 'charge')]"/>
                 <filter name="credit" string="Credit" domain="[('event_type', '=', 'credit')]"/>
                 <filter name="reimbursement" string="Reimbursement" domain="[('event_type', '=', 'reimbursement')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_event_type" string="Event Type" context="{'group_by': 'event_type'}"/>
                     <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>

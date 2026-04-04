@@ -29,9 +29,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_document_requirement_tree" model="ir.ui.view">
-        <field name="name">federation.document.requirement.tree</field>
+    <!-- List View -->
+    <record id="view_federation_document_requirement_list" model="ir.ui.view">
+        <field name="name">federation.document.requirement.list</field>
         <field name="model">federation.document.requirement</field>
         <field name="arch" type="xml">
             <list string="Document Requirements">

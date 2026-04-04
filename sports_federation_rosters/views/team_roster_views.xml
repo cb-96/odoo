@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_team_roster_tree" model="ir.ui.view">
-        <field name="name">federation.team.roster.tree</field>
+    <record id="view_federation_team_roster_list" model="ir.ui.view">
+        <field name="name">federation.team.roster.list</field>
         <field name="model">federation.team.roster</field>
         <field name="arch" type="xml">
             <list>

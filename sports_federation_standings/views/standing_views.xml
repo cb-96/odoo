@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_federation_standing_tree" model="ir.ui.view">
-        <field name="name">federation.standing.tree</field>
+    <record id="view_federation_standing_list" model="ir.ui.view">
+        <field name="name">federation.standing.list</field>
         <field name="model">federation.standing</field>
         <field name="arch" type="xml">
             <list>
@@ -81,8 +81,8 @@
         </field>
     </record>
 
-    <record id="view_federation_standing_line_tree" model="ir.ui.view">
-        <field name="name">federation.standing.line.tree</field>
+    <record id="view_federation_standing_line_list" model="ir.ui.view">
+        <field name="name">federation.standing.line.list</field>
         <field name="model">federation.standing.line</field>
         <field name="arch" type="xml">
             <list>

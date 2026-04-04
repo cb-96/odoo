@@ -71,7 +71,8 @@
                 <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
                 <filter name="expired" string="Expired" domain="[('state', '=', 'expired')]"/>
                 <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="player" string="Player" context="{'group_by': 'player_id'}"/>
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
@@ -84,7 +85,7 @@
     <record id="federation_player_license_action" model="ir.actions.act_window">
         <field name="name">Player Licenses</field>
         <field name="res_model">federation.player.license</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_player_license_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

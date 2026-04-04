@@ -69,7 +69,8 @@
                 <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
                 <filter name="sent" string="Sent" domain="[('state', '=', 'sent')]"/>
                 <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>

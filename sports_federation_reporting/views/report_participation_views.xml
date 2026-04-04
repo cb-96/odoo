@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Tree View -->
-    <record id="view_federation_report_participation_tree" model="ir.ui.view">
-        <field name="name">federation.report.participation.tree</field>
+    <!-- List View -->
+    <record id="view_federation_report_participation_list" model="ir.ui.view">
+        <field name="name">federation.report.participation.list</field>
         <field name="model">federation.report.participation</field>
         <field name="arch" type="xml">
             <list string="Participation Report">

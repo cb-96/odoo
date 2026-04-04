@@ -21,9 +21,9 @@
         </field>
     </record>
 
-    <!-- Tree View -->
-    <record id="view_federation_audit_note_tree" model="ir.ui.view">
-        <field name="name">federation.audit.note.tree</field>
+    <!-- List View -->
+    <record id="view_federation_audit_note_list" model="ir.ui.view">
+        <field name="name">federation.audit.note.list</field>
         <field name="model">federation.audit.note</field>
         <field name="arch" type="xml">
             <list string="Audit Notes">

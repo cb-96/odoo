@@ -9,7 +9,7 @@
             <form string="Club Representative">
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
-                            invisible="active = True"/>
+                            invisible="active"/>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_partner"
                                 type="object"
@@ -20,7 +20,7 @@
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-users"
-                                invisible="user_id = False"
+                                invisible="not user_id"
                                 string="User"/>
                     </div>
                     <div class="oe_title">

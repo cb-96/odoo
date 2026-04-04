@@ -13,7 +13,7 @@
                         type="object"
                         class="oe_stat_button"
                         icon="fa-shield"
-                        invisible="representative_count = 0">
+                        invisible="not representative_count">
                     <field name="representative_count" widget="statinfo" string="Club Roles"/>
                 </button>
             </xpath>

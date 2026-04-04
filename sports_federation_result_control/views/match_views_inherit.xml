@@ -24,7 +24,7 @@
                 <button name="action_correct_result" string="Correct Result" type="object"
                         invisible="result_state not in ('contested', 'approved')"/>
                 <button name="action_reset_result_to_draft" string="Reset to Draft" type="object"
-                        invisible="result_state = 'draft'"/>
+                        invisible="result_state == 'draft'"/>
             </xpath>
             <!-- Add result control section in body -->
             <xpath expr="//sheet/group[2]" position="after">

@@ -91,7 +91,7 @@
                 <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
                 <separator/>
-                <group string="Group By">
+                <group>
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>

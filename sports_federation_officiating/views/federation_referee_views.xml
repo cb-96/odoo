@@ -10,12 +10,12 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="%(federation_referee_certification_action)d" type="action"
                                 class="oe_stat_button" icon="fa-certificate"
-                                context="{'search_default_referee_id': active_id}">
+                                context="{'search_default_referee_id': id}">
                             <field name="certification_count" widget="statinfo" string="Certifications"/>
                         </button>
                         <button name="%(federation_match_referee_action)d" type="action"
                                 class="oe_stat_button" icon="fa-futbol-o"
-                                context="{'search_default_referee_id': active_id}">
+                                context="{'search_default_referee_id': id}">
                             <field name="assignment_count" widget="statinfo" string="Assignments"/>
                         </button>
                     </div>

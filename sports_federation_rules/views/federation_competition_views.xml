@@ -19,7 +19,7 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="%(federation_tournament_action)d" type="action"
                                 class="oe_stat_button" icon="fa-trophy"
-                                context="{'search_default_competition_id': active_id}">
+                                context="{'search_default_competition_id': id}">
                             <field name="tournament_count" widget="statinfo" string="Tournaments"/>
                         </button>
                     </div>

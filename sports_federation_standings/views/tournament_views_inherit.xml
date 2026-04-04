@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-                <button name="%(action_federation_standing)d" type="action" class="oe_stat_button" icon="fa-trophy" context="{'search_default_tournament_id': active_id}">
+                <button name="%(action_federation_standing)d" type="action" class="oe_stat_button" icon="fa-trophy" context="{'search_default_tournament_id': id}">
                     <field name="standing_count" string="Standings" widget="statinfo"/>
                 </button>
             </xpath>

@@ -19,7 +19,7 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="%(federation_player_license_action)d" type="action"
                                 class="oe_stat_button" icon="fa-id-card"
-                                context="{'search_default_player_id': active_id}">
+                                context="{'search_default_player_id': id}">
                             <field name="license_count" widget="statinfo" string="Licenses"/>
                         </button>
                     </div>

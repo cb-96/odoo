@@ -5,7 +5,7 @@ from odoo.exceptions import ValidationError
 class FederationRuleSet(models.Model):
     _name = "federation.rule.set"
     _description = "Federation Rule Set"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "name"
 
     name = fields.Char(string="Rule Set Name", required=True, tracking=True)

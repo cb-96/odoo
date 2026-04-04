@@ -88,7 +88,8 @@
                 <field name="city"/>
                 <field name="country_id"/>
 
-                <group expand="0" string="Group By">
+                <separator/>
+                <group>
                     <filter name="country" string="Country" context="{'group_by': 'country_id'}"/>
                     <filter name="city" string="City" context="{'group_by': 'city'}"/>
                 </group>

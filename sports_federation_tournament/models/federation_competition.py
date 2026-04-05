@@ -55,8 +55,8 @@ class FederationCompetition(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        ("code_unique", "UNIQUE(code)", "Competition code must be unique."),
+    _constraints = [
+        models.Constraint('unique (code)', 'Competition code must be unique.'),
     ]
 
     @api.depends("tournament_ids")
@@ -75,3 +75,9 @@ class FederationCompetition(models.Model):
     def action_draft(self):
         for rec in self:
             rec.state = "draft"
+
+    def action_view_tournaments(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_action')
+        action['domain'] = [('competition_id', '=', self.id)]
+        return action

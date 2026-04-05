@@ -21,19 +21,16 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_tournament_stage_action)d" type="action"
-                                class="oe_stat_button" icon="fa-sitemap"
-                                context="{'search_default_tournament_id': id}">
+                        <button name="action_view_stages" type="object"
+                                class="oe_stat_button" icon="fa-sitemap">
                             <field name="stage_count" widget="statinfo" string="Stages"/>
                         </button>
-                        <button name="%(federation_tournament_participant_action)d" type="action"
-                                class="oe_stat_button" icon="fa-users"
-                                context="{'search_default_tournament_id': id}">
+                        <button name="action_view_participants" type="object"
+                                class="oe_stat_button" icon="fa-users">
                             <field name="participant_count" widget="statinfo" string="Participants"/>
                         </button>
-                        <button name="%(federation_match_action)d" type="action"
-                                class="oe_stat_button" icon="fa-list"
-                                context="{'search_default_tournament_id': id}">
+                        <button name="action_view_matches" type="object"
+                                class="oe_stat_button" icon="fa-list">
                             <field name="match_count" widget="statinfo" string="Matches"/>
                         </button>
                     </div>
@@ -64,12 +61,12 @@
                     </group>
                     <separator string="Notes"/>
                     <field name="notes"/>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
-                    </div>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>

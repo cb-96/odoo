@@ -50,12 +50,8 @@ class FederationPlayer(models.Model):
         string="License Count", compute="_compute_counts", store=True
     )
 
-    _sql_constraints = [
-        (
-            "player_identity",
-            "UNIQUE(first_name, last_name, birth_date)",
-            "A player with the same name and birth date already exists.",
-        ),
+    _constraints = [
+        models.Constraint('unique (first_name, last_name, birth_date)', 'A player with the same name and birth date already exists.'),
     ]
 
     @api.depends("first_name", "last_name")
@@ -68,6 +64,12 @@ class FederationPlayer(models.Model):
     def _compute_counts(self):
         for rec in self:
             rec.license_count = len(rec.license_ids)
+
+    def action_view_licenses(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_people.federation_player_license_action')
+        action['domain'] = [('player_id', '=', self.id)]
+        return action
 
     @api.constrains("birth_date")
     def _check_birth_date(self):

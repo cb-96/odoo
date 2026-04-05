@@ -8,14 +8,12 @@
             <form string="Referee">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_referee_certification_action)d" type="action"
-                                class="oe_stat_button" icon="fa-certificate"
-                                context="{'search_default_referee_id': id}">
+                        <button name="action_view_certifications" type="object"
+                                class="oe_stat_button" icon="fa-certificate">
                             <field name="certification_count" widget="statinfo" string="Certifications"/>
                         </button>
-                        <button name="%(federation_match_referee_action)d" type="action"
-                                class="oe_stat_button" icon="fa-futbol-o"
-                                context="{'search_default_referee_id': id}">
+                        <button name="action_view_assignments" type="object"
+                                class="oe_stat_button" icon="fa-futbol-o">
                             <field name="assignment_count" widget="statinfo" string="Assignments"/>
                         </button>
                     </div>
@@ -37,12 +35,12 @@
                     </group>
                     <separator string="Notes"/>
                     <field name="notes"/>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
-                    </div>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>

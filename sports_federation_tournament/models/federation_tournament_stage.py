@@ -44,3 +44,15 @@ class FederationTournamentStage(models.Model):
         for rec in self:
             if rec.date_end and rec.date_start and rec.date_end < rec.date_start:
                 raise ValidationError("End date must be on or after start date.")
+
+    def action_view_groups(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_group_action')
+        action['domain'] = [('stage_id', '=', self.id)]
+        return action
+
+    def action_view_matches(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_match_action')
+        action['domain'] = [('stage_id', '=', self.id)]
+        return action

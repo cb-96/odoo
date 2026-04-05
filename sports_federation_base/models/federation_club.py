@@ -27,8 +27,8 @@ class FederationClub(models.Model):
     team_ids = fields.One2many("federation.team", "club_id", string="Teams")
     team_count = fields.Integer(string="Team Count", compute="_compute_team_count", store=True)
 
-    _sql_constraints = [
-        ("code_unique", "UNIQUE(code)", "Club code must be unique."),
+    _constraints = [
+        models.Constraint('unique (code)', 'Club code must be unique.'),
     ]
 
     @api.depends("team_ids")

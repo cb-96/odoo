@@ -27,12 +27,8 @@ class FederationRefereeCertification(models.Model):
     active = fields.Boolean(default=True)
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        (
-            "referee_level_unique",
-            "UNIQUE(referee_id, level, issue_date)",
-            "Duplicate certification for this referee, level, and date.",
-        ),
+    _constraints = [
+        models.Constraint('unique (referee_id, level, issue_date)', 'Duplicate certification for this referee, level, and date.'),
     ]
 
     @api.constrains("issue_date", "expiry_date")

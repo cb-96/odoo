@@ -41,12 +41,8 @@ class FederationMatchReferee(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        (
-            "match_referee_role_unique",
-            "UNIQUE(match_id, referee_id, role)",
-            "A referee can only be assigned once per role per match.",
-        ),
+    _constraints = [
+        models.Constraint('unique (match_id, referee_id, role)', 'A referee can only be assigned once per role per match.'),
     ]
 
     def action_confirm(self):

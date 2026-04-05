@@ -66,8 +66,8 @@ class FederationTournament(models.Model):
     )
     match_count = fields.Integer(string="Match Count", compute="_compute_counts", store=True)
 
-    _sql_constraints = [
-        ("code_unique", "UNIQUE(code)", "Tournament code must be unique."),
+    _constraints = [
+        models.Constraint('unique (code)', 'Tournament code must be unique.'),
     ]
 
     @api.depends("stage_ids", "participant_ids", "match_ids")
@@ -102,3 +102,21 @@ class FederationTournament(models.Model):
     def action_draft(self):
         for rec in self:
             rec.state = "draft"
+
+    def action_view_stages(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_stage_action')
+        action['domain'] = [('tournament_id', '=', self.id)]
+        return action
+
+    def action_view_participants(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_participant_action')
+        action['domain'] = [('tournament_id', '=', self.id)]
+        return action
+
+    def action_view_matches(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_match_action')
+        action['domain'] = [('tournament_id', '=', self.id)]
+        return action

@@ -8,14 +8,12 @@
             <form string="Tournament Stage">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_tournament_group_action)d" type="action"
-                                class="oe_stat_button" icon="fa-object-group"
-                                context="{'search_default_stage_id': id}">
+                        <button name="action_view_groups" type="object"
+                                class="oe_stat_button" icon="fa-object-group">
                             <field name="group_count" widget="statinfo" string="Groups"/>
                         </button>
-                        <button name="%(federation_match_action)d" type="action"
-                                class="oe_stat_button" icon="fa-list"
-                                context="{'search_default_stage_id': id}">
+                        <button name="action_view_matches" type="object"
+                                class="oe_stat_button" icon="fa-list">
                             <field name="match_count" widget="statinfo" string="Matches"/>
                         </button>
                     </div>

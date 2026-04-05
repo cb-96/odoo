@@ -35,12 +35,8 @@ class FederationSeasonRegistration(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        (
-            "team_season_unique",
-            "UNIQUE(team_id, season_id)",
-            "A team can only register once per season.",
-        ),
+    _constraints = [
+        models.Constraint('unique (team_id, season_id)', 'A team can only register once per season.'),
     ]
 
     @api.model

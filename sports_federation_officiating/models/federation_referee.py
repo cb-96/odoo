@@ -43,3 +43,15 @@ class FederationReferee(models.Model):
         for rec in self:
             rec.certification_count = len(rec.certification_ids)
             rec.assignment_count = len(rec.match_assignment_ids)
+
+    def action_view_certifications(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_officiating.federation_referee_certification_action')
+        action['domain'] = [('referee_id', '=', self.id)]
+        return action
+
+    def action_view_assignments(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_officiating.federation_match_referee_action')
+        action['domain'] = [('referee_id', '=', self.id)]
+        return action

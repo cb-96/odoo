@@ -34,8 +34,8 @@ class FederationSeason(models.Model):
         string="Registration Count", compute="_compute_registration_count", store=True
     )
 
-    _sql_constraints = [
-        ("code_unique", "UNIQUE(code)", "Season code must be unique."),
+    _constraints = [
+        models.Constraint('unique (code)', 'Season code must be unique.'),
     ]
 
     @api.depends("registration_ids")

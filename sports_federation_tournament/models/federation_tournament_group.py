@@ -32,3 +32,15 @@ class FederationTournamentGroup(models.Model):
         for rec in self:
             rec.participant_count = len(rec.participant_ids)
             rec.match_count = len(rec.match_ids)
+
+    def action_view_participants(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_participant_action')
+        action['domain'] = [('group_id', '=', self.id)]
+        return action
+
+    def action_view_matches(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_match_action')
+        action['domain'] = [('group_id', '=', self.id)]
+        return action

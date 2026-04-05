@@ -48,8 +48,8 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(sports_federation_tournament.action_federation_tournament_participant)d"
-                                type="action" class="oe_stat_button"
+                        <button name="action_view_participant"
+                                type="object" class="oe_stat_button"
                                 icon="fa-users"
                                 invisible="not participant_id">
                             <field name="participant_id" string="Participant" widget="statinfo"/>

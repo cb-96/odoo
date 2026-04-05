@@ -31,7 +31,7 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_federation_standing_line)d" type="action" class="oe_stat_button" icon="fa-list" invisible="not line_count">
+                        <button name="action_view_lines" type="object" class="oe_stat_button" icon="fa-list" invisible="not line_count">
                             <field name="line_count" string="Lines" widget="statinfo"/>
                         </button>
                     </div>

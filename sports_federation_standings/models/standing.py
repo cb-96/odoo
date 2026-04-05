@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -78,6 +78,15 @@ class FederationStanding(models.Model):
     def _compute_line_count(self):
         for record in self:
             record.line_count = len(record.line_ids)
+
+    def action_view_lines(self):
+        self.ensure_one()
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "sports_federation_standings.action_federation_standing_line"
+        )
+        action["domain"] = [("standing_id", "=", self.id)]
+        action["context"] = {"default_standing_id": self.id}
+        return action
 
     @api.constrains("group_id", "stage_id")
     def _check_group_stage_consistency(self):

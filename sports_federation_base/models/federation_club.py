@@ -36,6 +36,12 @@ class FederationClub(models.Model):
         for rec in self:
             rec.team_count = len(rec.team_ids)
 
+    def action_view_teams(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_base.federation_team_action')
+        action['domain'] = [('club_id', '=', self.id)]
+        return action
+
     @api.constrains("email")
     def _check_email(self):
         for rec in self:

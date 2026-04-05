@@ -128,6 +128,17 @@ class FederationTeamRoster(models.Model):
                 vals["rule_set_id"] = competition.rule_set_id.id
         return super().write(vals)
 
+    def action_view_lines(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Roster Lines"),
+            "res_model": "federation.team.roster.line",
+            "view_mode": "list,form",
+            "domain": [("roster_id", "=", self.id)],
+            "context": {"default_roster_id": self.id},
+        }
+
     def action_set_draft(self):
         self.write({"status": "draft"})
 

@@ -191,3 +191,12 @@ class FederationTournamentRegistration(models.Model):
         """Reset to draft (backend only)."""
         for rec in self:
             rec.state = "draft"
+
+    def action_view_participant(self):
+        self.ensure_one()
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "sports_federation_tournament.federation_tournament_participant_action"
+        )
+        action["res_id"] = self.participant_id.id
+        action["views"] = [(False, "form")]
+        return action

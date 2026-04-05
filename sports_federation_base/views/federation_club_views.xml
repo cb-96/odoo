@@ -8,11 +8,10 @@
             <form string="Club">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_team_action)d"
-                                type="action"
+                        <button name="action_view_teams"
+                                type="object"
                                 class="oe_stat_button"
-                                icon="fa-users"
-                                context="{'search_default_club_id': id}">
+                                icon="fa-users">
                             <field name="team_count" widget="statinfo" string="Teams"/>
                         </button>
                     </div>

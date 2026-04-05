@@ -19,11 +19,10 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(federation_season_registration_action)d"
-                                type="action"
+                        <button name="action_view_registrations"
+                                type="object"
                                 class="oe_stat_button"
-                                icon="fa-pencil-square-o"
-                                context="{'search_default_season_id': id}">
+                                icon="fa-pencil-square-o">
                             <field name="registration_count" widget="statinfo" string="Registrations"/>
                         </button>
                     </div>

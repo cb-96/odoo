@@ -43,6 +43,12 @@ class FederationSeason(models.Model):
         for rec in self:
             rec.registration_count = len(rec.registration_ids)
 
+    def action_view_registrations(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_base.federation_season_registration_action')
+        action['domain'] = [('season_id', '=', self.id)]
+        return action
+
     @api.constrains("date_start", "date_end")
     def _check_dates(self):
         for rec in self:

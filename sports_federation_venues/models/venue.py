@@ -40,6 +40,12 @@ class FederationVenue(models.Model):
         for record in self:
             record.playing_area_count = len(record.playing_area_ids)
 
+    def action_view_playing_areas(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_venues.action_federation_playing_area')
+        action['domain'] = [('venue_id', '=', self.id)]
+        return action
+
 
 class FederationPlayingArea(models.Model):
     _name = "federation.playing.area"

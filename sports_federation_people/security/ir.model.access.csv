@@ -1,5 +1,5 @@
-id,name,model_id:id,group_id:sports_federation_base.group_federation_user,perm_read,perm_write,perm_create,perm_unlink
-access_federation_player_user,federation.player.user,model_federation_player,1,0,0,0
-access_federation_player_manager,federation.player.manager,model_federation_player,group_federation_manager,1,1,1,1
-access_federation_player_license_user,federation.player.license.user,model_federation_player_license,1,0,0,0
-access_federation_player_license_manager,federation.player.license.manager,model_federation_player_license,group_federation_manager,1,1,1,1
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_federation_player_user,federation.player.user,model_federation_player,sports_federation_base.group_federation_user,1,0,0,0
+access_federation_player_manager,federation.player.manager,model_federation_player,sports_federation_base.group_federation_manager,1,1,1,1
+access_federation_player_license_user,federation.player.license.user,model_federation_player_license,sports_federation_base.group_federation_user,1,0,0,0
+access_federation_player_license_manager,federation.player.license.manager,model_federation_player_license,sports_federation_base.group_federation_manager,1,1,1,1

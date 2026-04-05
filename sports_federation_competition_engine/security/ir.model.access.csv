@@ -1,3 +1,3 @@
-﻿id,name,model_id:id,group_id:sports_federation_base.group_federation_user,perm_read,perm_write,perm_create,perm_unlink
-access_rr_wizard,federation.round.robin.wizard.user,model_federation_round_robin_wizard,1,1,1,0
-access_ko_wizard,federation.knockout.wizard.user,model_federation_knockout_wizard,1,1,1,0
+﻿id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rr_wizard,federation.round.robin.wizard.user,model_federation_round_robin_wizard,sports_federation_base.group_federation_user,1,1,1,0
+access_ko_wizard,federation.knockout.wizard.user,model_federation_knockout_wizard,sports_federation_base.group_federation_user,1,1,1,0

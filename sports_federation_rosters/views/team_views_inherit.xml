@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="sports_federation_base.view_federation_team_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-                <button name="%(action_federation_team_roster)d" type="action" class="oe_stat_button" icon="fa-users">
+                <button name="action_view_rosters" type="object" class="oe_stat_button" icon="fa-users">
                     <field name="roster_count" string="Rosters" widget="statinfo"/>
                 </button>
             </xpath>

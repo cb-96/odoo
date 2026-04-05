@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-                <button name="%(action_federation_match_sheet)d" type="action" class="oe_stat_button" icon="fa-file-text-o">
+                <button name="action_view_match_sheets" type="object" class="oe_stat_button" icon="fa-file-text-o">
                     <field name="match_sheet_count" string="Sheets" widget="statinfo"/>
                 </button>
             </xpath>

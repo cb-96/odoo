@@ -22,7 +22,9 @@ class FederationTournament(models.Model):
     def action_view_standings(self):
         """Open standings for this tournament."""
         self.ensure_one()
-        action = self.env.ref("sports_federation_standings.action_federation_standing").read()[0]
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "sports_federation_standings.action_federation_standing"
+        )
         action["domain"] = [("tournament_id", "=", self.id)]
         action["context"] = {"default_tournament_id": self.id}
         return action

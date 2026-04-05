@@ -8,7 +8,7 @@
             <form string="Venue">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_federation_playing_area)d" type="action" class="oe_stat_button" icon="fa-th">
+                        <button name="action_view_playing_areas" type="object" class="oe_stat_button" icon="fa-th">
                             <field name="playing_area_count" string="Playing Areas" widget="statinfo"/>
                         </button>
                     </div>

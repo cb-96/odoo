@@ -14,7 +14,7 @@ class FederationTournamentRegistration(models.Model):
 
     _name = "federation.tournament.registration"
     _description = "Tournament Registration Request"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "create_date desc"
 
     name = fields.Char(
@@ -104,13 +104,17 @@ class FederationTournamentRegistration(models.Model):
         ),
     ]
 
-    @api.model
-    def create(self, vals):
-        if vals.get("name", "New") == "New":
-            vals["name"] = self.env["ir.next_by_code"].next_by_code(
-                "federation.tournament.registration"
-            ) or "New"
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+
+        for vals in vals_list:
+            if vals.get("name", "New") == "New":
+                vals["name"] = self.env["ir.sequence"].next_by_code(
+                    "federation.tournament.registration"
+                ) or "New"
+        return super().create(vals_list)
 
     @api.constrains("team_id", "club_id")
     def _check_portal_ownership(self):

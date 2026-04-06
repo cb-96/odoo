@@ -1,32 +1,112 @@
 # Sports Federation Base
 
+Foundation module for the entire Sports Federation suite. Provides the core data
+models that every other federation module depends on: **clubs**, **teams**,
+**seasons**, and **season registrations**.
+
 ## Purpose
-This module provides the foundation for the sports federation management system, covering clubs, teams, seasons, and season registrations.
+
+This module establishes the organisational hierarchy of the federation and acts as
+the single source of truth for master data. All downstream modules
+(people, tournaments, compliance, etc.) reference these entities.
 
 ## Dependencies
+
 - `base`
 - `mail`
 
-## Scope
-- **Federation Clubs**: Master data for clubs with contact information, addresses, and team relationships.
-- **Federation Teams**: Teams belonging to clubs, classified by category (Senior, Youth, Junior, etc.) and gender.
-- **Federation Seasons**: Time-bounded season periods with lifecycle management (Draft → Open → Closed → Cancelled).
-- **Season Registrations**: Links a team to a season with a division/competition, using auto-generated references.
-- **Security**: Two-level access control (User read-only, Manager full CRUD) under a "Sports Federation" category.
-- **Sequences**: Auto-generated registration references with year-based prefix.
-
 ## Models
-| Model | Chatter | Description |
-|-------|---------|-------------|
-| `federation.club` | ✓ | Clubs with teams |
-| `federation.team` | ✓ (partial) | Teams belonging to clubs |
-| `federation.season` | ✓ | Season periods |
-| `federation.season.registration` | ✓ | Team-to-season mapping |
 
-## Menus
-- Federation
-  - Master Data
-    - Clubs
-    - Teams
-  - Seasons
-  - Registrations
+### `federation.club`
+
+Central record for each affiliated club. Stores contact details, full postal
+address, logo, and founding date. Each club owns one or more teams.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Club name (required) |
+| `code` | Char | Unique short code |
+| `email` / `phone` / `mobile` | Char | Contact channels |
+| `street` … `country_id` | Address | Full postal address |
+| `founded_date` | Date | Date the club was founded |
+| `logo` | Binary | Club emblem (shown as avatar) |
+| `team_ids` | One2many | Teams belonging to this club |
+
+- **Mail thread** enabled for audit & chatter.
+- **Unique code** constraint.
+- **Stat button** to navigate to child teams.
+
+### `federation.team`
+
+Represents a single squad within a club, classified by age category and gender.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Team name (required) |
+| `code` | Char | Unique short code |
+| `club_id` | Many2one | Parent club (required) |
+| `category` | Selection | senior / youth / junior / cadet / mini |
+| `gender` | Selection | male / female / mixed |
+
+- `name_search()` also matches on `code`.
+
+### `federation.season`
+
+A time-bounded period during which competitions take place.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` / `code` | Char | Season label and unique code |
+| `date_start` / `date_end` | Date | Season boundaries (end ≥ start) |
+| `state` | Selection | draft → open → closed / cancelled |
+
+**Workflow:** `action_open()` → `action_close()` or `action_cancel()` →
+`action_draft()` to reset.
+
+### `federation.season.registration`
+
+Enrols a team into a season. Auto-generates a sequence-based reference number on
+creation (`FED/REG/YYYY/00001`).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Auto-generated reference (readonly) |
+| `season_id` | Many2one | Target season |
+| `team_id` | Many2one | Registering team |
+| `club_id` | Many2one | Derived from team (stored) |
+| `division` | Char | Optional division label |
+| `state` | Selection | draft → confirmed / cancelled |
+
+**Constraint:** a team can register for a given season only once.
+
+## Security
+
+| Group | Description | Permissions |
+|-------|------------|-------------|
+| **Federation User** (`group_federation_user`) | Standard back-office users | Read-only on all models |
+| **Federation Manager** (`group_federation_manager`) | Administrators | Full CRUD on all models |
+
+Both groups belong to the *Federation* app category (`module_category_federation`).
+
+## Menu Structure
+
+```
+Federation (root)
+├── Master Data
+│   ├── Clubs
+│   └── Teams
+├── Seasons
+└── Registrations
+```
+
+## Data Files
+
+- `data/ir_sequence.xml` – auto-numbering sequence for season registrations.
+
+## Extension Points
+
+Other modules extend the base models:
+- **Tournament** adds `competition_id` and `rule_set_id` to registrations.
+- **Portal** adds `submitted` state and portal-user tracking.
+- **Venues** adds `venue_id` to tournaments and matches.
+- **Rosters**, **Result Control**, **Officiating** all extend `federation.match`.

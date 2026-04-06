@@ -1,26 +1,90 @@
 # Sports Federation Compliance
 
+Document requirements, submissions, and compliance checking. Ensures that clubs,
+players, referees, and venues maintain all required documentation (licences,
+insurance certificates, safety reports, etc.).
+
 ## Purpose
-Document requirements, submissions, and compliance checks
+
+Defines what **documents are required** for each entity type, tracks
+**submissions** of those documents with attachments and expiry dates, and runs
+**compliance checks** to flag missing or expired documentation.
 
 ## Dependencies
-- `sports_federation_base`
-- `sports_federation_people`
-- `sports_federation_officiating`
-- `sports_federation_venues`
-- `sports_federation_club_roles`
-- `mail`
+
+| Module | Reason |
+|--------|--------|
+| `sports_federation_base` | Clubs |
+| `sports_federation_people` | Players |
+| `sports_federation_officiating` | Referees |
+| `sports_federation_venues` | Venues |
+| `sports_federation_portal` | Club representatives |
+| `mail` | Chatter |
 
 ## Models
-| Model | Chatter | Description |
-|-------|---------|-------------|
-| `federation.document.requirement` |  | Federation Document Requirement |
-| `federation.document.submission` | ✓ | Federation Document Submission |
-| `federation.compliance.check` |  | Federation Compliance Check |
 
-## Menus
-- Federation
-  - Compliance
-    - Requirements
-    - Submissions
-    - Checks
+### `federation.document.requirement`
+
+A type of document that certain entities must provide.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Requirement title |
+| `code` | Char | Unique code |
+| `target_model` | Selection | Which entity type (club / player / referee / venue / club_representative) |
+| `required_for_all` | Boolean | Applies to all entities of this type |
+| `requires_expiry_date` | Boolean | Submission must include an expiry date |
+| `validity_days` | Integer | Default validity period |
+| `description` | Text | Detailed requirements |
+| `active` | Boolean | Currently enforced |
+
+### `federation.document.submission`
+
+An actual document submitted against a requirement.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Submission title |
+| `requirement_id` | Many2one | Which requirement this fulfils |
+| `target_model` | Selection (computed) | From requirement |
+| `club_id` / `player_id` / `referee_id` / `venue_id` / `club_representative_id` | Many2one | Target entity |
+| `status` | Selection | draft / submitted / approved / rejected / replacement_requested / expired |
+| `attachment_ids` | Many2many | Uploaded files |
+| `issue_date` / `expiry_date` | Date | Document validity |
+| `reviewer_id` | Many2one | Who reviewed |
+| `reviewed_on` | Datetime | Review timestamp |
+| `is_expired` | Boolean (computed) | True if expiry_date < today |
+| `target_display` | Char (computed) | Readable target entity name |
+| `notes` | Text | Remarks |
+
+- **State machine**: draft → submitted → approved / rejected / replacement_requested → expired.
+- **Constraint**: exactly one target entity field must be set.
+- **Expired ribbon** shown in form view when document has passed its expiry date.
+
+### `federation.compliance.check`
+
+A check result linking a requirement to an entity's submission status.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | Char | Check title |
+| `target_model` | Selection | Entity type |
+| `club_id` / `player_id` / `referee_id` / `venue_id` / `club_representative_id` | Many2one | Target |
+| `status` | Selection | compliant / missing / pending / expired |
+| `requirement_id` | Many2one | Which requirement |
+| `submission_id` | Many2one | Linked submission (if any) |
+| `checked_on` | Datetime | When the check ran |
+| `note` | Char | Result note |
+| `target_display` | Char (computed) | Readable target name |
+
+## Key Behaviours
+
+1. **Requirement definition** — Federation defines which documents each entity type
+   must provide.
+2. **Submission workflow** — Documents are uploaded, submitted, and reviewed with
+   approval/rejection.
+3. **Expiry tracking** — Computed `is_expired` field auto-flags overdue documents.
+4. **Compliance checks** — Programmatic checks produce compliant / missing / pending /
+   expired statuses per entity.
+5. **Multi-entity support** — Same framework covers clubs, players, referees, venues,
+   and club representatives.

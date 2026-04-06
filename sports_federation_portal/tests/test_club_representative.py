@@ -17,19 +17,19 @@ class TestClubRepresentative(TransactionCase):
         cls.partner3 = cls.env["res.partner"].create({"name": "Bob Johnson"})
         # Get role types (created by data file)
         cls.role_competition = cls.env.ref(
-            "sports_federation_club_roles.role_type_competition_contact"
+            "sports_federation_portal.role_type_competition_contact"
         )
         cls.role_finance = cls.env.ref(
-            "sports_federation_club_roles.role_type_finance_contact"
+            "sports_federation_portal.role_type_finance_contact"
         )
         cls.role_safeguarding = cls.env.ref(
-            "sports_federation_club_roles.role_type_safeguarding_contact"
+            "sports_federation_portal.role_type_safeguarding_contact"
         )
         cls.role_president = cls.env.ref(
-            "sports_federation_club_roles.role_type_president"
+            "sports_federation_portal.role_type_president"
         )
         cls.role_other = cls.env.ref(
-            "sports_federation_club_roles.role_type_other"
+            "sports_federation_portal.role_type_other"
         )
 
     def test_create_multiple_representatives(self):

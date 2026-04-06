@@ -2,7 +2,7 @@
 <odoo>
     <menuitem id="menu_federation_discipline"
               name="Discipline"
-              parent="sports_federation_base.menu_federation"
+              parent="sports_federation_base.menu_federation_root"
               sequence="60"/>
 
     <menuitem id="menu_federation_discipline_root"

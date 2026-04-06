@@ -6,7 +6,7 @@
         <field name="model">federation.match</field>
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@string='Schedule']" position="inside">
+            <xpath expr="//field[@name='venue']" position="after">
                 <field name="venue_id"/>
                 <field name="playing_area_id" domain="[('venue_id', '=', venue_id)]"/>
             </xpath>
@@ -16,7 +16,7 @@
     <record id="view_federation_match_tree_inherit_venue" model="ir.ui.view">
         <field name="name">federation.match.tree.inherit.venue</field>
         <field name="model">federation.match</field>
-        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_tree"/>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='venue']" position="replace">
                 <field name="venue_id"/>
@@ -34,7 +34,7 @@
                 <field name="venue_id"/>
                 <field name="playing_area_id"/>
             </xpath>
-            <xpath expr="//group[@expand='0']" position="inside">
+            <xpath expr="//filter[@name='state']" position="after">
                 <filter name="venue" string="Venue" context="{'group_by': 'venue_id'}"/>
             </xpath>
         </field>

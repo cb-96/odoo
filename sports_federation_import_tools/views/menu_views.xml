@@ -4,7 +4,7 @@
     <!-- Imports submenu -->
     <menuitem id="menu_federation_imports"
               name="Imports"
-              parent="sports_federation_base.menu_federation_administration"
+              parent="sports_federation_base.menu_federation_root"
               sequence="10"/>
 
     <!-- Import Clubs -->

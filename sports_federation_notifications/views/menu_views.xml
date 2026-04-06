@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <data>
 
     <!-- Administration submenu -->
     <menuitem id="menu_federation_administration"
               name="Administration"
-              parent="sports_federation_base.menu_federation"
+              parent="sports_federation_base.menu_federation_root"
               sequence="100"/>
 
     <!-- Notification Logs -->
@@ -14,4 +15,5 @@
               action="action_federation_notification_log"
               sequence="10"/>
 
+    </data>
 </odoo>

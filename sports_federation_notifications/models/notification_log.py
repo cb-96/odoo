@@ -37,3 +37,8 @@ class FederationNotificationLog(models.Model):
         required=True,
     )
     message = fields.Text(string="Message")
+
+    @api.model
+    def _cron_notification_scan(self):
+        """Delegate to the notification service cron method."""
+        self.env["federation.notification.service"]._cron_placeholder_notification_scan()

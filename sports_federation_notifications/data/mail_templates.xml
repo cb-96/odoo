@@ -6,12 +6,12 @@
         <field name="name">Federation: Generic Contact</field>
         <field name="model_id" ref="base.model_res_partner"/>
         <field name="subject">Message from Sports Federation</field>
-        <field name="email_from">{{(object.company_id.email or user.email)}}</field>
-        <field name="email_to">{{object.email}}</field>
-        <field name="body_html">
-            <p>Dear ${object.name},</p>
+        <field name="email_from">{{ (user.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <p>Dear <t t-out="object.name"/>,</p>
             <p>This is a message from the Sports Federation.</p>
-            <p>${ctx.get('message_body', '')}</p>
+            <p><t t-out="ctx.get('message_body', '')"/></p>
             <p>Best regards,<br/>Sports Federation</p>
         </field>
     </record>
@@ -21,11 +21,11 @@
         <field name="name">Federation: Registration Reminder</field>
         <field name="model_id" ref="sports_federation_base.model_federation_season_registration"/>
         <field name="subject">Reminder: Complete Your Season Registration</field>
-        <field name="email_from">{{(object.company_id.email or user.email)}}</field>
-        <field name="email_to">{{object.club_id.email or ''}}</field>
-        <field name="body_html">
-            <p>Dear ${object.club_id.name},</p>
-            <p>This is a reminder that your season registration <strong>${object.name}</strong> is still in draft status.</p>
+        <field name="email_from">{{ (user.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.club_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <p>Dear <t t-out="object.club_id.name"/>,</p>
+            <p>This is a reminder that your season registration <strong><t t-out="object.name"/></strong> is still in draft status.</p>
             <p>Please complete your registration as soon as possible.</p>
             <p>Best regards,<br/>Sports Federation</p>
         </field>
@@ -36,13 +36,13 @@
         <field name="name">Federation: Missing Data Notice</field>
         <field name="model_id" ref="base.model_res_partner"/>
         <field name="subject">Action Required: Missing Information</field>
-        <field name="email_from">{{(object.company_id.email or user.email)}}</field>
-        <field name="email_to">{{object.email}}</field>
-        <field name="body_html">
-            <p>Dear ${object.name},</p>
+        <field name="email_from">{{ (user.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <p>Dear <t t-out="object.name"/>,</p>
             <p>We have noticed that some required information is missing from your federation profile.</p>
             <p>Please update your profile to ensure we have all necessary details.</p>
-            <p>${ctx.get('missing_items', '')}</p>
+            <p><t t-out="ctx.get('missing_items', '')"/></p>
             <p>Best regards,<br/>Sports Federation</p>
         </field>
     </record>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List view (portal-focused: user, role, club) -->
+    <record id="view_federation_club_representative_portal_list" model="ir.ui.view">
+        <field name="name">federation.club.representative.portal.list</field>
+        <field name="model">federation.club.representative</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="club_id"/>
+                <field name="user_id"/>
+                <field name="partner_id"/>
+                <field name="role"/>
+                <field name="is_primary"/>
+                <field name="role_type_id" optional="show"/>
+                <field name="active" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view (portal-focused) -->
+    <record id="view_federation_club_representative_portal_form" model="ir.ui.view">
+        <field name="name">federation.club.representative.portal.form</field>
+        <field name="model">federation.club.representative</field>
+        <field name="arch" type="xml">
+            <form string="Club Representative">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="club_id"/>
+                            <field name="user_id"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="role"/>
+                            <field name="is_primary"/>
+                            <field name="role_type_id" optional="show"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action (portal management entry-point) -->
+    <record id="action_federation_club_representative_portal" model="ir.actions.act_window">
+        <field name="name">Portal Representatives</field>
+        <field name="res_model">federation.club.representative</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_federation_club_representative_portal_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_federation_club_representative_portal_form')}),
+        ]"/>
+    </record>
+
+</odoo>

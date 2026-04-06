@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-
-    <!-- No new groups needed; reuse existing federation groups from sports_federation_base -->
-    <!-- Federation User (group_federation_user) - read-only access -->
-    <!-- Federation Manager (group_federation_manager) - full access -->
-
-</odoo>

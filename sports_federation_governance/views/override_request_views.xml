@@ -14,7 +14,7 @@
                             invisible="state != 'submitted'"/>
                     <button name="action_reject" string="Reject" type="object" class="btn-danger"
                             invisible="state != 'submitted'"/>
-                    <button name="action_implement" string="Implement" type="object" class="btn-secondary"
+                    <button name="action_mark_implemented" string="Implement" type="object" class="btn-secondary"
                             invisible="state != 'approved'"/>
                     <button name="action_close" string="Close" type="object"
                             invisible="state not in ('implemented', 'rejected')"/>

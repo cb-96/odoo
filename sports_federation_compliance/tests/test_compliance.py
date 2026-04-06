@@ -225,14 +225,14 @@ class TestCompliance(TransactionCase):
             })
 
     def test_is_expired_helper(self):
-        """Test the is_expired helper method."""
+        """Test the is_expired computed field."""
         submission = self.env["federation.document.submission"].create({
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
             "club_id": self.club.id,
             "expiry_date": date.today() - timedelta(days=1),
         })
-        self.assertTrue(submission.is_expired())
+        self.assertTrue(submission.is_expired)
 
         submission2 = self.env["federation.document.submission"].create({
             "name": "Test Submission 2",
@@ -240,7 +240,7 @@ class TestCompliance(TransactionCase):
             "club_id": self.club.id,
             "expiry_date": date.today() + timedelta(days=30),
         })
-        self.assertFalse(submission2.is_expired())
+        self.assertFalse(submission2.is_expired)
 
         submission3 = self.env["federation.document.submission"].create({
             "name": "Test Submission 3",
@@ -248,4 +248,4 @@ class TestCompliance(TransactionCase):
             "club_id": self.club.id,
             # No expiry_date
         })
-        self.assertFalse(submission3.is_expired())
+        self.assertFalse(submission3.is_expired)

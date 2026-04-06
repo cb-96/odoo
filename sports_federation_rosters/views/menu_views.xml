@@ -2,13 +2,13 @@
 <odoo>
     <menuitem id="menu_federation_rosters"
               name="Rosters"
-              parent="sports_federation_tournament.menu_federation_competitions"
+              parent="sports_federation_tournament.menu_federation_tournament"
               action="action_federation_team_roster"
               sequence="10"/>
 
     <menuitem id="menu_federation_match_sheets"
               name="Match Sheets"
-              parent="sports_federation_tournament.menu_federation_competitions"
+              parent="sports_federation_tournament.menu_federation_tournament"
               action="action_federation_match_sheet"
               sequence="20"/>
 </odoo>

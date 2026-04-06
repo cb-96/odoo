@@ -1,29 +1,74 @@
 # Sports Federation Competition Engine
 
+Schedule generation wizards for **round-robin** and **knockout** formats. Given a
+tournament with participants, the engine creates all matches, assigns venues, and
+sets date/times automatically.
+
 ## Purpose
-This module provides an empty scaffold for competition engine logic including schedule generation and standings computation.
+
+Automates the creation of match fixtures. Instead of manually entering dozens or
+hundreds of matches, federation staff run a wizard that generates a complete
+schedule respecting the chosen format, seeding, and time intervals.
 
 ## Dependencies
-- `sports_federation_tournament`
 
-## Scope
-- **Service Layer**: Placeholder abstract model (`federation.competition.engine.service`) with method stubs for:
-  - Round-robin schedule generation
-  - Standings computation
-  - Knockout bracket generation
-- **No Models**: This module contains no new database models.
-- **No Views**: This module provides no user interface.
-- **No Menus**: This module adds no menu items.
+| Module | Reason |
+|--------|--------|
+| `sports_federation_tournament` | Tournaments, stages, groups, participants, matches |
 
-## Extension Points
-All service methods raise `NotImplementedError` intentionally. Future implementations should:
-1. Implement the method bodies with actual scheduling/standings logic
-2. Add wizard models for user-facing schedule generation
-3. Add computed fields on tournament/group models for live standings
-4. Potentially add cron jobs for automatic schedule updates
+## Wizards
 
-## Usage
-```python
-# Example future usage from a wizard or model method:
-engine = self.env["federation.competition.engine.service"]
-engine.generate_round_robin_schedule(tournament, group=group, participants=participants)
+### `federation.round.robin.wizard`
+
+Generates a full round-robin schedule where every participant plays every other
+participant once (or twice in a double round-robin).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `tournament_id` | Many2one | Target tournament |
+| `stage_id` | Many2one | Target stage |
+| `group_id` | Many2one | Target group (optional) |
+| `participant_ids` | Many2many | Teams to schedule |
+| `use_all_participants` | Boolean | Use all enrolled participants |
+| `round_type` | Selection | single / double |
+| `start_datetime` | Datetime | First match kick-off |
+| `interval_hours` | Integer | Hours between rounds |
+| `venue` | Char | Default venue |
+| `overwrite` | Boolean | Allow replacing existing matches |
+| `summary` | Text (computed) | Preview of what will be generated |
+
+**Algorithm**: Circle method ensuring no team plays itself and every pair meets
+exactly once (or twice for double). Handles odd participant counts with automatic
+bye rounds. Matches are created with deterministic ordering.
+
+### `federation.knockout.wizard`
+
+Generates a single-elimination bracket.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `tournament_id` | Many2one | Target tournament |
+| `stage_id` | Many2one | Target stage |
+| `participant_source` | Selection | manual / from_stage |
+| `participant_ids` | Many2many | Manually selected teams |
+| `source_stage_id` | Many2one | Pull from previous stage standings |
+| `seeding` | Selection | natural / power_of_two |
+| `bracket_size` | Selection | 4 / 8 / 16 / 32 |
+| `start_datetime` | Datetime | First match kick-off |
+| `interval_hours` | Integer | Hours between rounds |
+| `venue` | Char | Default venue |
+| `overwrite` | Boolean | Allow replacing existing matches |
+| `summary` | Text (computed) | Bracket preview |
+
+**Algorithm**: Generates seeded brackets, handles byes when participant count
+is not a power of two, and ensures top seeds are separated. Power-of-two seeding
+follows standard tournament bracket placement.
+
+## Key Behaviours
+
+1. **Overwrite protection** — Existing matches are preserved unless `overwrite` is
+   explicitly checked.
+2. **Tournament state check** — Wizards enforce that the tournament is in the correct
+   state (open or in_progress) before generating.
+3. **Minimum participants** — At least 2 teams are required.
+4. **Button integration** — Wizard launch buttons are added to the tournament form view.

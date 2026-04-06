@@ -18,7 +18,9 @@ class RoundRobinWizard(models.TransientModel):
         domain="[('stage_id', '=', stage_id)]"
     )
     participant_ids = fields.Many2many(
-        "federation.tournament.participant", string="Participants"
+        "federation.tournament.participant",
+        relation="fed_rr_wiz_participant_rel",
+        string="Participants",
     )
     use_all_participants = fields.Boolean(string="Use All Registered", default=True)
     round_type = fields.Selection(

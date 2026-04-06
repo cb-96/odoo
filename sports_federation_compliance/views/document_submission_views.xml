@@ -24,7 +24,7 @@
                     <div class="oe_button_box" name="button_box">
                     </div>
                     <widget name="web_ribbon" title="Expired" bg_color="text-bg-danger"
-                            invisible="not is_expired()"/>
+                            invisible="not is_expired"/>
                     <group>
                         <group string="General Information">
                             <field name="name"/>

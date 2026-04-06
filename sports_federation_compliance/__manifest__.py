@@ -11,7 +11,7 @@
         "sports_federation_people",
         "sports_federation_officiating",
         "sports_federation_venues",
-        "sports_federation_club_roles",
+        "sports_federation_portal",
         "mail",
     ],
     "data": [

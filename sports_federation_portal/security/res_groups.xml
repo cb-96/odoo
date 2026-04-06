@@ -3,12 +3,8 @@
 
     <record id="group_federation_portal_club" model="res.groups">
         <field name="name">Portal Club Representative</field>
-        <field name="category_id" ref="sports_federation_base.module_category_federation"/>
         <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
-        <field name="comment">
-            Portal users in this group can view their club's data and submit
-            season and tournament registrations.
-        </field>
+        <field name="comment">Portal users in this group can view their club data and submit season and tournament registrations.</field>
     </record>
 
 </odoo>

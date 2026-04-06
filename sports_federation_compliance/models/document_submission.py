@@ -181,6 +181,24 @@ class FederationDocumentSubmission(models.Model):
                         "Expiry date cannot be before issue date."
                     )
 
+    is_expired = fields.Boolean(
+        string="Is Expired",
+        compute="_compute_is_expired",
+        search="_search_is_expired",
+    )
+
+    @api.depends("expiry_date")
+    def _compute_is_expired(self):
+        today = fields.Date.context_today(self)
+        for rec in self:
+            rec.is_expired = bool(rec.expiry_date and rec.expiry_date < today)
+
+    def _search_is_expired(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator == "=" and value) or (operator == "!=" and not value):
+            return [("expiry_date", "<", today), ("expiry_date", "!=", False)]
+        return ["|", ("expiry_date", ">=", today), ("expiry_date", "=", False)]
+
     @api.constrains("requirement_id", "expiry_date")
     def _check_expiry_date_required(self):
         """Ensure expiry_date is set when requirement requires it."""
@@ -190,13 +208,6 @@ class FederationDocumentSubmission(models.Model):
                     raise ValidationError(
                         f"Expiry date is required for requirement '{rec.requirement_id.name}'."
                     )
-
-    def is_expired(self):
-        """Check if submission is expired based on expiry_date."""
-        self.ensure_one()
-        if not self.expiry_date:
-            return False
-        return self.expiry_date < fields.Date.context_today(self)
 
     def action_submit(self):
         """Submit the document for review."""

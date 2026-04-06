@@ -20,10 +20,10 @@
               action="action_federation_tournament_registration"
               sequence="10"/>
 
-    <menuitem id="menu_federation_club_representative"
+    <menuitem id="menu_federation_club_representative_portal"
               name="Club Representatives"
               parent="menu_federation_portal_root"
-              action="action_federation_club_representative"
+              action="action_federation_club_representative_portal"
               sequence="20"/>
 
 </odoo>

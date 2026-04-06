@@ -7,7 +7,7 @@
         <field name="model">federation.season.registration</field>
         <field name="inherit_id" ref="sports_federation_base.view_federation_season_registration_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@string='Registration']" position="inside">
+            <xpath expr="//group[field[@name='division']]" position="inside">
                 <field name="competition_id"/>
                 <field name="rule_set_id"/>
             </xpath>
@@ -18,7 +18,7 @@
     <record id="view_federation_season_registration_tree_inherit" model="ir.ui.view">
         <field name="name">federation.season.registration.tree.inherit</field>
         <field name="model">federation.season.registration</field>
-        <field name="inherit_id" ref="sports_federation_base.view_federation_season_registration_tree"/>
+        <field name="inherit_id" ref="sports_federation_base.view_federation_season_registration_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='division']" position="after">
                 <field name="competition_id" optional="hide"/>
@@ -33,7 +33,7 @@
         <field name="model">federation.season.registration</field>
         <field name="inherit_id" ref="sports_federation_base.view_federation_season_registration_search"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='division']" position="after">
+            <xpath expr="//field[@name='team_id']" position="after">
                 <field name="competition_id"/>
                 <field name="rule_set_id"/>
             </xpath>

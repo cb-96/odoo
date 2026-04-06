@@ -6,11 +6,9 @@
         <field name="model">federation.tournament</field>
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@string='Tournament']" position="after">
-                <group string="Venue">
-                    <field name="venue_id"/>
-                    <field name="venue_notes"/>
-                </group>
+            <xpath expr="//field[@name='rule_set_id']" position="after">
+                <field name="venue_id"/>
+                <field name="venue_notes"/>
             </xpath>
         </field>
     </record>

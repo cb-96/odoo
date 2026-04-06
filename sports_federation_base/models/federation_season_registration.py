@@ -39,13 +39,17 @@ class FederationSeasonRegistration(models.Model):
         models.Constraint('unique (team_id, season_id)', 'A team can only register once per season.'),
     ]
 
-    @api.model
-    def create(self, vals):
-        if vals.get("name", "New") == "New":
-            vals["name"] = self.env["ir.next_by_code"].next_by_code(
-                "federation.season.registration"
-            ) or "New"
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+
+        for vals in vals_list:
+            if vals.get("name", "New") == "New":
+                vals["name"] = self.env["ir.sequence"].next_by_code(
+                    "federation.season.registration"
+                ) or "New"
+        return super().create(vals_list)
 
     def action_confirm(self):
         for rec in self:

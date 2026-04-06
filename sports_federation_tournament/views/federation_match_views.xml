@@ -46,14 +46,13 @@
                             <field name="away_score" invisible="state not in ('in_progress', 'done')"/>
                         </group>
                     </group>
-                    <separator string="Notes"/>
-                    <field name="notes"/>
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>

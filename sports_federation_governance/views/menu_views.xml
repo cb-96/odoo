@@ -4,7 +4,7 @@
     <!-- Governance submenu -->
     <menuitem id="menu_federation_governance"
               name="Governance"
-              parent="sports_federation_base.menu_federation"
+              parent="sports_federation_base.menu_federation_root"
               sequence="90"/>
 
     <!-- Override Requests -->

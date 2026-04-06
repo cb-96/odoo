@@ -4,7 +4,7 @@
     <!-- Reporting submenu -->
     <menuitem id="menu_federation_reporting"
               name="Reporting"
-              parent="sports_federation_base.menu_federation"
+              parent="sports_federation_base.menu_federation_root"
               sequence="110"/>
 
     <!-- Participation Report -->

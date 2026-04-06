@@ -18,6 +18,7 @@ class KnockoutWizard(models.TransientModel):
     ], default="tournament", required=True)
     participant_ids = fields.Many2many(
         "federation.tournament.participant",
+        relation="fed_ko_wiz_participant_rel",
         domain="[('tournament_id', '=', tournament_id)]"
     )
     source_stage_id = fields.Many2one(

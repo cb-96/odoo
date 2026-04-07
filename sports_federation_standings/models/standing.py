@@ -137,7 +137,14 @@ class FederationStanding(models.Model):
         return {"win": 3, "draw": 1, "loss": 0}
 
     def _get_relevant_matches(self):
-        """Get matches relevant for this standing computation."""
+        """Get matches relevant for this standing computation.
+
+        When ``sports_federation_result_control`` is installed the
+        ``include_in_official_standings`` flag is present on
+        ``federation.match``.  Only matches that carry this flag are
+        counted so that contested, corrected, or unapproved results are
+        automatically excluded from standings.
+        """
         self.ensure_one()
         domain = [
             ("tournament_id", "=", self.tournament_id.id),
@@ -149,7 +156,12 @@ class FederationStanding(models.Model):
             domain.append(("stage_id", "=", self.stage_id.id))
         if self.group_id:
             domain.append(("group_id", "=", self.group_id.id))
-        return self.env["federation.match"].search(domain)
+        # Safety: only count officially approved results when result_control is
+        # installed (adds include_in_official_standings to federation.match).
+        MatchModel = self.env["federation.match"]
+        if "include_in_official_standings" in MatchModel._fields:
+            domain.append(("include_in_official_standings", "=", True))
+        return MatchModel.search(domain)
 
     def _get_participants(self):
         """Get participants for this standing."""

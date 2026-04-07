@@ -1,6 +1,6 @@
 {
     "name": "Sports Federation Finance Bridge",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "category": "Sports",
     "summary": "Record billable and reimbursable federation events without accounting integration",
     "author": "Sports Federation",
@@ -10,6 +10,7 @@
         "sports_federation_base",
         "sports_federation_people",
         "sports_federation_tournament",
+        "sports_federation_result_control",
         "sports_federation_officiating",
         "sports_federation_discipline",
     ],

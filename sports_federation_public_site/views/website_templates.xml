@@ -217,4 +217,89 @@
         </t>
     </template>
 
+    <!-- Competitions Archive Page -->
+    <template id="page_competitions_archive" name="Competitions Archive">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item active">Archive</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4">Past Competitions</h1>
+                <div class="row">
+                    <t t-foreach="tournaments" t-as="tournament">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a t-attf-href="/competitions/{{tournament.id}}">
+                                            <t t-esc="tournament.name"/>
+                                        </a>
+                                    </h5>
+                                    <span class="badge bg-secondary mb-2" t-esc="tournament.state"/>
+                                    <p class="card-text text-muted">
+                                        <t t-if="tournament.date_start">
+                                            <t t-esc="tournament.date_start.strftime('%b %d, %Y')"/>
+                                            <t t-if="tournament.date_end">
+                                                - <t t-esc="tournament.date_end.strftime('%b %d, %Y')"/>
+                                            </t>
+                                        </t>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="not tournaments" class="alert alert-info">
+                    No archived competitions found.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Competition Teams Page -->
+    <template id="page_competition_teams" name="Competition Teams">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item">
+                            <a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/>
+                        </li>
+                        <li class="breadcrumb-item active">Teams</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4"><t t-esc="tournament.name"/> — Teams</h1>
+                <table class="table table-striped" t-if="participants">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Club</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="participants" t-as="participant">
+                            <tr>
+                                <td t-esc="participant.team_id.name"/>
+                                <td t-esc="participant.club_id.name"/>
+                                <td>
+                                    <span t-attf-class="badge bg-#{participant.state == 'confirmed' and 'success' or 'secondary'}">
+                                        <t t-esc="participant.state"/>
+                                    </span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-if="not participants" class="alert alert-info">
+                    No teams registered for this competition yet.
+                </div>
+            </div>
+        </t>
+    </template>
+
 </odoo>

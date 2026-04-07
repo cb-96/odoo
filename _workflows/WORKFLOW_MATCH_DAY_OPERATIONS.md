@@ -76,6 +76,21 @@ Match sheet states: `draft` → `submitted` → `confirmed` → `locked`.
 1. Confirm the match venue is set (via `venue_id` on the match).
 2. Verify the playing area is available and suitable.
 3. Contact venue via stored contact details if needed.
+4. If the venue incurs passthrough costs, create a finance event for the
+   booking: use the **Create Venue Charge** button on the match header (visible
+   when the match is `scheduled`) or call the programmatic helper
+   `match.action_create_venue_finance_event()` (fee type code `venue_booking` by default).
+5. Gameday bundling and constraints:
+    - Matches may be attached to a `federation.gameday` record (`match.gameday_id`).
+       When schedules are generated with `Schedule By Round`, the scheduler
+       creates or finds a `gameday` per round and attaches the matches. This
+       groups matches at a venue/day for operational coordination (referees,
+       volunteers, venue logistics and finance events).
+    - The venues module enforces a constraint that prevents teams in the same
+       `category` from playing the same opponent more than once on the same
+       gameday. This avoids repeated pairings in the same venue/day block.
+    - For programmatic creation or lookup use the gameday helper in
+       `sports_federation_venues.models.federation_gameday` (e.g. `find_or_create`).
 
 ### 5. Pre-Match Checks
 
@@ -118,7 +133,7 @@ After the match completes:
 | Complete referee assignments | `officiating` | Assignments marked `completed` |
 | Submit result for verification | `result_control` | Feeds into result pipeline |
 | Record incidents | `discipline` | Incidents logged during match |
-| Log finance events | `finance_bridge` | Referee reimbursements, any fines |
+| Log finance events | `finance_bridge` | Referee reimbursements, venue booking charges (via match header), any fines |
 | Recompute standings | `standings` | Updated with new result |
 
 ## State Diagram

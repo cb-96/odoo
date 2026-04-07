@@ -17,6 +17,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/venue_views.xml",
+        "views/gameday_views.xml",
         "views/tournament_views_inherit.xml",
         "views/match_views_inherit.xml",
         "views/menu_views.xml",

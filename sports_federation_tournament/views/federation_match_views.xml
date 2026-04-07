@@ -11,6 +11,8 @@
                             invisible="state != 'draft'"/>
                     <button name="action_start" string="Start" type="object" class="btn-primary"
                             invisible="state != 'scheduled'"/>
+                    <button name="action_create_venue_finance_event" string="Create Venue Charge" type="object" class="btn-secondary"
+                        invisible="state != 'scheduled'"/>
                     <button name="action_done" string="Done" type="object" class="btn-secondary"
                             invisible="state != 'in_progress'"/>
                     <button name="action_cancel" string="Cancel" type="object"
@@ -30,6 +32,7 @@
                             <field name="tournament_id"/>
                             <field name="stage_id" domain="[('tournament_id', '=', tournament_id)]"/>
                             <field name="group_id" domain="[('stage_id', '=', stage_id)]"/>
+                            <field name="round_id" domain="[('stage_id', '=', stage_id)]"/>
                         </group>
                         <group string="Schedule">
                             <field name="date_scheduled"/>
@@ -47,6 +50,22 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Bracket" name="bracket"
+                              invisible="not source_match_1_id and not source_match_2_id and not bracket_type">
+                            <group>
+                                <group string="Bracket Info">
+                                    <field name="bracket_type"/>
+                                    <field name="round_number"/>
+                                    <field name="bracket_position"/>
+                                </group>
+                                <group string="Source Matches">
+                                    <field name="source_match_1_id"/>
+                                    <field name="source_type_1"/>
+                                    <field name="source_match_2_id"/>
+                                    <field name="source_type_2"/>
+                                </group>
+                            </group>
+                        </page>
                         <page string="Notes" name="notes">
                             <field name="notes"/>
                         </page>
@@ -70,6 +89,8 @@
                 <field name="away_team_id"/>
                 <field name="away_score" invisible="1"/>
                 <field name="venue"/>
+                <field name="bracket_type" optional="hide"/>
+                <field name="round_number" optional="hide"/>
                 <field name="state"/>
             </list>
         </field>

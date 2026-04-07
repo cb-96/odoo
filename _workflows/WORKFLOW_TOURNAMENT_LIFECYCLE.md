@@ -86,9 +86,27 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
 
 1. Move tournament to `in_progress` state.
 2. Open the **Round Robin Wizard** or **Knockout Wizard** from the tournament form.
-3. Configure: select participants, set start date/time, interval between rounds,
-   default venue.
-4. Preview the generated schedule via the summary field.
+3. Configure scheduling options in the wizard:
+   - Select participants and (optionally) a group.
+   - Set `Start Date/Time` and `Interval (hours)` — the intra-round spacing.
+   - Use `Full Cycles (repeats)` to repeat the entire round-robin cycle N times
+     (useful for formats that play multiple cycles; combined with the double-round
+     option this enables 4+ meetings per pair).
+    - Toggle `Schedule By Round` to allocate each round as a single gameday/time
+       block. When enabled, `Round Interval (hours)` controls spacing between rounds
+       (e.g., 24 hours for daily rounds). Intra-round spacing still uses
+       `Interval (hours)`.
+       - When `Schedule By Round` is enabled the scheduler will create or find a
+          `federation.gameday` record (in `sports_federation_venues`) for each
+          round and attach created matches to that gameday. This enables venue-day
+          bundling and easier match-day coordination (referee assignment, venue
+          logistics, and finance events).
+       - The round scheduler will attempt to alternate `male` / `female` fixtures
+          inside each round to provide rest; this is a best-effort interleaving and
+          does not change seeding or pairings.
+    - Set a default `Venue` and enable `Overwrite Existing` to replace prior matches.
+4. Preview the generated schedule via the wizard `Summary` (shows total matches
+   given participants, cycles, and round type).
 5. Confirm to create all match records automatically.
 
 **Round Robin**: Circle method generates a complete schedule where every team plays
@@ -125,8 +143,19 @@ every other team once (single) or twice (double).
 
 1. After a stage completes, review standings to determine qualifiers.
 2. Qualification rules from the rule set indicate who advances.
-3. Create participants in the next stage (e.g. move group winners to knockout).
-4. Generate the next stage's schedule using competition engine wizards.
+3. Use `federation.stage.progression` rules to formalise advancement: these
+   can be single-group, cross-group (e.g. "best third-placed teams"), and
+   include seeding/placement strategies. A progression rule can be executed
+   manually (`action_execute()`) or set to `auto_advance=True`.
+   - When a standings record is `frozen`/`computed`, any progression rules for
+     that stage with `auto_advance=True` will be executed automatically — new
+     participants are created in the target stage and (optionally) a new stage
+     schedule can be generated automatically.
+4. Tournament templates (`federation.tournament.template`) let administrators
+   scaffold common stage/group/progression combinations (for recurring
+   tournaments). Use `action_apply()` from the template to create stages and
+   progression rules for a tournament in a single step.
+5. Generate the next stage's schedule using competition engine wizards.
 
 ### 10. Tournament Completion
 

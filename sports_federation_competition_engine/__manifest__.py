@@ -6,9 +6,11 @@
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",
-    "depends": ["sports_federation_tournament"],
+    "depends": ["sports_federation_tournament", "sports_federation_standings"],
     "data": [
         "security/ir.model.access.csv",
+        "views/stage_progression_views.xml",
+        "views/tournament_template_views.xml",
         "wizards/round_robin_wizard_views.xml",
         "wizards/knockout_wizard_views.xml",
         "views/tournament_buttons.xml",

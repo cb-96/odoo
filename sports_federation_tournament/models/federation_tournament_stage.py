@@ -28,15 +28,18 @@ class FederationTournamentStage(models.Model):
     notes = fields.Text(string="Notes")
 
     group_ids = fields.One2many("federation.tournament.group", "stage_id", string="Groups")
+    round_ids = fields.One2many("federation.tournament.round", "stage_id", string="Rounds")
     match_ids = fields.One2many("federation.match", "stage_id", string="Matches")
 
     group_count = fields.Integer(string="Group Count", compute="_compute_counts", store=True)
+    round_count = fields.Integer(string="Round Count", compute="_compute_counts", store=True)
     match_count = fields.Integer(string="Match Count", compute="_compute_counts", store=True)
 
-    @api.depends("group_ids", "match_ids")
+    @api.depends("group_ids", "round_ids", "match_ids")
     def _compute_counts(self):
         for rec in self:
             rec.group_count = len(rec.group_ids)
+            rec.round_count = len(rec.round_ids)
             rec.match_count = len(rec.match_ids)
 
     @api.constrains("date_start", "date_end")
@@ -48,6 +51,12 @@ class FederationTournamentStage(models.Model):
     def action_view_groups(self):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_group_action')
+        action['domain'] = [('stage_id', '=', self.id)]
+        return action
+
+    def action_view_rounds(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_round_action')
         action['domain'] = [('stage_id', '=', self.id)]
         return action
 

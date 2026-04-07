@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_gameday_form" model="ir.ui.view">
+        <field name="name">federation.gameday.form</field>
+        <field name="model">federation.gameday</field>
+        <field name="arch" type="xml">
+            <form string="Gameday">
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="start_datetime"/>
+                        <field name="venue_id"/>
+                        <field name="playing_area_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Matches">
+                            <field name="match_ids">
+                                <tree>
+                                    <field name="date_scheduled"/>
+                                    <field name="home_team_id"/>
+                                    <field name="away_team_id"/>
+                                    <field name="venue_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_gameday_tree" model="ir.ui.view">
+        <field name="name">federation.gameday.tree</field>
+        <field name="model">federation.gameday</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="start_datetime"/>
+                <field name="venue_id"/>
+                <field name="match_ids" widget="one2many_list"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_federation_gameday" model="ir.actions.act_window">
+        <field name="name">Gamedays</field>
+        <field name="res_model">federation.gameday</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

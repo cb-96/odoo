@@ -31,6 +31,14 @@ class KnockoutWizard(models.TransientModel):
     bracket_size = fields.Selection([
         ("natural", "Natural Size"), ("power_of_two", "Next Power of 2"),
     ], default="power_of_two", required=True)
+    bracket_type = fields.Selection([
+        ("winners", "Winners"),
+        ("losers", "Losers"),
+        ("consolation", "Consolation"),
+        ("placement_3rd", "3rd Place"),
+        ("placement_5th", "5th Place"),
+        ("placement_7th", "7th Place"),
+    ], string="Bracket Type", default="winners", required=True)
     start_datetime = fields.Datetime()
     interval_hours = fields.Integer(default=2)
     venue = fields.Char()
@@ -78,6 +86,7 @@ class KnockoutWizard(models.TransientModel):
         options = {
             "seeding": self.seeding,
             "bracket_size": self.bracket_size,
+            "bracket_type": self.bracket_type,
             "start_datetime": self.start_datetime,
             "interval_hours": self.interval_hours,
             "venue": self.venue or "",

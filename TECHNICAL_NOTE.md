@@ -1,3 +1,41 @@
+New competition models and behaviours (2026-04-07)
+
+Several new models and scheduling behaviours were added to support more realistic tournaments and automated stage progression:
+
+- `federation.stage.progression` (in `sports_federation_competition_engine`) — a rule model that formalises how teams advance from a source stage/group into a target stage/group. It supports per-group and cross-group selection (`cross_group`), rank windows (`rank_from` / `rank_to`), seeding strategies (`keep_rank`, `reseed`, `random`) and an `auto_advance` flag. Use `action_execute()` to apply a progression and the model is used automatically when standings are frozen and `auto_advance=True`.
+
+- `federation.tournament.round` (in `sports_federation_tournament`) — materialises a logical round inside a stage (useful for per-round scheduling, reporting and tying rounds to `gameday` records). Rounds have a `sequence`, `match_ids` and a simple `state` (draft/scheduled/completed).
+
+- `federation.tournament.template` (in `sports_federation_competition_engine`) — templates to predefine stage/group layouts and progression rules. A template's `action_apply(tournament)` will create stages, groups and progression rules automatically, enabling one-click tournament scaffolding (useful for repeatable event formats).
+
+- `federation.gameday` (in `sports_federation_venues`) — represents a venue/day/time block that bundles multiple matches at the same venue on the same calendar day. When `schedule_by_round` is enabled in the round-robin wizard the scheduler will create or find a `gameday` per round and attach created matches to it.
+
+- Match bracket/linking fields — `federation.match` now includes: `round_id`, `round_number`, `bracket_position`, `bracket_type`, `source_match_1_id`, `source_match_2_id`, `source_type_1/2` and helper `next_match_ids`. These turn matches into first-class bracket nodes so full knockout trees can be created and wired together programmatically.
+
+- Full knockout bracket generation — the knockout service now constructs a full bracket tree (all rounds) rather than only first-round matches. Placeholder matches for later rounds are created and linked to their source matches (by `source_match_*`); when a match is completed the system will auto-populate winners/losers into the next round using the `action_done()` / `_advance_bracket_teams()` logic.
+
+- Round-robin enhancements — the round-robin service now returns explicit per-round pairings, supports `rounds_count` (repeat full cycles), `schedule_by_round` (create a `gameday` per round) and attempts to alternate `male` / `female` fixtures within a round to provide rest. When a `venue` string matches a `federation.venue` record the scheduler will attach `venue_id` and create/find the `gameday` record.
+
+Implementation notes
+
+- Gameday constraints: the `sports_federation_venues` module adds a `gameday_id` on `federation.match` and enforces a constraint preventing teams in the same `category` from playing the same opponent more than once on the same gameday. This prevents repeated pairings inside a single venue/day block.
+
+- Alternation policy: when scheduling by round the scheduler partitions same-gender fixtures and interleaves male/female matches where possible. Mixed-gender fixtures are appended after the alternation. This is a best-effort policy (it preserves determinism but will not re-seed teams).
+
+- Auto-advance: `federation.standing.action_freeze()` triggers any `federation.stage.progression` rules with `auto_advance=True` for the stage/group being frozen — this provides an automated pipeline from computed standings into new stage participants (and is safe-guarded by the progression rule's `state`).
+
+- Backwards compatibility: the `venue` free-text field is preserved for compatibility; when a `federation.venue` is found the scheduler will populate `venue_id` and `gameday_id` where relevant.
+
+Testing and coverage
+
+Add unit and integration tests covering the following:
+
+- `federation.stage.progression`: ensure `action_execute()` selects the correct teams across single-group and cross-group rules and that `seeding_method` options behave as documented.
+- `federation.tournament.template`: applying a template creates the expected stages, groups and progression rules.
+- Round-robin scheduling: `rounds_count`, `schedule_by_round`, per-round gameday creation, alternation of male/female fixtures, and repeat cycles.
+- Knockout bracket generation: bracket size determination, bye handling, and automatic wiring of placeholder matches and advancement on `action_done()`.
+- Gameday constraints: enforce no duplicate same-category pairings on a gameday.
+
 # Sports Federation — Technical Note
 
 Last updated: 2026-04-07

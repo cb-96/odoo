@@ -12,6 +12,10 @@
                                 class="oe_stat_button" icon="fa-object-group">
                             <field name="group_count" widget="statinfo" string="Groups"/>
                         </button>
+                        <button name="action_view_rounds" type="object"
+                                class="oe_stat_button" icon="fa-repeat">
+                            <field name="round_count" widget="statinfo" string="Rounds"/>
+                        </button>
                         <button name="action_view_matches" type="object"
                                 class="oe_stat_button" icon="fa-list">
                             <field name="match_count" widget="statinfo" string="Matches"/>

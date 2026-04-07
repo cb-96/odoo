@@ -307,15 +307,73 @@ class FederationStanding(models.Model):
             })
 
     def action_freeze(self):
-        """Freeze the standing to prevent recomputation."""
+        """Freeze the standing to prevent recomputation.
+
+        If any stage progression rules have auto_advance=True for the
+        source stage/group of this standing, they are executed automatically.
+        """
         for record in self:
             record.state = "frozen"
+            # Trigger auto-advance progression rules
+            if record.tournament_id and record.stage_id:
+                Progression = self.env.get("federation.stage.progression")
+                if Progression is not None:
+                    domain = [
+                        ("tournament_id", "=", record.tournament_id.id),
+                        ("source_stage_id", "=", record.stage_id.id),
+                        ("auto_advance", "=", True),
+                        ("state", "=", "pending"),
+                    ]
+                    if record.group_id:
+                        domain.append(("source_group_id", "=", record.group_id.id))
+                    rules = Progression.search(domain)
+                    for rule in rules:
+                        rule.action_execute()
 
     def action_unfreeze(self):
         """Unfreeze the standing to allow recomputation."""
         for record in self:
             if record.state == "frozen":
                 record.state = "computed"
+
+    @api.model
+    def cross_group_ranking(self, stage, rank_from=1, rank_to=None):
+        """Rank teams across all groups in a stage at the given rank positions.
+
+        Returns a sorted list of dicts:
+            [{"team": team_record, "rank": int, "points": int,
+              "score_diff": int, "score_for": int, "group": group_record}]
+        """
+        groups = self.env["federation.tournament.group"].search([
+            ("stage_id", "=", stage.id),
+        ])
+        entries = []
+        for group in groups:
+            standing = self.search([
+                ("tournament_id", "=", stage.tournament_id.id),
+                ("stage_id", "=", stage.id),
+                ("group_id", "=", group.id),
+                ("state", "in", ("computed", "frozen")),
+            ], limit=1)
+            if not standing:
+                continue
+            for line in standing.line_ids:
+                if line.rank < rank_from:
+                    continue
+                if rank_to and line.rank > rank_to:
+                    continue
+                entries.append({
+                    "team": line.team_id,
+                    "rank": line.rank,
+                    "points": line.points,
+                    "score_diff": line.score_diff,
+                    "score_for": line.score_for,
+                    "group": group,
+                })
+
+        # Sort: points desc → goal diff desc → goals for desc → team name asc
+        entries.sort(key=lambda e: (-e["points"], -e["score_diff"], -e["score_for"], e["team"].name))
+        return entries
 
 
 class FederationStandingLine(models.Model):

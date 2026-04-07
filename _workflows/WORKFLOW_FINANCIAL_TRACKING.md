@@ -41,6 +41,7 @@ future accounting integration.
 | Disciplinary Fine (Red Card) | `fine` | €150.00 |
 | Referee Travel Reimbursement | `reimbursement` | €75.00 |
 | Match Officials Fee | `reimbursement` | €100.00 |
+| Venue Booking (passthrough) | `other` | variable |
 
 Each fee type has a unique code, category, and default amount.
 
@@ -57,6 +58,10 @@ Finance events are created in two ways:
 - Registration approved → registration fee event
 - Sanction with fine → fine event
 - Referee assignment completed → reimbursement event
+ - Venue confirmed for a match → venue booking event (created manually via the
+     **Create Venue Charge** match header button or programmatically via
+     `match.action_create_venue_finance_event()`). The default fee type code used
+     is `venue_booking` but implementations may map to a different fee type.
 
 Each event records:
 - Fee type (from catalogue)

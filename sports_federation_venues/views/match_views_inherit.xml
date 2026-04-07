@@ -9,6 +9,7 @@
             <xpath expr="//field[@name='venue']" position="after">
                 <field name="venue_id"/>
                 <field name="playing_area_id" domain="[('venue_id', '=', venue_id)]"/>
+                <field name="gameday_id"/>
             </xpath>
         </field>
     </record>

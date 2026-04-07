@@ -27,6 +27,9 @@ class RoundRobinWizard(models.TransientModel):
         [("single", "Single Round"), ("double", "Double Round")],
         string="Round Type", default="single", required=True
     )
+    rounds_count = fields.Integer(string="Full Cycles (repeats)", default=1)
+    schedule_by_round = fields.Boolean(string="Schedule By Round", default=False)
+    round_interval_hours = fields.Integer(string="Round Interval (hours)", default=24)
     start_datetime = fields.Datetime(string="Start Date/Time")
     interval_hours = fields.Integer(string="Interval (hours)", default=2)
     venue = fields.Char(string="Default Venue")
@@ -45,9 +48,10 @@ class RoundRobinWizard(models.TransientModel):
                 continue
             rounds = n - 1 if n % 2 == 0 else n
             matches_per_round = n // 2
-            total = rounds * matches_per_round
+            per_cycle = rounds * matches_per_round
             if wiz.round_type == "double":
-                total *= 2
+                per_cycle *= 2
+            total = per_cycle * (wiz.rounds_count or 1)
             wiz.summary = (
                 f"{n} participants, {rounds} rounds, "
                 f"{matches_per_round} matches/round, {total} total matches."
@@ -73,6 +77,9 @@ class RoundRobinWizard(models.TransientModel):
             "double_round": self.round_type == "double",
             "start_datetime": self.start_datetime,
             "interval_hours": self.interval_hours,
+            "rounds_count": self.rounds_count,
+            "schedule_by_round": self.schedule_by_round,
+            "round_interval_hours": self.round_interval_hours,
             "venue": self.venue or "",
             "overwrite": self.overwrite,
             "group": self.group_id,

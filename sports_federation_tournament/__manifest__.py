@@ -11,6 +11,7 @@
         "security/ir.model.access.csv",
         "views/federation_tournament_participant_views.xml",
         "views/federation_match_views.xml",
+        "views/federation_tournament_round_views.xml",
         "views/federation_tournament_group_views.xml",
         "views/federation_tournament_stage_views.xml",
         "views/federation_tournament_views.xml",

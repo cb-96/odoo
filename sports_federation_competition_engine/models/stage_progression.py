@@ -1,0 +1,228 @@
+from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
+
+
+class FederationStageProgression(models.Model):
+    _name = "federation.stage.progression"
+    _description = "Stage Progression Rule"
+    _order = "sequence, id"
+
+    name = fields.Char(string="Name", compute="_compute_name", store=True)
+    tournament_id = fields.Many2one(
+        "federation.tournament",
+        string="Tournament",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    sequence = fields.Integer(string="Sequence", default=10)
+
+    # Source
+    source_stage_id = fields.Many2one(
+        "federation.tournament.stage",
+        string="Source Stage",
+        required=True,
+        ondelete="cascade",
+        domain="[('tournament_id', '=', tournament_id)]",
+    )
+    source_group_id = fields.Many2one(
+        "federation.tournament.group",
+        string="Source Group",
+        ondelete="cascade",
+        domain="[('stage_id', '=', source_stage_id)]",
+        help="Leave empty for cross-group ranking (all groups in the source stage).",
+    )
+
+    # Target
+    target_stage_id = fields.Many2one(
+        "federation.tournament.stage",
+        string="Target Stage",
+        required=True,
+        ondelete="cascade",
+        domain="[('tournament_id', '=', tournament_id)]",
+    )
+    target_group_id = fields.Many2one(
+        "federation.tournament.group",
+        string="Target Group",
+        ondelete="cascade",
+        domain="[('stage_id', '=', target_stage_id)]",
+    )
+
+    # Rank selection
+    rank_from = fields.Integer(
+        string="From Rank",
+        required=True,
+        default=1,
+        help="Lowest rank to include (e.g. 1 = winner).",
+    )
+    rank_to = fields.Integer(
+        string="To Rank",
+        required=True,
+        default=2,
+        help="Highest rank to include (e.g. 2 = top 2 advance).",
+    )
+    cross_group = fields.Boolean(
+        string="Cross-Group Ranking",
+        compute="_compute_cross_group",
+        store=True,
+        help="When source group is empty, ranks are compared across all groups in the stage.",
+    )
+
+    # Seeding in target
+    seeding_method = fields.Selection(
+        [
+            ("keep_rank", "Keep Rank"),
+            ("reseed", "Re-seed by Points"),
+            ("random", "Random"),
+        ],
+        string="Seeding Method",
+        default="keep_rank",
+        required=True,
+    )
+    auto_advance = fields.Boolean(
+        string="Auto Advance",
+        default=False,
+        help="Automatically advance teams when standings are frozen.",
+    )
+    state = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("executed", "Executed"),
+        ],
+        string="Status",
+        default="pending",
+        required=True,
+    )
+
+    @api.depends("source_stage_id", "target_stage_id", "rank_from", "rank_to")
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.source_stage_id:
+                parts.append(rec.source_stage_id.name or "?")
+            parts.append(f"rank {rec.rank_from}-{rec.rank_to}")
+            parts.append("→")
+            if rec.target_stage_id:
+                parts.append(rec.target_stage_id.name or "?")
+            rec.name = " ".join(parts)
+
+    @api.depends("source_group_id")
+    def _compute_cross_group(self):
+        for rec in self:
+            rec.cross_group = not rec.source_group_id
+
+    @api.constrains("rank_from", "rank_to")
+    def _check_ranks(self):
+        for rec in self:
+            if rec.rank_from < 1:
+                raise ValidationError("From Rank must be at least 1.")
+            if rec.rank_to < rec.rank_from:
+                raise ValidationError("To Rank must be >= From Rank.")
+
+    @api.constrains("source_stage_id", "target_stage_id")
+    def _check_not_same_stage(self):
+        for rec in self:
+            if rec.source_stage_id == rec.target_stage_id:
+                raise ValidationError("Source and target stages must be different.")
+
+    def action_execute(self):
+        """Execute the progression: read standings and advance teams."""
+        import random as _random
+        for rec in self:
+            if rec.state == "executed":
+                raise UserError("This progression rule has already been executed.")
+
+            qualified = rec._get_qualified_teams()
+            if not qualified:
+                raise UserError("No qualified teams found. Compute standings first.")
+
+            # Apply seeding
+            if rec.seeding_method == "random":
+                _random.shuffle(qualified)
+            elif rec.seeding_method == "reseed":
+                qualified.sort(key=lambda x: (-x["points"], -x["score_diff"], x["name"]))
+            # keep_rank: already sorted by rank
+
+            Participant = self.env["federation.tournament.participant"]
+            for idx, entry in enumerate(qualified):
+                team = entry["team"]
+                # Find existing participant or create
+                existing = Participant.search([
+                    ("tournament_id", "=", rec.tournament_id.id),
+                    ("team_id", "=", team.id),
+                ], limit=1)
+                vals = {
+                    "stage_id": rec.target_stage_id.id,
+                    "seed": idx + 1,
+                    "state": "confirmed",
+                }
+                if rec.target_group_id:
+                    vals["group_id"] = rec.target_group_id.id
+                if existing:
+                    existing.write(vals)
+                else:
+                    vals.update({
+                        "tournament_id": rec.tournament_id.id,
+                        "team_id": team.id,
+                    })
+                    Participant.create(vals)
+
+            rec.state = "executed"
+
+    def _get_qualified_teams(self):
+        """Get teams from standings that match the rank range.
+
+        Returns a list of dicts: [{"team": team_record, "rank": int, "points": int, ...}]
+        """
+        self.ensure_one()
+        Standing = self.env["federation.standing"]
+
+        if self.source_group_id:
+            # Single group — read standings for that group
+            standings = Standing.search([
+                ("tournament_id", "=", self.tournament_id.id),
+                ("stage_id", "=", self.source_stage_id.id),
+                ("group_id", "=", self.source_group_id.id),
+                ("state", "in", ("computed", "frozen")),
+            ], limit=1)
+            if not standings:
+                return []
+            lines = standings.line_ids.filtered(
+                lambda l: self.rank_from <= l.rank <= self.rank_to
+            ).sorted("rank")
+            return [{
+                "team": l.team_id,
+                "rank": l.rank,
+                "points": l.points,
+                "score_diff": l.score_diff,
+                "name": l.team_id.name,
+            } for l in lines]
+        else:
+            # Cross-group: collect the specified rank range across ALL groups in the stage
+            groups = self.env["federation.tournament.group"].search([
+                ("stage_id", "=", self.source_stage_id.id),
+            ])
+            all_entries = []
+            for group in groups:
+                standings = Standing.search([
+                    ("tournament_id", "=", self.tournament_id.id),
+                    ("stage_id", "=", self.source_stage_id.id),
+                    ("group_id", "=", group.id),
+                    ("state", "in", ("computed", "frozen")),
+                ], limit=1)
+                if not standings:
+                    continue
+                lines = standings.line_ids.filtered(
+                    lambda l: self.rank_from <= l.rank <= self.rank_to
+                ).sorted("rank")
+                for l in lines:
+                    all_entries.append({
+                        "team": l.team_id,
+                        "rank": l.rank,
+                        "points": l.points,
+                        "score_diff": l.score_diff,
+                        "name": l.team_id.name,
+                    })
+            # Sort cross-group by points desc, then goal diff desc, then goals for desc
+            all_entries.sort(key=lambda x: (-x["points"], -x["score_diff"], x["name"]))
+            return all_entries

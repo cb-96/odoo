@@ -68,6 +68,7 @@
                                     <field name="qualified"/>
                                     <field name="eliminated"/>
                                     <field name="note"/>
+                                    <field name="tiebreak_notes" optional="hide"/>
                                 </list>
                             </field>
                         </page>
@@ -100,6 +101,7 @@
                 <field name="qualified"/>
                 <field name="eliminated"/>
                 <field name="note"/>
+                <field name="tiebreak_notes" optional="hide"/>
             </list>
         </field>
     </record>

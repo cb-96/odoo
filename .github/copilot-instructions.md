@@ -38,7 +38,7 @@
 - **Primary rule**: Prefer conservative, minimal changes that keep module boundaries intact. Avoid touching unrelated modules unless absolutely required and explain why.
 - **When asked to implement a model change**: return a plan and a single patch that includes: the `models/<file>.py` change, `models/__init__.py` export, `security/ir.model.access.csv` entry, `views/*.xml` (if UI), `__manifest__.py` update, and a new test under `tests/` that exercises the main logic.
 - **When asked to add a wizard or generator**: create a transient model in `wizards/`, a wizard view, and a small deterministic example in tests that demonstrates expected output (e.g. round-robin schedule for 4 participants).
--- **When asked about business rules or workflows**: consult and reference the Workflow docs in `odoo/_workflows` and the `TECHNICAL_NOTE.md` to ensure behaviour matches the documented flows.
+- **When asked about business rules or workflows**: consult and reference the Workflow docs in `odoo/_workflows` and the `TECHNICAL_NOTE.md` to ensure behaviour matches the documented flows.
 
 **Example prompts you can give Copilot in this repo**
 - **Add a model**: "Add a new persistent model `federation.referee` with fields `name`, `certification_level`, `active`; add ACLs, a basic tree/form view, and unit tests. Show me the patch with files changed."
@@ -46,9 +46,16 @@
 - **Fix workflow behaviour**: "Investigate why standings recompute includes contested results; propose a minimal fix and tests to prevent contested results from being counted."
 
 **Notes & Expectations**
--- **Authoritative sources**: the `_workflows` documents and `TECHNICAL_NOTE.md` are the source of truth for business behaviour—use them before changing workflows.
+- **Authoritative sources**: the `_workflows` documents and `TECHNICAL_NOTE.md` are the source of truth for business behaviour—use them before changing workflows.
 - **Keep modules decoupled**: the architecture intentionally separates `base`, `tournament`, and the `competition_engine` service; prefer adding features in the appropriate module.
--- **Ask clarifying questions**: if a requested feature impacts tournament rules, scheduling, or publication flows, ask which workflow (`_workflows/*.md`) should govern the behaviour.
+- **Ask clarifying questions**: if a requested feature impacts tournament rules, scheduling, or publication flows, ask which workflow (`_workflows/*.md`) should govern the behaviour.
+
+**Documentation Maintenance (required)**
+
+- **Always update docs**: For any code, data model, view, workflow, or behaviour change, update the relevant documentation files in this repository as part of the same change set (or in a linked follow-up PR). At minimum, consider updating `odoo/TECHNICAL_NOTE.md`, `odoo/CONTEXT.md`, the module-level `README.md` under the affected `odoo/<module>/`, and any affected workflow files under `odoo/_workflows/`.
+- **Doc scope**: Document API/ORM changes, new models, new fields, migration notes (DB changes), public website impacts, and any user-facing behaviour changes. Include brief examples or CLI commands for running tests or sample data when useful.
+- **PR checklist enforcement**: Fail-fast — do not open a PR merging code that introduces behavioural or schema changes without documentation entries. If you cannot edit docs yourself (e.g., lacking domain clarity), leave a clear TODO in the code and notify repository maintainers.
+- **Why**: Keeping documentation current ensures maintainability, reduces onboarding friction, and prevents accidental regressions in workflows that rely on textual contracts (workflows, assumptions, and operational steps).
 
 If you'd like, I can now: (1) commit this file, (2) open a PR draft with the change, or (3) run a more thorough pass reading additional README/_logs files and incorporate extra notes—which would you prefer?
 

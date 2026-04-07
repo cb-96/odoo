@@ -1,6 +1,7 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.website.controllers.main import Website
+import json
 
 
 class PublicCompetitionsController(http.Controller):
@@ -17,6 +18,46 @@ class PublicCompetitionsController(http.Controller):
         }
         return request.render("sports_federation_public_site.page_competitions", values)
 
+    @http.route("/competitions/archive", type="http", auth="public", website=True)
+    def competitions_archive(self, **kw):
+        """Public archive page — past (closed/cancelled) published tournaments."""
+        tournaments = request.env["federation.tournament"].sudo().search([
+            ("website_published", "=", True),
+            ("state", "in", ("closed", "cancelled")),
+        ], order="date_start desc")
+        values = {
+            "tournaments": tournaments,
+            "page_name": "competitions_archive",
+        }
+        return request.render("sports_federation_public_site.page_competitions_archive", values)
+
+    @http.route("/competitions/api/json", type="json", auth="public", methods=["POST"])
+    def competitions_api_json(self, **kw):
+        """JSON API endpoint — returns published tournament list.
+
+        Response::
+
+            {
+                "tournaments": [
+                    {"id": int, "name": str, "state": str,
+                     "date_start": str|null, "date_end": str|null}
+                ]
+            }
+        """
+        tournaments = request.env["federation.tournament"].sudo().search([
+            ("website_published", "=", True),
+        ], order="date_start asc")
+        result = []
+        for t in tournaments:
+            result.append({
+                "id": t.id,
+                "name": t.name,
+                "state": t.state,
+                "date_start": t.date_start.isoformat() if t.date_start else None,
+                "date_end": t.date_end.isoformat() if t.date_end else None,
+            })
+        return {"tournaments": result}
+
     @http.route("/competitions/<model('federation.tournament'):tournament>", type="http", auth="public", website=True)
     def competition_detail(self, tournament, **kw):
         """Public tournament detail page."""
@@ -27,6 +68,22 @@ class PublicCompetitionsController(http.Controller):
             "page_name": "competition_detail",
         }
         return request.render("sports_federation_public_site.page_competition_detail", values)
+
+    @http.route("/competitions/<model('federation.tournament'):tournament>/teams", type="http", auth="public", website=True)
+    def competition_teams(self, tournament, **kw):
+        """Public team listing for a tournament, ordered by participant state."""
+        if not tournament.website_published:
+            return request.not_found()
+        participants = request.env["federation.tournament.participant"].sudo().search([
+            ("tournament_id", "=", tournament.id),
+            ("state", "!=", "withdrawn"),
+        ], order="state asc, team_id asc")
+        values = {
+            "tournament": tournament,
+            "participants": participants,
+            "page_name": "competition_teams",
+        }
+        return request.render("sports_federation_public_site.page_competition_teams", values)
 
     @http.route("/competitions/<model('federation.tournament'):tournament>/standings", type="http", auth="public", website=True)
     def competition_standings(self, tournament, **kw):

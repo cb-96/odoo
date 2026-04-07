@@ -275,6 +275,34 @@ class FederationStanding(models.Model):
         items.sort(key=sort_key)
         return items
 
+    def _compute_tiebreak_notes(self, sorted_items, participant_map):
+        """Return {pid: tiebreak_notes_str} explaining rank vs the item above.
+
+        For each item that shares the same point total as the item ranked
+        immediately above it, the note records which criterion separated them.
+        Items ranked by points alone (no tie) receive an empty string.
+        """
+        notes = {}
+        for i, (pid, s) in enumerate(sorted_items):
+            if i == 0:
+                notes[pid] = ""
+                continue
+            prev_pid, prev_s = sorted_items[i - 1]
+            if prev_s["points"] != s["points"]:
+                notes[pid] = ""
+            elif prev_s["won"] != s["won"]:
+                notes[pid] = _("Ranked by wins")
+            elif (prev_s["score_for"] - prev_s["score_against"]) != (
+                s["score_for"] - s["score_against"]
+            ):
+                notes[pid] = _("Ranked by goal difference")
+            elif prev_s["score_for"] != s["score_for"]:
+                notes[pid] = _("Ranked by goals scored")
+            else:
+                participant = participant_map.get(pid)
+                notes[pid] = _("Ranked alphabetically by team name")
+        return notes
+
     def action_recompute(self):
         """Recompute the standing from matches."""
         for record in self:
@@ -290,6 +318,7 @@ class FederationStanding(models.Model):
             sorted_items = record._sort_standings(stats)
             participants = record._get_participants()
             participant_map = {p.id: p for p in participants}
+            tiebreak_notes = record._compute_tiebreak_notes(sorted_items, participant_map)
 
             # Delete existing lines
             record.line_ids.unlink()
@@ -310,6 +339,7 @@ class FederationStanding(models.Model):
                         "score_for": s["score_for"],
                         "score_against": s["score_against"],
                         "points": s["points"],
+                        "tiebreak_notes": tiebreak_notes.get(pid, ""),
                     })
                     rank += 1
 
@@ -435,6 +465,7 @@ class FederationStandingLine(models.Model):
     qualified = fields.Boolean(string="Qualified", default=False)
     eliminated = fields.Boolean(string="Eliminated", default=False)
     note = fields.Char(string="Note")
+    tiebreak_notes = fields.Text(string="Tiebreak Notes", readonly=True)
 
     _sql_constraints = [
         (

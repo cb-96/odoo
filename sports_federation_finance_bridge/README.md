@@ -18,6 +18,7 @@ an accounting system when one is connected.
 | `sports_federation_base` | Clubs |
 | `sports_federation_people` | Players |
 | `sports_federation_tournament` | Tournament context |
+| `sports_federation_result_control` | Result approval pipeline (automatic event hooks) |
 | `sports_federation_officiating` | Referees |
 | `sports_federation_discipline` | Fines and sanctions |
 
@@ -63,3 +64,19 @@ An individual financial occurrence.
 3. **Accounting-ready** — The `invoiced` and `paid` states plus `invoice_ref` field
    prepare for future accounting module bridging.
 4. **Multi-entity** — Covers clubs, players, and referees.
+## Result Approval Finance Hooks (Phase 2)
+
+match_result_hooks.py extends `federation.match` with:
+
+- **`result_fee_type_id`** (Many2one ? ederation.fee.type): optional; when set,
+  a `federation.finance.event` (charge) is automatically created when
+  `action_approve_result()` completes.
+- **`result_finance_event_ids`** (computed): all finance events whose source is
+  this match record.
+- **`action_approve_result()`** override: calls the base result pipeline and then
+  fires the auto-event.
+
+### Migration note (v19.0.1.1.0)
+
+A new field `result_fee_type_id` (Many2one, nullable) is added to
+`federation.match`.  Run `-u sports_federation_finance_bridge` after upgrade.

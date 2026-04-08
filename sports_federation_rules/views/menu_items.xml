@@ -4,7 +4,7 @@
     <!-- Competition Rules submenu -->
     <menuitem id="menu_federation_competition_rules"
               name="Competition Rules"
-              parent="sports_federation_base.menu_federation_root"
+              parent="sports_federation_base.menu_federation_competitions"
               sequence="35"/>
 
     <menuitem id="menu_federation_rule_set"

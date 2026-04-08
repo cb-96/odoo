@@ -34,5 +34,9 @@
               parent="menu_federation_root"
               action="federation_season_registration_action"
               sequence="30"/>
+    <menuitem id="menu_federation_competitions"
+              name="Competitions"
+              parent="menu_federation_root"
+              sequence="25"/>
 
 </odoo>

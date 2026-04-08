@@ -4,4 +4,4 @@ __pycache__/
 *.pyo
 
 # CI logs (keep .gitkeep, ignore run output)
-ci/logs/*/
+ci/logs/*

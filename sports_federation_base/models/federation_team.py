@@ -42,9 +42,7 @@ class FederationTeam(models.Model):
         string="Registration Count", compute="_compute_registration_count", store=True
     )
 
-    _constraints = [
-        models.Constraint('unique (code)', 'Team code must be unique.'),
-    ]
+    _code_unique = models.Constraint('unique (code)', 'Team code must be unique.')
 
     @api.depends("registration_ids")
     def _compute_registration_count(self):
@@ -63,5 +61,5 @@ class FederationTeam(models.Model):
         if name:
             domain = ["|", ("name", operator, name), ("code", operator, name)]
             recs = self.search(domain + args, limit=limit)
-            return recs.name_get()
+            return recs.name_get() if hasattr(recs, 'name_get') else [(r.id, r.display_name) for r in recs]
         return super().name_search(name, args, operator, limit)

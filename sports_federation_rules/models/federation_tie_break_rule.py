@@ -38,10 +38,7 @@ class FederationTieBreakRule(models.Model):
         help="If checked, lower values rank higher (e.g., fewer goals against).",
     )
 
-    _sql_constraints = [
-        (
-            "rule_set_type_unique",
-            "UNIQUE(rule_set_id, tie_break_type)",
-            "Each tie-break type can only appear once per rule set.",
-        ),
-    ]
+    _rule_set_type_unique = models.Constraint(
+        'UNIQUE(rule_set_id, tie_break_type)',
+        'Each tie-break type can only appear once per rule set.',
+    )

@@ -15,19 +15,19 @@
                     <notebook>
                         <page string="Stages">
                             <field name="line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="stage_name"/>
                                     <field name="stage_type"/>
                                     <field name="format"/>
                                     <field name="group_count"/>
                                     <field name="teams_per_group"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Progression Rules">
                             <field name="progression_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="source_line_id"/>
                                     <field name="target_line_id"/>
@@ -35,7 +35,7 @@
                                     <field name="rank_to"/>
                                     <field name="seeding_method"/>
                                     <field name="auto_advance"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -48,10 +48,10 @@
         <field name="name">federation.tournament.template.tree</field>
         <field name="model">federation.tournament.template</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="description"/>
-            </tree>
+            </list>
         </field>
     </record>
 

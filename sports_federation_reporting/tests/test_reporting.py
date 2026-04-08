@@ -16,6 +16,8 @@ class TestReporting(TransactionCase):
         cls.season = cls.env["federation.season"].create({
             "name": "Test Season",
             "code": "TS2024",
+            "date_start": "2024-09-01",
+            "date_end": "2025-06-30",
         })
         # Create test referee
         cls.referee = cls.env["federation.referee"].create({

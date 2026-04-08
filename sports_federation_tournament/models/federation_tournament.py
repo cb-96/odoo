@@ -66,9 +66,7 @@ class FederationTournament(models.Model):
     )
     match_count = fields.Integer(string="Match Count", compute="_compute_counts", store=True)
 
-    _constraints = [
-        models.Constraint('unique (code)', 'Tournament code must be unique.'),
-    ]
+    _code_unique = models.Constraint('unique (code)', 'Tournament code must be unique.')
 
     @api.depends("stage_ids", "participant_ids", "match_ids")
     def _compute_counts(self):

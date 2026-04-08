@@ -31,6 +31,7 @@ class TestMatchSheets(TransactionCase):
             "name": "Test Tournament",
             "code": "TTOUR",
             "season_id": cls.season.id,
+            "date_start": "2024-01-01",
         })
         cls.match = cls.env["federation.match"].create({
             "tournament_id": cls.tournament.id,

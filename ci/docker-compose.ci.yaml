@@ -1,0 +1,38 @@
+# CI/CD compose – isolated ephemeral environment for automated tests.
+# Project name: sf_ci  (set in run_tests.sh via -p flag)
+#
+# Spins up a throwaway Postgres (tmpfs) and Odoo instance that installs
+# modules with --test-enable, then tears everything down.
+
+services:
+  ci-db:
+    image: postgres:18
+    user: root
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_ci
+      POSTGRES_DB: postgres
+    # tmpfs for speed – data is discarded after the run
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  ci-odoo:
+    image: odoo:19
+    user: root
+    depends_on:
+      ci-db:
+        condition: service_healthy
+    environment:
+      HOST: ci-db
+      USER: odoo
+      PASSWORD: odoo_ci
+    volumes:
+      - ../:/mnt/extra-addons:ro
+      - ./odoo-ci.conf:/etc/odoo/odoo.conf:ro
+    # No HTTP – headless test runner; stop after init + test
+    command: ["--no-http", "--stop-after-init", "--test-enable"]

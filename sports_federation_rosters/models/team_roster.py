@@ -73,13 +73,10 @@ class FederationTeamRoster(models.Model):
     min_players_required = fields.Integer(string="Min Players Required")
     max_players_allowed = fields.Integer(string="Max Players Allowed")
 
-    _sql_constraints = [
-        (
-            "unique_team_season_competition_name",
-            "UNIQUE(team_id, season_id, competition_id, name)",
-            "A roster with this name already exists for this team, season, and competition.",
-        ),
-    ]
+    _unique_team_season_competition_name = models.Constraint(
+        'UNIQUE(team_id, season_id, competition_id, name)',
+        'A roster with this name already exists for this team, season, and competition.',
+    )
 
     @api.depends("line_ids")
     def _compute_line_count(self):
@@ -212,13 +209,10 @@ class FederationTeamRosterLine(models.Model):
         store=True,
     )
 
-    _sql_constraints = [
-        (
-            "unique_roster_player_date_from",
-            "UNIQUE(roster_id, player_id, date_from)",
-            "A roster line for this player with this start date already exists.",
-        ),
-    ]
+    _unique_roster_player_date_from = models.Constraint(
+        'UNIQUE(roster_id, player_id, date_from)',
+        'A roster line for this player with this start date already exists.',
+    )
 
     @api.depends("status", "license_id", "license_id.expiry_date")
     def _compute_eligible(self):

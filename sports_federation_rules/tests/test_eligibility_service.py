@@ -13,6 +13,7 @@ Coverage:
 - check_match_eligibility uses match → tournament chain rule set
 """
 from datetime import date, timedelta
+from unittest import SkipTest
 from odoo.tests.common import TransactionCase
 
 
@@ -21,6 +22,8 @@ class TestEligibilityService(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        if "federation.tournament" not in cls.env:
+            raise SkipTest("federation.tournament not available (installed later)")
         cls.club = cls.env["federation.club"].create({
             "name": "Elig Test Club",
             "code": "ETC",

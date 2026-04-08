@@ -164,7 +164,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         """JSON API date fields are None when the tournament has no date."""
         t = self.env["federation.tournament"].create({
             "name": "No Dates Tour", "code": "NDTOUR", "season_id": self.season.id,
-            "website_published": True,
+            "website_published": True, "date_start": "2024-01-01",
         })
         date_end_val = t.date_end.isoformat() if t.date_end else None
         self.assertIsNone(date_end_val)

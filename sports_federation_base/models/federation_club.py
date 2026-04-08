@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class FederationClub(models.Model):
@@ -27,9 +28,7 @@ class FederationClub(models.Model):
     team_ids = fields.One2many("federation.team", "club_id", string="Teams")
     team_count = fields.Integer(string="Team Count", compute="_compute_team_count", store=True)
 
-    _constraints = [
-        models.Constraint('unique (code)', 'Club code must be unique.'),
-    ]
+    _code_unique = models.Constraint('unique (code)', 'Club code must be unique.')
 
     @api.depends("team_ids")
     def _compute_team_count(self):
@@ -46,4 +45,4 @@ class FederationClub(models.Model):
     def _check_email(self):
         for rec in self:
             if rec.email and "@" not in rec.email:
-                raise models.ValidationError("Invalid email address.")
+                raise ValidationError("Invalid email address.")

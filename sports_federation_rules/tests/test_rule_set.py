@@ -1,5 +1,6 @@
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError
+from odoo.tools import mute_logger
 
 
 class TestFederationRuleSet(TransactionCase):
@@ -30,7 +31,7 @@ class TestFederationRuleSet(TransactionCase):
 
     def test_rule_set_code_unique(self):
         """Test that rule set code must be unique."""
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception), mute_logger('odoo.sql_db'), self.cr.savepoint():
             self.env["federation.rule.set"].create({
                 "name": "Duplicate Rules",
                 "code": "SLR",
@@ -72,7 +73,7 @@ class TestFederationRuleSet(TransactionCase):
             "result_type": "win",
             "points": 3,
         })
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception), mute_logger('odoo.sql_db'), self.cr.savepoint():
             self.env["federation.points.rule"].create({
                 "rule_set_id": self.rule_set.id,
                 "result_type": "win",
@@ -109,7 +110,7 @@ class TestFederationRuleSet(TransactionCase):
             "sequence": 10,
             "tie_break_type": "head_to_head",
         })
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception), mute_logger('odoo.sql_db'), self.cr.savepoint():
             self.env["federation.tie_break.rule"].create({
                 "rule_set_id": self.rule_set.id,
                 "sequence": 20,
@@ -150,4 +151,4 @@ class TestFederationRuleSet(TransactionCase):
             "value_integer": 4,
         })
         self.assertEqual(len(self.rule_set.qualification_rule_ids), 1)
-        self.assertEqual(reg.rule_set_id, self.rule_set)
+        self.assertEqual(top_n.rule_set_id, self.rule_set)

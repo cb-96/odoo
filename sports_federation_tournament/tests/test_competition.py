@@ -8,7 +8,11 @@ class TestFederationCompetition(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.season = cls.env["federation.season"].create({"name": "2025-2026"})
+        cls.season = cls.env["federation.season"].create({
+            "name": "2025-2026",
+            "date_start": "2025-09-01",
+            "date_end": "2026-06-30",
+        })
 
     def test_create_competition(self):
         """Test creating a basic competition."""

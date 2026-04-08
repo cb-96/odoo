@@ -55,9 +55,7 @@ class FederationCompetition(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _constraints = [
-        models.Constraint('unique (code)', 'Competition code must be unique.'),
-    ]
+    _code_unique = models.Constraint('unique (code)', 'Competition code must be unique.')
 
     @api.depends("tournament_ids")
     def _compute_tournament_count(self):

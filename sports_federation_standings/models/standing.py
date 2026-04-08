@@ -66,13 +66,10 @@ class FederationStanding(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        (
-            "unique_tournament_stage_group_name",
-            "UNIQUE(tournament_id, stage_id, group_id, name)",
-            "A standing with this name already exists for this tournament/stage/group.",
-        ),
-    ]
+    _unique_tournament_stage_group_name = models.Constraint(
+        'UNIQUE(tournament_id, stage_id, group_id, name)',
+        'A standing with this name already exists for this tournament/stage/group.',
+    )
 
     @api.depends("line_ids")
     def _compute_line_count(self):
@@ -137,7 +134,15 @@ class FederationStanding(models.Model):
         return {"win": 3, "draw": 1, "loss": 0}
 
     def _get_relevant_matches(self):
-        """Get matches relevant for this standing computation."""
+        """Get matches relevant for this standing computation.
+
+        When ``sports_federation_result_control`` is installed the
+        ``include_in_official_standings`` field is present on
+        ``federation.match``.  Only matches explicitly approved for
+        official standings are counted; contested / unapproved results
+        are excluded.  When the module is absent every ``done`` match
+        is counted (fallback behaviour).
+        """
         self.ensure_one()
         domain = [
             ("tournament_id", "=", self.tournament_id.id),
@@ -149,6 +154,9 @@ class FederationStanding(models.Model):
             domain.append(("stage_id", "=", self.stage_id.id))
         if self.group_id:
             domain.append(("group_id", "=", self.group_id.id))
+        # If result_control is installed, only count officially approved matches
+        if "include_in_official_standings" in self.env["federation.match"]._fields:
+            domain.append(("include_in_official_standings", "=", True))
         return self.env["federation.match"].search(domain)
 
     def _get_participants(self):
@@ -455,13 +463,10 @@ class FederationStandingLine(models.Model):
     note = fields.Char(string="Note")
     tiebreak_notes = fields.Text(string="Tiebreak Notes", readonly=True)
 
-    _sql_constraints = [
-        (
-            "unique_standing_participant",
-            "UNIQUE(standing_id, participant_id)",
-            "A standing line already exists for this participant.",
-        ),
-    ]
+    _unique_standing_participant = models.Constraint(
+        'UNIQUE(standing_id, participant_id)',
+        'A standing line already exists for this participant.',
+    )
 
     @api.depends("score_for", "score_against")
     def _compute_score_diff(self):

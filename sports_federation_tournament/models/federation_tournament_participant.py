@@ -39,9 +39,7 @@ class FederationTournamentParticipant(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _constraints = [
-        models.Constraint('unique (team_id, tournament_id)', 'A team can only participate once per tournament.'),
-    ]
+    _team_tournament_unique = models.Constraint('unique (team_id, tournament_id)', 'A team can only participate once per tournament.')
 
     @api.depends("team_id", "tournament_id")
     def _compute_name(self):

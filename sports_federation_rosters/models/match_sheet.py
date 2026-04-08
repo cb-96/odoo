@@ -58,13 +58,10 @@ class FederationMatchSheet(models.Model):
     manager_name = fields.Char(string="Manager Name")
     notes = fields.Text(string="Notes")
 
-    _sql_constraints = [
-        (
-            "unique_match_team_side",
-            "UNIQUE(match_id, team_id, side)",
-            "A match sheet already exists for this team and side in this match.",
-        ),
-    ]
+    _unique_match_team_side = models.Constraint(
+        'UNIQUE(match_id, team_id, side)',
+        'A match sheet already exists for this team and side in this match.',
+    )
 
     @api.depends("line_ids")
     def _compute_line_count(self):
@@ -129,13 +126,10 @@ class FederationMatchSheetLine(models.Model):
         store=False,
     )
 
-    _sql_constraints = [
-        (
-            "unique_match_sheet_player",
-            "UNIQUE(match_sheet_id, player_id)",
-            "A player cannot appear twice on the same match sheet.",
-        ),
-    ]
+    _unique_match_sheet_player = models.Constraint(
+        'UNIQUE(match_sheet_id, player_id)',
+        'A player cannot appear twice on the same match sheet.',
+    )
 
     @api.depends("roster_line_id", "roster_line_id.eligible")
     def _compute_eligible(self):

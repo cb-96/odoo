@@ -42,9 +42,7 @@ class FederationPlayerLicense(models.Model):
     eligibility_notes = fields.Text(string="Eligibility Notes")
     notes = fields.Text(string="Notes")
 
-    _constraints = [
-        models.Constraint('unique (player_id, season_id)', 'A player can only have one license per season.'),
-    ]
+    _player_season_unique = models.Constraint('unique (player_id, season_id)', 'A player can only have one license per season.')
 
     @api.constrains("issue_date", "expiry_date")
     def _check_dates(self):

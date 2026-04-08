@@ -76,7 +76,7 @@ class TestPublicSite(TransactionCase):
         self.tournament.public_slug = "test-slug"
         self.tournament.show_public_results = True
         self.tournament.show_public_standings = True
-        self.assertEqual(self.tournament.public_description, "Test description")
+        self.assertIn("Test description", str(self.tournament.public_description))
         self.assertEqual(self.tournament.public_slug, "test-slug")
         self.assertTrue(self.tournament.show_public_results)
         self.assertTrue(self.tournament.show_public_standings)

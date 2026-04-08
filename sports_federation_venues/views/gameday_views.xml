@@ -16,12 +16,12 @@
                     <notebook>
                         <page string="Matches">
                             <field name="match_ids">
-                                <tree>
+                                <list>
                                     <field name="date_scheduled"/>
                                     <field name="home_team_id"/>
                                     <field name="away_team_id"/>
                                     <field name="venue_id"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -34,11 +34,11 @@
         <field name="name">federation.gameday.tree</field>
         <field name="model">federation.gameday</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="start_datetime"/>
                 <field name="venue_id"/>
                 <field name="match_ids" widget="one2many_list"/>
-            </tree>
+            </list>
         </field>
     </record>
 

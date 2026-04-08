@@ -96,13 +96,10 @@ class FederationTournamentRegistration(models.Model):
         ondelete="set null",
     )
 
-    _sql_constraints = [
-        (
-            "team_tournament_unique",
-            "UNIQUE(team_id, tournament_id)",
-            "A team can only submit one registration request per tournament.",
-        ),
-    ]
+    _team_tournament_unique = models.Constraint(
+        'UNIQUE(team_id, tournament_id)',
+        'A team can only submit one registration request per tournament.',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):

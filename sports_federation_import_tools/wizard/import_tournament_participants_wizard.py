@@ -2,7 +2,7 @@ import base64
 import csv
 import io
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -79,12 +79,9 @@ class FederationImportTournamentParticipantsWizard(models.TransientModel):
                 continue
 
             # Check for duplicate
-            existing = Participant.search([
-                ("tournament_id", "=", tournament.id),
-                ("team_id", "=", team.id),
-            ], limit=1)
-            if existing:
-                errors.append(f"Row {row_num}: Team '{team_name}' already registered for tournament '{tournament_name}'.")
+            unavailable_reason = tournament.get_participant_team_unavailability_reason(team)
+            if unavailable_reason:
+                errors.append(f"Row {row_num}: {unavailable_reason}")
                 error_count += 1
                 continue
 
@@ -95,6 +92,9 @@ class FederationImportTournamentParticipantsWizard(models.TransientModel):
                         "team_id": team.id,
                     })
                     success_count += 1
+                except ValidationError as e:
+                    errors.append(f"Row {row_num}: {str(e)}")
+                    error_count += 1
                 except Exception as e:
                     errors.append(f"Row {row_num}: {str(e)}")
                     error_count += 1

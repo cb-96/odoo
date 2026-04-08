@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Public website pages for competitions, standings, and results",
+    "description": "Public website pages for competitions, standings, results, and federation events.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

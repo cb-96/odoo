@@ -9,17 +9,17 @@ class ResUsers(models.Model):
     representative_ids = fields.One2many(
         "federation.club.representative",
         "user_id",
-        string="Club Representative Roles",
+        string="Portal Representative Roles",
         help="Club representative records linked to this user for portal access.",
     )
     representative_count = fields.Integer(
-        string="Representative Role Count",
+        string="Portal Representative Role Count",
         compute="_compute_representative_count",
         store=True,
     )
     represented_club_ids = fields.Many2many(
         "federation.club",
-        string="Represented Clubs",
+        string="Portal Represented Clubs",
         compute="_compute_represented_club_ids",
         store=True,
         help="Clubs this user represents (via representative records).",

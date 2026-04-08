@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Referee management and match assignments",
+    "description": "Referee management, certifications, and match assignment workflows.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

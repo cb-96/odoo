@@ -11,6 +11,13 @@ class TestClubRepresentative(TransactionCase):
         super().setUpClass()
         # Create a club
         cls.club = cls.env["federation.club"].create({"name": "Test Club"})
+        cls.user = cls.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "Club Representative Test User",
+                "login": "club.representative.test.user@example.com",
+                "email": "club.representative.test.user@example.com",
+            }
+        )
         # Create partners
         cls.partner1 = cls.env["res.partner"].create({"name": "John Doe"})
         cls.partner2 = cls.env["res.partner"].create({"name": "Jane Smith"})
@@ -174,45 +181,43 @@ class TestClubRepresentative(TransactionCase):
 
     def test_get_club_for_user(self):
         """Test _get_club_for_user helper method."""
-        user = self.env.ref("base.user_admin")
         # No representative yet
-        club = self.env["federation.club.representative"]._get_club_for_user(user)
+        club = self.env["federation.club.representative"]._get_club_for_user(self.user)
         self.assertFalse(club)
 
         # Create representative linked to user
         self.env["federation.club.representative"].create(
             {
                 "club_id": self.club.id,
-                "partner_id": user.partner_id.id,
-                "user_id": user.id,
+                "partner_id": self.user.partner_id.id,
+                "user_id": self.user.id,
                 "role_type_id": self.role_competition.id,
             }
         )
-        club = self.env["federation.club.representative"]._get_club_for_user(user)
+        club = self.env["federation.club.representative"]._get_club_for_user(self.user)
         self.assertEqual(club, self.club)
 
     def test_get_clubs_for_user(self):
         """Test _get_clubs_for_user helper method."""
-        user = self.env.ref("base.user_admin")
         club2 = self.env["federation.club"].create({"name": "Test Club 2"})
 
         self.env["federation.club.representative"].create(
             {
                 "club_id": self.club.id,
-                "partner_id": user.partner_id.id,
-                "user_id": user.id,
+                "partner_id": self.user.partner_id.id,
+                "user_id": self.user.id,
                 "role_type_id": self.role_competition.id,
             }
         )
         self.env["federation.club.representative"].create(
             {
                 "club_id": club2.id,
-                "partner_id": user.partner_id.id,
-                "user_id": user.id,
+                "partner_id": self.user.partner_id.id,
+                "user_id": self.user.id,
                 "role_type_id": self.role_finance.id,
             }
         )
-        clubs = self.env["federation.club.representative"]._get_clubs_for_user(user)
+        clubs = self.env["federation.club.representative"]._get_clubs_for_user(self.user)
         self.assertEqual(len(clubs), 2)
         self.assertIn(self.club, clubs)
         self.assertIn(club2, clubs)
@@ -275,13 +280,12 @@ class TestClubRepresentative(TransactionCase):
 
     def test_user_represented_clubs(self):
         """Test user represented_club_ids computation."""
-        user = self.env.ref("base.user_admin")
         self.env["federation.club.representative"].create(
             {
                 "club_id": self.club.id,
-                "partner_id": user.partner_id.id,
-                "user_id": user.id,
+                "partner_id": self.user.partner_id.id,
+                "user_id": self.user.id,
                 "role_type_id": self.role_competition.id,
             }
         )
-        self.assertIn(self.club, user.represented_club_ids)
+        self.assertIn(self.club, self.user.represented_club_ids)

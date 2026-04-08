@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Controlled override requests, decisions, and audit notes for federation governance",
+    "description": "Governance workflows for override requests, decisions, and audit notes.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

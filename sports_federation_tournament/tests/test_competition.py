@@ -143,3 +143,163 @@ class TestFederationCompetition(TransactionCase):
         edition._compute_tournament_count()
         self.assertEqual(edition.tournament_count, 1)
         self.assertEqual(tournament.edition_id, edition)
+
+    def test_tournament_team_eligibility_uses_category_and_gender(self):
+        club = self.env["federation.club"].create({
+            "name": "Eligibility Club",
+            "code": "ELIGCLUB",
+        })
+        eligible_team = self.env["federation.team"].create({
+            "name": "Eligible Team",
+            "club_id": club.id,
+            "code": "ET1",
+            "category": "senior",
+            "gender": "male",
+        })
+        wrong_gender_team = self.env["federation.team"].create({
+            "name": "Wrong Gender Team",
+            "club_id": club.id,
+            "code": "ET2",
+            "category": "senior",
+            "gender": "female",
+        })
+        wrong_category_team = self.env["federation.team"].create({
+            "name": "Wrong Category Team",
+            "club_id": club.id,
+            "code": "ET3",
+            "category": "junior",
+            "gender": "male",
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Senior Men Cup",
+            "code": "SMC",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+            "category": "senior",
+            "gender": "male",
+        })
+
+        self.assertTrue(tournament.is_team_allowed(eligible_team))
+        self.assertFalse(tournament.is_team_allowed(wrong_gender_team))
+        self.assertFalse(tournament.is_team_allowed(wrong_category_team))
+        eligible_teams = tournament.search_eligible_teams([
+            ("id", "in", [eligible_team.id, wrong_gender_team.id, wrong_category_team.id]),
+        ])
+        self.assertIn(eligible_team, eligible_teams)
+        self.assertNotIn(wrong_gender_team, eligible_teams)
+        self.assertNotIn(wrong_category_team, eligible_teams)
+
+    def test_tournament_participant_rejects_ineligible_team(self):
+        club = self.env["federation.club"].create({
+            "name": "Participant Club",
+            "code": "PARTCLUB",
+        })
+        eligible_team = self.env["federation.team"].create({
+            "name": "Participant Eligible Team",
+            "club_id": club.id,
+            "code": "PET1",
+            "category": "senior",
+            "gender": "male",
+        })
+        ineligible_team = self.env["federation.team"].create({
+            "name": "Participant Ineligible Team",
+            "club_id": club.id,
+            "code": "PET2",
+            "category": "senior",
+            "gender": "female",
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Participant Cup",
+            "code": "PCUP",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+            "gender": "male",
+            "category": "senior",
+        })
+
+        participant = self.env["federation.tournament.participant"].create({
+            "tournament_id": tournament.id,
+            "team_id": eligible_team.id,
+        })
+        self.assertEqual(participant.team_id, eligible_team)
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.tournament.participant"].create({
+                "tournament_id": tournament.id,
+                "team_id": ineligible_team.id,
+            })
+
+    def test_tournament_participant_backend_domain_uses_eligible_teams(self):
+        club = self.env["federation.club"].create({
+            "name": "Domain Club",
+            "code": "DOMAINCLUB",
+        })
+        eligible_team = self.env["federation.team"].create({
+            "name": "Domain Eligible Team",
+            "club_id": club.id,
+            "code": "DET",
+            "category": "senior",
+            "gender": "male",
+        })
+        ineligible_team = self.env["federation.team"].create({
+            "name": "Domain Ineligible Team",
+            "club_id": club.id,
+            "code": "DIT",
+            "category": "senior",
+            "gender": "female",
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Domain Cup",
+            "code": "DCUP",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+            "gender": "male",
+            "category": "senior",
+        })
+
+        participant = self.env["federation.tournament.participant"].new({
+            "tournament_id": tournament.id,
+        })
+        participant._compute_team_selection()
+
+        eligible_team_ids = participant.eligible_team_ids._origin.ids
+        self.assertIn(eligible_team.id, eligible_team_ids)
+        self.assertNotIn(ineligible_team.id, eligible_team_ids)
+
+        available_team_ids = participant.available_team_ids._origin.ids
+        self.assertIn(eligible_team.id, available_team_ids)
+        self.assertNotIn(ineligible_team.id, available_team_ids)
+        self.assertIn("Domain Ineligible Team", participant.excluded_team_feedback_html)
+
+    def test_tournament_participant_backend_feedback_explains_duplicate_team(self):
+        club = self.env["federation.club"].create({
+            "name": "Duplicate Team Club",
+            "code": "DUPCLUB",
+        })
+        duplicate_team = self.env["federation.team"].create({
+            "name": "Existing Participant Team",
+            "club_id": club.id,
+            "code": "EXISTTEAM",
+            "category": "senior",
+            "gender": "male",
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Duplicate Participant Cup",
+            "code": "DPCUP",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+            "gender": "male",
+            "category": "senior",
+        })
+        self.env["federation.tournament.participant"].create({
+            "tournament_id": tournament.id,
+            "team_id": duplicate_team.id,
+        })
+
+        participant = self.env["federation.tournament.participant"].new({
+            "tournament_id": tournament.id,
+        })
+        participant._compute_team_selection()
+
+        self.assertNotIn(duplicate_team.id, participant.available_team_ids._origin.ids)
+        self.assertIn("A participant record already exists for this team.", participant.excluded_team_feedback_html)

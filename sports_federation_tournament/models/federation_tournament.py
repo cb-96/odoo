@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -10,6 +10,22 @@ class FederationTournament(models.Model):
 
     name = fields.Char(string="Tournament Name", required=True, tracking=True)
     code = fields.Char(string="Code", copy=False)
+    category = fields.Selection(
+        [
+            ("senior", "Senior"),
+            ("youth", "Youth"),
+            ("junior", "Junior"),
+            ("cadet", "Cadet"),
+            ("mini", "Mini"),
+        ],
+        string="Category",
+        tracking=True,
+    )
+    gender = fields.Selection(
+        [("male", "Male"), ("female", "Female"), ("mixed", "Mixed")],
+        string="Gender",
+        tracking=True,
+    )
     active = fields.Boolean(default=True)
     date_start = fields.Date(string="Start Date", required=True, tracking=True)
     date_end = fields.Date(string="End Date", tracking=True)
@@ -133,3 +149,176 @@ class FederationTournament(models.Model):
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_match_action')
         action['domain'] = [('tournament_id', '=', self.id)]
         return action
+
+    def _get_effective_rule_set(self):
+        self.ensure_one()
+        return self.rule_set_id or (
+            self.competition_id.rule_set_id if self.competition_id else self.env["federation.rule.set"]
+        )
+
+    def _get_rule_set_allowed_team_values(self):
+        self.ensure_one()
+        rule_set = self._get_effective_rule_set()
+        if not rule_set:
+            return set()
+
+        rules = rule_set.eligibility_rule_ids.filtered(
+            lambda rule: rule.eligibility_type == "gender" and rule.active and not rule.is_placeholder
+        )
+        allowed = set()
+        for rule in rules:
+            if rule.allowed_categories:
+                allowed.update(
+                    value.strip().lower()
+                    for value in rule.allowed_categories.split(",")
+                    if value.strip()
+                )
+        return allowed
+
+    def get_allowed_team_domain(self):
+        """Return an Odoo search domain for teams that may be eligible.
+
+        This is used for backend field domains. Exact validation still goes
+        through ``get_team_eligibility_error``.
+        """
+        self.ensure_one()
+        domain = []
+        if self.gender:
+            domain.append(("gender", "=", self.gender))
+        if self.category:
+            domain.append(("category", "=", self.category))
+
+        allowed = sorted(self._get_rule_set_allowed_team_values())
+        if allowed:
+            domain.extend(["|", ("gender", "in", allowed), ("category", "in", allowed)])
+        return domain
+
+    def search_eligible_teams(self, extra_domain=None):
+        self.ensure_one()
+        snapshot = self.get_team_selection_snapshot(extra_domain=extra_domain)
+        return snapshot["available_teams"]
+
+    def get_team_selection_snapshot(self, extra_domain=None, blocked_reason_by_team_id=None):
+        """Return selectable teams plus explicit exclusion reasons.
+
+        ``blocked_reason_by_team_id`` is used for non-eligibility exclusions,
+        such as duplicate registrations or existing participant records.
+        """
+        self.ensure_one()
+        Team = self.env["federation.team"]
+        teams = Team.search(list(extra_domain or []), order="name")
+        blocked_reason_by_team_id = blocked_reason_by_team_id or {}
+
+        available_team_ids = []
+        excluded_teams = []
+        for team in teams:
+            blocked_reason = blocked_reason_by_team_id.get(team.id)
+            if blocked_reason:
+                excluded_teams.append({"team": team, "reason": blocked_reason})
+                continue
+
+            error = self.get_team_eligibility_error(team)
+            if error:
+                excluded_teams.append({"team": team, "reason": error})
+                continue
+
+            available_team_ids.append(team.id)
+
+        return {
+            "available_teams": Team.browse(available_team_ids),
+            "excluded_teams": excluded_teams,
+        }
+
+    def _get_existing_participant_reason(self):
+        self.ensure_one()
+        return _("A participant record already exists for this team.")
+
+    def _get_participant_blocked_reason_by_team_id(self, current_participant=None):
+        self.ensure_one()
+        domain = [("tournament_id", "=", self.id)]
+        if current_participant and current_participant.id:
+            domain.append(("id", "!=", current_participant.id))
+
+        existing = self.env["federation.tournament.participant"].search(domain)
+        blocked_reason = self._get_existing_participant_reason()
+        return {
+            record.team_id.id: blocked_reason
+            for record in existing
+            if record.team_id
+        }
+
+    def get_participant_team_selection_snapshot(self, extra_domain=None, current_participant=None):
+        self.ensure_one()
+        return self.get_team_selection_snapshot(
+            extra_domain=extra_domain,
+            blocked_reason_by_team_id=self._get_participant_blocked_reason_by_team_id(
+                current_participant=current_participant
+            ),
+        )
+
+    def get_participant_team_unavailability_reason(self, team, current_participant=None):
+        self.ensure_one()
+        blocked_reason = self._get_participant_blocked_reason_by_team_id(
+            current_participant=current_participant
+        ).get(team.id)
+        if blocked_reason:
+            return blocked_reason
+        return self.get_team_eligibility_error(team)
+
+    def get_team_eligibility_error(self, team):
+        """Return a human-readable reason when a team cannot register.
+
+        This is the central source of truth for team-vs-tournament checks so
+        portal registration, backend registration, and direct participant
+        creation all behave consistently.
+        """
+        self.ensure_one()
+        if not team:
+            return _("A team must be selected.")
+
+        if self.gender and (team.gender or "").lower() != self.gender.lower():
+            return _(
+                "Team '%(team)s' (gender=%(team_gender)s) is not eligible for tournament '%(tournament)s' (gender=%(tournament_gender)s)."
+            ) % {
+                "team": team.name,
+                "team_gender": team.gender or _("not set"),
+                "tournament": self.name,
+                "tournament_gender": self.gender,
+            }
+
+        if self.category and (team.category or "").lower() != self.category.lower():
+            return _(
+                "Team '%(team)s' (category=%(team_category)s) is not eligible for tournament '%(tournament)s' (category=%(tournament_category)s)."
+            ) % {
+                "team": team.name,
+                "team_category": team.category or _("not set"),
+                "tournament": self.name,
+                "tournament_category": self.category,
+            }
+
+        rule_set = self._get_effective_rule_set()
+        if not rule_set:
+            return False
+
+        allowed = self._get_rule_set_allowed_team_values()
+        if not allowed:
+            return False
+
+        team_gender = (team.gender or "").lower()
+        team_category = (team.category or "").lower()
+        if allowed and team_gender not in allowed and team_category not in allowed:
+            return _(
+                "Team '%(team)s' (category=%(team_category)s, gender=%(team_gender)s) is not eligible for tournament '%(tournament)s' according to rule set '%(rule_set)s'."
+            ) % {
+                "team": team.name,
+                "team_category": team.category or _("not set"),
+                "team_gender": team.gender or _("not set"),
+                "tournament": self.name,
+                "rule_set": rule_set.name,
+            }
+        return False
+
+    def is_team_allowed(self, team):
+        """Return True when the team passes the tournament eligibility checks."""
+        self.ensure_one()
+        return not self.get_team_eligibility_error(team)

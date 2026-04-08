@@ -103,4 +103,37 @@ class TestImportTools(TransactionCase):
         self.assertEqual(wizard.line_count, 1)
         self.assertEqual(wizard.success_count, 0)
         self.assertEqual(wizard.error_count, 1)
-        self.assertIn("already registered", wizard.result_message)
+        self.assertIn("A participant record already exists for this team.", wizard.result_message)
+
+    def test_import_tournament_participants_reports_ineligible_reason(self):
+        """Test tournament participant import shows the same eligibility reason as backend flows."""
+        tournament = self.env["federation.tournament"].create({
+            "name": "Senior Men Tournament",
+            "code": "SMT2024",
+            "date_start": "2024-02-01",
+            "category": "senior",
+            "gender": "male",
+        })
+        ineligible_team = self.env["federation.team"].create({
+            "name": "Ineligible Team",
+            "club_id": self.club.id,
+            "code": "IT001",
+            "category": "senior",
+            "gender": "female",
+        })
+
+        csv_content = (
+            "tournament_name,team_name\n"
+            f"{tournament.name},{ineligible_team.name}"
+        )
+        wizard = self.env["federation.import.tournament.participants.wizard"].create({
+            "upload_file": self._create_csv_file(csv_content),
+            "dry_run": False,
+        })
+        wizard.action_parse_and_import()
+
+        self.assertEqual(wizard.line_count, 1)
+        self.assertEqual(wizard.success_count, 0)
+        self.assertEqual(wizard.error_count, 1)
+        self.assertIn("Ineligible Team", wizard.result_message)
+        self.assertIn("is not eligible for tournament", wizard.result_message)

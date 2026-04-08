@@ -30,11 +30,13 @@ class TestRosters(TransactionCase):
             "name": "Player One",
             "first_name": "Player",
             "last_name": "One",
+            "gender": "male",
         })
         cls.player2 = cls.env["federation.player"].create({
             "name": "Player Two",
             "first_name": "Player",
             "last_name": "Two",
+            "gender": "male",
         })
 
     def test_create_roster(self):
@@ -161,4 +163,29 @@ class TestRosters(TransactionCase):
                 "player_id": self.player1.id,
                 "date_from": "2024-12-31",
                 "date_to": "2024-01-01",
+            })
+
+    def test_roster_line_rejects_gender_mismatch(self):
+        """Players cannot be added to a single-gender team with the wrong gender."""
+        female_team = self.env["federation.team"].create({
+            "name": "Female Team",
+            "club_id": self.club.id,
+            "code": "FT",
+            "gender": "female",
+        })
+        male_player = self.env["federation.player"].create({
+            "first_name": "Male",
+            "last_name": "Player",
+            "gender": "male",
+        })
+        roster = self.env["federation.team.roster"].create({
+            "name": "Female Team Roster",
+            "team_id": female_team.id,
+            "season_id": self.season.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.team.roster.line"].create({
+                "roster_id": roster.id,
+                "player_id": male_player.id,
             })

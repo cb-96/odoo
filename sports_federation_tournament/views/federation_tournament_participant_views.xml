@@ -22,7 +22,14 @@
                     <group>
                         <group string="Tournament">
                             <field name="tournament_id"/>
-                            <field name="team_id"/>
+                            <field name="eligible_team_ids" invisible="1"/>
+                            <field name="available_team_ids" invisible="1"/>
+                            <field name="team_id" domain="[('id', 'in', available_team_ids)]"/>
+                            <field name="excluded_team_feedback_html"
+                                   widget="html"
+                                   nolabel="1"
+                                   readonly="1"
+                                   invisible="not excluded_team_feedback_html"/>
                             <field name="club_id"/>
                         </group>
                         <group string="Assignment">

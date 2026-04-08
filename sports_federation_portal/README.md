@@ -146,10 +146,73 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 
 ### Backend Flows
 - [ ] **Tournament registration form** shows statusbar, buttons, and chatter.
+- [ ] **Tournament registration form** explains why teams are unavailable in backend dropdowns.
 - [ ] **Submit/Confirm/Reject/Cancel** buttons work with correct visibility.
 - [ ] **Club representative** can be created from club form view.
 - [ ] **Menu items** appear under Federation > Portal.
 - [ ] **Search/filters** work on tournament registration tree view.
+
+## Live Browser Verification
+
+Use this procedure when you need to validate the real website flow against the running Docker stack instead of only relying on tests.
+
+### 1. Seed deterministic portal data
+
+Create or update a small set of records through Odoo shell so the browser check is repeatable.
+
+```bash
+docker compose exec odoo odoo shell -c /etc/odoo/odoo.conf -d odoo
+```
+
+Recommended dataset:
+- one club with a representative user
+- one open tournament with explicit `category` and `gender`
+- one eligible team for that tournament
+- one ineligible team for that tournament
+
+Important details:
+- use `group_ids` on `res.users`, not `groups_id`
+- write a plain password value if helper signatures differ across versions
+- call `env.cr.commit()` before leaving the shell so the browser can see the records
+
+### 2. Restart Odoo after model or view changes
+
+If Python models, XML views, or manifests changed, restart the running service before opening the website.
+
+```bash
+docker compose restart odoo
+```
+
+Without a restart, the browser may hit stale-runtime errors even when tests passed. During verification of the tournament registration page, a stale process raised an `AttributeError` for a newly added tournament field until the container was restarted.
+
+### 3. Verify the website flow in a browser
+
+Open the registration page directly:
+
+```text
+http://localhost:10019/tournament/<tournament_id>/register
+```
+
+Then confirm all of the following:
+- anonymous access redirects to login because the route uses `auth="user"`
+- after login, the page renders without server errors
+- the Team dropdown only shows selectable teams
+- the page shows an "Unavailable Teams" section with explicit reasons for exclusions
+- tournament category and gender badges match the seeded data
+
+### 4. Check live logs when the browser does not match expectations
+
+Use the running container logs immediately after reproducing the issue:
+
+```bash
+docker compose logs --tail=200 odoo
+```
+
+This is the fastest way to distinguish between:
+- routing issues
+- stale runtime state
+- missing upgraded fields
+- template rendering errors
 
 ## Required Changes in Existing Modules
 

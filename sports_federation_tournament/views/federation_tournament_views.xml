@@ -57,6 +57,8 @@
                             <field name="max_participants"/>
                             <field name="edition_id"/>
                             <field name="competition_id"/>
+                            <field name="category"/>
+                            <field name="gender"/>
                             <field name="rule_set_id"/>
                         </group>
                     </group>

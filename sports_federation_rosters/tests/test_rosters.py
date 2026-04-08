@@ -25,7 +25,6 @@ class TestRosters(TransactionCase):
         cls.competition = cls.env["federation.competition"].create({
             "name": "Test Competition",
             "code": "TC",
-            "season_id": cls.season.id,
         })
         cls.player1 = cls.env["federation.player"].create({
             "name": "Player One",

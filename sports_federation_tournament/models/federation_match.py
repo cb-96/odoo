@@ -153,7 +153,10 @@ class FederationMatch(models.Model):
         FeeType = self.env["federation.fee.type"]
 
         for match in self:
-            if not match.venue:
+            venue_name = ""
+            if hasattr(match, 'venue_id') and match.venue_id:
+                venue_name = match.venue_id.name
+            if not venue_name:
                 raise ValidationError("Match has no venue set; cannot create finance event.")
 
             fee_type = FeeType.search([("code", "=", fee_type_code)], limit=1)
@@ -167,7 +170,7 @@ class FederationMatch(models.Model):
                     "currency_id": self.env.company.currency_id.id,
                 })
 
-            note_text = note or f"Venue booking for {match.name} at {match.venue}"
+            note_text = note or f"Venue booking for {match.name} at {venue_name}"
             event = self.env["federation.finance.event"].create_from_source(
                 match, fee_type, amount=amount, event_type="charge", partner=partner, note=note_text
             )

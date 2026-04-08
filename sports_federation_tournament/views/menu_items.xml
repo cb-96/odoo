@@ -63,4 +63,10 @@
               action="federation_tournament_create_action"
               sequence="5"/>
 
+    <menuitem id="menu_federation_tournament_list"
+              name="Tournament List"
+              parent="menu_federation_tournament"
+              action="federation_tournament_action"
+              sequence="1"/>
+
 </odoo>

@@ -15,6 +15,7 @@
         "views/federation_tournament_group_views.xml",
         "views/federation_tournament_stage_views.xml",
         "views/federation_tournament_views.xml",
+        "views/federation_competition_edition_views.xml",
         "views/federation_competition_views.xml",
         "views/federation_season_registration_views_inherit.xml",
         "views/menu_items.xml",

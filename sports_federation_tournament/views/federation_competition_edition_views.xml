@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_federation_tournament_form" model="ir.ui.view">
-        <field name="name">federation.tournament.form</field>
-        <field name="model">federation.tournament</field>
+    <record id="view_federation_competition_edition_form" model="ir.ui.view">
+        <field name="name">federation.competition.edition.form</field>
+        <field name="model">federation.competition.edition</field>
         <field name="arch" type="xml">
-            <form string="Tournament">
+            <form string="Competition Edition">
                 <header>
                     <button name="action_open" string="Open" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
@@ -21,17 +21,9 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_stages" type="object"
+                        <button name="action_view_tournaments" type="object"
                                 class="oe_stat_button" icon="fa-sitemap">
-                            <field name="stage_count" widget="statinfo" string="Stages"/>
-                        </button>
-                        <button name="action_view_participants" type="object"
-                                class="oe_stat_button" icon="fa-users">
-                            <field name="participant_count" widget="statinfo" string="Participants"/>
-                        </button>
-                        <button name="action_view_matches" type="object"
-                                class="oe_stat_button" icon="fa-list">
-                            <field name="match_count" widget="statinfo" string="Matches"/>
+                            <field name="tournament_count" widget="statinfo" string="Divisions"/>
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
@@ -39,24 +31,18 @@
                     <div class="oe_title">
                         <label for="name"/>
                         <h1>
-                            <field name="name" placeholder="Tournament Name"/>
+                            <field name="name" placeholder="e.g. Premier League 2025-2026"/>
                         </h1>
-                        <h3>
-                            <field name="code" placeholder="Code"/>
-                        </h3>
                     </div>
                     <group>
-                        <group string="Schedule">
-                            <field name="tournament_type"/>
-                            <field name="date_start"/>
-                            <field name="date_end" invisible="tournament_type == 'single_day'"/>
-                        </group>
-                        <group string="Details">
-                            <field name="season_id"/>
-                            <field name="location"/>
-                            <field name="max_participants"/>
-                            <field name="edition_id"/>
+                        <group string="Competition">
                             <field name="competition_id"/>
+                            <field name="competition_type"/>
+                            <field name="season_id"/>
+                        </group>
+                        <group string="Schedule &amp; Rules">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
                             <field name="rule_set_id"/>
                         </group>
                     </group>
@@ -71,31 +57,31 @@
         </field>
     </record>
 
-    <record id="view_federation_tournament_list" model="ir.ui.view">
-        <field name="name">federation.tournament.list</field>
-        <field name="model">federation.tournament</field>
+    <record id="view_federation_competition_edition_list" model="ir.ui.view">
+        <field name="name">federation.competition.edition.list</field>
+        <field name="model">federation.competition.edition</field>
         <field name="arch" type="xml">
-            <list string="Tournaments">
+            <list string="Competition Editions">
                 <field name="name"/>
-                <field name="code"/>
+                <field name="competition_id"/>
+                <field name="competition_type"/>
                 <field name="season_id"/>
                 <field name="date_start"/>
-                <field name="tournament_type"/>
+                <field name="date_end"/>
                 <field name="state"/>
-                <field name="participant_count"/>
+                <field name="tournament_count" string="Divisions"/>
             </list>
         </field>
     </record>
 
-    <record id="view_federation_tournament_search" model="ir.ui.view">
-        <field name="name">federation.tournament.search</field>
-        <field name="model">federation.tournament</field>
+    <record id="view_federation_competition_edition_search" model="ir.ui.view">
+        <field name="name">federation.competition.edition.search</field>
+        <field name="model">federation.competition.edition</field>
         <field name="arch" type="xml">
-            <search string="Search Tournaments">
+            <search string="Search Competition Editions">
                 <field name="name"/>
-                <field name="code"/>
+                <field name="competition_id"/>
                 <field name="season_id"/>
-                <field name="location"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
                 <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
@@ -103,21 +89,22 @@
                 <separator/>
                 <group>
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
-                    <filter name="type" string="Type" context="{'group_by': 'tournament_type'}"/>
+                    <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
+                    <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <record id="federation_tournament_action" model="ir.actions.act_window">
-        <field name="name">Tournaments</field>
-        <field name="res_model">federation.tournament</field>
+    <record id="federation_competition_edition_action" model="ir.actions.act_window">
+        <field name="name">Competition Editions</field>
+        <field name="res_model">federation.competition.edition</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_federation_tournament_search"/>
+        <field name="search_view_id" ref="view_federation_competition_edition_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Create your first tournament.
+                Create a season-specific edition of a competition.
             </p>
         </field>
     </record>

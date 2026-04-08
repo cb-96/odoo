@@ -220,10 +220,8 @@ class RoundRobinService(models.AbstractModel):
                     }
                     if group:
                         vals["group_id"] = group.id
-                    # link venue record if available (backwards-compatible)
                     if venue_rec:
                         vals["venue_id"] = venue_rec.id
-                        vals["venue"] = venue_rec.name
                     if gameday:
                         vals["gameday_id"] = gameday.id
 
@@ -257,7 +255,6 @@ class RoundRobinService(models.AbstractModel):
                             venue_rec = None
                         if venue_rec:
                             vals["venue_id"] = venue_rec.id
-                            vals["venue"] = venue_rec.name
                     if start_dt and interval:
                         vals["date_scheduled"] = start_dt + timedelta(hours=idx * interval)
                     elif start_dt:

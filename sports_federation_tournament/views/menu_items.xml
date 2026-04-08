@@ -2,13 +2,19 @@
 <odoo>
 
     <menuitem id="menu_federation_competition"
-              name="Competitions"
+              name="Competition Templates"
               parent="sports_federation_base.menu_federation_root"
               action="federation_competition_action"
+              sequence="20"/>
+
+    <menuitem id="menu_federation_competition_edition"
+              name="Competition Editions"
+              parent="sports_federation_base.menu_federation_root"
+              action="federation_competition_edition_action"
               sequence="25"/>
 
     <menuitem id="menu_federation_tournament"
-              name="Tournaments"
+              name="Divisions / Tournaments"
               parent="sports_federation_base.menu_federation_root"
               action="federation_tournament_action"
               sequence="40"/>

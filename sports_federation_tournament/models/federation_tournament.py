@@ -39,6 +39,13 @@ class FederationTournament(models.Model):
         tracking=True,
     )
     max_participants = fields.Integer(string="Max Participants", tracking=True)
+    edition_id = fields.Many2one(
+        "federation.competition.edition",
+        string="Competition Edition",
+        tracking=True,
+        ondelete="set null",
+        help="The competition edition (season-specific) this division/tournament belongs to.",
+    )
     competition_id = fields.Many2one(
         "federation.competition",
         string="Competition",
@@ -80,6 +87,14 @@ class FederationTournament(models.Model):
         for rec in self:
             if rec.date_end and rec.date_start and rec.date_end < rec.date_start:
                 raise ValidationError("End date must be on or after start date.")
+
+    @api.onchange("edition_id")
+    def _onchange_edition_id(self):
+        if self.edition_id:
+            self.season_id = self.edition_id.season_id
+            self.competition_id = self.edition_id.competition_id
+            if self.edition_id.rule_set_id and not self.rule_set_id:
+                self.rule_set_id = self.edition_id.rule_set_id
 
     def action_open(self):
         for rec in self:

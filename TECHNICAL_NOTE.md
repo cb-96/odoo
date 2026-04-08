@@ -24,7 +24,7 @@ Implementation notes
 
 - Auto-advance: `federation.standing.action_freeze()` triggers any `federation.stage.progression` rules with `auto_advance=True` for the stage/group being frozen — this provides an automated pipeline from computed standings into new stage participants (and is safe-guarded by the progression rule's `state`).
 
-- Backwards compatibility: the `venue` free-text field is preserved for compatibility; when a `federation.venue` is found the scheduler will populate `venue_id` and `gameday_id` where relevant.
+- Venue handling: the `venue` free-text field has been removed from `federation.match`. Use `venue_id` (Many2one to `federation.venue`) instead. The round-robin and knockout wizards accept a venue name string and resolve it to a `federation.venue` record to populate `venue_id` and `gameday_id`.
 
 Testing and coverage
 

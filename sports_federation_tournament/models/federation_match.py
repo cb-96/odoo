@@ -25,7 +25,6 @@ class FederationMatch(models.Model):
         "federation.team", string="Away Team", ondelete="restrict"
     )
     date_scheduled = fields.Datetime(string="Scheduled Date", tracking=True)
-    venue = fields.Char(string="Venue")
     round_id = fields.Many2one(
         "federation.tournament.round",
         string="Round",

@@ -3,7 +3,7 @@ from odoo.exceptions import ValidationError
 
 
 class TestFederationCompetition(TransactionCase):
-    """Tests for federation.competition model."""
+    """Tests for federation.competition (template) and federation.competition.edition models."""
 
     @classmethod
     def setUpClass(cls):
@@ -15,12 +15,11 @@ class TestFederationCompetition(TransactionCase):
         })
 
     def test_create_competition(self):
-        """Test creating a basic competition."""
+        """Test creating a basic competition template."""
         comp = self.env["federation.competition"].create({
             "name": "Premier League",
             "code": "PL",
             "competition_type": "league",
-            "season_id": self.season.id,
         })
         self.assertEqual(comp.name, "Premier League")
         self.assertEqual(comp.code, "PL")
@@ -72,19 +71,75 @@ class TestFederationCompetition(TransactionCase):
         })
         self.assertEqual(comp.rule_set_id, rule_set)
 
-    def test_competition_tournament_count(self):
-        """Test tournament count computation."""
+    def test_competition_edition_count(self):
+        """Test edition count computation on competition template."""
         comp = self.env["federation.competition"].create({
-            "name": "Comp with Tournaments",
+            "name": "Comp with Editions",
             "competition_type": "league",
         })
-        self.assertEqual(comp.tournament_count, 0)
+        self.assertEqual(comp.edition_count, 0)
 
-        # Create a tournament linked to this competition
-        self.env["federation.tournament"].create({
-            "name": "Tournament 1",
+        # Create an edition linked to this competition
+        self.env["federation.competition.edition"].create({
+            "name": "Comp 2025-2026",
+            "competition_id": comp.id,
+            "season_id": self.season.id,
+        })
+        comp._compute_edition_count()
+        self.assertEqual(comp.edition_count, 1)
+
+    def test_create_edition(self):
+        """Test creating a competition edition."""
+        comp = self.env["federation.competition"].create({
+            "name": "League",
+            "competition_type": "league",
+        })
+        edition = self.env["federation.competition.edition"].create({
+            "name": "League 2025-2026",
+            "competition_id": comp.id,
+            "season_id": self.season.id,
+        })
+        self.assertEqual(edition.competition_id, comp)
+        self.assertEqual(edition.season_id, self.season)
+        self.assertEqual(edition.state, "draft")
+        self.assertEqual(edition.competition_type, "league")
+
+    def test_edition_state_transitions(self):
+        """Test edition state transitions."""
+        comp = self.env["federation.competition"].create({
+            "name": "Cup",
+            "competition_type": "cup",
+        })
+        edition = self.env["federation.competition.edition"].create({
+            "name": "Cup 2025-2026",
+            "competition_id": comp.id,
+            "season_id": self.season.id,
+        })
+        self.assertEqual(edition.state, "draft")
+        edition.action_open()
+        self.assertEqual(edition.state, "open")
+        edition.action_start()
+        self.assertEqual(edition.state, "in_progress")
+        edition.action_close()
+        self.assertEqual(edition.state, "closed")
+
+    def test_edition_tournament_link(self):
+        """Test linking tournaments (divisions) to an edition."""
+        comp = self.env["federation.competition"].create({
+            "name": "League",
+            "competition_type": "league",
+        })
+        edition = self.env["federation.competition.edition"].create({
+            "name": "League 2025-2026",
+            "competition_id": comp.id,
+            "season_id": self.season.id,
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Division 1",
             "date_start": "2025-09-01",
+            "edition_id": edition.id,
             "competition_id": comp.id,
         })
-        comp._compute_tournament_count()
-        self.assertEqual(comp.tournament_count, 1)
+        edition._compute_tournament_count()
+        self.assertEqual(edition.tournament_count, 1)
+        self.assertEqual(tournament.edition_id, edition)

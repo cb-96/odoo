@@ -36,7 +36,6 @@
                         </group>
                         <group string="Schedule">
                             <field name="date_scheduled"/>
-                            <field name="venue"/>
                         </group>
                     </group>
                     <group>
@@ -88,7 +87,6 @@
                 <field name="home_score" invisible="1"/>
                 <field name="away_team_id"/>
                 <field name="away_score" invisible="1"/>
-                <field name="venue"/>
                 <field name="bracket_type" optional="hide"/>
                 <field name="round_number" optional="hide"/>
                 <field name="state"/>
@@ -106,7 +104,6 @@
                 <field name="group_id"/>
                 <field name="home_team_id"/>
                 <field name="away_team_id"/>
-                <field name="venue"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
                 <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>

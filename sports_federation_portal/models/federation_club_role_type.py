@@ -45,9 +45,7 @@ class FederationClubRoleType(models.Model):
         help="This role is responsible for safeguarding matters.",
     )
 
-    _sql_constraints = [
-        ("code_unique", "UNIQUE(code)", "Role type code must be unique."),
-    ]
+    _code_unique = models.Constraint('UNIQUE(code)', 'Role type code must be unique.')
 
     @api.model
     def _get_default_role_types(self):

@@ -1,4 +1,5 @@
 from . import federation_competition
+from . import federation_competition_edition
 from . import federation_tournament
 from . import federation_tournament_stage
 from . import federation_tournament_group

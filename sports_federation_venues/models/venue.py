@@ -27,13 +27,10 @@ class FederationVenue(models.Model):
         string="Playing Area Count",
     )
 
-    _sql_constraints = [
-        (
-            "unique_name_city",
-            "UNIQUE(name, city)",
-            "A venue with this name already exists in this city.",
-        ),
-    ]
+    _unique_name_city = models.Constraint(
+        'UNIQUE(name, city)',
+        'A venue with this name already exists in this city.',
+    )
 
     @api.depends("playing_area_ids")
     def _compute_playing_area_count(self):
@@ -71,10 +68,7 @@ class FederationPlayingArea(models.Model):
     notes = fields.Text()
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        (
-            "unique_venue_name",
-            "UNIQUE(venue_id, name)",
-            "A playing area with this name already exists for this venue.",
-        ),
-    ]
+    _unique_venue_name = models.Constraint(
+        'UNIQUE(venue_id, name)',
+        'A playing area with this name already exists for this venue.',
+    )

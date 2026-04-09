@@ -3,6 +3,7 @@
     "version": "19.0.1.1.0",
     "category": "Sports",
     "summary": "Record billable and reimbursable federation events without accounting integration",
+    "description": "Finance event tracking for billable and reimbursable federation operations.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

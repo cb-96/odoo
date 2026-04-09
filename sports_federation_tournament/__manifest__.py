@@ -3,6 +3,12 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Tournaments, stages, groups, participants, and matches",
+    "description": """
+Tournament structure and lifecycle management for the sports federation suite.
+
+Provides competitions, tournaments, stages, groups, participants, and matches,
+with rule-set support and workflow state management.
+""",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",
@@ -15,6 +21,7 @@
         "views/federation_tournament_group_views.xml",
         "views/federation_tournament_stage_views.xml",
         "views/federation_tournament_views.xml",
+        "views/federation_competition_edition_views.xml",
         "views/federation_competition_views.xml",
         "views/federation_season_registration_views_inherit.xml",
         "views/menu_items.xml",

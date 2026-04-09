@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Wizard-driven CSV import tools for clubs, teams, players, and tournament participants",
+    "description": "CSV import wizards for clubs, teams, players, and tournament participants.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

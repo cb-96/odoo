@@ -4,7 +4,7 @@ from odoo.exceptions import ValidationError
 
 class FederationCompetition(models.Model):
     _name = "federation.competition"
-    _description = "Federation Competition"
+    _description = "Competition Template"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "sequence, name"
 
@@ -26,15 +26,12 @@ class FederationCompetition(models.Model):
         required=True,
         tracking=True,
     )
-    season_id = fields.Many2one(
-        "federation.season", string="Season", tracking=True, ondelete="set null"
-    )
     rule_set_id = fields.Many2one(
         "federation.rule.set",
-        string="Rule Set",
+        string="Default Rule Set",
         tracking=True,
         ondelete="set null",
-        help="Default rule set applied to tournaments or registrations referencing this competition.",
+        help="Default rule set applied to editions and divisions referencing this competition template.",
     )
     state = fields.Selection(
         [
@@ -47,22 +44,20 @@ class FederationCompetition(models.Model):
         required=True,
         tracking=True,
     )
-    tournament_ids = fields.One2many(
-        "federation.tournament", "competition_id", string="Tournaments"
+    edition_ids = fields.One2many(
+        "federation.competition.edition", "competition_id", string="Editions"
     )
-    tournament_count = fields.Integer(
-        string="Tournament Count", compute="_compute_tournament_count", store=False
+    edition_count = fields.Integer(
+        string="Edition Count", compute="_compute_edition_count", store=False
     )
     notes = fields.Text(string="Notes")
 
-    _constraints = [
-        models.Constraint('unique (code)', 'Competition code must be unique.'),
-    ]
+    _code_unique = models.Constraint('unique (code)', 'Competition code must be unique.')
 
-    @api.depends("tournament_ids")
-    def _compute_tournament_count(self):
+    @api.depends("edition_ids")
+    def _compute_edition_count(self):
         for rec in self:
-            rec.tournament_count = len(rec.tournament_ids)
+            rec.edition_count = len(rec.edition_ids)
 
     def action_activate(self):
         for rec in self:
@@ -76,8 +71,8 @@ class FederationCompetition(models.Model):
         for rec in self:
             rec.state = "draft"
 
-    def action_view_tournaments(self):
+    def action_view_editions(self):
         self.ensure_one()
-        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_action')
+        action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_competition_edition_action')
         action['domain'] = [('competition_id', '=', self.id)]
         return action

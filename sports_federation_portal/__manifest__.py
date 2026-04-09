@@ -3,6 +3,12 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Club contacts, representative roles, portal website and registration flows",
+    "description": """
+Portal and website flows for sports federation club representatives.
+
+Provides club representative ownership, portal dashboards, and season or
+tournament registration workflows on top of the federation base modules.
+""",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

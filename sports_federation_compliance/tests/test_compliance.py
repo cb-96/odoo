@@ -1,5 +1,6 @@
 from odoo.tests import TransactionCase
 from odoo.exceptions import ValidationError
+from odoo.tools import mute_logger
 from datetime import date, timedelta
 
 
@@ -44,6 +45,14 @@ class TestCompliance(TransactionCase):
             "validity_days": 365,
         })
 
+        # Create a requirement without expiry date constraint
+        cls.requirement_no_expiry = cls.env["federation.document.requirement"].create({
+            "name": "Club Info",
+            "code": "CLUB_INFO",
+            "target_model": "federation.club",
+            "requires_expiry_date": False,
+        })
+
     def test_create_requirement(self):
         """Test creating a document requirement."""
         requirement = self.env["federation.document.requirement"].create({
@@ -57,7 +66,7 @@ class TestCompliance(TransactionCase):
 
     def test_requirement_unique_code_target(self):
         """Test unique constraint on (code, target_model)."""
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(Exception), mute_logger('odoo.sql_db'), self.cr.savepoint():
             self.env["federation.document.requirement"].create({
                 "name": "Duplicate Requirement",
                 "code": "CLUB_REG",  # Same code as setUpClass
@@ -72,7 +81,6 @@ class TestCompliance(TransactionCase):
                 "name": "Test Submission",
                 "requirement_id": self.requirement.id,
             })
-            # Trigger constraint check
             submission._check_single_target()
 
         # Multiple targets set
@@ -83,7 +91,6 @@ class TestCompliance(TransactionCase):
                 "club_id": self.club.id,
                 "player_id": self.player.id,
             })
-            # Trigger constraint check
             submission._check_single_target()
 
     def test_submission_target_matches_requirement_model(self):
@@ -95,7 +102,6 @@ class TestCompliance(TransactionCase):
                 "requirement_id": self.requirement.id,
                 "player_id": self.player.id,  # Wrong target for club requirement
             })
-            # Trigger constraint check
             submission._check_target_matches_requirement()
 
         # Correct target should work
@@ -103,6 +109,7 @@ class TestCompliance(TransactionCase):
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
             "club_id": self.club.id,
+            "expiry_date": date.today() + timedelta(days=365),
         })
         self.assertEqual(submission.target_model, "federation.club")
         self.assertEqual(submission.club_id, self.club)
@@ -124,14 +131,13 @@ class TestCompliance(TransactionCase):
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
             "club_id": self.club.id,
+            "expiry_date": date.today() + timedelta(days=365),
         })
         self.assertEqual(submission.status, "draft")
 
-        # Submit
         submission.action_submit()
         self.assertEqual(submission.status, "submitted")
 
-        # Approve
         submission.action_approve()
         self.assertEqual(submission.status, "approved")
         self.assertTrue(submission.reviewer_id)
@@ -143,6 +149,7 @@ class TestCompliance(TransactionCase):
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
             "club_id": self.club.id,
+            "expiry_date": date.today() + timedelta(days=365),
         })
         submission.action_submit()
         submission.action_reject()
@@ -154,6 +161,7 @@ class TestCompliance(TransactionCase):
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
             "club_id": self.club.id,
+            "expiry_date": date.today() + timedelta(days=365),
         })
         submission.action_submit()
         submission.action_approve()
@@ -166,13 +174,12 @@ class TestCompliance(TransactionCase):
             self.club, "federation.club"
         )
         self.assertTrue(len(checks) > 0)
-        missing_check = checks.filtered(lambda c: c.status == "missing")
-        self.assertTrue(missing_check)
-        self.assertEqual(missing_check.note, "No submission found")
+        missing_checks = [c for c in checks if c.status == "missing"]
+        self.assertTrue(missing_checks)
+        self.assertEqual(missing_checks[0].note, "No submission found")
 
     def test_check_detects_valid_approved_document(self):
         """Test that compliance check detects valid approved document."""
-        # Create and approve submission
         submission = self.env["federation.document.submission"].create({
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
@@ -183,18 +190,16 @@ class TestCompliance(TransactionCase):
         submission.action_submit()
         submission.action_approve()
 
-        # Recompute checks
         checks = self.env["federation.compliance.check"].recompute_checks_for_target(
             self.club, "federation.club"
         )
-        compliant_check = checks.filtered(lambda c: c.status == "compliant")
-        self.assertTrue(compliant_check)
-        self.assertEqual(compliant_check.note, "Document is valid")
-        self.assertEqual(compliant_check.submission_id, submission)
+        compliant_checks = [c for c in checks if c.status == "compliant"]
+        self.assertTrue(compliant_checks)
+        self.assertEqual(compliant_checks[0].note, "Document is valid")
+        self.assertEqual(compliant_checks[0].submission_id, submission)
 
     def test_check_detects_expired_document(self):
         """Test that compliance check detects expired document."""
-        # Create and approve submission with past expiry date
         submission = self.env["federation.document.submission"].create({
             "name": "Test Submission",
             "requirement_id": self.requirement.id,
@@ -205,13 +210,12 @@ class TestCompliance(TransactionCase):
         submission.action_submit()
         submission.action_approve()
 
-        # Recompute checks
         checks = self.env["federation.compliance.check"].recompute_checks_for_target(
             self.club, "federation.club"
         )
-        expired_check = checks.filtered(lambda c: c.status == "expired")
-        self.assertTrue(expired_check)
-        self.assertEqual(expired_check.note, "Document has expired")
+        expired_checks = [c for c in checks if c.status == "expired"]
+        self.assertTrue(expired_checks)
+        self.assertEqual(expired_checks[0].note, "Document has expired")
 
     def test_check_single_target(self):
         """Test that compliance check requires exactly one target."""
@@ -221,7 +225,6 @@ class TestCompliance(TransactionCase):
                 "target_model": "federation.club",
                 "status": "compliant",
                 "requirement_id": self.requirement.id,
-                # No target set
             })
 
     def test_is_expired_helper(self):
@@ -244,8 +247,7 @@ class TestCompliance(TransactionCase):
 
         submission3 = self.env["federation.document.submission"].create({
             "name": "Test Submission 3",
-            "requirement_id": self.requirement.id,
+            "requirement_id": self.requirement_no_expiry.id,
             "club_id": self.club.id,
-            # No expiry_date
         })
         self.assertFalse(submission3.is_expired)

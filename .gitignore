@@ -2,3 +2,8 @@ ERRORS.md
 __pycache__/
 *.pyc
 *.pyo
+
+# CI logs (keep .gitkeep, ignore run output)
+ci/logs/*
+
+_logs/

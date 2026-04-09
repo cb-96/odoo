@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class FederationClubRepresentative(models.Model):
@@ -84,18 +85,14 @@ class FederationClubRepresentative(models.Model):
         help="True if the representative's tenure is currently active.",
     )
 
-    _sql_constraints = [
-        (
-            "partner_club_role_unique",
-            "UNIQUE(partner_id, club_id, role_type_id)",
-            "A partner can only have one representative record per club and role type.",
-        ),
-        (
-            "user_club_role_unique",
-            "UNIQUE(user_id, club_id, role_type_id)",
-            "A user can only have one representative record per club and role type.",
-        ),
-    ]
+    _partner_club_role_unique = models.Constraint(
+        'UNIQUE(partner_id, club_id, role_type_id)',
+        'A partner can only have one representative record per club and role type.',
+    )
+    _user_club_role_unique = models.Constraint(
+        'UNIQUE(user_id, club_id, role_type_id)',
+        'A user can only have one representative record per club and role type.',
+    )
 
     @api.depends("partner_id", "club_id", "role_type_id", "is_primary")
     def _compute_display_name(self):
@@ -128,7 +125,7 @@ class FederationClubRepresentative(models.Model):
     def _check_dates(self):
         for rec in self:
             if rec.date_start and rec.date_end and rec.date_start > rec.date_end:
-                raise models.ValidationError(
+                raise ValidationError(
                     "Start date cannot be after end date."
                 )
 
@@ -145,7 +142,7 @@ class FederationClubRepresentative(models.Model):
                 ]
                 existing = self.search(domain, limit=1)
                 if existing:
-                    raise models.ValidationError(
+                    raise ValidationError(
                         f"There is already a primary representative for "
                         f"'{rec.role_type_id.name}' at club '{rec.club_id.name}'."
                     )

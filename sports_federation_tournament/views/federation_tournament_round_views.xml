@@ -32,14 +32,14 @@
                     <notebook>
                         <page string="Matches">
                             <field name="match_ids">
-                                <tree>
+                                <list>
                                     <field name="date_scheduled"/>
                                     <field name="home_team_id"/>
                                     <field name="away_team_id"/>
                                     <field name="home_score"/>
                                     <field name="away_score"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -52,14 +52,14 @@
         <field name="name">federation.tournament.round.tree</field>
         <field name="model">federation.tournament.round</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="stage_id"/>
                 <field name="group_id"/>
                 <field name="match_count"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

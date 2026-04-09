@@ -53,12 +53,17 @@ class TestDiscipline(TransactionCase):
         self.assertEqual(incident.player_id, self.player)
 
     def test_incident_requires_subject_reference(self):
-        """Test that incident requires at least one subject reference."""
+        """Test that incident requires at least one subject reference.
+
+        @api.constrains only fires when a constrained field is set, so we
+        must explicitly set one field to False to trigger the check.
+        """
         with self.assertRaises(ValidationError):
             self.env["federation.match.incident"].create({
                 "name": "Bad Incident",
                 "incident_type": "other",
                 "description": "No subject reference provided.",
+                "player_id": False,
             })
 
     def test_create_case_and_attach_incident(self):

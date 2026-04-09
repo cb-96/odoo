@@ -72,7 +72,6 @@ class TestFinanceHooks(TransactionCase):
         }
         if with_venue:
             vals["venue_id"] = self.venue.id
-            vals["venue"] = self.venue.name
         if with_result_fee:
             vals["result_fee_type_id"] = self.fee_type_result.id
         return self.env["federation.match"].create(vals)

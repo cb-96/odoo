@@ -31,7 +31,7 @@ class PublicCompetitionsController(http.Controller):
         }
         return request.render("sports_federation_public_site.page_competitions_archive", values)
 
-    @http.route("/competitions/api/json", type="json", auth="public", methods=["POST"])
+    @http.route("/competitions/api/json", type="jsonrpc", auth="public", methods=["POST"])
     def competitions_api_json(self, **kw):
         """JSON API endpoint — returns published tournament list.
 

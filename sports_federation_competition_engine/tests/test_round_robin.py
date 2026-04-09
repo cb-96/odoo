@@ -101,7 +101,7 @@ class TestRoundRobin(TransactionCase):
         """Double round should produce twice the matches."""
         single = self._generate(double_round=False)
         # Clear matches
-        single.unlink()
+        self.env["federation.match"].browse([m.id for m in single]).unlink()
         double = self._generate(double_round=True, overwrite=True)
         self.assertEqual(len(double), 30)  # 15 * 2
 
@@ -163,9 +163,9 @@ class TestRoundRobin(TransactionCase):
     def test_deterministic_ordering(self):
         """Same input should produce same pairings."""
         first = self._generate()
-        first.unlink()
+        first_pairs = {(m.home_team_id.id, m.away_team_id.id) for m in first}
+        self.env["federation.match"].browse([m.id for m in first]).unlink()
         second = self._generate(overwrite=True)
         # Compare team pairings (order of matches may vary but pairings should be same)
-        first_pairs = {(m.home_team_id.id, m.away_team_id.id) for m in first}
         second_pairs = {(m.home_team_id.id, m.away_team_id.id) for m in second}
         self.assertEqual(first_pairs, second_pairs)

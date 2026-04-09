@@ -35,7 +35,7 @@ class FederationDisciplinaryCase(models.Model):
     closed_on = fields.Date(string="Closed On")
     responsible_user_id = fields.Many2one(
         "res.users",
-        string="Responsible User",
+        string="Case Owner",
     )
     incident_ids = fields.One2many(
         "federation.match.incident",

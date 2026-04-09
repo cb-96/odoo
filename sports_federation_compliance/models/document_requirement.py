@@ -37,10 +37,7 @@ class FederationDocumentRequirement(models.Model):
         help="Number of days the document is valid after issue date.",
     )
 
-    _sql_constraints = [
-        (
-            "code_target_model_unique",
-            "UNIQUE(code, target_model)",
-            "A requirement with this code already exists for this target model.",
-        ),
-    ]
+    _code_target_model_unique = models.Constraint(
+        'UNIQUE(code, target_model)',
+        'A requirement with this code already exists for this target model.',
+    )

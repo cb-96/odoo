@@ -47,7 +47,7 @@
         <field name="name">federation.stage.progression.tree</field>
         <field name="model">federation.stage.progression</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="sequence" widget="handle"/>
                 <field name="source_stage_id"/>
                 <field name="source_group_id"/>
@@ -58,7 +58,7 @@
                 <field name="seeding_method"/>
                 <field name="auto_advance"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_competition_edition_form" model="ir.ui.view">
+        <field name="name">federation.competition.edition.form</field>
+        <field name="model">federation.competition.edition</field>
+        <field name="arch" type="xml">
+            <form string="Competition Edition">
+                <header>
+                    <button name="action_open" string="Open" type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_start" string="Start" type="object" class="btn-primary"
+                            invisible="state != 'open'"/>
+                    <button name="action_close" string="Close" type="object" class="btn-secondary"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('closed', 'cancelled')"/>
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,in_progress,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tournaments" type="object"
+                                class="oe_stat_button" icon="fa-sitemap">
+                            <field name="tournament_count" widget="statinfo" string="Divisions"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Premier League 2025-2026"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Competition">
+                            <field name="competition_id"/>
+                            <field name="competition_type"/>
+                            <field name="season_id"/>
+                        </group>
+                        <group string="Schedule &amp; Rules">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="rule_set_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_competition_edition_list" model="ir.ui.view">
+        <field name="name">federation.competition.edition.list</field>
+        <field name="model">federation.competition.edition</field>
+        <field name="arch" type="xml">
+            <list string="Competition Editions">
+                <field name="name"/>
+                <field name="competition_id"/>
+                <field name="competition_type"/>
+                <field name="season_id"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state"/>
+                <field name="tournament_count" string="Divisions"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_competition_edition_search" model="ir.ui.view">
+        <field name="name">federation.competition.edition.search</field>
+        <field name="model">federation.competition.edition</field>
+        <field name="arch" type="xml">
+            <search string="Search Competition Editions">
+                <field name="name"/>
+                <field name="competition_id"/>
+                <field name="season_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
+                <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <separator/>
+                <group>
+                    <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="competition" string="Competition" context="{'group_by': 'competition_id'}"/>
+                    <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>
+                    <filter name="state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="federation_competition_edition_action" model="ir.actions.act_window">
+        <field name="name">Competition Editions</field>
+        <field name="res_model">federation.competition.edition</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_competition_edition_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a season-specific edition of a competition.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -51,14 +51,17 @@ class TestKpiCsvExport(TransactionCase):
             "rule_set_id": cls.rule_set.id,
         })
         # Create a match so standings actually compute
-        cls.match = cls.env["federation.match"].create({
+        match_vals = {
             "tournament_id": cls.tournament.id,
             "home_team_id": cls.team_a.id,
             "away_team_id": cls.team_b.id,
             "home_score": 2,
             "away_score": 1,
             "state": "done",
-        })
+        }
+        if "include_in_official_standings" in cls.env["federation.match"]._fields:
+            match_vals["include_in_official_standings"] = True
+        cls.match = cls.env["federation.match"].create(match_vals)
         cls.standing.action_recompute()
 
     # ---------------------------------------------------------------

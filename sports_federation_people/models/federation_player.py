@@ -50,9 +50,7 @@ class FederationPlayer(models.Model):
         string="License Count", compute="_compute_counts", store=True
     )
 
-    _constraints = [
-        models.Constraint('unique (first_name, last_name, birth_date)', 'A player with the same name and birth date already exists.'),
-    ]
+    _name_birthdate_unique = models.Constraint('unique (first_name, last_name, birth_date)', 'A player with the same name and birth date already exists.')
 
     @api.depends("first_name", "last_name")
     def _compute_name(self):
@@ -99,5 +97,5 @@ class FederationPlayer(models.Model):
                 ("last_name", operator, name),
             ]
             recs = self.search(domain + args, limit=limit)
-            return recs.name_get()
+            return recs.name_get() if hasattr(recs, 'name_get') else [(r.id, r.display_name) for r in recs]
         return super().name_search(name, args, operator, limit)

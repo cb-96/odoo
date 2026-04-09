@@ -62,9 +62,7 @@ class FederationFinanceEvent(models.Model):
     external_ref = fields.Char()
     notes = fields.Text()
 
-    _constraints = [
-        models.Constraint('unique (fee_type_id, source_model, source_res_id)', 'A finance event already exists for this fee type and source record.'),
-    ]
+    _fee_source_unique = models.Constraint('unique (fee_type_id, source_model, source_res_id)', 'A finance event already exists for this fee type and source record.')
 
     @api.constrains("amount")
     def _check_amount(self):
@@ -135,11 +133,17 @@ class FederationFinanceEvent(models.Model):
         }
 
         # Try to set related fields if available on source_record
-        if hasattr(source_record, "club_id") and source_record.club_id:
+        if source_record._name == "federation.club":
+            vals["club_id"] = source_record.id
+        elif hasattr(source_record, "club_id") and source_record.club_id:
             vals["club_id"] = source_record.club_id.id
-        if hasattr(source_record, "player_id") and source_record.player_id:
+        if source_record._name == "federation.player":
+            vals["player_id"] = source_record.id
+        elif hasattr(source_record, "player_id") and source_record.player_id:
             vals["player_id"] = source_record.player_id.id
-        if hasattr(source_record, "referee_id") and source_record.referee_id:
+        if source_record._name == "federation.referee":
+            vals["referee_id"] = source_record.id
+        elif hasattr(source_record, "referee_id") and source_record.referee_id:
             vals["referee_id"] = source_record.referee_id.id
 
         return self.create(vals)

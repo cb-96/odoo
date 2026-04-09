@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Result lifecycle control and approval workflow for matches",
+    "description": "Result submission, verification, approval, and control workflows for matches.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

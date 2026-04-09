@@ -3,6 +3,7 @@
     "version": "19.0.1.1.0",
     "category": "Sports",
     "summary": "Reporting models for federation data",
+    "description": "Reporting models and dashboards for participation, officiating, compliance, and finance.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

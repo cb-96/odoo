@@ -5,7 +5,7 @@
         <field name="name">federation.competition.form</field>
         <field name="model">federation.competition</field>
         <field name="arch" type="xml">
-            <form string="Competition">
+            <form string="Competition Template">
                 <header>
                     <button name="action_activate" string="Activate" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
@@ -17,9 +17,9 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_tournaments" type="object"
-                                class="oe_stat_button" icon="fa-trophy">
-                            <field name="tournament_count" widget="statinfo" string="Tournaments"/>
+                        <button name="action_view_editions" type="object"
+                                class="oe_stat_button" icon="fa-calendar">
+                            <field name="edition_count" widget="statinfo" string="Editions"/>
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
@@ -36,10 +36,9 @@
                     <group>
                         <group string="General">
                             <field name="competition_type"/>
-                            <field name="season_id"/>
                             <field name="sequence"/>
                         </group>
-                        <group string="Rules">
+                        <group string="Defaults">
                             <field name="rule_set_id"/>
                         </group>
                     </group>
@@ -61,12 +60,11 @@
         <field name="name">federation.competition.list</field>
         <field name="model">federation.competition</field>
         <field name="arch" type="xml">
-            <list string="Competitions">
+            <list string="Competition Templates">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
                 <field name="competition_type"/>
-                <field name="season_id"/>
                 <field name="rule_set_id"/>
                 <field name="state"/>
             </list>
@@ -77,17 +75,15 @@
         <field name="name">federation.competition.search</field>
         <field name="model">federation.competition</field>
         <field name="arch" type="xml">
-            <search string="Search Competitions">
+            <search string="Search Competition Templates">
                 <field name="name"/>
                 <field name="code"/>
-                <field name="season_id"/>
                 <field name="rule_set_id"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
                 <separator/>
                 <group>
-                    <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="type" string="Type" context="{'group_by': 'competition_type'}"/>
                     <filter name="state" string="Status" context="{'group_by': 'state'}"/>
                     <filter name="rule_set" string="Rule Set" context="{'group_by': 'rule_set_id'}"/>
@@ -97,13 +93,13 @@
     </record>
 
     <record id="federation_competition_action" model="ir.actions.act_window">
-        <field name="name">Competitions</field>
+        <field name="name">Competition Templates</field>
         <field name="res_model">federation.competition</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_federation_competition_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Define your first competition.
+                Define your first competition template.
             </p>
         </field>
     </record>

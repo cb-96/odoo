@@ -7,6 +7,9 @@ class TestStandings(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.has_result_control = (
+            "include_in_official_standings" in cls.env["federation.match"]._fields
+        )
         cls.club = cls.env["federation.club"].create({
             "name": "Test Club",
             "code": "TEST",
@@ -59,17 +62,23 @@ class TestStandings(TransactionCase):
             "team_id": cls.team_c.id,
         })
 
+    def _match_vals(self, vals):
+        """Add include_in_official_standings=True when result_control is installed."""
+        if self.has_result_control:
+            vals.setdefault("include_in_official_standings", True)
+        return vals
+
     def test_recompute_two_team_standing(self):
         """Test standings computation with two teams."""
         # Create match: Team A beats Team B 2-1
-        self.env["federation.match"].create({
+        self.env["federation.match"].create(self._match_vals({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_a.id,
             "away_team_id": self.team_b.id,
             "home_score": 2,
             "away_score": 1,
             "state": "done",
-        })
+        }))
         
         standing = self.env["federation.standing"].create({
             "name": "Test Standing",
@@ -78,7 +87,8 @@ class TestStandings(TransactionCase):
         })
         standing.action_recompute()
         
-        self.assertEqual(len(standing.line_ids), 2)
+        # All 3 tournament participants should have standing lines
+        self.assertEqual(len(standing.line_ids), 3)
         
         # Team A should be first (3 points, 1 win)
         line_a = standing.line_ids.filtered(lambda l: l.participant_id == self.participant_a)
@@ -92,9 +102,9 @@ class TestStandings(TransactionCase):
         self.assertEqual(line_a.score_diff, 1)
         self.assertEqual(line_a.points, 3)
         
-        # Team B should be second (0 points, 1 loss)
+        # Team B should be last (0 points, 1 loss, worst goal diff)
         line_b = standing.line_ids.filtered(lambda l: l.participant_id == self.participant_b)
-        self.assertEqual(line_b.rank, 2)
+        self.assertEqual(line_b.rank, 3)
         self.assertEqual(line_b.played, 1)
         self.assertEqual(line_b.won, 0)
         self.assertEqual(line_b.drawn, 0)
@@ -107,32 +117,32 @@ class TestStandings(TransactionCase):
     def test_recompute_three_team_standing(self):
         """Test standings computation with three teams."""
         # Match 1: A beats B 2-1
-        self.env["federation.match"].create({
+        self.env["federation.match"].create(self._match_vals({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_a.id,
             "away_team_id": self.team_b.id,
             "home_score": 2,
             "away_score": 1,
             "state": "done",
-        })
+        }))
         # Match 2: B beats C 3-0
-        self.env["federation.match"].create({
+        self.env["federation.match"].create(self._match_vals({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_b.id,
             "away_team_id": self.team_c.id,
             "home_score": 3,
             "away_score": 0,
             "state": "done",
-        })
+        }))
         # Match 3: A draws C 1-1
-        self.env["federation.match"].create({
+        self.env["federation.match"].create(self._match_vals({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_a.id,
             "away_team_id": self.team_c.id,
             "home_score": 1,
             "away_score": 1,
             "state": "done",
-        })
+        }))
         
         standing = self.env["federation.standing"].create({
             "name": "Test Standing",
@@ -173,14 +183,14 @@ class TestStandings(TransactionCase):
     def test_score_diff_computation(self):
         """Test score difference computation."""
         # Create match with large score difference
-        self.env["federation.match"].create({
+        self.env["federation.match"].create(self._match_vals({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_a.id,
             "away_team_id": self.team_b.id,
             "home_score": 5,
             "away_score": 0,
             "state": "done",
-        })
+        }))
         
         standing = self.env["federation.standing"].create({
             "name": "Test Standing",
@@ -200,17 +210,14 @@ class TestStandings(TransactionCase):
         stage = self.env["federation.tournament.stage"].create({
             "name": "Group Stage",
             "tournament_id": self.tournament.id,
-            "code": "GS",
         })
         other_stage = self.env["federation.tournament.stage"].create({
             "name": "Other Stage",
             "tournament_id": self.tournament.id,
-            "code": "OS",
         })
         group = self.env["federation.tournament.group"].create({
             "name": "Group A",
             "stage_id": stage.id,
-            "code": "GA",
         })
         
         # This should work

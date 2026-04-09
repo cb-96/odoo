@@ -7,7 +7,7 @@ class FederationGameday(models.Model):
     _order = "start_datetime desc, id"
 
     name = fields.Char(string="Reference", compute="_compute_name", store=True)
-    start_datetime = fields.Datetime(string="Start Date/Time", required=True, tracking=True)
+    start_datetime = fields.Datetime(string="Start Date/Time", required=True)
     venue_id = fields.Many2one(
         "federation.venue", string="Venue", required=True, ondelete="cascade"
     )

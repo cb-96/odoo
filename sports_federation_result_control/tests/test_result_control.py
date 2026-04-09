@@ -28,10 +28,13 @@ class TestResultControl(TransactionCase):
         cls.season = cls.env["federation.season"].create({
             "name": "Test Season",
             "code": "TS2024",
+            "date_start": "2024-09-01",
+            "date_end": "2025-06-30",
         })
         cls.tournament = cls.env["federation.tournament"].create({
             "name": "Test Tournament",
             "season_id": cls.season.id,
+            "date_start": "2024-09-01",
         })
         cls.match = cls.env["federation.match"].create({
             "tournament_id": cls.tournament.id,

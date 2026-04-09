@@ -73,13 +73,10 @@ class FederationTeamRoster(models.Model):
     min_players_required = fields.Integer(string="Min Players Required")
     max_players_allowed = fields.Integer(string="Max Players Allowed")
 
-    _sql_constraints = [
-        (
-            "unique_team_season_competition_name",
-            "UNIQUE(team_id, season_id, competition_id, name)",
-            "A roster with this name already exists for this team, season, and competition.",
-        ),
-    ]
+    _unique_team_season_competition_name = models.Constraint(
+        'UNIQUE(team_id, season_id, competition_id, name)',
+        'A roster with this name already exists for this team, season, and competition.',
+    )
 
     @api.depends("line_ids")
     def _compute_line_count(self):
@@ -212,13 +209,21 @@ class FederationTeamRosterLine(models.Model):
         store=True,
     )
 
-    _sql_constraints = [
-        (
-            "unique_roster_player_date_from",
-            "UNIQUE(roster_id, player_id, date_from)",
-            "A roster line for this player with this start date already exists.",
-        ),
-    ]
+    _unique_roster_player_date_from = models.Constraint(
+        'UNIQUE(roster_id, player_id, date_from)',
+        'A roster line for this player with this start date already exists.',
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._validate_player_eligibility()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        self._validate_player_eligibility()
+        return result
 
     @api.depends("status", "license_id", "license_id.expiry_date")
     def _compute_eligible(self):
@@ -269,3 +274,45 @@ class FederationTeamRosterLine(models.Model):
                     raise ValidationError(
                         _("Only one active vice captain is allowed per roster.")
                     )
+
+    @api.constrains("player_id", "roster_id")
+    def _check_player_eligibility_rules(self):
+        self._validate_player_eligibility()
+
+    def _validate_player_eligibility(self):
+        """Validate direct team compatibility and rule-set eligibility."""
+        Service = self.env.get("federation.eligibility.service")
+        for record in self:
+            player = record.player_id
+            roster = record.roster_id
+            if not player or not roster:
+                continue
+            team = roster.team_id
+            if team and team.gender in ("male", "female"):
+                if not player.gender:
+                    raise ValidationError(
+                        _("Player '%s' must have a gender set to be added to team '%s'.")
+                        % (player.display_name, team.display_name)
+                    )
+                if player.gender != team.gender:
+                    raise ValidationError(
+                        _("Player '%s' (%s) is not eligible for team '%s' (%s).")
+                        % (player.display_name, player.gender, team.display_name, team.gender)
+                    )
+            if not Service:
+                continue
+            # determine effective rule set (roster.rule_set_id or competition.rule_set_id)
+            rule_set = roster.rule_set_id or (roster.competition_id.rule_set_id if getattr(roster, "competition_id", False) else None)
+            if not rule_set:
+                continue
+            context = {}
+            if roster.season_id:
+                context["season_id"] = roster.season_id.id
+            # call the eligibility service
+            result = Service.check_player_eligibility(player, rule_set, context=context)
+            if not result.get("eligible", True):
+                reasons = result.get("reasons", [])
+                raise ValidationError(
+                    _("Player '%s' is not eligible for this roster: %s")
+                    % (player.display_name, "; ".join(reasons))
+                )

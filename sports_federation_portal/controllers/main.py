@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
@@ -94,27 +96,33 @@ class FederationWebsite(http.Controller):
             return request.render(
                 "sports_federation_portal.tournament_register_page", values
             )
-        # Get eligible teams (must have an active season registration)
-        teams = request.env["federation.team"].sudo().search(
-            [("club_id", "in", clubs.ids)],
-            order="name",
-        )
-        # Filter teams that already registered for this tournament
         existing = request.env["federation.tournament.registration"].sudo().search(
             [
                 ("tournament_id", "=", tournament_id),
-                ("team_id", "in", teams.ids),
+                ("team_id.club_id", "in", clubs.ids),
                 ("state", "!=", "cancelled"),
             ]
         )
-        already_registered_team_ids = existing.mapped("team_id").ids
-        available_teams = teams.filtered(
-            lambda t: t.id not in already_registered_team_ids
+        blocked_reason_by_team_id = {
+            team.id: "Already registered or currently awaiting review."
+            for team in existing.mapped("team_id")
+        }
+        selection_snapshot = tournament.sudo().get_team_selection_snapshot(
+            extra_domain=[("club_id", "in", clubs.ids)],
+            blocked_reason_by_team_id=blocked_reason_by_team_id,
         )
         values = {
             "tournament": tournament,
             "clubs": clubs,
-            "teams": available_teams,
+            "teams": selection_snapshot["available_teams"],
+            "excluded_teams": [
+                {
+                    "name": item["team"].name,
+                    "club": item["team"].club_id.name,
+                    "reason": item["reason"],
+                }
+                for item in selection_snapshot["excluded_teams"]
+            ],
             "error": kw.get("error"),
             "success": kw.get("success"),
         }
@@ -148,6 +156,11 @@ class FederationWebsite(http.Controller):
         if team.club_id not in clubs:
             return request.redirect(
                 f"/tournament/{tournament_id}/register?error=You+can+only+register+your+own+teams"
+            )
+        eligibility_error = tournament.get_team_eligibility_error(team)
+        if eligibility_error:
+            return request.redirect(
+                f"/tournament/{tournament_id}/register?error={quote_plus(eligibility_error)}"
             )
         # Check for duplicate
         existing = request.env["federation.tournament.registration"].sudo().search(
@@ -191,7 +204,7 @@ class FederationWebsite(http.Controller):
             registration.sudo().action_submit()
         except ValidationError as e:
             return request.redirect(
-                f"/tournament/{tournament_id}/register?error={str(e)}"
+                f"/tournament/{tournament_id}/register?error={quote_plus(str(e))}"
             )
         return request.redirect(
             f"/tournament/{tournament_id}/register?success=Registration+submitted+successfully"
@@ -267,8 +280,67 @@ class FederationPortal(CustomerPortal):
             "teams": teams,
             "clubs": clubs,
             "page_name": "my_teams",
+            "success": kw.get("success"),
+            "error": kw.get("error"),
         }
         return request.render("sports_federation_portal.portal_my_teams", values)
+
+    @http.route(
+        ["/my/teams/new"],
+        type="http",
+        auth="user",
+        website=True,
+        methods=["GET"],
+    )
+    def portal_my_teams_new(self, **kw):
+        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
+        if not clubs:
+            return request.redirect("/my/club")
+        values = {
+            "clubs": clubs,
+            "page_name": "new_team",
+            "error": kw.get("error"),
+        }
+        return request.render("sports_federation_portal.portal_my_team_new", values)
+
+    @http.route(
+        ["/my/teams/new"],
+        type="http",
+        auth="user",
+        website=True,
+        methods=["POST"],
+        csrf=True,
+    )
+    def portal_my_teams_create(self, name, club_id, category=None, gender=None, email=None, phone=None, **kw):
+        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
+        team_name = (name or "").strip()
+        category = (category or "").strip()
+        gender = (gender or "").strip()
+        if not team_name:
+            return request.redirect("/my/teams/new?error=Team+name+is+required")
+        if not category:
+            return request.redirect("/my/teams/new?error=Team+category+is+required")
+        if not gender:
+            return request.redirect("/my/teams/new?error=Team+gender+is+required")
+        try:
+            club_id = int(club_id)
+        except (ValueError, TypeError):
+            return request.redirect("/my/teams/new?error=Invalid+club+selection")
+        club = request.env["federation.club"].sudo().browse(club_id)
+        if club not in clubs:
+            return request.redirect("/my/teams?error=You+can+only+create+teams+for+your+own+club")
+        try:
+            request.env["federation.team"].sudo().create({
+                "name": team_name,
+                "club_id": club.id,
+                "category": category,
+                "gender": gender,
+                "email": email.strip() if email else False,
+                "phone": phone.strip() if phone else False,
+            })
+        except Exception as e:
+            return request.redirect("/my/teams/new?error=%s" % (quote_plus(str(e)),))
+        return request.redirect("/my/teams?success=Team+created+successfully")
 
     # ------------------------------------------------------------------
     # My Season Registrations

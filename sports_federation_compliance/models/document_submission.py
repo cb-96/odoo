@@ -35,7 +35,6 @@ class FederationDocumentSubmission(models.Model):
         index=True,
     )
     target_model = fields.Selection(
-        selection=TARGET_MODEL_SELECTION,
         string="Target Model",
         related="requirement_id.target_model",
         store=True,

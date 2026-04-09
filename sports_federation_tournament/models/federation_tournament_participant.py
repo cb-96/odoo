@@ -1,4 +1,6 @@
-from odoo import api, fields, models
+from markupsafe import escape
+
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -13,6 +15,20 @@ class FederationTournamentParticipant(models.Model):
     )
     team_id = fields.Many2one(
         "federation.team", string="Team", required=True, ondelete="restrict"
+    )
+    eligible_team_ids = fields.Many2many(
+        "federation.team",
+        string="Eligible Teams",
+        compute="_compute_team_selection",
+    )
+    available_team_ids = fields.Many2many(
+        "federation.team",
+        string="Available Teams",
+        compute="_compute_team_selection",
+    )
+    excluded_team_feedback_html = fields.Html(
+        string="Unavailable Teams",
+        compute="_compute_team_selection",
     )
     club_id = fields.Many2one(
         "federation.club", string="Club", related="team_id.club_id", store=True, readonly=True
@@ -39,9 +55,7 @@ class FederationTournamentParticipant(models.Model):
     )
     notes = fields.Text(string="Notes")
 
-    _constraints = [
-        models.Constraint('unique (team_id, tournament_id)', 'A team can only participate once per tournament.'),
-    ]
+    _team_tournament_unique = models.Constraint('unique (team_id, tournament_id)', 'A team can only participate once per tournament.')
 
     @api.depends("team_id", "tournament_id")
     def _compute_name(self):
@@ -50,6 +64,72 @@ class FederationTournamentParticipant(models.Model):
                 rec.name = f"{rec.team_id.name} @ {rec.tournament_id.name}"
             else:
                 rec.name = "New"
+
+    @api.depends("tournament_id", "team_id")
+    def _compute_team_selection(self):
+        Team = self.env["federation.team"]
+        for rec in self:
+            if not rec.tournament_id:
+                rec.eligible_team_ids = Team.browse([])
+                rec.available_team_ids = Team.browse([])
+                rec.excluded_team_feedback_html = False
+                continue
+
+            rec.eligible_team_ids = rec.tournament_id.search_eligible_teams()
+            selection_snapshot = rec.tournament_id.get_participant_team_selection_snapshot(
+                current_participant=rec
+            )
+            rec.available_team_ids = selection_snapshot["available_teams"]
+            rec.excluded_team_feedback_html = rec._render_excluded_team_feedback_html(
+                selection_snapshot["excluded_teams"]
+            )
+
+    def _render_excluded_team_feedback_html(self, excluded_teams):
+        if not excluded_teams:
+            return False
+
+        intro = escape(
+            _(
+                "Only teams that can currently be selected appear in the Team dropdown."
+            )
+        )
+        items = "".join(
+            "<li><strong>{team}</strong> ({club}): {reason}</li>".format(
+                team=escape(item["team"].name),
+                club=escape(item["team"].club_id.display_name or _("No Club")),
+                reason=escape(item["reason"]),
+            )
+            for item in excluded_teams
+        )
+        return f"<p>{intro}</p><ul>{items}</ul>"
+
+    def _get_team_unavailability_reason(self, team):
+        self.ensure_one()
+        return self.tournament_id.get_participant_team_unavailability_reason(
+            team,
+            current_participant=self,
+        )
+
+    @api.onchange("tournament_id")
+    def _onchange_tournament_id(self):
+        domain = [("id", "in", self.available_team_ids.ids)]
+        if self.team_id and self.tournament_id and self.team_id not in self.available_team_ids:
+            warning = {
+                "title": _("Ineligible Team"),
+                "message": self._get_team_unavailability_reason(self.team_id),
+            }
+            self.team_id = False
+            return {"domain": {"team_id": domain}, "warning": warning}
+        return {"domain": {"team_id": domain}}
+
+    @api.constrains("team_id", "tournament_id")
+    def _check_team_eligibility(self):
+        for rec in self:
+            if not rec.team_id or not rec.tournament_id:
+                continue
+            error = rec.tournament_id.get_team_eligibility_error(rec.team_id)
+            if error:
+                raise ValidationError(error)
 
     def action_confirm(self):
         for rec in self:

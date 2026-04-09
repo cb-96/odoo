@@ -135,6 +135,14 @@
                                     <th>Season</th>
                                     <td><t t-esc="tournament.season_id.name"/></td>
                                 </tr>
+                                <tr t-if="tournament.category">
+                                    <th>Category</th>
+                                    <td><t t-esc="dict(tournament._fields['category'].selection).get(tournament.category)"/></td>
+                                </tr>
+                                <tr t-if="tournament.gender">
+                                    <th>Gender</th>
+                                    <td><t t-esc="dict(tournament._fields['gender'].selection).get(tournament.gender)"/></td>
+                                </tr>
                                 <tr>
                                     <th>Type</th>
                                     <td><t t-esc="dict(tournament._fields['tournament_type'].selection).get(tournament.tournament_type)"/></td>
@@ -238,7 +246,16 @@
                         <t t-esc="success"/>
                     </div>
 
-                    <t t-if="not error or teams">
+                    <div class="mb-3" t-if="tournament.category or tournament.gender">
+                        <span class="badge text-bg-light me-2" t-if="tournament.category">
+                            Category: <t t-esc="dict(tournament._fields['category'].selection).get(tournament.category)"/>
+                        </span>
+                        <span class="badge text-bg-light" t-if="tournament.gender">
+                            Gender: <t t-esc="dict(tournament._fields['gender'].selection).get(tournament.gender)"/>
+                        </span>
+                    </div>
+
+                    <t t-if="teams">
                         <div class="card">
                             <div class="card-body">
                                 <form t-attf-action="/tournament/#{tournament.id}/register"
@@ -274,6 +291,31 @@
                             </div>
                         </div>
                     </t>
+                    <div t-elif="not error" class="alert alert-warning">
+                        No eligible teams are currently available for this tournament.
+                    </div>
+
+                    <div class="card mt-3" t-if="excluded_teams">
+                        <div class="card-body">
+                            <h5 class="card-title">Unavailable Teams</h5>
+                            <p class="text-muted small mb-3">
+                                These teams are hidden from the registration dropdown because they are already registered or do not match this tournament's requirements.
+                            </p>
+                            <ul class="list-group list-group-flush">
+                                <t t-foreach="excluded_teams" t-as="entry">
+                                    <li class="list-group-item px-0">
+                                        <div class="fw-semibold">
+                                            <t t-esc="entry['name']"/>
+                                            <span class="text-muted">(<t t-esc="entry['club']"/>)</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            <t t-esc="entry['reason']"/>
+                                        </div>
+                                    </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </t>

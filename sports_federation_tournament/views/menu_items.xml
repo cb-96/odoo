@@ -2,14 +2,20 @@
 <odoo>
 
     <menuitem id="menu_federation_competition"
-              name="Competitions"
-              parent="sports_federation_base.menu_federation_root"
+              name="Competition Templates"
+              parent="sports_federation_base.menu_federation_competitions"
               action="federation_competition_action"
+              sequence="20"/>
+
+    <menuitem id="menu_federation_competition_edition"
+              name="Competition Editions"
+              parent="sports_federation_base.menu_federation_competitions"
+              action="federation_competition_edition_action"
               sequence="25"/>
 
     <menuitem id="menu_federation_tournament"
-              name="Tournaments"
-              parent="sports_federation_base.menu_federation_root"
+              name="Divisions / Tournaments"
+              parent="sports_federation_base.menu_federation_competitions"
               action="federation_tournament_action"
               sequence="40"/>
 
@@ -41,5 +47,26 @@
               parent="menu_federation_tournament"
               action="federation_match_action"
               sequence="30"/>
+
+    <record id="federation_tournament_create_action" model="ir.actions.act_window">
+        <field name="name">Create Tournament</field>
+        <field name="res_model">federation.tournament</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_federation_tournament_form"/>
+        <field name="target">new</field>
+        <field name="context">{'default_state': 'draft'}</field>
+    </record>
+
+    <menuitem id="menu_federation_tournament_create"
+              name="Create Tournament"
+              parent="menu_federation_tournament"
+              action="federation_tournament_create_action"
+              sequence="5"/>
+
+    <menuitem id="menu_federation_tournament_list"
+              name="Tournament List"
+              parent="menu_federation_tournament"
+              action="federation_tournament_action"
+              sequence="1"/>
 
 </odoo>

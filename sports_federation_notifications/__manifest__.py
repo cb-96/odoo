@@ -3,6 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Sports",
     "summary": "Centralized federation notification helpers, templates, and scheduled reminders",
+    "description": "Notification templates, reminder jobs, and outbound communication logs.",
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",

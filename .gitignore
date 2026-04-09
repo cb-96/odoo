@@ -5,3 +5,5 @@ __pycache__/
 
 # CI logs (keep .gitkeep, ignore run output)
 ci/logs/*
+
+_logs/

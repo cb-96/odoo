@@ -57,5 +57,3 @@
 - **PR checklist enforcement**: Fail-fast — do not open a PR merging code that introduces behavioural or schema changes without documentation entries. If you cannot edit docs yourself (e.g., lacking domain clarity), leave a clear TODO in the code and notify repository maintainers.
 - **Why**: Keeping documentation current ensures maintainability, reduces onboarding friction, and prevents accidental regressions in workflows that rely on textual contracts (workflows, assumptions, and operational steps).
 
-If you'd like, I can now: (1) commit this file, (2) open a PR draft with the change, or (3) run a more thorough pass reading additional README/_logs files and incorporate extra notes—which would you prefer?
-

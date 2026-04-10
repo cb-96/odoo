@@ -15,6 +15,19 @@ controllers, record rules, tests, and workflow docs aligned with the code.
 | `federation.season.registration` | `sports_federation_base` + `sports_federation_portal` | Shared: club representative submits, federation staff confirms | Portal form or backend UI | `draft`, `submitted`, `confirmed`, `cancelled` | Team must belong to one of the submitting user's represented clubs | Portal extension adds `submitted`, `user_id`, and `rejection_reason`. |
 | `federation.finance.event` | `sports_federation_finance_bridge` | Federation finance operations and approved workflow hooks | Backend UI or workflow automation | `draft`, `confirmed`, `settled`, `cancelled` | Source record remains authoritative; finance staff own settlement/cancellation | Season-registration confirmation and match finance hooks create events automatically. |
 
+## Archive behavior
+
+The core master-data records now expose explicit archive and restore actions in
+the backend UI so operational records do not disappear through ad hoc writes to
+`active`.
+
+| Record | Archive guardrail |
+| --- | --- |
+| `federation.club` | Clubs can only be archived after their active teams are archived. |
+| `federation.team` | Teams can only be archived when all linked season registrations are cancelled. |
+| `federation.season` | Open seasons must be closed or cancelled before they can be archived. |
+| `federation.tournament` | Open or in-progress tournaments must be closed or cancelled before they can be archived. |
+
 ## Transition ownership
 
 | Record | Transition owners | Guardrails |
@@ -35,6 +48,8 @@ Use the model enums below in code, docs, and tests:
 - Tournament registration review uses `submitted` and `rejected`.
 - Season registration review uses `submitted`; there is no `rejected` state in the current model.
 - Finance event lifecycle uses `settled`; `invoiced` and `paid` are future integration concepts, not current model states.
+- Seasons only open from `draft`, close from `open`, and return to `draft` from `cancelled`.
+- Tournaments only open from `draft`, start from `open`, close from `in_progress`, and return to `draft` from `cancelled`.
 
 ## Review checklist
 

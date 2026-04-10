@@ -6,6 +6,12 @@
         <field name="model">federation.team</field>
         <field name="arch" type="xml">
             <form string="Team">
+                <header>
+                    <button name="action_archive" string="Archive" type="object"
+                            class="btn-secondary" invisible="not active"/>
+                    <button name="action_restore" string="Restore" type="object"
+                            class="btn-secondary" invisible="active"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_registrations"
@@ -76,6 +82,7 @@
                 <field name="gender"/>
 
                 <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
                 <group>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
                     <filter name="cat" string="Category" context="{'group_by': 'category'}"/>

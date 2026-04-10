@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -54,17 +54,36 @@ class FederationSeason(models.Model):
                 raise ValidationError("End date must be after start date.")
 
     def action_open(self):
-        for rec in self:
-            rec.state = "open"
+        invalid_seasons = self.filtered(lambda rec: rec.state != "draft" or not rec.active)
+        if invalid_seasons:
+            raise ValidationError(_("Only active draft seasons can be opened."))
+        self.write({"state": "open"})
 
     def action_close(self):
-        for rec in self:
-            rec.state = "closed"
+        invalid_seasons = self.filtered(lambda rec: rec.state != "open")
+        if invalid_seasons:
+            raise ValidationError(_("Only open seasons can be closed."))
+        self.write({"state": "closed"})
 
     def action_cancel(self):
-        for rec in self:
-            rec.state = "cancelled"
+        invalid_seasons = self.filtered(lambda rec: rec.state not in ("draft", "open"))
+        if invalid_seasons:
+            raise ValidationError(_("Only draft or open seasons can be cancelled."))
+        self.write({"state": "cancelled"})
 
     def action_draft(self):
-        for rec in self:
-            rec.state = "draft"
+        invalid_seasons = self.filtered(lambda rec: rec.state != "cancelled")
+        if invalid_seasons:
+            raise ValidationError(_("Only cancelled seasons can be reset to draft."))
+        self.write({"state": "draft"})
+
+    def action_archive(self):
+        active_seasons = self.filtered(lambda rec: rec.state == "open")
+        if active_seasons:
+            raise ValidationError(_("Close or cancel an open season before archiving it."))
+        self.write({"active": False})
+        return True
+
+    def action_restore(self):
+        self.write({"active": True})
+        return True

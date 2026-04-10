@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class FederationTeam(models.Model):
@@ -63,3 +64,20 @@ class FederationTeam(models.Model):
             recs = self.search(domain + args, limit=limit)
             return recs.name_get() if hasattr(recs, 'name_get') else [(r.id, r.display_name) for r in recs]
         return super().name_search(name, args, operator, limit)
+
+    def action_archive(self):
+        teams_with_active_registrations = self.filtered(
+            lambda rec: rec.registration_ids.filtered(lambda registration: registration.state != "cancelled")
+        )
+        if teams_with_active_registrations:
+            raise ValidationError(
+                _(
+                    "Cancel or complete the team's active season registrations before archiving it."
+                )
+            )
+        self.write({"active": False})
+        return True
+
+    def action_restore(self):
+        self.write({"active": True})
+        return True

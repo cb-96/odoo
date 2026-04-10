@@ -59,7 +59,7 @@ documentation, and operator-safe UI or wizard behavior.
 
 ### Priority 0 — Must-Have Foundation and Release Blockers
 
-1. Stabilize canonical master data and state models.
+1. Done (2026-04-10): Stabilize canonical master data and state models.
 Modules: `sports_federation_base`, `sports_federation_people`, `sports_federation_tournament`, `sports_federation_portal`.
 Work: review all core records for mandatory fields, sequences, archive behavior, ownership fields, and state transitions; align technical notes, workflows, and tests with the actual ORM implementation.
 Done when: core records used in season registration and competition operations have clear lifecycle coverage, explicit ACLs, and focused tests.

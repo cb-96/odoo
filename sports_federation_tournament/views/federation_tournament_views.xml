@@ -17,7 +17,11 @@
                             invisible="state in ('closed', 'cancelled')"/>
                     <button name="action_draft" string="Reset to Draft" type="object"
                             invisible="state != 'cancelled'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,open,in_progress,closed"/>
+                    <button name="action_archive" string="Archive" type="object"
+                        class="btn-secondary" invisible="not active"/>
+                    <button name="action_restore" string="Restore" type="object"
+                        class="btn-secondary" invisible="active"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,in_progress,closed,cancelled"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -102,6 +106,8 @@
                 <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
                 <filter name="in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
                 <separator/>
                 <group>
                     <filter name="season" string="Season" context="{'group_by': 'season_id'}"/>

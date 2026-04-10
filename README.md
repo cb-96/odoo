@@ -70,8 +70,9 @@ Quick links
 Quickstart / Installation (example)
 
 Prerequisites
-- Python 3.10+ (use virtualenv)
-- PostgreSQL 12+
+- Python 3.10+ (for local linting and editor tooling)
+- Docker with Compose v2 (for the containerized Odoo test runner)
+- PostgreSQL 12+ only if you are running against a separate local Odoo checkout
 - Node.js/npm (optional: for asset tooling)
 - wkhtmltopdf (optional: PDF export)
 
@@ -82,19 +83,28 @@ git clone REPOSITORY_URL
 cd REPO_ROOT/odoo
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -U pip setuptools
-pip install -r requirements.txt
-python odoo-bin -d sports_fed --addons-path=addons,odoo -u all
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+black --check sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
+flake8 sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
+```
+
+Containerized module tests (Git Bash / WSL on Windows, or any POSIX shell):
+
+```bash
+bash ./ci/run_tests.sh --module sports_federation_standings
 ```
 
 Notes and tips
+- `requirements.txt` pins repository-local tooling only. The Odoo runtime used by CI comes from the `odoo:19` Docker image declared in `ci/docker-compose.ci.yaml`.
+- This repository does not ship `odoo-bin`. If you use a separate local Odoo checkout, point its `addons_path` at this repository and run tests from that checkout.
 - Use the module manifest `__manifest__.py` `data` entries to register new
   views/security/data files. If you add or change models, update
   `security/ir.model.access.csv` and include migration notes in the docs.
 - To run module tests (example):
 
-```powershell
-python odoo-bin -d test_db -i sports_federation_competition_engine --test-enable --stop-after-init
+```bash
+bash ./ci/run_tests.sh --module sports_federation_competition_engine
 ```
 
 Development & tests
@@ -110,6 +120,8 @@ Contributing & docs
 - Follow the PR checklist in `.github/copilot-instructions.md` and add tests
   for behavioural changes. If you cannot update docs immediately, add a clear
   TODO in the change and notify maintainers.
+- The canonical lifecycle and ownership reference for the core records is in
+  `STATE_AND_OWNERSHIP_MATRIX.md`.
 
 Module list (high level)
 - `sports_federation_base` — master data (clubs, teams, seasons)

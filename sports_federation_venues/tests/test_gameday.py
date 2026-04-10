@@ -138,7 +138,7 @@ class TestGameday(TransactionCase):
             "gameday_id": gameday.id,
             "state": "draft",
         })
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.env["federation.match"].create({
                 "tournament_id": self.tournament.id,
                 "home_team_id": self.team_senior_a.id,
@@ -157,7 +157,7 @@ class TestGameday(TransactionCase):
             "gameday_id": gameday.id,
             "state": "draft",
         })
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.env["federation.match"].create({
                 "tournament_id": self.tournament.id,
                 "home_team_id": self.team_senior_b.id,
@@ -278,3 +278,71 @@ class TestGameday(TransactionCase):
         match = matches[0]
         self.assertTrue(match.gameday_id, "Match should have a gameday when schedule_by_round=True.")
         self.assertEqual(match.gameday_id.venue_id, self.venue)
+
+    def test_schedule_by_round_reuses_one_gameday_per_round(self):
+        """Each round shares one gameday when multiple matches are scheduled at the same venue."""
+        has_engine = bool(self.env.get("federation.round.robin.service"))
+        if not has_engine:
+            self.skipTest("sports_federation_competition_engine not installed.")
+
+        stage = self.env["federation.tournament.stage"].create({
+            "name": "Grouped RR Stage",
+            "tournament_id": self.tournament.id,
+        })
+        extra_team_names = [
+            ("GD Team C", "GC"),
+            ("GD Team D", "GD"),
+        ]
+        extra_teams = [
+            self.env["federation.team"].create(
+                {
+                    "name": name,
+                    "club_id": self.club.id,
+                    "code": code,
+                    "category": "senior",
+                }
+            )
+            for name, code in extra_team_names
+        ]
+        participants = []
+        for team in [self.team_senior_a, self.team_senior_b] + extra_teams:
+            participants.append(
+                self.env["federation.tournament.participant"].create(
+                    {
+                        "tournament_id": self.tournament.id,
+                        "team_id": team.id,
+                        "stage_id": stage.id,
+                    }
+                )
+            )
+
+        self.tournament.state = "open"
+
+        service = self.env["federation.round.robin.service"]
+        start_dt = datetime(2024, 11, 1, 9, 0)
+        matches = service.generate(
+            tournament=self.tournament,
+            stage=stage,
+            participants=participants,
+            options={
+                "double_round": False,
+                "schedule_by_round": True,
+                "start_datetime": start_dt,
+                "round_interval_hours": 24,
+                "interval_hours": 2,
+                "venue": self.venue.name,
+                "overwrite": True,
+            },
+        )
+
+        self.assertEqual(len(matches), 6)
+        gameday_groups = {}
+        for match in matches:
+            self.assertTrue(match.gameday_id)
+            gameday_groups.setdefault(match.gameday_id.id, []).append(match)
+
+        self.assertEqual(len(gameday_groups), 3, "Four teams should produce 3 round-based gamedays.")
+        self.assertTrue(
+            all(len(group) == 2 for group in gameday_groups.values()),
+            "Each round should reuse one gameday for its two matches.",
+        )

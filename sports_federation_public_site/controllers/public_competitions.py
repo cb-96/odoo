@@ -1,7 +1,5 @@
 from odoo import http
 from odoo.http import request
-from odoo.addons.website.controllers.main import Website
-import json
 
 
 class PublicCompetitionsController(http.Controller):
@@ -61,7 +59,7 @@ class PublicCompetitionsController(http.Controller):
     @http.route("/competitions/<model('federation.tournament'):tournament>", type="http", auth="public", website=True)
     def competition_detail(self, tournament, **kw):
         """Public tournament detail page."""
-        if not tournament.website_published:
+        if not tournament.can_access_public_detail():
             return request.not_found()
         values = {
             "tournament": tournament,
@@ -72,7 +70,7 @@ class PublicCompetitionsController(http.Controller):
     @http.route("/competitions/<model('federation.tournament'):tournament>/teams", type="http", auth="public", website=True)
     def competition_teams(self, tournament, **kw):
         """Public team listing for a tournament, ordered by participant state."""
-        if not tournament.website_published:
+        if not tournament.can_access_public_detail():
             return request.not_found()
         participants = request.env["federation.tournament.participant"].sudo().search([
             ("tournament_id", "=", tournament.id),
@@ -88,7 +86,7 @@ class PublicCompetitionsController(http.Controller):
     @http.route("/competitions/<model('federation.tournament'):tournament>/standings", type="http", auth="public", website=True)
     def competition_standings(self, tournament, **kw):
         """Public standings page for one tournament."""
-        if not tournament.website_published:
+        if not tournament.can_access_public_standings():
             return request.not_found()
         standings = request.env["federation.standing"].sudo().search([
             ("tournament_id", "=", tournament.id),
@@ -104,7 +102,7 @@ class PublicCompetitionsController(http.Controller):
     @http.route("/competitions/<model('federation.tournament'):tournament>/results", type="http", auth="public", website=True)
     def competition_results(self, tournament, **kw):
         """Public results page for one tournament."""
-        if not tournament.website_published:
+        if not tournament.can_access_public_results():
             return request.not_found()
         matches = request.env["federation.match"].sudo().search([
             ("tournament_id", "=", tournament.id),

@@ -38,6 +38,7 @@ draft -> submitted -> confirmed / rejected / cancelled
 #### 3. Season Registration Extension
 
 The existing `federation.season.registration` model is extended with a `submitted` state and portal fields (`user_id`, `partner_id`, `rejection_reason`). This avoids creating a duplicate model while adding the portal workflow.
+The same model now also enforces club ownership at ORM level so portal-created season registrations cannot bypass controller checks.
 
 #### 4. Public vs Portal Separation
 
@@ -62,6 +63,7 @@ Portal users (`group_federation_portal_club`) get these record rules:
 | `federation.tournament.participant` | `('club_id', 'in', ...)` | See only own participants |
 
 Additionally, controllers validate ownership on every write operation as defense-in-depth.
+For season and tournament registrations, the models also enforce that `user_id` can only submit teams for represented clubs.
 
 ## Module Tree
 

@@ -27,10 +27,10 @@
                                     <p class="card-text text-muted" t-if="tournament.venue_id">
                                         <i class="fa fa-map-marker"/> <t t-esc="tournament.venue_id.name"/>
                                     </p>
-                                    <div t-if="tournament.public_description" class="card-text">
-                                        <t t-raw="tournament.public_description[:150]"/>
-                                        <t t-if="len(tournament.public_description) > 150">...</t>
-                                    </div>
+                                    <div t-if="tournament.public_description"
+                                         class="card-text"
+                                         style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;"
+                                         t-field="tournament.public_description"/>
                                 </div>
                             </div>
                         </div>
@@ -87,7 +87,7 @@
                 </div>
                 <div t-if="tournament.public_description" class="mb-4">
                     <h3>About</h3>
-                    <div t-raw="tournament.public_description"/>
+                    <div t-field="tournament.public_description"/>
                 </div>
             </div>
         </t>

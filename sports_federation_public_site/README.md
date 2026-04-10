@@ -45,7 +45,10 @@ match results on public URLs without logging in.
 | Route | Auth | Description |
 |-------|------|-------------|
 | `GET /competitions` | public | List all published tournaments |
+| `GET /competitions/archive` | public | List closed or cancelled published tournaments |
+| `POST /competitions/api/json` | public | JSON list of published tournaments |
 | `GET /competitions/<tournament>` | public | Tournament detail page |
+| `GET /competitions/<tournament>/teams` | public | Published participant list excluding withdrawn entries |
 | `GET /competitions/<tournament>/standings` | public | Standings table |
 | `GET /competitions/<tournament>/results` | public | Match results |
 | `GET /competitions/<tournament>/schedule` | public | Upcoming fixtures |
@@ -55,5 +58,6 @@ match results on public URLs without logging in.
 1. **Opt-in publishing** — Tournaments and standings must be explicitly published.
 2. **Public access** — All routes use `auth="public"`, no login required.
 3. **Slug-based URLs** — Clean URLs using `public_slug` field.
-4. **Selective display** — Toggle results and standings visibility per tournament.
-5. **Website templates** — QWeb templates for responsive public pages.
+4. **Selective display** — Direct results and standings routes enforce their per-tournament visibility toggles.
+5. **Sanitized rich text** — Public descriptions render through website field rendering rather than raw `t-raw` output.
+6. **Website templates** — QWeb templates for responsive public pages.

@@ -105,13 +105,13 @@ The canonical workflows live in `odoo/_workflows` (authoritative). Implementatio
 
 Tournament lifecycle
 
-- States: `draft → open → in_progress → completed | cancelled`.
+- States: `draft → open → in_progress → closed | cancelled`.
 - Preconditions for `open`: participants registered/confirmed, ruleset assigned, optional venues configured.
 - Schedule creation typically moves the tournament to `in_progress` (explicit action required).
 
 Match lifecycle and match-day operations
 
-- States: `draft → scheduled → in_progress → completed | cancelled`.
+- States: `draft → scheduled → in_progress → done | cancelled`.
 - Pre-match checks: both teams have confirmed match-sheets, required referee roles filled and confirmed, no suspensions on selected players, venue confirmed.
 - During match: record events (substitutions, cards) which feed the discipline and finance modules.
 
@@ -175,7 +175,8 @@ Portal patterns
 Public site
 
 - Public controllers use `auth='public'` and `sudo()` for reads. Only expose non-sensitive fields (no emails/phones/notes) to public templates.
-- Provide toggles on tournaments and standings for `website_published` and `show_public_results`.
+- Enforce `website_published` and the relevant visibility toggle (`show_public_results`, `show_public_standings`) before serving direct public routes.
+- Render public rich text through sanitized website field rendering rather than raw `t-raw` output.
 
 CSRF and forms
 
@@ -225,11 +226,12 @@ CI recommendations
 
 - Run module tests in CI and fail PRs on test regressions.
 - Include a lint step (flake8/black for Python where applicable) and XML/manifest validation.
+- The repository CI entrypoint is `ci/run_tests.sh`; the GitHub workflow at `.github/workflows/ci.yml` reuses that script and runs Black/Flake8 from `requirements.txt`.
 
 Example test command
 
 ```bash
-odoo-bin -d testdb -i sports_federation_competition_engine --test-enable --stop-after-init
+bash ./ci/run_tests.sh --module sports_federation_competition_engine
 ```
 
 ## Upgrade, migrations and deployment notes
@@ -258,6 +260,7 @@ When introducing a new feature follow this minimal patch checklist:
 5. Write tests under `tests/` covering the main business rule.
 6. Update module `README.md` with short usage notes.
 7. Run tests locally; run `odoo-bin -d <db> -i <module> --test-enable`.
+8. Keep `STATE_AND_OWNERSHIP_MATRIX.md` aligned with any lifecycle or portal-ownership change.
 
 PR checklist (required)
 

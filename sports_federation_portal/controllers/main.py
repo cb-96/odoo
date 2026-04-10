@@ -1,10 +1,9 @@
 from urllib.parse import quote_plus
 
-from odoo import http, fields
+from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
-from odoo.exceptions import AccessError, ValidationError, MissingError
-from odoo.tools import plaintext2html
+from odoo.exceptions import ValidationError
 
 
 class FederationWebsite(http.Controller):

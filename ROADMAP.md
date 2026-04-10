@@ -1,101 +1,81 @@
-# Sports Federation Platform Roadmap (code-aware)
+<!-- ROADMAP updated 2026-04-10: archived previous version to ROADMAP_archive_2026-04-07.md -->
 
-This file has been revised to map roadmap outcomes directly to the repository
-modules, recent model additions, and concrete developer work packages. Use
-this as the working roadmap for engineering tickets and PRs.
+# ROADMAP — Engineering Plan (2026-04-10)
 
-Top-level sequence
+This roadmap focuses engineering work into short, verifiable deliverables mapped
+to modules. It prioritizes stability (tests & security), CI and reproducible
+builds, and the high-value product flows (scheduling, standings, finance
+automation, and public/portal UX).
 
-1. Stabilize and make state/ownership explicit across core modules
-2. Automate high-value operational actions (finance events, notifications)
-3. Centralize eligibility & progression logic (explainable standings)
-4. Improve public/portal self-service and reporting
+## Vision
 
-Quick code signals (recent / already implemented)
+Deliver a maintainable, well-tested Odoo addon suite that supports the full
+sports federation lifecycle: registration → scheduling → results → standings →
+reporting and finance.
 
-- `sports_federation_venues` — adds `federation.gameday` to bundle matches by venue/day and helper `find_or_create`. See [odoo/sports_federation_venues/models](sports_federation_venues/models).
-- `sports_federation_tournament` — materialised rounds: `federation.tournament.round`. See [odoo/sports_federation_tournament/models](sports_federation_tournament/models).
-- `federation.match` extensions — bracket/linking fields and `action_done()` wiring so knockout brackets auto-advance winners. See [odoo/sports_federation_tournament/models/federation_match.py](sports_federation_tournament/models/federation_match.py).
-- `sports_federation_competition_engine` — new progression and template models: `federation.stage.progression` and `federation.tournament.template`; services updated for per-round scheduling and full-bracket construction. See [odoo/sports_federation_competition_engine/models](sports_federation_competition_engine/models) and [odoo/sports_federation_competition_engine/services](sports_federation_competition_engine/services).
-- `sports_federation_standings` — cross-group ranking helper and `generate_standings()` delegator; standings freeze can trigger `auto_advance` progressions. See [odoo/sports_federation_standings/models/standing.py](sports_federation_standings/models/standing.py).
-- Finance passthrough helpers — match-level helper `action_create_venue_finance_event()` to create venue-related finance events (bridge to `sports_federation_finance_bridge`).
+## Current snapshot
 
-What this means for the roadmap
+- Repository contains a well-structured set of `sports_federation_*` modules.
+- GitHub Actions CI is defined in `.github/workflows/ci.yml` for targeted lint and module tests.
+- Pinned tooling dependencies are defined in `requirements.txt` and lint config in `.flake8`.
+- `STATE_AND_OWNERSHIP_MATRIX.md` now documents canonical states and ownership boundaries.
+- Public/portal security hardening is in place for visibility gating, portal season-registration ownership, and raw HTML rendering.
 
-The high-level phases remain valid, but each deliverable should now be
-expressed as concrete work packages tied to modules and test coverage. Below
-are recommended priorities and ownerable tasks.
+## Top priorities (next 30 days)
 
-Phase 1 — Stabilize (high priority)
+1. Implemented: add GitHub Actions CI to run targeted module tests and linters.
+2. Implemented: add pinned dependencies and document the containerized/local dev setup.
+3. Implemented: add `STATE_AND_OWNERSHIP_MATRIX.md` and reconcile lifecycle enums in docs.
+4. Implemented: audit public/portal controllers and templates; enforce visibility flags and remove raw `t-raw` rendering.
+5. Implemented: keep standings result-filter coverage in place and expand gameday constraint coverage.
 
-Goals:
+## 90-day plan
 
-- Ensure canonical state/ownership for core objects (`federation.match`, `federation.participant`, `federation.tournament`, `federation.standing`).
-- Enforce that only `approved`/`published` results count in standings.
-- Add blocking-policy matrix tests and implement enforcement where feasible.
+- Harden progression & eligibility logic: implement a central eligibility service and explainable standings.
+- Automate finance events in `sports_federation_finance_bridge` for key triggers.
+- Improve public/portal UX and add exportable KPI reports under `sports_federation_reporting`.
 
-Concrete tasks (example tickets):
+## 6-month plan
 
-- State matrix: author `odoo/STATE_AND_OWNERSHIP_MATRIX.md` and reconcile lifecycle enums in `odoo/sports_federation_tournament/models/*.py` and `odoo/sports_federation_result_control` (ensure consistent field names and values).
-- Standings safety: add tests in `odoo/sports_federation_standings/tests/test_standings_result_filter.py` to assert contested/unapproved results are excluded; update compute code if needed (`odoo/sports_federation_standings/models/standing.py`).
-- Gameday constraint validation: add tests in `odoo/sports_federation_venues/tests/test_gameday.py` verifying the "no duplicate same-category pairing on a gameday" rule and scheduling `schedule_by_round` behaviour.
+- Release a v1.0 candidate: stable migrations, packaging, and release notes.
+- Add monitoring for public endpoints and basic observability for scheduled jobs.
 
-Phase 2 — Operational automation (deliverables mapped to modules)
+## Module-targeted deliverables (examples)
 
-Goals:
+- `sports_federation_competition_engine`: add/expand tests for round-robin and knockout, and ensure deterministic scheduling.
+- `sports_federation_standings`: tie-break explanation chain and contested/unapproved result filtering tests are in place.
+- `sports_federation_finance_bridge`: implement and test auto finance events for registrations and venue fees.
+- `sports_federation_public_site` / `sports_federation_portal`: visibility gating and HTML sanitization are in place; continue broader acceptance coverage as follow-up work.
 
-- Automated finance events for registration/licensing/referee reimbursements.
-- Event-driven notifications for state transitions (registration, referee, result approval).
+## Quality & release checklist (for each PR that changes models/fields)
 
-Concrete tasks:
+- Add or update `security/ir.model.access.csv`.
+- Update `__manifest__.py` `data` list when adding XML/CSV data files.
+- Include focused unit tests for new behaviour (module-level tests).
+- Update module `README.md` with migration notes and behavioural changes.
 
-- Finance hooks: implement and test auto-event creation in `odoo/sports_federation_finance_bridge` (unit tests under `odoo/sports_federation_finance_bridge/tests/`). Ensure match-level `action_create_venue_finance_event()` correctly creates finance events.
-- Notification matrix: author a trigger matrix doc and implement event dispatchers in `sports_federation_notifications` (or `competition_engine` where scheduling triggers exist).
+## Immediate follow-ups
 
-Phase 3 — Eligibility & competition intelligence
+1. Expand CI lint scope as additional legacy files are brought under Black/Flake8.
+2. Run the new GitHub Actions workflow and review the first end-to-end result on GitHub.
+3. Continue 90-day plan work on eligibility, finance automation, and reporting.
 
-Goals:
+## How to run tests locally
 
-- Central eligibility service answering roster/match/registration queries.
-- Explainable standings and explicit qualifier flags.
+Example (replace `<module>`):
 
-Concrete tasks:
+```bash
+bash ./ci/run_tests.sh --module <module>
+```
 
-- `eligibility_service`: create `odoo/sports_federation_rules/services/eligibility.py` (or colocate in `people`) with unit tests that validate roster/match eligibility decisions.
-- Standings explanation: enhance `odoo/sports_federation_standings` to record tie-break reasons and add acceptance tests that assert the reason chain.
+## Docs & references
 
-Phase 4/5 — Public experience, reporting, KPI
+- Workflow specs: [_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md](_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md)
+- Architecture notes: [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md)
+- Project context: [CONTEXT.md](CONTEXT.md)
 
-Goals:
+---
 
-- Richer portal pages and archives (map to `sports_federation_public_site`).
-- KPI dashboards and data-quality monitors (instrument import and governance modules).
+Archived previous roadmap to `ROADMAP_archive_2026-04-07.md`.
 
-Concrete tasks:
-
-- Public page improvements: add API endpoints and templates under `odoo/sports_federation_public_site/controllers` and tests covering public slugs and visibility rules.
-- KPI reports: create lightweight reports in `odoo/sports_federation_reporting` and exportable CSV endpoints for leadership dashboards.
-
-Documentation, tests and release hygiene (non-negotiable)
-
-- Every change that introduces or modifies models/fields must include:
-- `security/ir.model.access.csv` updates,
-- updated `__manifest__.py` `data` entries if new XML/CSV data files are added,
-- a short README in `odoo/<module>/README.md` describing behaviour and migration notes.
-- Add focused unit/integration tests for all new scheduling and progression logic. Suggested tests to add first:
-- `odoo/sports_federation_competition_engine/tests/test_round_robin.py`
-- `odoo/sports_federation_competition_engine/tests/test_knockout_bracket.py`
-- `odoo/sports_federation_competition_engine/tests/test_stage_progression.py`
-- `odoo/sports_federation_venues/tests/test_gameday.py`
-
-Immediate next steps (recommended)
-
-1. Create the `STATE_AND_OWNERSHIP_MATRIX.md` doc and assign owners for `match`, `standing`, `participant`, `registration`.
-2. Add the tests listed above and run the Odoo test runner in CI.
-3. Audit `security/` files for new models (`gameday`, `tournament.round`, `stage.progression`, `tournament.template`, bracket fields on `match`).
-4. Add migration notes in `TECHNICAL_NOTE.md` for DB-impacting changes.
-
-If you want, I can:
-
-- open PRs with the test skeletons and the `STATE_AND_OWNERSHIP_MATRIX.md` draft, or
-- commit & push this roadmap update now and create a set of issues from the "Immediate next steps" list.
+Top-priority roadmap items above were implemented in the repository on 2026-04-10.

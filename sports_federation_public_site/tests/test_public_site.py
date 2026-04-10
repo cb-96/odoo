@@ -1,5 +1,4 @@
 from odoo.tests import TransactionCase
-from odoo.exceptions import ValidationError
 
 
 class TestPublicSite(TransactionCase):
@@ -41,13 +40,30 @@ class TestPublicSite(TransactionCase):
     def test_unpublished_tournament_detail_returns_404(self):
         """Test that unpublished tournament detail returns 404."""
         self.tournament.website_published = False
-        # The controller checks website_published and returns not_found if False
-        self.assertFalse(self.tournament.website_published)
+        self.assertFalse(self.tournament.can_access_public_detail())
 
     def test_published_tournament_detail_renders(self):
         """Test that published tournament detail renders."""
         self.tournament.website_published = True
-        self.assertTrue(self.tournament.website_published)
+        self.assertTrue(self.tournament.can_access_public_detail())
+
+    def test_results_visibility_requires_results_toggle(self):
+        """Direct results access requires both publish and results flags."""
+        self.tournament.website_published = True
+        self.tournament.show_public_results = False
+        self.assertFalse(self.tournament.can_access_public_results())
+
+        self.tournament.show_public_results = True
+        self.assertTrue(self.tournament.can_access_public_results())
+
+    def test_standings_visibility_requires_standings_toggle(self):
+        """Direct standings access requires both publish and standings flags."""
+        self.tournament.website_published = True
+        self.tournament.show_public_standings = False
+        self.assertFalse(self.tournament.can_access_public_standings())
+
+        self.tournament.show_public_standings = True
+        self.assertTrue(self.tournament.can_access_public_standings())
 
     def test_only_published_standings_visible(self):
         """Test that only published standings are visible."""

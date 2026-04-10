@@ -1,3 +1,4 @@
+from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase
 
 
@@ -56,6 +57,27 @@ class TestPublicSite(TransactionCase):
         self.tournament.show_public_results = True
         self.assertTrue(self.tournament.can_access_public_results())
 
+    def test_public_results_query_only_returns_approved_matches(self):
+        approved_match = self.env["federation.match"].create({
+            "tournament_id": self.tournament.id,
+            "home_team_id": False,
+            "away_team_id": False,
+            "result_state": "approved",
+        })
+        submitted_match = self.env["federation.match"].create({
+            "tournament_id": self.tournament.id,
+            "home_team_id": False,
+            "away_team_id": False,
+            "result_state": "submitted",
+        })
+
+        matches = self.env["federation.match"].search([
+            ("tournament_id", "=", self.tournament.id),
+            ("result_state", "=", "approved"),
+        ])
+        self.assertIn(approved_match, matches)
+        self.assertNotIn(submitted_match, matches)
+
     def test_standings_visibility_requires_standings_toggle(self):
         """Direct standings access requires both publish and standings flags."""
         self.tournament.website_published = True
@@ -96,6 +118,17 @@ class TestPublicSite(TransactionCase):
         self.assertEqual(self.tournament.public_slug, "test-slug")
         self.assertTrue(self.tournament.show_public_results)
         self.assertTrue(self.tournament.show_public_standings)
+
+    def test_public_slug_must_be_unique(self):
+        self.tournament.public_slug = "shared-slug"
+        with self.assertRaises(ValidationError):
+            self.env["federation.tournament"].create({
+                "name": "Other Tournament",
+                "code": "OTHER-TT",
+                "date_start": "2024-02-01",
+                "date_end": "2024-02-28",
+                "public_slug": "shared-slug",
+            })
 
     def test_standing_public_fields(self):
         """Test that standing public fields are set correctly."""

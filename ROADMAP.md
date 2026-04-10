@@ -79,7 +79,7 @@ Modules: `sports_federation_result_control`, `sports_federation_standings`, `spo
 Work: enforce submit, verify, approve separation of duties; ensure contested and corrected results behave correctly; keep official standings limited to approved outcomes; preserve tie-break explanation visibility.
 Done when: official standings can be defended operationally and every exception path has regression coverage.
 
-5. Harden portal and public-site security before wider rollout.
+5. Harden portal and public-site security before wider rollout. Done (2026-04-10)
 Modules: `sports_federation_portal`, `sports_federation_public_site`.
 Work: verify ownership checks on portal writes, validate all public visibility flags, avoid unsafe template rendering, and cover direct-URL access paths with controller tests.
 Done when: public and portal surfaces enforce the same data-ownership and publication rules described in the workflows.

@@ -4,6 +4,11 @@ from odoo import fields, models
 class FederationTournament(models.Model):
     _inherit = "federation.tournament"
 
+    _public_slug_unique = models.Constraint(
+        "UNIQUE(public_slug)",
+        "Public slug must be unique.",
+    )
+
     website_published = fields.Boolean(
         string="Published on Website",
         default=False,

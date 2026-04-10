@@ -1,4 +1,4 @@
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase
 
 
@@ -16,10 +16,27 @@ class TestTournamentRegistration(TransactionCase):
             "date_start": "2025-01-01",
             "date_end": "2025-12-31",
         })
+        cls.portal_group = cls.env.ref(
+            "sports_federation_portal.group_federation_portal_club"
+        )
+        cls.role_type = cls.env.ref(
+            "sports_federation_portal.role_type_competition_contact"
+        )
         cls.eligible_team = cls.env["federation.team"].create({
             "name": "Eligible Portal Team",
             "club_id": cls.club.id,
             "code": "EPT",
+            "category": "senior",
+            "gender": "male",
+        })
+        cls.other_club = cls.env["federation.club"].create({
+            "name": "Other Portal Registration Club",
+            "code": "OPRC",
+        })
+        cls.other_team = cls.env["federation.team"].create({
+            "name": "Other Eligible Portal Team",
+            "club_id": cls.other_club.id,
+            "code": "OEPT",
             "category": "senior",
             "gender": "male",
         })
@@ -37,6 +54,30 @@ class TestTournamentRegistration(TransactionCase):
             "date_start": "2025-06-01",
             "gender": "male",
             "category": "senior",
+        })
+        cls.user_a = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Portal Registration User A",
+            "login": "portal.registration.a@example.com",
+            "email": "portal.registration.a@example.com",
+            "groups_id": [(6, 0, [cls.portal_group.id])],
+        })
+        cls.user_b = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Portal Registration User B",
+            "login": "portal.registration.b@example.com",
+            "email": "portal.registration.b@example.com",
+            "groups_id": [(6, 0, [cls.portal_group.id])],
+        })
+        cls.env["federation.club.representative"].create({
+            "club_id": cls.club.id,
+            "partner_id": cls.user_a.partner_id.id,
+            "user_id": cls.user_a.id,
+            "role_type_id": cls.role_type.id,
+        })
+        cls.env["federation.club.representative"].create({
+            "club_id": cls.other_club.id,
+            "partner_id": cls.user_b.partner_id.id,
+            "user_id": cls.user_b.id,
+            "role_type_id": cls.role_type.id,
         })
 
     def test_registration_accepts_eligible_team(self):
@@ -82,3 +123,20 @@ class TestTournamentRegistration(TransactionCase):
 
         self.assertNotIn(self.eligible_team.id, registration.available_team_ids._origin.ids)
         self.assertIn("Already registered or currently awaiting review.", registration.excluded_team_feedback_html)
+
+    def test_portal_user_only_sees_own_tournament_registrations(self):
+        own_registration = self.env["federation.tournament.registration"].with_user(self.user_a).create({
+            "tournament_id": self.tournament.id,
+            "team_id": self.eligible_team.id,
+        })
+        other_registration = self.env["federation.tournament.registration"].with_user(self.user_b).create({
+            "tournament_id": self.tournament.id,
+            "team_id": self.other_team.id,
+        })
+
+        visible_to_user_a = self.env["federation.tournament.registration"].with_user(self.user_a).search([])
+        self.assertIn(own_registration, visible_to_user_a)
+        self.assertNotIn(other_registration, visible_to_user_a)
+
+        with self.assertRaises(AccessError):
+            other_registration.with_user(self.user_a).write({"notes": "Not allowed"})

@@ -57,7 +57,7 @@ match results on public URLs without logging in.
 
 1. **Opt-in publishing** — Tournaments and standings must be explicitly published.
 2. **Public access** — All routes use `auth="public"`, no login required.
-3. **Slug-based URLs** — Clean URLs using `public_slug` field.
+3. **Unique public identifiers** — `public_slug` is stored as the public identifier field and is now uniqueness-guarded so publication metadata cannot collide.
 4. **Selective display** — Direct results and standings routes enforce their per-tournament visibility toggles.
 5. **Sanitized rich text** — Public descriptions render through website field rendering rather than raw `t-raw` output.
 6. **Website templates** — QWeb templates for responsive public pages.

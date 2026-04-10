@@ -8,11 +8,23 @@
               sequence="110"/>
 
     <!-- Participation Report -->
+    <menuitem id="menu_federation_report_operational"
+              name="Operational KPIs"
+              parent="menu_federation_reporting"
+              action="action_federation_report_operational"
+              sequence="5"/>
+
     <menuitem id="menu_federation_report_participation"
               name="Participation"
               parent="menu_federation_reporting"
               action="action_federation_report_participation"
               sequence="10"/>
+
+    <menuitem id="menu_federation_report_standing_reconciliation"
+              name="Standings Reconciliation"
+              parent="menu_federation_reporting"
+              action="action_federation_report_standing_reconciliation"
+              sequence="15"/>
 
     <!-- Officiating Report -->
     <menuitem id="menu_federation_report_officiating"
@@ -34,5 +46,18 @@
               parent="menu_federation_reporting"
               action="action_federation_report_finance"
               sequence="40"/>
+
+    <menuitem id="menu_federation_report_finance_reconciliation"
+              name="Finance Reconciliation"
+              parent="menu_federation_reporting"
+              action="action_federation_report_finance_reconciliation"
+              sequence="45"/>
+
+    <menuitem id="menu_federation_report_schedule"
+              name="Report Schedules"
+              parent="menu_federation_reporting"
+              action="action_federation_report_schedule"
+              groups="sports_federation_base.group_federation_manager"
+              sequence="90"/>
 
 </odoo>

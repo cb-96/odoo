@@ -12,6 +12,7 @@
                 <field name="missing_count"/>
                 <field name="pending_count"/>
                 <field name="expired_count"/>
+                <field name="non_compliant_count"/>
             </list>
         </field>
     </record>
@@ -27,6 +28,7 @@
                 <field name="missing_count" type="measure"/>
                 <field name="pending_count" type="measure"/>
                 <field name="expired_count" type="measure"/>
+                <field name="non_compliant_count" type="measure"/>
             </pivot>
         </field>
     </record>

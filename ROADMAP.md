@@ -121,7 +121,7 @@ Modules: `sports_federation_notifications`, `sports_federation_portal`, `sports_
 Work: replace notification stubs with actual templates or activities for registration, publication, referee assignment, approved results, standings freeze, and finance confirmations.
 Done when: high-value workflow events reliably produce a logged communication or task.
 
-6. Expand reporting from CSV extraction to operational reporting.
+6. Done (2026-04-10): Expand reporting from CSV extraction to operational reporting.
 Modules: `sports_federation_reporting`, `sports_federation_standings`, `sports_federation_finance_bridge`, `sports_federation_tournament`, `sports_federation_compliance`.
 Work: provide federation-facing KPI outputs, reconciliation views, and role-oriented reports that do not require direct database access.
 Done when: administrators can produce recurring weekly or monthly operational views from the application layer.

@@ -123,7 +123,11 @@ The **Finance Report** (SQL view-backed model) provides:
 - Summary by fee type and state
 - Total amounts per category
 - Event counts for monitoring
-- CSV export via `/reporting/export/finance` for leadership dashboards
+- A **Finance Reconciliation** queue showing open follow-up items by event,
+    counterparty, reference coverage, and ageing
+- Report schedules that can generate weekly or monthly CSV snapshots from the
+    reporting menu without direct database access
+- CSV export via `/reporting/export/finance` for lightweight leadership dashboards
 
 ## State Diagram
 

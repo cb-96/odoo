@@ -1,6 +1,6 @@
 {
     "name": "Sports Federation Reporting",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.2.0",
     "category": "Sports",
     "summary": "Reporting models for federation data",
     "description": "Reporting models and dashboards for participation, officiating, compliance, and finance.",
@@ -20,10 +20,13 @@
     ],
     "data": [
         "security/ir.model.access.csv",
+        "data/report_schedule_cron.xml",
         "views/report_participation_views.xml",
         "views/report_officiating_views.xml",
         "views/report_compliance_views.xml",
         "views/report_finance_views.xml",
+        "views/report_operational_views.xml",
+        "views/report_schedule_views.xml",
         "views/menu_views.xml",
     ],
     "demo": [],

@@ -1,15 +1,17 @@
 # Sports Federation Reporting
 
-Cross-module analytical reports backed by PostgreSQL views. Provides read-only
-report models that aggregate data from participation, officiating, compliance,
-and finance into summary tables.
+Cross-module analytical reports backed by PostgreSQL views plus scheduled report
+snapshots. Provides read-only report models that aggregate participation,
+officiating, compliance, finance, and tournament-readiness data into
+operator-facing views.
 
 ## Purpose
 
 Gives federation administrators a **dashboard-level view** of key metrics without
 writing SQL or building custom reports. Each report model is a database view
 that joins and aggregates data from multiple modules into a single, filterable
-list or pivot view.
+list or pivot view, while report schedules generate recurring weekly or monthly
+CSV snapshots from inside Odoo.
 
 ## Dependencies
 
@@ -60,6 +62,7 @@ Compliance status overview by entity type.
 | `missing_count` | Integer | Missing documents |
 | `pending_count` | Integer | Awaiting review |
 | `expired_count` | Integer | Expired documents |
+| `non_compliant_count` | Integer | Explicitly rejected or non-compliant checks |
 
 ### `federation.report.finance`
 
@@ -72,13 +75,68 @@ Financial event summary by fee type and state.
 | `event_count` | Integer | Number of events |
 | `total_amount` | Float | Sum of amounts |
 
+### `federation.report.operational`
+
+Tournament-level operational KPI view.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` / `tournament_id` | Many2one | Scope of the KPI row |
+| `participant_count` / `confirmed_participant_count` | Integer | Enrolment totals |
+| `participant_confirmation_rate` | Float | Confirmed-participant percentage |
+| `match_count` / `completed_match_count` | Integer | Match execution totals |
+| `match_completion_rate` | Float | Completed-match percentage |
+| `pending_finance_event_count` / `pending_finance_amount` | Integer / Float | Open finance follow-up tied to match operations |
+| `open_club_compliance_count` | Integer | Outstanding club compliance checks for participating clubs |
+| `readiness_status` | Selection | `healthy`, `attention`, or `blocked` |
+
+### `federation.report.standing.reconciliation`
+
+Tournament-level standings coverage check.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `confirmed_participant_count` | Integer | Confirmed tournament participants |
+| `covered_participant_count` | Integer | Distinct participants represented in standings |
+| `missing_participant_count` | Integer | Confirmed participants missing from standings coverage |
+| `orphaned_participant_count` | Integer | Standings entries without a matching confirmed participant |
+| `reconciliation_status` | Selection | `healthy`, `attention`, or `blocked` |
+| `reconciliation_note` | Text | Operator-readable mismatch explanation |
+
+### `federation.report.finance.reconciliation`
+
+Finance follow-up queue by event.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `finance_event_id` | Many2one | Source finance event |
+| `counterparty_display` | Char | Club, player, referee, or partner name |
+| `follow_up_status` | Selection | Draft / awaiting settlement / awaiting reference / complete / cancelled |
+| `needs_follow_up` | Boolean | Whether the event still needs operator attention |
+| `age_days` | Integer | Days since the event was created |
+| `invoice_ref` / `external_ref` | Char | Reconciliation references |
+
+### `federation.report.schedule`
+
+Persistent schedule for recurring application-layer report generation.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `report_type` | Selection | Operational, standings reconciliation, finance reconciliation, compliance summary |
+| `period_type` | Selection | Weekly or monthly cadence |
+| `season_id` | Many2one | Optional season scope for season-based reports |
+| `next_run_on` / `last_run_on` | Datetime | Scheduling metadata |
+| `generated_file` | Binary | Last generated CSV snapshot |
+| `last_row_count` | Integer | Number of exported data rows |
+
 ## Key Behaviours
 
-1. **Read-only views** — Models use `_auto = False` with `init()` creating SQL views.
-2. **Pivot and graph support** — Views are configured for pivot-table and graphical
-   analysis.
-3. **Cross-module joins** — Each report aggregates from multiple modules' tables.
-4. **Zero maintenance** — Reports auto-refresh as underlying data changes.
+1. **Read-only views** — Analytical models use `_auto = False` with `init()` creating SQL views.
+2. **Role-oriented reporting surfaces** — Operational KPIs, standings reconciliation, finance reconciliation, and compliance summaries are separated into task-specific menus instead of a single generic export path.
+3. **Cross-module joins** — Operational KPIs combine tournament, standings, finance, and compliance data into one application-layer view.
+4. **Recurring snapshots** — `federation.report.schedule` can generate weekly or monthly CSV snapshots and a daily cron refreshes active schedules.
+5. **Reconciliation-first reporting** — Standings coverage and finance follow-up reports expose the specific gaps operators must resolve before relying on downstream outputs.
+6. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
 
 ## CSV exports
 
@@ -88,3 +146,6 @@ reporting controllers:
 - `/reporting/export/standings/<tournament_id>` — standings lines with tie-break notes
 - `/reporting/export/participation/<season_id>` — season participation roster
 - `/reporting/export/finance` — finance summary grouped by fee type and state
+
+For recurring in-application reporting, create records under **Federation → Reporting → Report Schedules**.
+Each schedule stores the last generated CSV snapshot directly on the schedule record.

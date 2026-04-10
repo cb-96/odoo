@@ -2,6 +2,27 @@
 
 Last updated: 2026-04-10
 
+## Operational reporting expansion (2026-04-10)
+
+Year 1 Priority 1 item 6 expanded reporting from raw CSV extraction into
+operator-facing application reports.
+
+- `sports_federation_reporting` now includes `federation.report.operational`
+    for tournament readiness KPIs across participation, standings coverage,
+    match completion, finance follow-up, and participant-club compliance.
+- A new `federation.report.standing.reconciliation` view exposes mismatches
+    between confirmed participants and standings coverage, with operator-readable
+    reconciliation notes.
+- A new `federation.report.finance.reconciliation` view turns finance events
+    into a follow-up queue keyed by counterparty, references, age, and
+    completion status instead of only grouped fee totals.
+- `federation.report.schedule` plus a daily cron now generate recurring weekly
+    or monthly CSV snapshots from inside Odoo, so administrators can run the
+    reporting cadence without direct database access.
+- The compliance summary report now exposes `non_compliant_count` so rejected
+    or explicitly failed checks are visible alongside missing, pending, and
+    expired totals.
+
 ## Notification activation (2026-04-10)
 
 Year 1 Priority 1 item 5 converted the notification module from mostly logged

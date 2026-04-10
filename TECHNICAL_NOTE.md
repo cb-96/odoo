@@ -2,6 +2,24 @@
 
 Last updated: 2026-04-10
 
+## Match-day roster traceability (2026-04-10)
+
+Year 1 Priority 1 item 2 closed the operational gap between season rosters,
+match sheets, portal visibility, and disputed results.
+
+- `sports_federation_rosters` now logs roster, lineup, and substitution events
+    in `federation.participation.audit`.
+- Season rosters now expose match-day locking state. Once a live match sheet
+    references a roster line, that referenced line cannot be structurally changed
+    or removed.
+- Approved match sheets now freeze lineup edits while still allowing
+    substitution timing (`entered_minute`, `left_minute`) until final lock.
+- `sports_federation_result_control` now logs every result transition in
+    `federation.match.result.audit`, including dispute and correction reasons.
+- `sports_federation_portal` now exposes read-only roster and match-sheet pages
+    so club representatives can review eligibility blocks, substitutions,
+    participation audit history, and result disputes from the portal.
+
 ## Eligibility workflow hardening (2026-04-10)
 
 Year 1 Priority 1 item 1 connected the existing eligibility models to live

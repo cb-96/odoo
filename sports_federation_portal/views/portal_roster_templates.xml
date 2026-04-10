@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_federation_links_rosters" inherit_id="sports_federation_portal.portal_federation_links">
+        <xpath expr="//div[@t-if='federation_representative']" position="inside">
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-id-card me-2"/>My Rosters
+                        </h5>
+                        <p class="card-text">Review season rosters, lock status, and audit history.</p>
+                        <a href="/my/rosters" class="btn btn-outline-primary btn-sm">View Rosters</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-list-alt me-2"/>My Match Sheets
+                        </h5>
+                        <p class="card-text">Track submitted squads, substitutions, and result disputes.</p>
+                        <a href="/my/match-sheets" class="btn btn-outline-primary btn-sm">View Match Sheets</a>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="portal_my_rosters" name="My Rosters">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-id-card me-2"/>My Rosters</h2>
+                    </div>
+                </div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Roster</th>
+                            <th>Team</th>
+                            <th>Season</th>
+                            <th>Status</th>
+                            <th>Locked</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="rosters" t-as="roster">
+                            <tr>
+                                <td><t t-esc="roster.name"/></td>
+                                <td><t t-esc="roster.team_id.name"/></td>
+                                <td><t t-esc="roster.season_id.name"/></td>
+                                <td><t t-esc="dict(roster._fields['status'].selection).get(roster.status)"/></td>
+                                <td>
+                                    <span t-if="roster.match_day_locked" class="badge bg-warning text-dark">Locked</span>
+                                    <span t-if="not roster.match_day_locked" class="badge bg-success">Editable</span>
+                                </td>
+                                <td>
+                                    <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-sm btn-outline-primary">Open</a>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <div t-if="not rosters" class="text-center py-4">
+                    <p class="text-muted">No rosters are available for your club yet.</p>
+                </div>
+
+                <t t-if="pager">
+                    <t t-call="portal.pager"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_roster_detail" name="My Roster Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-id-card me-2"/><t t-esc="roster.name"/></h2>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/my/rosters" class="btn btn-outline-secondary">Back to Rosters</a>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Roster Summary</h5>
+                                <table class="table table-sm mb-0">
+                                    <tr><th>Team</th><td><t t-esc="roster.team_id.name"/></td></tr>
+                                    <tr><th>Season</th><td><t t-esc="roster.season_id.name"/></td></tr>
+                                    <tr t-if="roster.competition_id"><th>Competition</th><td><t t-esc="roster.competition_id.name"/></td></tr>
+                                    <tr><th>Status</th><td><t t-esc="dict(roster._fields['status'].selection).get(roster.status)"/></td></tr>
+                                    <tr><th>Players</th><td><t t-esc="roster.line_count"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Operational Status</h5>
+                                <div t-if="roster.readiness_feedback" class="alert alert-warning mb-3">
+                                    <t t-esc="roster.readiness_feedback"/>
+                                </div>
+                                <div t-if="roster.match_day_lock_feedback" class="alert alert-info mb-0">
+                                    <t t-esc="roster.match_day_lock_feedback"/>
+                                </div>
+                                <div t-if="not roster.readiness_feedback and not roster.match_day_lock_feedback" class="text-muted">
+                                    No current blocking issues are recorded.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Roster Lines</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Status</th>
+                                    <th>Captaincy</th>
+                                    <th>Eligibility</th>
+                                    <th>Dates</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="roster.line_ids" t-as="line">
+                                    <tr>
+                                        <td><t t-esc="line.player_id.display_name"/></td>
+                                        <td><t t-esc="dict(line._fields['status'].selection).get(line.status)"/></td>
+                                        <td>
+                                            <span t-if="line.is_captain">Captain</span>
+                                            <span t-if="line.is_vice_captain">Vice Captain</span>
+                                        </td>
+                                        <td>
+                                            <span t-if="line.eligible" class="badge bg-success">Eligible</span>
+                                            <span t-if="not line.eligible" class="badge bg-danger">Blocked</span>
+                                            <div t-if="line.eligibility_feedback" class="small text-muted mt-1">
+                                                <t t-esc="line.eligibility_feedback"/>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <t t-if="line.date_from" t-esc="line.date_from" t-options='{"widget": "date"}'/>
+                                            <t t-if="line.date_from and line.date_to"> - </t>
+                                            <t t-if="line.date_to" t-esc="line.date_to" t-options='{"widget": "date"}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Audit History</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Event</th>
+                                    <th>Player</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="roster.audit_event_ids" t-as="event">
+                                    <tr>
+                                        <td><t t-esc="event.event_on" t-options='{"widget": "datetime"}'/></td>
+                                        <td><t t-esc="dict(event._fields['event_type'].selection).get(event.event_type)"/></td>
+                                        <td><t t-esc="event.player_id.display_name if event.player_id else ''"/></td>
+                                        <td><t t-esc="event.description"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_match_sheets" name="My Match Sheets">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-list-alt me-2"/>My Match Sheets</h2>
+                    </div>
+                </div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sheet</th>
+                            <th>Match</th>
+                            <th>Team</th>
+                            <th>State</th>
+                            <th>Ready</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="match_sheets" t-as="sheet">
+                            <tr>
+                                <td><t t-esc="sheet.name"/></td>
+                                <td><t t-esc="sheet.match_id.display_name"/></td>
+                                <td><t t-esc="sheet.team_id.name"/></td>
+                                <td><t t-esc="dict(sheet._fields['state'].selection).get(sheet.state)"/></td>
+                                <td>
+                                    <span t-if="sheet.ready_for_submission" class="badge bg-success">Ready</span>
+                                    <span t-if="not sheet.ready_for_submission" class="badge bg-warning text-dark">Attention</span>
+                                </td>
+                                <td>
+                                    <a t-attf-href="/my/match-sheets/#{sheet.id}" class="btn btn-sm btn-outline-primary">Open</a>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <div t-if="not match_sheets" class="text-center py-4">
+                    <p class="text-muted">No match sheets are available for your club yet.</p>
+                </div>
+
+                <t t-if="pager">
+                    <t t-call="portal.pager"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_match_sheet_detail" name="My Match Sheet Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-list-alt me-2"/><t t-esc="sheet.name"/></h2>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/my/match-sheets" class="btn btn-outline-secondary">Back to Match Sheets</a>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Sheet Summary</h5>
+                                <table class="table table-sm mb-0">
+                                    <tr><th>Match</th><td><t t-esc="sheet.match_id.display_name"/></td></tr>
+                                    <tr><th>Team</th><td><t t-esc="sheet.team_id.name"/></td></tr>
+                                    <tr><th>State</th><td><t t-esc="dict(sheet._fields['state'].selection).get(sheet.state)"/></td></tr>
+                                    <tr><th>Result State</th><td><t t-esc="dict(sheet.match_id._fields['result_state'].selection).get(sheet.match_id.result_state)"/></td></tr>
+                                    <tr><th>Substitutions</th><td><t t-esc="sheet.substitution_count"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Operational Notes</h5>
+                                <div t-if="sheet.readiness_feedback" class="alert alert-warning mb-3">
+                                    <t t-esc="sheet.readiness_feedback"/>
+                                </div>
+                                <div t-if="sheet.match_id.result_contest_reason" class="alert alert-danger mb-3">
+                                    <strong>Contest Reason:</strong>
+                                    <t t-esc="sheet.match_id.result_contest_reason"/>
+                                </div>
+                                <div t-if="sheet.match_id.result_correction_reason" class="alert alert-info mb-0">
+                                    <strong>Correction Reason:</strong>
+                                    <t t-esc="sheet.match_id.result_correction_reason"/>
+                                </div>
+                                <div t-if="not sheet.readiness_feedback and not sheet.match_id.result_contest_reason and not sheet.match_id.result_correction_reason" class="text-muted">
+                                    No additional notes are recorded.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Squad</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Role</th>
+                                    <th>Captain</th>
+                                    <th>Eligibility</th>
+                                    <th>Entered</th>
+                                    <th>Left</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="sheet.line_ids" t-as="line">
+                                    <tr>
+                                        <td><t t-esc="line.player_id.display_name"/></td>
+                                        <td>
+                                            <span t-if="line.is_starter">Starter</span>
+                                            <span t-if="line.is_substitute">Substitute</span>
+                                        </td>
+                                        <td><t t-esc="'Yes' if line.is_captain else ''"/></td>
+                                        <td>
+                                            <span t-if="line.eligible" class="badge bg-success">Eligible</span>
+                                            <span t-if="not line.eligible" class="badge bg-danger">Blocked</span>
+                                            <div t-if="line.eligibility_feedback" class="small text-muted mt-1">
+                                                <t t-esc="line.eligibility_feedback"/>
+                                            </div>
+                                        </td>
+                                        <td><t t-esc="line.entered_minute or ''"/></td>
+                                        <td><t t-esc="line.left_minute or ''"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <h4>Participation Audit</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Event</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="sheet.audit_event_ids" t-as="event">
+                                    <tr>
+                                        <td><t t-esc="event.event_on" t-options='{"widget": "datetime"}'/></td>
+                                        <td><t t-esc="dict(event._fields['event_type'].selection).get(event.event_type)"/></td>
+                                        <td><t t-esc="event.description"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-lg-6">
+                        <h4>Result Audit</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Event</th>
+                                    <th>Reason</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="sheet.match_id.result_audit_ids" t-as="event">
+                                    <tr>
+                                        <td><t t-esc="event.created_on" t-options='{"widget": "datetime"}'/></td>
+                                        <td><t t-esc="dict(event._fields['event_type'].selection).get(event.event_type)"/></td>
+                                        <td><t t-esc="event.reason or ''"/></td>
+                                        <td><t t-esc="event.description"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

@@ -230,3 +230,67 @@ class TestRosters(TransactionCase):
         self.assertIn("not active", line.eligibility_feedback.lower())
         self.assertFalse(roster.ready_for_activation)
         self.assertIn(self.player1.display_name, roster.readiness_feedback)
+
+    def test_live_match_sheet_locks_roster_scope_and_used_lines(self):
+        roster = self.env["federation.team.roster"].create({
+            "name": "Locked Scope Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+        line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+        match = self.env["federation.match"].create({
+            "tournament_id": self.env["federation.tournament"].create({
+                "name": "Roster Lock Tournament",
+                "code": "RLT",
+                "season_id": self.season.id,
+                "date_start": "2024-02-01",
+            }).id,
+            "home_team_id": self.team.id,
+            "away_team_id": self.env["federation.team"].create({
+                "name": "Opponent Team",
+                "club_id": self.club.id,
+                "code": "OTL",
+            }).id,
+            "date_scheduled": "2024-02-10 15:00:00",
+        })
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Locked Scope Sheet",
+            "match_id": match.id,
+            "team_id": self.team.id,
+            "roster_id": roster.id,
+            "side": "home",
+        })
+        self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "roster_line_id": line.id,
+            "is_starter": True,
+        })
+        sheet.action_submit()
+
+        self.assertTrue(roster.match_day_locked)
+        with self.assertRaises(ValidationError):
+            roster.write({"valid_to": "2024-12-15"})
+        with self.assertRaises(ValidationError):
+            line.write({"status": "inactive"})
+
+    def test_roster_audit_events_are_created_for_lifecycle_changes(self):
+        roster = self.env["federation.team.roster"].create({
+            "name": "Audited Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+        self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+
+        event_types = roster.audit_event_ids.mapped("event_type")
+        self.assertIn("roster_created", event_types)
+        self.assertIn("roster_line_added", event_types)
+        self.assertIn("roster_activated", event_types)

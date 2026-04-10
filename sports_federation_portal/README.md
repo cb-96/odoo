@@ -3,7 +3,7 @@
 ## Solution Design
 
 ### Overview
-The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons. It sits on top of `sports_federation_base` and `sports_federation_tournament`, using `website` and `portal` from Odoo core.
+The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons, and to review operational rosters and match sheets with their audit history. It sits on top of `sports_federation_base`, `sports_federation_tournament`, `sports_federation_rosters`, and `sports_federation_result_control`, using `website` and `portal` from Odoo core.
 
 ### Key Design Decisions
 
@@ -62,6 +62,12 @@ Portal users (`group_federation_portal_club`) get these record rules:
 | `federation.tournament.registration` | `('club_id', 'in', ...)` | See only own tournament registrations |
 | `federation.tournament` | `[(1, '=', 1)]` | See all tournaments (read-only, for listing) |
 | `federation.tournament.participant` | `('club_id', 'in', ...)` | See only own participants |
+| `federation.team.roster` | `('club_id', 'in', ...)` | See only own season rosters |
+| `federation.team.roster.line` | `('roster_id.club_id', 'in', ...)` | See only own roster lines |
+| `federation.match.sheet` | `('team_id.club_id', 'in', ...)` | See only own match sheets |
+| `federation.match.sheet.line` | `('match_sheet_id.team_id.club_id', 'in', ...)` | See only own match-sheet lines |
+| `federation.participation.audit` | `('team_id.club_id', 'in', ...)` | See only own participation audit events |
+| `federation.match.result.audit` | home/away team club ownership | See only own result dispute and approval history |
 
 Additionally, controllers validate ownership on every write operation as defense-in-depth.
 For season and tournament registrations, the models also enforce that `user_id` can only submit teams for represented clubs.
@@ -75,6 +81,7 @@ sports_federation_portal/
     controllers/
         __init__.py
         main.py
+        rosters.py
     data/
         ir_sequence.xml
     models/
@@ -91,6 +98,7 @@ sports_federation_portal/
         federation_club_representative_views.xml
         federation_tournament_registration_views.xml
         portal_templates.xml
+        portal_roster_templates.xml
         website_menus.xml
         website_tournament_templates.xml
 ```
@@ -141,6 +149,8 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Tournament listing** (`/tournaments`) shows open/in_progress/closed tournaments.
 - [ ] **Tournament detail** (`/tournament/<id>`) shows participants and register button when state is `open`.
 - [ ] **Tournament registration** creates a `federation.tournament.registration` in `submitted` state.
+- [ ] **Roster portal pages** (`/my/rosters`, `/my/rosters/<id>`) show only the representative's clubs, including lock feedback and audit events.
+- [ ] **Match-sheet portal pages** (`/my/match-sheets`, `/my/match-sheets/<id>`) show substitutions plus related result disputes and corrections.
 - [ ] **Duplicate registration** is rejected with an error message.
 - [ ] **Max participants** limit is enforced.
 - [ ] **Season registration** creates a `federation.season.registration` in `submitted` state.

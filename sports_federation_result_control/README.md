@@ -35,6 +35,20 @@ Extends the match model with result-control fields.
 | `result_contest_reason` | Text | Why the result was disputed |
 | `result_correction_reason` | Text | Why the result was changed |
 | `include_in_official_standings` | Boolean | Flag for standings computation |
+| `result_audit_ids` | One2many | Detailed transition timeline for disputes and approvals |
+
+### `federation.match.result.audit`
+
+Immutable result-workflow timeline for a match.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `match_id` | Many2one | The audited match |
+| `event_type` | Selection | submitted / verified / approved / contested / corrected / reset |
+| `from_state` / `to_state` | Char | Transition boundary |
+| `reason` | Text | Contest or correction rationale |
+| `description` | Text | Human-readable summary |
+| `author_id` / `created_on` | Many2one / Datetime | Attribution and timestamp |
 
 ### Actions
 
@@ -59,7 +73,7 @@ Extends the match model with result-control fields.
 1. **Three-step approval** — submit → verify → approve ensures multiple eyes.
 2. **Contest / correction** — Disputed results can be flagged and later corrected.
 3. **Standings gating** — Only approved results set `include_in_official_standings = True`.
-4. **Audit trail** — Every transition records who and when via user/datetime fields.
+4. **Audit trail** — Every transition records who and when via user/datetime fields and a persistent `federation.match.result.audit` entry.
 5. **Separation of duties** — Submitter, verifier, and approver must be distinct users for the same match.
 6. **Auto recomputation** — Approve, contest, correct, and reset actions recompute linked non-frozen standings automatically.
 7. **Approved score immutability** — Home and away scores cannot be edited while a result remains approved.

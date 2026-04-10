@@ -200,3 +200,28 @@ class TestResultControl(TransactionCase):
         self.match.with_user(self.approver_user).action_approve_result()
         with self.assertRaises(ValidationError):
             self.match.write({"home_score": 5})
+
+    def test_result_audit_entries_follow_workflow_transitions(self):
+        self.match.with_user(self.submitter_user).action_submit_result()
+        self.match.with_user(self.verifier_user).action_verify_result()
+        self.match.with_user(self.approver_user).action_approve_result()
+
+        event_types = self.match.result_audit_ids.mapped("event_type")
+        self.assertIn("submitted", event_types)
+        self.assertIn("verified", event_types)
+        self.assertIn("approved", event_types)
+
+    def test_contest_and_correction_reasons_are_audited(self):
+        self.match.with_user(self.submitter_user).action_submit_result()
+        self.match.result_contest_reason = "Score disputed"
+        self.match.action_contest_result()
+        self.match.result_correction_reason = "Score corrected after review"
+        self.match.action_correct_result()
+
+        contest_entry = self.match.result_audit_ids.filtered(lambda entry: entry.event_type == "contested")[:1]
+        correction_entry = self.match.result_audit_ids.filtered(lambda entry: entry.event_type == "corrected")[:1]
+
+        self.assertTrue(contest_entry)
+        self.assertEqual(contest_entry.reason, "Score disputed")
+        self.assertTrue(correction_entry)
+        self.assertEqual(correction_entry.reason, "Score corrected after review")

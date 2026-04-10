@@ -101,7 +101,7 @@ Modules: `sports_federation_people`, `sports_federation_rules`, `sports_federati
 Work: connect eligibility checks to participant confirmation, roster validation, and match-sheet readiness; present operator-readable failure reasons instead of opaque blocks.
 Done when: ineligible players are blocked consistently before official competition actions.
 
-2. Complete roster and match-sheet operations.
+2. Done (2026-04-10): Complete roster and match-sheet operations.
 Modules: `sports_federation_rosters`, `sports_federation_people`, `sports_federation_portal`, `sports_federation_result_control`.
 Work: support season rosters, match-day roster locking, substitutions governance, and audit history tied to results and disputes.
 Done when: match-day participation is traceable and synchronized with eligibility and discipline status.

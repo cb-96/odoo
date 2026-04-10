@@ -60,6 +60,11 @@ class FederationMatchResultControl(models.Model):
         default=False,
         tracking=True,
     )
+    result_audit_ids = fields.One2many(
+        "federation.match.result.audit",
+        "match_id",
+        string="Result Audit",
+    )
 
     def write(self, vals):
         if (
@@ -95,6 +100,22 @@ class FederationMatchResultControl(models.Model):
                 if standing.state != "frozen":
                     standing.action_recompute()
 
+    def _log_result_audit(self, event_type, description, from_state, to_state, reason=False):
+        Audit = self.env.get("federation.match.result.audit")
+        if Audit is None:
+            return False
+        for rec in self:
+            Audit.create_event(
+                match=rec,
+                event_type=event_type,
+                description=description,
+                from_state=from_state,
+                to_state=to_state,
+                reason=reason,
+                author=self.env.user,
+            )
+        return True
+
     def action_submit_result(self):
         """Submit the match result for verification."""
         for rec in self:
@@ -102,6 +123,7 @@ class FederationMatchResultControl(models.Model):
                 raise ValidationError(
                     "Only draft or corrected results can be submitted."
                 )
+            from_state = rec.result_state
             rec.write({
                 "result_state": "submitted",
                 "result_submitted_by_id": self.env.user.id,
@@ -111,6 +133,12 @@ class FederationMatchResultControl(models.Model):
                 "result_approved_by_id": False,
                 "result_approved_on": False,
             })
+            rec._log_result_audit(
+                "submitted",
+                "Result submitted for verification.",
+                from_state,
+                "submitted",
+            )
 
     def action_verify_result(self):
         """Verify the submitted result."""
@@ -127,11 +155,18 @@ class FederationMatchResultControl(models.Model):
                 raise ValidationError(
                     "The submitting user cannot verify the same result."
                 )
+            from_state = rec.result_state
             rec.write({
                 "result_state": "verified",
                 "result_verified_by_id": self.env.user.id,
                 "result_verified_on": fields.Datetime.now(),
             })
+            rec._log_result_audit(
+                "verified",
+                "Result verified.",
+                from_state,
+                "verified",
+            )
 
     def action_approve_result(self):
         """Approve the verified result and include in official standings."""
@@ -152,12 +187,19 @@ class FederationMatchResultControl(models.Model):
                 raise ValidationError(
                     "The verifying user cannot approve the same result."
                 )
+            from_state = rec.result_state
             rec.write({
                 "result_state": "approved",
                 "result_approved_by_id": self.env.user.id,
                 "result_approved_on": fields.Datetime.now(),
                 "include_in_official_standings": True,
             })
+            rec._log_result_audit(
+                "approved",
+                "Result approved and included in official standings.",
+                from_state,
+                "approved",
+            )
         self._recompute_related_standings()
 
     def action_contest_result(self):
@@ -171,10 +213,18 @@ class FederationMatchResultControl(models.Model):
                 raise ValidationError(
                     "A contest reason is required."
                 )
+            from_state = rec.result_state
             rec.write({
                 "result_state": "contested",
                 "include_in_official_standings": False,
             })
+            rec._log_result_audit(
+                "contested",
+                "Result contested.",
+                from_state,
+                "contested",
+                reason=rec.result_contest_reason,
+            )
         self._recompute_related_standings()
 
     def action_correct_result(self):
@@ -188,10 +238,18 @@ class FederationMatchResultControl(models.Model):
                 raise ValidationError(
                     "A correction reason is required."
                 )
+            from_state = rec.result_state
             rec.write({
                 "result_state": "corrected",
                 "include_in_official_standings": False,
             })
+            rec._log_result_audit(
+                "corrected",
+                "Result corrected and removed from official standings until resubmitted.",
+                from_state,
+                "corrected",
+                reason=rec.result_correction_reason,
+            )
         self._recompute_related_standings()
 
     def action_reset_result_to_draft(self):
@@ -201,6 +259,7 @@ class FederationMatchResultControl(models.Model):
             "Only result approvers can reset results to draft.",
         )
         for rec in self:
+            from_state = rec.result_state
             rec.write({
                 "result_state": "draft",
                 "include_in_official_standings": False,
@@ -209,4 +268,10 @@ class FederationMatchResultControl(models.Model):
                 "result_approved_by_id": False,
                 "result_approved_on": False,
             })
+            rec._log_result_audit(
+                "reset",
+                "Result reset to draft.",
+                from_state,
+                "draft",
+            )
         self._recompute_related_standings()

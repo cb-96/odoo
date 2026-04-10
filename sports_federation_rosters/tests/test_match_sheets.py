@@ -240,3 +240,65 @@ class TestMatchSheets(TransactionCase):
         self.assertIn("required minimum of 2", sheet.readiness_feedback)
         with self.assertRaises(ValidationError):
             sheet.action_submit()
+
+    def test_match_sheet_substitution_minutes_require_valid_roles(self):
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Substitution Rules Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "side": "home",
+        })
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.match.sheet.line"].create({
+                "match_sheet_id": sheet.id,
+                "player_id": self.player1.id,
+                "entered_minute": 15,
+            })
+
+    def test_approved_match_sheet_allows_substitution_updates_but_not_lineup_changes(self):
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Approved Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "side": "home",
+        })
+        line = self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "is_substitute": True,
+        })
+        sheet.action_submit()
+        sheet.action_approve()
+
+        line.write({"entered_minute": 42})
+        self.assertEqual(line.entered_minute, 42)
+        self.assertEqual(sheet.substitution_count, 1)
+        self.assertIn(
+            "substitution_recorded",
+            sheet.audit_event_ids.mapped("event_type"),
+        )
+
+        with self.assertRaises(ValidationError):
+            line.write({"jersey_number": "12"})
+
+    def test_lock_blocks_any_further_match_sheet_changes(self):
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Locked Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "side": "home",
+        })
+        line = self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "is_starter": True,
+        })
+        sheet.action_submit()
+        sheet.action_approve()
+        sheet.action_lock()
+
+        with self.assertRaises(ValidationError):
+            sheet.write({"notes": "Locked"})
+        with self.assertRaises(ValidationError):
+            line.write({"notes": "Not allowed"})

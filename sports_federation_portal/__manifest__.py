@@ -1,6 +1,6 @@
 {
     "name": "Sports Federation Club Roles & Portal",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "category": "Sports",
     "summary": "Club contacts, representative roles, portal website and registration flows",
     "description": """
@@ -17,6 +17,8 @@ tournament registration workflows on top of the federation base modules.
         "portal",
         "sports_federation_base",
         "sports_federation_tournament",
+        "sports_federation_rosters",
+        "sports_federation_result_control",
     ],
     "data": [
         "security/res_groups.xml",
@@ -34,6 +36,7 @@ tournament registration workflows on top of the federation base modules.
         "views/federation_club_representative_portal_views.xml",
         "views/website_tournament_templates.xml",
         "views/portal_templates.xml",
+        "views/portal_roster_templates.xml",
         "views/menu_items.xml",
         "views/website_menus.xml",
     ],

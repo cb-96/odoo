@@ -90,6 +90,28 @@ class FederationTeamRoster(models.Model):
         compute="_compute_readiness",
         string="Readiness Feedback",
     )
+    match_sheet_ids = fields.One2many(
+        "federation.match.sheet",
+        "roster_id",
+        string="Match Sheets",
+    )
+    match_sheet_count = fields.Integer(
+        compute="_compute_match_sheet_count",
+        string="Match Sheet Count",
+    )
+    match_day_locked = fields.Boolean(
+        compute="_compute_match_day_lock",
+        string="Match-Day Locked",
+    )
+    match_day_lock_feedback = fields.Text(
+        compute="_compute_match_day_lock",
+        string="Match-Day Lock Feedback",
+    )
+    audit_event_ids = fields.One2many(
+        "federation.participation.audit",
+        "roster_id",
+        string="Audit Events",
+    )
 
     _unique_team_season_competition_name = models.Constraint(
         'UNIQUE(team_id, season_id, competition_id, name)',
@@ -100,6 +122,11 @@ class FederationTeamRoster(models.Model):
     def _compute_line_count(self):
         for record in self:
             record.line_count = len(record.line_ids)
+
+    @api.depends("match_sheet_ids")
+    def _compute_match_sheet_count(self):
+        for record in self:
+            record.match_sheet_count = len(record.match_sheet_ids)
 
     @api.depends(
         "status",
@@ -130,6 +157,29 @@ class FederationTeamRoster(models.Model):
             issues = record._get_readiness_issues()
             record.ready_for_activation = not bool(issues)
             record.readiness_feedback = "\n".join(issues) if issues else False
+
+    @api.depends(
+        "match_sheet_ids.state",
+        "match_sheet_ids.name",
+        "match_sheet_ids.match_id",
+        "match_sheet_ids.match_id.date_scheduled",
+    )
+    def _compute_match_day_lock(self):
+        state_labels = dict(self.env["federation.match.sheet"]._fields["state"].selection)
+        for record in self:
+            locking_sheets = record._get_locking_match_sheets()
+            record.match_day_locked = bool(locking_sheets)
+            if locking_sheets:
+                names = ", ".join(
+                    "%s (%s)"
+                    % (sheet.display_name, state_labels.get(sheet.state, sheet.state))
+                    for sheet in locking_sheets
+                )
+                record.match_day_lock_feedback = _(
+                    "Roster scope is locked because these match sheets already left draft: %(sheets)s."
+                ) % {"sheets": names}
+            else:
+                record.match_day_lock_feedback = False
 
     @api.constrains("valid_from", "valid_to")
     def _check_valid_dates(self):
@@ -162,16 +212,51 @@ class FederationTeamRoster(models.Model):
                 )
                 if competition.rule_set_id:
                     vals["rule_set_id"] = competition.rule_set_id.id
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for record in records:
+            record._log_audit_event(
+                "roster_created",
+                _(
+                    "Roster '%(roster)s' created for team '%(team)s' in season '%(season)s'."
+                )
+                % {
+                    "roster": record.display_name,
+                    "team": record.team_id.display_name,
+                    "season": record.season_id.display_name,
+                },
+            )
+        return records
 
     def write(self, vals):
+        self._assert_scope_editable_for_match_day(vals)
         if not vals.get("rule_set_id") and vals.get("competition_id"):
             competition = self.env["federation.competition"].browse(
                 vals["competition_id"]
             )
             if competition.rule_set_id:
                 vals["rule_set_id"] = competition.rule_set_id.id
-        return super().write(vals)
+        result = super().write(vals)
+        tracked_fields = {
+            "team_id",
+            "season_id",
+            "competition_id",
+            "season_registration_id",
+            "rule_set_id",
+            "valid_from",
+            "valid_to",
+            "min_players_required",
+            "max_players_allowed",
+            "notes",
+        }
+        changed_fields = sorted(tracked_fields.intersection(vals))
+        if changed_fields:
+            field_labels = ", ".join(self._fields[field].string for field in changed_fields)
+            for record in self:
+                record._log_audit_event(
+                    "roster_updated",
+                    _("Roster updated: %(fields)s.") % {"fields": field_labels},
+                )
+        return result
 
     def action_view_lines(self):
         self.ensure_one()
@@ -184,6 +269,17 @@ class FederationTeamRoster(models.Model):
             "context": {"default_roster_id": self.id},
         }
 
+    def action_view_match_sheets(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Match Sheets"),
+            "res_model": "federation.match.sheet",
+            "view_mode": "list,form",
+            "domain": [("roster_id", "=", self.id)],
+            "context": {"default_roster_id": self.id},
+        }
+
     def _get_effective_rule_set(self):
         self.ensure_one()
         return self.rule_set_id or (
@@ -191,6 +287,57 @@ class FederationTeamRoster(models.Model):
             if self.competition_id and self.competition_id.rule_set_id
             else self.env["federation.rule.set"]
         )
+
+    def _get_locking_match_sheets(self):
+        self.ensure_one()
+        return self.match_sheet_ids.filtered(
+            lambda sheet: sheet.state in ("submitted", "approved", "locked")
+        )
+
+    def _log_audit_event(self, event_type, description, player=False, match_sheet=False):
+        Audit = self.env.get("federation.participation.audit")
+        if Audit is None:
+            return False
+        for record in self:
+            Audit.create_event(
+                event_type=event_type,
+                description=description,
+                team=record.team_id,
+                roster=record,
+                match_sheet=match_sheet,
+                player=player,
+            )
+        return True
+
+    def _assert_scope_editable_for_match_day(self, vals):
+        if self.env.context.get("bypass_match_day_lock"):
+            return
+        protected_fields = {
+            "team_id",
+            "season_id",
+            "competition_id",
+            "season_registration_id",
+            "rule_set_id",
+            "valid_from",
+            "valid_to",
+            "min_players_required",
+            "max_players_allowed",
+        }
+        changed_fields = sorted(protected_fields.intersection(vals))
+        if not changed_fields:
+            return
+        field_labels = ", ".join(self._fields[field].string for field in changed_fields)
+        for record in self:
+            if record.match_day_locked:
+                raise ValidationError(
+                    _(
+                        "Roster '%(roster)s' cannot change %(fields)s because submitted, approved, or locked match sheets already reference it."
+                    )
+                    % {
+                        "roster": record.display_name,
+                        "fields": field_labels,
+                    }
+                )
 
     def _get_reference_date(self):
         self.ensure_one()
@@ -261,6 +408,14 @@ class FederationTeamRoster(models.Model):
         return issues
 
     def action_set_draft(self):
+        for record in self:
+            if record.match_day_locked:
+                raise ValidationError(
+                    _(
+                        "Roster '%(roster)s' cannot return to draft after match-day sheets have already left draft."
+                    )
+                    % {"roster": record.display_name}
+                )
         self.write({"status": "draft"})
 
     def action_activate(self):
@@ -275,9 +430,20 @@ class FederationTeamRoster(models.Model):
                     }
                 )
         self.write({"status": "active"})
+        for record in self:
+            record._log_audit_event(
+                "roster_activated",
+                _("Roster '%(roster)s' activated for competition operations.")
+                % {"roster": record.display_name},
+            )
 
     def action_close(self):
-        self.write({"status": "closed"})
+        self.with_context(bypass_match_day_lock=True).write({"status": "closed"})
+        for record in self:
+            record._log_audit_event(
+                "roster_closed",
+                _("Roster '%(roster)s' closed.") % {"roster": record.display_name},
+            )
 
 
 class FederationTeamRosterLine(models.Model):
@@ -357,11 +523,63 @@ class FederationTeamRosterLine(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         records._validate_player_eligibility()
+        for record in records:
+            record.roster_id._log_audit_event(
+                "roster_line_added",
+                _("Player '%(player)s' added to the roster.")
+                % {"player": record.player_id.display_name},
+                player=record.player_id,
+            )
         return records
 
     def write(self, vals):
+        self._assert_not_locked_for_match_day(vals)
         result = super().write(vals)
         self._validate_player_eligibility()
+        tracked_fields = {
+            "player_id",
+            "status",
+            "date_from",
+            "date_to",
+            "jersey_number",
+            "is_captain",
+            "is_vice_captain",
+            "license_id",
+            "notes",
+        }
+        changed_fields = sorted(tracked_fields.intersection(vals))
+        if changed_fields:
+            field_labels = ", ".join(self._fields[field].string for field in changed_fields)
+            for record in self:
+                record.roster_id._log_audit_event(
+                    "roster_line_updated",
+                    _("Roster line for '%(player)s' updated: %(fields)s.")
+                    % {
+                        "player": record.player_id.display_name,
+                        "fields": field_labels,
+                    },
+                    player=record.player_id,
+                )
+        return result
+
+    def unlink(self):
+        self._assert_not_locked_for_match_day()
+        audit_payloads = [
+            (
+                record.roster_id,
+                record.player_id,
+                _("Player '%(player)s' removed from the roster.")
+                % {"player": record.player_id.display_name},
+            )
+            for record in self
+        ]
+        result = super().unlink()
+        for roster, player, description in audit_payloads:
+            roster._log_audit_event(
+                "roster_line_removed",
+                description,
+                player=player,
+            )
         return result
 
     @api.depends(
@@ -450,6 +668,44 @@ class FederationTeamRosterLine(models.Model):
         if self.license_id:
             context["license_id"] = self.license_id.id
         return context
+
+    def _get_locking_match_sheet_lines(self):
+        self.ensure_one()
+        return self.env["federation.match.sheet.line"].search(
+            [
+                ("roster_line_id", "=", self.id),
+                ("match_sheet_id.state", "in", ("submitted", "approved", "locked")),
+            ]
+        )
+
+    def _assert_not_locked_for_match_day(self, vals=None):
+        if self.env.context.get("bypass_match_day_lock"):
+            return
+        protected_fields = {
+            "player_id",
+            "status",
+            "date_from",
+            "date_to",
+            "jersey_number",
+            "is_captain",
+            "is_vice_captain",
+            "license_id",
+        }
+        if vals is not None and not protected_fields.intersection(vals):
+            return
+        for record in self:
+            locking_lines = record._get_locking_match_sheet_lines()
+            if locking_lines:
+                sheet_names = ", ".join(locking_lines.mapped("match_sheet_id").mapped("display_name"))
+                raise ValidationError(
+                    _(
+                        "Roster line for player '%(player)s' is locked because it already appears on live match sheet(s): %(sheets)s."
+                    )
+                    % {
+                        "player": record.player_id.display_name,
+                        "sheets": sheet_names,
+                    }
+                )
 
     def _get_eligibility_reasons(self, reference_date=None):
         self.ensure_one()

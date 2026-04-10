@@ -53,6 +53,8 @@ the operational sequence from pre-match preparation through to the final whistle
 8. Validate: selected players must belong to active roster lines for the same
    team, satisfy license and registration rules for the match context, and any
    blockers are shown as readable feedback before submission.
+9. After approval, the sheet lineup is frozen; only substitution timing fields
+   remain editable until the sheet is explicitly locked.
 
 Match sheet states: `draft` → `submitted` → `approved` → `locked`.
 
@@ -111,6 +113,15 @@ Before the match starts, verify:
 | Referees confirmed | `officiating` | Required referee roles are filled and confirmed |
 | Venue set | `venues` | Match has a valid venue assignment |
 
+Operational traceability additions:
+
+- Once a roster line is used on a submitted, approved, or locked match sheet,
+   that referenced roster line can no longer be structurally changed or removed.
+- Match sheets record substitution timing (`entered_minute`, `left_minute`) on
+   the declared squad instead of adding late lineup changes.
+- Roster and match-sheet lifecycle events are written to participation audit
+   history so club reps and staff can review what changed and when.
+
 ### 6. Match Execution
 
 **Actor**: Referees, federation staff
@@ -118,7 +129,7 @@ Before the match starts, verify:
 
 1. Set match state to `in_progress` at kick-off.
 2. During the match, record:
-   - Substitutions (update `substitution_minute` on match sheet lines)
+   - Substitutions (update `entered_minute` / `left_minute` on approved match-sheet lines)
    - Incidents (yellow/red cards, misconduct) → feeds into discipline workflow
 3. At full time, enter final scores (`home_score`, `away_score`).
 4. Set match state to `completed`.
@@ -142,7 +153,7 @@ After the match completes:
 ## State Diagram
 
 ```
-Roster: draft → active → locked → archived
+Roster: draft → active → closed
 
 Match Sheet: draft → submitted → approved → locked
 
@@ -163,6 +174,7 @@ Match: draft → scheduled → in_progress → completed
 | 24 hours before | Submit match sheets |
 | Match day | Approve match sheets, verify eligibility |
 | Kick-off | Set match to in_progress |
+| During match | Record substitutions on the approved sheet |
 | Full time | Enter scores, log incidents |
 | Post-match | Lock sheets, submit result, update standings |
 

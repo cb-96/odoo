@@ -95,6 +95,9 @@ The result is now **official** and eligible for standings computation.
 7. The corrected result can be edited and re-submitted through the pipeline.
 8. If staff need a clean restart, an approver can reset the corrected or contested result back to `draft` before re-submission.
 
+Every transition is also written to `federation.match.result.audit`, so dispute
+history is preserved even after the current `result_state` moves on.
+
 ### 7. Standings Update
 
 **Actor**: Federation administrator

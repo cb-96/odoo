@@ -37,7 +37,7 @@ A pool of eligible players for a team within a season or competition scope.
 | `season_registration_id` | Many2one | Linked registration |
 | `competition_id` | Many2one | Competition scope (optional) |
 | `rule_set_id` | Many2one | Squad-size rules |
-| `status` | Selection | draft / active / locked / archived |
+| `status` | Selection | draft / active / closed |
 | `valid_from` / `valid_to` | Date | Validity window |
 | `line_ids` | One2many | Rostered players |
 | `line_count` | Integer | Player count |
@@ -45,6 +45,10 @@ A pool of eligible players for a team within a season or competition scope.
 | `min_players_required` / `max_players_allowed` | Integer | From rule set |
 | `ready_for_activation` | Boolean (computed) | Whether activation checks pass |
 | `readiness_feedback` | Text (computed) | Aggregated activation blockers |
+| `match_sheet_count` | Integer (computed) | Linked match sheets using this roster |
+| `match_day_locked` | Boolean (computed) | Whether live match sheets now lock roster scope changes |
+| `match_day_lock_feedback` | Text (computed) | Why the roster scope is locked |
+| `audit_event_ids` | One2many | Participation audit events for this roster |
 
 ### `federation.team.roster.line`
 
@@ -63,6 +67,8 @@ A single player entry on a roster.
 | `eligibility_feedback` | Text (computed) | Human-readable failure reasons |
 | `notes` | Text | Remarks |
 
+- **Match-day lock behaviour**: once a submitted, approved, or locked match sheet references a roster line, that referenced line cannot be structurally changed or removed.
+
 ### `federation.match.sheet`
 
 The squad list submitted for a specific match.
@@ -79,6 +85,9 @@ The squad list submitted for a specific match.
 | `line_count` | Integer | Squad size |
 | `ready_for_submission` | Boolean (computed) | Whether submission checks pass |
 | `readiness_feedback` | Text (computed) | Aggregated submission blockers |
+| `substitution_count` | Integer (computed) | Number of recorded substitution entries |
+| `locked_on` / `locked_by_id` | Datetime / Many2one | Final lock metadata |
+| `audit_event_ids` | One2many | Participation audit events for this sheet |
 | `coach_name` / `manager_name` | Char | Team staff |
 | `notes` | Text | Remarks |
 
@@ -97,9 +106,25 @@ A player on a match sheet.
 | `is_substitute` | Boolean | Bench selection |
 | `is_captain` | Boolean | Match captain |
 | `jersey_number` | Char | Shirt number |
+| `entered_minute` / `left_minute` | Integer | Substitution timeline tracking |
 | `eligible` | Boolean (computed) | Current eligibility status |
 | `eligibility_feedback` | Text (computed) | Human-readable failure reasons |
 | `notes` | Text | Remarks |
+
+### `federation.participation.audit`
+
+Immutable operational log for roster and match-sheet activity.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `event_type` | Selection | Created / updated / submitted / approved / locked / substitution events |
+| `team_id` | Many2one | Team owning the event |
+| `roster_id` | Many2one | Related season roster, when applicable |
+| `match_sheet_id` | Many2one | Related match sheet, when applicable |
+| `match_id` | Many2one | Related match, when applicable |
+| `player_id` | Many2one | Player affected by the event |
+| `description` | Text | Human-readable audit detail |
+| `author_id` / `event_on` | Many2one / Datetime | Attribution and timestamp |
 
 ### `federation.tournament.participant` (extension)
 
@@ -123,8 +148,16 @@ team has an active, ready roster for the tournament season.
    readiness summaries.
 4. **Match sheet from roster** — Match sheets can validate against explicit
    roster lines so team, date-window, and license mismatches are caught early.
-5. **Participant confirmation gating** — Tournament participants can only be
+5. **Match-day locking** — Submitted and approved sheet activity locks roster
+   scope changes and the referenced roster lines so historical lineups remain
+   defensible.
+6. **Substitution governance** — Approved sheets can record `entered_minute`
+   and `left_minute` values while still blocking lineup changes after approval.
+7. **Participation audit trail** — Roster lifecycle changes, lineup changes,
+   submissions, approvals, locks, and substitutions are captured in
+   `federation.participation.audit`.
+8. **Participant confirmation gating** — Tournament participants can only be
    confirmed when an active ready roster exists for the tournament season,
    preferring competition-specific rosters when available.
-6. **State locking** — Approved match sheets can be locked once match-day
+9. **State locking** — Approved match sheets can be locked once match-day
    operations are complete.

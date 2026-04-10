@@ -106,7 +106,7 @@ Modules: `sports_federation_rosters`, `sports_federation_people`, `sports_federa
 Work: support season rosters, match-day roster locking, substitutions governance, and audit history tied to results and disputes.
 Done when: match-day participation is traceable and synchronized with eligibility and discipline status.
 
-3. Complete officiating assignment and confirmation workflows.
+3. Done (2026-04-10): Complete officiating assignment and confirmation workflows.
 Modules: `sports_federation_officiating`, `sports_federation_tournament`, `sports_federation_venues`, `sports_federation_notifications`.
 Work: add assignment statuses, confirmation deadlines, shortage alerts, and readiness checks for required official roles.
 Done when: operationally ready matches can be identified automatically and missing-official cases create visible exceptions.

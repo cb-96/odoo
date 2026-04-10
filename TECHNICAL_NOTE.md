@@ -158,6 +158,7 @@ Match lifecycle and match-day operations
 
 - States: `draft → scheduled → in_progress → done | cancelled`.
 - Pre-match checks: both teams have confirmed match-sheets, required referee roles filled and confirmed, no suspensions on selected players, venue confirmed.
+- Officiating readiness is computed directly on the match from assignment state, rule-set referee counts, overdue confirmations, and referee certification validity so operators can filter or inspect staffing gaps without opening each assignment.
 - During match: record events (substitutions, cards) which feed the discipline and finance modules.
 
 Result pipeline

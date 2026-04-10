@@ -46,7 +46,7 @@ Reusable service methods callable by any module.
 |--------|-------------|
 | `send_email_template(record, template_xmlid, ...)` | Send an email using a mail.template and log it |
 | `create_activity(record, activity_type_xmlid, ...)` | Create a mail.activity and log it |
-| `_cron_placeholder_notification_scan()` | Scheduled scan for overdue draft registrations |
+| `_cron_placeholder_notification_scan()` | Scheduled scan for overdue registrations and officiating gaps |
 
 ## Data Files
 
@@ -60,8 +60,9 @@ Reusable service methods callable by any module.
 1. **Service pattern** — AbstractModel with helper methods; no table, just logic.
 2. **Comprehensive logging** — Every send/activity creation produces a log entry.
 3. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
-4. **Scheduled scan** — Cron job detects stale draft registrations and logs reminders.
+4. **Scheduled scan** — Cron job detects stale draft registrations, overdue referee confirmations, and officiating shortages, then logs follow-up reminders or alerts.
 5. **Season-registration hooks** — When `sports_federation_portal` is installed, season registration confirmation and rejection automatically dispatch logged email notifications to the submitting representative or club contact.
+6. **Officiating hooks** — Referee assignments create a logged assignment stub immediately, while overdue confirmations and match staffing shortages are surfaced through dispatcher stubs callable from cron scans.
 
 ## Integration configuration (env)
 

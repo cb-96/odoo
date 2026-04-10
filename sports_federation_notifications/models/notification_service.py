@@ -166,3 +166,24 @@ class FederationNotificationService(models.AbstractModel):
                 "sent_on": fields.Datetime.now(),
                 "message": "No draft registrations older than 7 days found.",
             })
+
+        Dispatcher = self.env.get("federation.notification.dispatcher")
+        MatchReferee = self.env.get("federation.match.referee")
+        Match = self.env.get("federation.match")
+
+        if Dispatcher and MatchReferee:
+            overdue_assignments = MatchReferee.search([
+                ("state", "=", "draft"),
+            ], limit=20).filtered(lambda assignment: assignment.is_confirmation_overdue)
+            for assignment in overdue_assignments:
+                Dispatcher.send_referee_confirmation_overdue(assignment)
+
+        if Dispatcher and Match and "is_officially_ready" in Match._fields:
+            shortage_matches = Match.search([
+                ("state", "in", ("draft", "scheduled")),
+                ("date_scheduled", "!=", False),
+            ], limit=20).filtered(
+                lambda match: match.required_referee_count and not match.is_officially_ready
+            )
+            for match in shortage_matches:
+                Dispatcher.send_referee_shortage_alert(match)

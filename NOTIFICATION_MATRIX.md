@@ -19,7 +19,9 @@ people) and the notification dispatcher in
 | Match result contested | `federation.match.action_contest_result()` | Home club + away club + federation manager | Email | `sports_federation_notifications.mail_result_contested` | Stub |
 | Standing frozen | `federation.standing.action_freeze()` | All tournament participants | Email | `sports_federation_notifications.mail_standing_frozen` | Stub |
 | Finance event confirmed | `federation.finance.event.action_confirm()` | Club contact / player / referee | Email | `sports_federation_notifications.mail_finance_confirmed` | Stub |
-| Referee assigned to match | `federation.match_officiating.create()` | Referee | Email | `sports_federation_notifications.mail_referee_assigned` | Stub |
+| Referee assigned to match | `federation.match.referee.create()` | Referee | Email | `sports_federation_notifications.mail_referee_assigned` | Stub |
+| Referee confirmation overdue | `federation.notification.service._cron_placeholder_notification_scan()` | Federation staff | Activity | — | Stub |
+| Match officiating shortage | `federation.notification.service._cron_placeholder_notification_scan()` | Federation staff | Activity | — | Stub |
 | Suspension issued | `federation.suspension.action_issue()` | Player + club contact | Email | `sports_federation_notifications.mail_suspension_issued` | Stub |
 
 ---
@@ -41,6 +43,8 @@ federation.notification.dispatcher (AbstractModel)
     │── send_standing_frozen(standing)
     │── send_finance_event_confirmed(finance_event)
     │── send_referee_assigned(match_officiating)
+    │── send_referee_confirmation_overdue(match_officiating)
+    │── send_referee_shortage_alert(match)
     └── send_suspension_issued(suspension)
 ```
 

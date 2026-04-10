@@ -57,12 +57,32 @@ Links a referee to a match in a specific role.
 | `match_id` | Many2one | The match |
 | `referee_id` | Many2one | The official |
 | `tournament_id` | Many2one | Computed from match |
-| `role` | Selection | head / assistant / fourth / var |
-| `state` | Selection | assigned / confirmed / completed / cancelled |
+| `role` | Selection | head / assistant_1 / assistant_2 / fourth / table |
+| `state` | Selection | assigned / confirmed / done / cancelled |
+| `assigned_on` / `confirmed_on` / `completed_on` / `cancelled_on` | Datetime | Lifecycle timestamps |
+| `confirmation_deadline` | Datetime | Match-based deadline, 48 hours before kick-off |
+| `is_confirmation_overdue` | Boolean | Draft assignments that missed the deadline |
+| `assignment_ready` | Boolean | Whether the assigned official can be confirmed |
+| `readiness_feedback` | Text | Operator-readable explanation for readiness gaps |
 | `notes` | Text | Assignment notes |
 
 - **SQL constraint**: unique (match_id, referee_id, role) — prevents duplicate
   role assignments.
+
+### `federation.match` officiating extension
+
+Matches receive computed officiating-readiness fields so staff can spot issues
+before the match goes live.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `referee_assignment_count` | Integer | Number of linked officiating assignments |
+| `required_referee_count` | Integer | Expected official count from the tournament rule set |
+| `confirmed_referee_count` | Integer | Officials already confirmed |
+| `missing_referees_count` | Integer | Gap between required and confirmed assignments |
+| `overdue_referee_confirmation_count` | Integer | Draft assignments that missed the deadline |
+| `is_officially_ready` | Boolean | True when required roles are covered and no readiness issues remain |
+| `official_readiness_issues` | Text | Aggregated shortage / overdue / certification issues |
 
 ## Key Behaviours
 
@@ -70,6 +90,11 @@ Links a referee to a match in a specific role.
    meet current requirements.
 2. **Role-based assignment** — Each match can have multiple referees in distinct
    roles.
-3. **Assignment state machine** — assigned → confirmed → completed / cancelled.
-4. **Tournament context** — Assignments carry a computed tournament reference for
+3. **Confirmation governance** — assignments expose a 48-hour confirmation deadline,
+   overdue status, and block confirmation when the referee is inactive or lacks a
+   valid certification window for the match.
+4. **Match readiness visibility** — matches show confirmed counts, shortages, overdue
+   confirmations, and aggregated officiating issues in the form and list views.
+5. **Assignment state machine** — assigned → confirmed → done / cancelled.
+6. **Tournament context** — Assignments carry a computed tournament reference for
    filtering and reporting.

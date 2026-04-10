@@ -173,3 +173,50 @@ class TestNotifications(TransactionCase):
         self.assertTrue(log)
         self.assertIn(log.state, ("sent", "failed"))
         self.assertEqual(registration.rejection_reason, "Missing supporting document")
+
+    def test_referee_shortage_alert_creates_notification_log(self):
+        season = self.env["federation.season"].create({
+            "name": "Notification Match Season",
+            "code": "NMSEASON",
+            "date_start": "2026-01-01",
+            "date_end": "2026-12-31",
+        })
+        home_team = self.env["federation.team"].create({
+            "name": "Notification Home Team",
+            "club_id": self.club.id,
+            "code": "NMHT",
+        })
+        away_club = self.env["federation.club"].create({
+            "name": "Notification Away Club",
+            "code": "NMAC",
+        })
+        away_team = self.env["federation.team"].create({
+            "name": "Notification Away Team",
+            "club_id": away_club.id,
+            "code": "NMAT",
+        })
+        tournament = self.env["federation.tournament"].create({
+            "name": "Notification Match Tournament",
+            "code": "NMT",
+            "season_id": season.id,
+            "date_start": "2026-06-01",
+        })
+        match = self.env["federation.match"].create({
+            "tournament_id": tournament.id,
+            "home_team_id": home_team.id,
+            "away_team_id": away_team.id,
+        })
+
+        dispatcher = self.env["federation.notification.dispatcher"]
+        dispatcher.send_referee_shortage_alert(match)
+
+        log = self.env["federation.notification.log"].search(
+            [
+                ("target_model", "=", "federation.match"),
+                ("target_res_id", "=", match.id),
+                ("name", "like", "Referee shortage"),
+            ],
+            limit=1,
+        )
+        self.assertTrue(log)
+        self.assertIn(log.state, ("sent", "failed"))

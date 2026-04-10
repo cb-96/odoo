@@ -208,6 +208,52 @@ class FederationNotificationDispatcher(models.AbstractModel):
             })
 
     # ------------------------------------------------------------------
+    # Officiating events
+    # ------------------------------------------------------------------
+
+    def send_referee_confirmation_overdue(self, match_officiating):
+        """Log an overdue referee confirmation alert for staff follow-up."""
+        Log = self.env["federation.notification.log"]
+        try:
+            Log.create({
+                "name": f"[stub] Referee confirmation overdue: {match_officiating.match_id.name}",
+                "target_model": match_officiating._name,
+                "target_res_id": match_officiating.id,
+                "notification_type": "activity",
+                "state": "sent",
+                "sent_on": fields.Datetime.now(),
+                "message": match_officiating.readiness_feedback or "Referee confirmation deadline has been missed.",
+            })
+        except Exception as exc:
+            Log.create({
+                "name": "[error] Referee confirmation overdue",
+                "notification_type": "activity",
+                "state": "failed",
+                "message": str(exc),
+            })
+
+    def send_referee_shortage_alert(self, match):
+        """Log a staffing shortage alert for a match that is not officiating-ready."""
+        Log = self.env["federation.notification.log"]
+        try:
+            Log.create({
+                "name": f"[stub] Referee shortage: {match.name}",
+                "target_model": match._name,
+                "target_res_id": match.id,
+                "notification_type": "activity",
+                "state": "sent",
+                "sent_on": fields.Datetime.now(),
+                "message": getattr(match, "official_readiness_issues", False) or "Match is missing required officials.",
+            })
+        except Exception as exc:
+            Log.create({
+                "name": "[error] Referee shortage",
+                "notification_type": "activity",
+                "state": "failed",
+                "message": str(exc),
+            })
+
+    # ------------------------------------------------------------------
     # Standings events
     # ------------------------------------------------------------------
 

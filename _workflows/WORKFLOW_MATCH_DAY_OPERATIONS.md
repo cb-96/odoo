@@ -66,12 +66,16 @@ Match sheet states: `draft` → `submitted` → `approved` → `locked`.
 1. Select referees from the registry based on certification level and availability.
 2. Create **match referee** assignments with defined roles:
    - `head` — Main referee
-   - `assistant` — Assistant referees
+   - `assistant_1` / `assistant_2` — Assistant referees
    - `fourth` — Fourth official
-   - `var` — Video assistant (if applicable)
-3. Each assignment has a state: `assigned` → `confirmed` → `completed` / `cancelled`.
-4. SQL constraint prevents duplicate (match, referee, role) combinations.
-5. The rule set's `referee_required_count` indicates how many officials are needed.
+   - `table` — Table or desk official
+3. Each assignment has a state: `assigned` → `confirmed` → `done` / `cancelled`.
+4. Assignments inherit a 48-hour confirmation deadline from the scheduled match time and stay visible as overdue until confirmed, cancelled, or the match closes.
+5. Confirmation is blocked if the official is inactive or their certification is missing / expired for the match date.
+6. Matches aggregate readiness from the rule set's `referee_required_count`, confirmed assignments, overdue confirmations, and assignment-level readiness issues.
+7. Notification stubs create follow-up alerts for overdue confirmations and staffing shortages via the scheduled notification scan.
+8. SQL constraint prevents duplicate (match, referee, role) combinations.
+9. The rule set's `referee_required_count` indicates how many officials are needed.
 
 ### 4. Venue Confirmation
 
@@ -132,7 +136,7 @@ Operational traceability additions:
    - Substitutions (update `entered_minute` / `left_minute` on approved match-sheet lines)
    - Incidents (yellow/red cards, misconduct) → feeds into discipline workflow
 3. At full time, enter final scores (`home_score`, `away_score`).
-4. Set match state to `completed`.
+4. Set match state to `done`.
 
 ### 7. Post-Match Actions
 
@@ -144,11 +148,16 @@ After the match completes:
 | Action | Module | Detail |
 |--------|--------|--------|
 | Lock match sheets | `rosters` | Sheets move to `locked` state |
-| Complete referee assignments | `officiating` | Assignments marked `completed` |
+| Complete referee assignments | `officiating` | Assignments marked `done` |
 | Submit result for verification | `result_control` | Feeds into result pipeline |
 | Record incidents | `discipline` | Incidents logged during match |
 | Log finance events | `finance_bridge` | Referee reimbursements, venue booking charges (via match header), any fines |
 | Recompute standings | `standings` | Updated with new result |
+
+Operational readiness additions:
+
+- Match forms expose official counts, overdue confirmations, and aggregated readiness issues so staffing gaps remain visible before kick-off.
+- The notification scan logs follow-up alerts for overdue confirmations and matches that still fail the officiating readiness check.
 
 ## State Diagram
 
@@ -157,11 +166,11 @@ Roster: draft → active → closed
 
 Match Sheet: draft → submitted → approved → locked
 
-Referee Assignment: assigned → confirmed → completed
+Referee Assignment: assigned → confirmed → done
                                           → cancelled
 
-Match: draft → scheduled → in_progress → completed
-                                        → cancelled
+Match: draft → scheduled → in_progress → done
+                                    → cancelled
 ```
 
 ## Typical Timeline

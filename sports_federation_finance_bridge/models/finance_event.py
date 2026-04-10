@@ -87,6 +87,9 @@ class FederationFinanceEvent(models.Model):
             if record.state != "draft":
                 raise ValidationError("Only draft events can be confirmed.")
             record.state = "confirmed"
+            Dispatcher = record.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_finance_event_confirmed(record)
 
     def action_settle(self):
         for record in self:

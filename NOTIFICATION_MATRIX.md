@@ -12,17 +12,19 @@ people) and the notification dispatcher in
 
 | Event | Trigger Model / Action | Recipients | Notification Type | Template XML ID | Implemented? |
 |---|---|---|---|---|---|
-| Tournament published | `federation.tournament.website_published = True` | All registered club managers | Email | `sports_federation_notifications.mail_tournament_published` | Stub |
-| Participant registration confirmed | `federation.tournament.participant.action_confirm()` | Club contact + team captain | Email | `sports_federation_notifications.mail_participant_confirmed` | Stub |
-| Match result submitted | `federation.match.action_submit_result()` | Federation verifier group | Activity | — | Stub |
-| Match result approved | `federation.match.action_approve_result()` | Home club + away club contacts | Email | `sports_federation_notifications.mail_result_approved` | Stub |
-| Match result contested | `federation.match.action_contest_result()` | Home club + away club + federation manager | Email | `sports_federation_notifications.mail_result_contested` | Stub |
-| Standing frozen | `federation.standing.action_freeze()` | All tournament participants | Email | `sports_federation_notifications.mail_standing_frozen` | Stub |
-| Finance event confirmed | `federation.finance.event.action_confirm()` | Club contact / player / referee | Email | `sports_federation_notifications.mail_finance_confirmed` | Stub |
-| Referee assigned to match | `federation.match.referee.create()` | Referee | Email | `sports_federation_notifications.mail_referee_assigned` | Stub |
-| Referee confirmation overdue | `federation.notification.service._cron_placeholder_notification_scan()` | Federation staff | Activity | — | Stub |
-| Match officiating shortage | `federation.notification.service._cron_placeholder_notification_scan()` | Federation staff | Activity | — | Stub |
-| Suspension issued | `federation.suspension.action_issue()` | Player + club contact | Email | `sports_federation_notifications.mail_suspension_issued` | Stub |
+| Season registration confirmed | `federation.season.registration.action_confirm()` | Submitting representative or club contact | Email | `sports_federation_notifications.template_federation_season_registration_confirmed` | Yes |
+| Season registration returned to draft | `federation.season.registration.action_reject()` | Submitting representative or club contact | Email | `sports_federation_notifications.template_federation_season_registration_rejected` | Yes |
+| Tournament published | `federation.tournament.write({'website_published': True})` | Participant club and team contacts | Email | `sports_federation_notifications.template_federation_tournament_published` | Yes |
+| Participant confirmed | `federation.tournament.participant.action_confirm()` | Team contact + club contact | Email | `sports_federation_notifications.template_federation_participant_confirmed` | Yes |
+| Match result submitted | `federation.match.action_submit_result()` | Users in result validator group | Activity | — | Yes |
+| Match result approved | `federation.match.action_approve_result()` | Home/away team and club contacts | Email | `sports_federation_notifications.template_federation_result_approved` | Yes |
+| Match result contested | `federation.match.action_contest_result()` | Home/away team and club contacts + federation managers | Email | `sports_federation_notifications.template_federation_result_contested` | Yes |
+| Standing frozen | `federation.standing.action_freeze()` | Tournament participant club contacts | Email | `sports_federation_notifications.template_federation_standing_frozen` | Yes |
+| Finance event confirmed | `federation.finance.event.action_confirm()` | Partner or club/player/referee contact | Email | `sports_federation_notifications.template_federation_finance_confirmed` | Yes |
+| Referee assigned to match | `federation.match.referee.create()` | Referee | Email | `sports_federation_notifications.template_federation_referee_assigned` | Yes |
+| Referee confirmation overdue | `federation.notification.service._cron_placeholder_notification_scan()` | Federation managers | Activity | — | Yes |
+| Match officiating shortage | `federation.notification.service._cron_placeholder_notification_scan()` | Federation managers | Activity | — | Yes |
+| Suspension issued | `federation.suspension.action_issue()` | Player + club contact | Email | — | No |
 
 ---
 
@@ -49,20 +51,19 @@ federation.notification.dispatcher (AbstractModel)
 ```
 
 Each method:
-1. Checks whether the relevant module is installed (guard via `env.get()`).
-2. Resolves recipient partners.
-3. Calls `self.send_email_template()` or `self.create_activity()` from the
-   base `federation.notification.service`.
-4. Returns the `federation.notification.log` record.
+1. Resolves recipient emails or target user groups from the business record.
+2. Delegates to `self.send_email_template()` or `self.create_activity()` from the
+  base `federation.notification.service`.
+3. Returns one or more `federation.notification.log` records capturing sent or failed delivery.
 
 ---
 
 ## Implementation Status
 
-Stubs are defined in
-`sports_federation_notifications/models/notification_dispatcher.py`.
-Each method currently logs a placeholder entry.  Fill in the template XML ID
-and recipient resolution as the corresponding modules stabilize.
+The dispatcher is live for the high-value workflow scenarios above. Email-based
+events create sent or failed log rows through the shared notification service,
+and activity-based events create one log row per assigned user. The only
+remaining stub is `send_suspension_issued()`.
 
 ---
 
@@ -76,4 +77,4 @@ All dispatcher methods must be non-blocking:
 
 ---
 
-_Last updated: Phase 2 automation (auto-generated) — update this file when new triggers are added._
+_Last updated: 2026-04-10 — update this file when new triggers are added._

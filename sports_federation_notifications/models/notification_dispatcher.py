@@ -1,11 +1,11 @@
 """
-Notification Dispatcher — event-driven notification stubs.
+Notification Dispatcher — event-driven notification routing.
 
-Each method here maps to one row in ``odoo/NOTIFICATION_MATRIX.md``.
-Methods are currently stubs that log a placeholder entry.  To activate a
-notification, replace the placeholder ``Log.create(...)`` call with actual
-``send_email_template`` or ``create_activity`` calls once the mail templates
-are authored.
+Each method here maps to one row in ``odoo/NOTIFICATION_MATRIX.md`` and
+resolves recipients before delegating to ``send_email_template`` or
+``create_activity``. Most modeled workflow scenarios are now live; suspension
+issuance remains the only placeholder until the discipline template and
+recipient mapping are finalized.
 
 Usage (from any model override):
 ::
@@ -27,6 +27,56 @@ class FederationNotificationDispatcher(models.AbstractModel):
     _name = "federation.notification.dispatcher"
     _description = "Federation Notification Dispatcher"
     _inherit = "federation.notification.service"
+
+    def _unique_emails(self, emails):
+        unique = []
+        for email in emails:
+            normalized = (email or "").strip()
+            if normalized and normalized not in unique:
+                unique.append(normalized)
+        return unique
+
+    def _log_missing_recipients(self, record, log_name, notification_type, message):
+        return self.env["federation.notification.log"].create({
+            "name": log_name,
+            "target_model": record._name,
+            "target_res_id": record.id,
+            "notification_type": notification_type,
+            "state": "failed",
+            "message": message,
+        })
+
+    def _send_email_or_log(self, record, template_xmlid, log_name, emails):
+        unique_emails = self._unique_emails(emails)
+        if not unique_emails:
+            return self._log_missing_recipients(
+                record,
+                log_name,
+                "email",
+                "No recipient email available for this notification.",
+            )
+        return self.send_email_template(
+            record,
+            template_xmlid,
+            email_to=unique_emails,
+            log_name=log_name,
+        )
+
+    def _create_group_activities(self, record, group_xmlid, summary, note=None):
+        group = self.env.ref(group_xmlid, raise_if_not_found=False)
+        users = group.users if group else self.env["res.users"].browse([])
+        if not users:
+            return self._log_missing_recipients(
+                record,
+                summary,
+                "activity",
+                f"No users configured in group {group_xmlid}.",
+            )
+
+        logs = self.env["federation.notification.log"]
+        for user in users:
+            logs |= self.create_activity(record, user.id, summary, note=note)
+        return logs
 
     # ------------------------------------------------------------------
     # Season registration events
@@ -68,282 +118,135 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_tournament_published(self, tournament):
-        """Notify registered club managers when a tournament is published.
-
-        TODO: resolve recipient list from ``federation.season.registration``
-        and use ``sports_federation_notifications.mail_tournament_published``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Tournament published: {tournament.name}",
-                "target_model": "federation.tournament",
-                "target_res_id": tournament.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Tournament published: {tournament.name}",
-                "target_model": "federation.tournament",
-                "target_res_id": tournament.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        emails = tournament.participant_ids.mapped("club_id.email") + tournament.participant_ids.mapped("team_id.email")
+        return self._send_email_or_log(
+            tournament,
+            "sports_federation_notifications.template_federation_tournament_published",
+            f"Tournament published: {tournament.name}",
+            emails,
+        )
 
     # ------------------------------------------------------------------
     # Participant events
     # ------------------------------------------------------------------
 
     def send_participant_confirmed(self, participant):
-        """Notify club contact when a tournament participant is confirmed.
-
-        TODO: template ``sports_federation_notifications.mail_participant_confirmed``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Participant confirmed: {participant.name}",
-                "target_model": "federation.tournament.participant",
-                "target_res_id": participant.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Participant confirmed: {participant.name}",
-                "target_model": "federation.tournament.participant",
-                "target_res_id": participant.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        emails = [participant.team_id.email, participant.club_id.email]
+        return self._send_email_or_log(
+            participant,
+            "sports_federation_notifications.template_federation_participant_confirmed",
+            f"Participant confirmed: {participant.name}",
+            emails,
+        )
 
     # ------------------------------------------------------------------
     # Match result events
     # ------------------------------------------------------------------
 
     def send_result_submitted(self, match):
-        """Create an activity for verifiers when a match result is submitted.
-
-        TODO: use ``create_activity`` targeting the verifier group representative.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Result submitted: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "activity",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no activity wired yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Result submitted: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "activity",
-                "state": "failed",
-                "message": str(exc),
-            })
+        return self._create_group_activities(
+            match,
+            "sports_federation_result_control.group_result_validator",
+            f"Verify result: {match.name}",
+            note="A match result has been submitted and awaits verification.",
+        )
 
     def send_result_approved(self, match):
-        """Email both clubs when a result is officially approved.
-
-        TODO: template ``sports_federation_notifications.mail_result_approved``
-        with recipients: home_club.partner_id and away_club.partner_id.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Result approved: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Result approved: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        emails = [
+            match.home_team_id.email,
+            match.home_team_id.club_id.email,
+            match.away_team_id.email,
+            match.away_team_id.club_id.email,
+        ]
+        return self._send_email_or_log(
+            match,
+            "sports_federation_notifications.template_federation_result_approved",
+            f"Result approved: {match.name}",
+            emails,
+        )
 
     def send_result_contested(self, match):
-        """Email clubs and federation manager when a result is contested.
-
-        TODO: template ``sports_federation_notifications.mail_result_contested``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Result contested: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Result contested: {match.name}",
-                "target_model": "federation.match",
-                "target_res_id": match.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        manager_group = self.env.ref(
+            "sports_federation_base.group_federation_manager",
+            raise_if_not_found=False,
+        )
+        manager_emails = manager_group.users.mapped("email") if manager_group else []
+        emails = [
+            match.home_team_id.email,
+            match.home_team_id.club_id.email,
+            match.away_team_id.email,
+            match.away_team_id.club_id.email,
+            *manager_emails,
+        ]
+        return self._send_email_or_log(
+            match,
+            "sports_federation_notifications.template_federation_result_contested",
+            f"Result contested: {match.name}",
+            emails,
+        )
 
     # ------------------------------------------------------------------
     # Officiating events
     # ------------------------------------------------------------------
 
     def send_referee_confirmation_overdue(self, match_officiating):
-        """Log an overdue referee confirmation alert for staff follow-up."""
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Referee confirmation overdue: {match_officiating.match_id.name}",
-                "target_model": match_officiating._name,
-                "target_res_id": match_officiating.id,
-                "notification_type": "activity",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": match_officiating.readiness_feedback or "Referee confirmation deadline has been missed.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": "[error] Referee confirmation overdue",
-                "notification_type": "activity",
-                "state": "failed",
-                "message": str(exc),
-            })
+        return self._create_group_activities(
+            match_officiating,
+            "sports_federation_base.group_federation_manager",
+            f"Referee confirmation overdue: {match_officiating.match_id.name}",
+            note=match_officiating.readiness_feedback or "Referee confirmation deadline has been missed.",
+        )
 
     def send_referee_shortage_alert(self, match):
-        """Log a staffing shortage alert for a match that is not officiating-ready."""
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Referee shortage: {match.name}",
-                "target_model": match._name,
-                "target_res_id": match.id,
-                "notification_type": "activity",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": getattr(match, "official_readiness_issues", False) or "Match is missing required officials.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": "[error] Referee shortage",
-                "notification_type": "activity",
-                "state": "failed",
-                "message": str(exc),
-            })
+        return self._create_group_activities(
+            match,
+            "sports_federation_base.group_federation_manager",
+            f"Referee shortage: {match.name}",
+            note=getattr(match, "official_readiness_issues", False) or "Match is missing required officials.",
+        )
 
     # ------------------------------------------------------------------
     # Standings events
     # ------------------------------------------------------------------
 
     def send_standing_frozen(self, standing):
-        """Notify participants when a standing is frozen.
-
-        TODO: template ``sports_federation_notifications.mail_standing_frozen``
-        with recipients derived from ``standing.tournament_id.participant_ids``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Standing frozen: {standing.name}",
-                "target_model": "federation.standing",
-                "target_res_id": standing.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Standing frozen: {standing.name}",
-                "target_model": "federation.standing",
-                "target_res_id": standing.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        emails = standing.tournament_id.participant_ids.mapped("club_id.email")
+        return self._send_email_or_log(
+            standing,
+            "sports_federation_notifications.template_federation_standing_frozen",
+            f"Standing frozen: {standing.name}",
+            emails,
+        )
 
     # ------------------------------------------------------------------
     # Finance events
     # ------------------------------------------------------------------
 
     def send_finance_event_confirmed(self, finance_event):
-        """Notify the relevant club or person when a finance event is confirmed.
-
-        TODO: template ``sports_federation_notifications.mail_finance_confirmed``;
-        resolve recipient from ``finance_event.club_id.partner_id``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            Log.create({
-                "name": f"[stub] Finance event confirmed: {finance_event.name}",
-                "target_model": "federation.finance.event",
-                "target_res_id": finance_event.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": f"[error] Finance event confirmed: {finance_event.name}",
-                "target_model": "federation.finance.event",
-                "target_res_id": finance_event.id,
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        emails = [
+            finance_event.partner_id.email,
+            finance_event.club_id.email,
+            finance_event.player_id.email,
+            finance_event.referee_id.email,
+        ]
+        return self._send_email_or_log(
+            finance_event,
+            "sports_federation_notifications.template_federation_finance_confirmed",
+            f"Finance event confirmed: {finance_event.name}",
+            emails,
+        )
 
     # ------------------------------------------------------------------
     # Officiating events
     # ------------------------------------------------------------------
 
     def send_referee_assigned(self, match_officiating):
-        """Notify a referee when they are assigned to a match.
-
-        TODO: template ``sports_federation_notifications.mail_referee_assigned``
-        targeting ``match_officiating.referee_id.partner_id``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            name = getattr(match_officiating, "name", str(match_officiating.id))
-            Log.create({
-                "name": f"[stub] Referee assigned: {name}",
-                "target_model": match_officiating._name,
-                "target_res_id": match_officiating.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": "[error] Referee assigned",
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        return self._send_email_or_log(
+            match_officiating,
+            "sports_federation_notifications.template_federation_referee_assigned",
+            f"Referee assigned: {match_officiating.match_id.name}",
+            [match_officiating.referee_id.email],
+        )
 
     # ------------------------------------------------------------------
     # Discipline events

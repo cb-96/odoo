@@ -21,6 +21,7 @@ the operational sequence from pre-match preparation through to the final whistle
 | `sports_federation_people` | Player eligibility verification |
 | `sports_federation_rules` | Squad-size limits and eligibility rules |
 | `sports_federation_discipline` | Suspension checks |
+| `sports_federation_notifications` | Referee assignment emails and staffing alert activities |
 
 ## Step-by-Step Flow
 
@@ -69,13 +70,14 @@ Match sheet states: `draft` → `submitted` → `approved` → `locked`.
    - `assistant_1` / `assistant_2` — Assistant referees
    - `fourth` — Fourth official
    - `table` — Table or desk official
-3. Each assignment has a state: `assigned` → `confirmed` → `done` / `cancelled`.
+3. Each assignment has a state: `draft` (displayed as Assigned) → `confirmed` → `done` / `cancelled`.
 4. Assignments inherit a 48-hour confirmation deadline from the scheduled match time and stay visible as overdue until confirmed, cancelled, or the match closes.
 5. Confirmation is blocked if the official is inactive or their certification is missing / expired for the match date.
 6. Matches aggregate readiness from the rule set's `referee_required_count`, confirmed assignments, overdue confirmations, and assignment-level readiness issues.
-7. Notification stubs create follow-up alerts for overdue confirmations and staffing shortages via the scheduled notification scan.
-8. SQL constraint prevents duplicate (match, referee, role) combinations.
-9. The rule set's `referee_required_count` indicates how many officials are needed.
+7. Creating an assignment sends an email to the assigned referee with the role and confirmation deadline.
+8. The scheduled notification scan creates federation-manager activities for overdue confirmations and staffing shortages.
+9. SQL constraint prevents duplicate (match, referee, role) combinations.
+10. The rule set's `referee_required_count` indicates how many officials are needed.
 
 ### 4. Venue Confirmation
 
@@ -157,7 +159,7 @@ After the match completes:
 Operational readiness additions:
 
 - Match forms expose official counts, overdue confirmations, and aggregated readiness issues so staffing gaps remain visible before kick-off.
-- The notification scan logs follow-up alerts for overdue confirmations and matches that still fail the officiating readiness check.
+- The notification scan creates follow-up activities for overdue confirmations and matches that still fail the officiating readiness check.
 
 ## State Diagram
 

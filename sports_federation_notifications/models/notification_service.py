@@ -26,6 +26,9 @@ class FederationNotificationService(models.AbstractModel):
             The created notification log record.
         """
         Log = self.env["federation.notification.log"]
+        if isinstance(email_to, (list, tuple, set)):
+            email_to = ",".join(dict.fromkeys(email for email in email_to if email))
+
         log_vals = {
             "name": log_name or f"Email: {template_xmlid}",
             "target_model": record._name,
@@ -119,12 +122,11 @@ class FederationNotificationService(models.AbstractModel):
 
     @api.model
     def _cron_placeholder_notification_scan(self):
-        """Placeholder cron method for scheduled notification scans.
+        """Default cron scan for stale registrations and officiating gaps.
 
-        This method is intentionally minimal. It searches for season registrations
-        in draft state older than 7 days and logs a reminder notice.
-
-        Future modules can extend this or add their own cron methods.
+        The scan logs draft season-registration reminders and, when the related
+        modules are installed, creates activities for overdue referee
+        confirmations and officiating shortages.
         """
         Log = self.env["federation.notification.log"]
         Registration = self.env.get("federation.season.registration")

@@ -8,17 +8,22 @@ with a log of all notifications sent.
 
 Gives other modules a **single entry point** for sending notifications. Instead
 of each module implementing its own mail logic, they call the notification
-service, which handles template rendering, sending, and logging.
+service, which handles template rendering, activity creation, sending, and logging.
 
 ## Dependencies
 
 | Module | Reason |
 |--------|--------|
-| `sports_federation_base` | Core entities |
-| `sports_federation_people` | Player/person context |
-| `sports_federation_tournament` | Tournament context |
-| `sports_federation_portal` | Portal context |
-| `mail` | Email engine |
+| `sports_federation_base` | Core entities, federation manager group resolution |
+| `sports_federation_people` | Player and referee contact resolution |
+| `sports_federation_tournament` | Tournament, participant, and match event sources |
+| `sports_federation_portal` | Season-registration confirmation and rejection hooks |
+| `sports_federation_public_site` | Tournament publication trigger |
+| `sports_federation_result_control` | Result submission, approval, and contest triggers |
+| `sports_federation_standings` | Standing freeze trigger |
+| `sports_federation_finance_bridge` | Finance confirmation trigger |
+| `sports_federation_officiating` | Referee assignment and staffing alert triggers |
+| `mail` | Email engine and mail.activity support |
 
 ## Models
 
@@ -52,17 +57,20 @@ Reusable service methods callable by any module.
 
 | File | Content |
 |------|---------|
-| `data/mail_templates.xml` | Generic contact, season registration reminder, season registration confirmed/rejected, missing data notice templates |
+| `data/mail_templates.xml` | Generic contact, registration, publication, result, standings, finance, and referee assignment templates |
 | `data/ir_cron.xml` | Daily notification scan scheduled action (inactive by default) |
 
 ## Key Behaviours
 
 1. **Service pattern** — AbstractModel with helper methods; no table, just logic.
 2. **Comprehensive logging** — Every send/activity creation produces a log entry.
-3. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
-4. **Scheduled scan** — Cron job detects stale draft registrations, overdue referee confirmations, and officiating shortages, then logs follow-up reminders or alerts.
-5. **Season-registration hooks** — When `sports_federation_portal` is installed, season registration confirmation and rejection automatically dispatch logged email notifications to the submitting representative or club contact.
-6. **Officiating hooks** — Referee assignments create a logged assignment stub immediately, while overdue confirmations and match staffing shortages are surfaced through dispatcher stubs callable from cron scans.
+3. **Multi-recipient email delivery** — `send_email_template()` accepts a single email or a collection of emails and deduplicates them before sending.
+4. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
+5. **Live workflow coverage** — Season registration confirmation/rejection, tournament publication, participant confirmation, result approval/contest, standing freeze, finance confirmation, and referee assignment all dispatch concrete emails.
+6. **Activity-based operational follow-up** — Result submission creates verifier activities, while overdue referee confirmations and officiating shortages create federation-manager activities.
+7. **Scheduled scan** — Cron logs stale draft registration reminders and triggers the officiating follow-up activities above.
+8. **Failure visibility without transaction rollback** — Missing recipients or template failures create `failed` notification logs instead of blocking the business workflow.
+9. **Remaining gap** — `send_suspension_issued()` is still a stub until the discipline-side template and recipient mapping are finalized.
 
 ## Integration configuration (env)
 

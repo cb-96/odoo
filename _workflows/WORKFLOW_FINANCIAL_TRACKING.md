@@ -21,6 +21,7 @@ future accounting integration.
 | `sports_federation_tournament` | Tournament context |
 | `sports_federation_officiating` | Referees (reimbursements) |
 | `sports_federation_discipline` | Sanctions (fines) |
+| `sports_federation_notifications` | Finance confirmation notifications |
 | `sports_federation_reporting` | Financial summary reports |
 
 ## Step-by-Step Flow
@@ -81,6 +82,9 @@ Each event records:
 2. Verify amounts, source references, and the deterministic `external_ref`.
 3. **Confirm**: state `draft` → `confirmed`.
 4. Confirmed events represent accepted financial obligations.
+5. Confirmation triggers a notification email to the resolved partner, club,
+   player, or referee contact; missing-recipient cases are logged without
+   blocking the state change.
 
 ### 4. Invoicing
 

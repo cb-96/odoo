@@ -116,7 +116,7 @@ Modules: `sports_federation_finance_bridge`, `sports_federation_base`, `sports_f
 Work: extend hooks for reimbursements, discipline-related charges, venue settlements, and reconciliation-friendly references.
 Done when: most federation-triggered monetary events are created automatically, remain idempotent, and are exportable.
 
-5. Activate the modeled notification scenarios.
+5. Done (2026-04-10): Activate the modeled notification scenarios.
 Modules: `sports_federation_notifications`, `sports_federation_portal`, `sports_federation_public_site`, `sports_federation_result_control`, `sports_federation_standings`, `sports_federation_finance_bridge`.
 Work: replace notification stubs with actual templates or activities for registration, publication, referee assignment, approved results, standings freeze, and finance confirmations.
 Done when: high-value workflow events reliably produce a logged communication or task.

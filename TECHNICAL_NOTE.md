@@ -2,6 +2,24 @@
 
 Last updated: 2026-04-10
 
+## Notification activation (2026-04-10)
+
+Year 1 Priority 1 item 5 converted the notification module from mostly logged
+placeholders into active workflow delivery.
+
+- `sports_federation_notifications` now sends real emails for season
+    registration decisions, tournament publication, participant confirmation,
+    approved and contested results, frozen standings, finance confirmations,
+    and referee assignments.
+- Result submission now creates validator activities instead of a placeholder
+    log entry, and the scheduled notification scan now creates federation
+    manager activities for overdue referee confirmations and officiating
+    shortages.
+- Shared notification helpers now accept multi-recipient email payloads,
+    deduplicate them, and keep failures non-blocking by writing `failed`
+    notification-log rows instead of rolling back the business action.
+- Suspension issuance remains the only modeled scenario still left as a stub.
+
 ## Match-day roster traceability (2026-04-10)
 
 Year 1 Priority 1 item 2 closed the operational gap between season rosters,
@@ -103,7 +121,7 @@ This technical note documents architecture, coding conventions, workflows, and e
 
 ## Executive summary
 
-The project is a modular suite of Odoo 19 addons implementing a sports federation management system. Modules are intentionally small and focused: `sports_federation_base` owns master data (clubs, teams, seasons), `sports_federation_tournament` implements tournament structure and match records, and `sports_federation_competition_engine` contains deterministic scheduling algorithms and wizards. Domain features (`people`, `rosters`, `officiating`, `result_control`, `standings`, `public_site`, `reporting`) extend core behaviour without mixing responsibilities.
+The project is a modular suite of Odoo 19 addons implementing a sports federation management system. Modules are intentionally small and focused: `sports_federation_base` owns master data (clubs, teams, seasons), `sports_federation_tournament` implements tournament structure and match records, and `sports_federation_competition_engine` contains deterministic scheduling algorithms and wizards. Domain features (`people`, `rosters`, `officiating`, `result_control`, `standings`, `public_site`, `notifications`, `reporting`) extend core behaviour without mixing responsibilities.
 
 Design goals
 
@@ -123,6 +141,9 @@ Design goals
 - `sports_federation_finance_bridge` — Lightweight finance events with source-linked,
   idempotent hooks for registrations, result approval, sanctions, officiating,
   and venue settlements.
+- `sports_federation_notifications` — Central email/activity dispatcher and
+    audit log for registration, publication, result, officiating, standings, and
+    finance workflow events.
 - `sports_federation_result_control` — Result submission, verification, approval, contest and correction flows.
 - `sports_federation_standings` — Standings computation, tie-break logic, and publishing controls.
 - `sports_federation_public_site` / `sports_federation_portal` — Website and portal layers for public pages and club self-service.

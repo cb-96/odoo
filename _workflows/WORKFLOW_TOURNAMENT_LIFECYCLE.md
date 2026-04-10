@@ -20,6 +20,7 @@ journey from initial setup to final completion.
 | `sports_federation_competition_engine` | Round-robin and knockout schedule generation wizards |
 | `sports_federation_venues` | Venue and playing-area assignment |
 | `sports_federation_standings` | Standings computation at each stage |
+| `sports_federation_notifications` | Participant-confirmation and publication notifications |
 | `sports_federation_public_site` | Public publication of tournament pages |
 
 ## Step-by-Step Flow
@@ -67,7 +68,8 @@ journey from initial setup to final completion.
 5. Participant confirmation requires an active ready roster for the tournament
    season. When both a competition-specific roster and a season-wide roster are
    available, the competition-specific roster is used for readiness checks.
-6. Move tournament to `open` state once enrolment is complete.
+6. Confirming a participant sends an email to the team and club contacts.
+7. Move tournament to `open` state once enrolment is complete.
 
 Bulk enrolment is available via the **Import Tournament Participants** wizard.
 
@@ -180,7 +182,8 @@ every other team once (single) or twice (double).
 1. Set `website_published = True` on the tournament.
 2. Configure public slug, description, and toggle results/standings visibility.
 3. Publish standings records.
-4. Public pages become available at `/competitions/<slug>`.
+4. Participant club and team contacts receive a tournament-publication email the first time the tournament is published.
+5. Public pages become available at `/competitions/<slug>`.
 
 ## State Diagram
 

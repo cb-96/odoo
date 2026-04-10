@@ -17,6 +17,7 @@ data-entry errors and disputed scores from corrupting competition tables.
 | `sports_federation_tournament` | Match model (base for result fields) |
 | `sports_federation_standings` | Standings computation using approved results |
 | `sports_federation_governance` | Override requests for disputed results |
+| `sports_federation_notifications` | Validator activities and club / manager notifications |
 | `sports_federation_public_site` | Publishing approved results publicly |
 | `mail` | Chatter audit trail on matches |
 
@@ -42,6 +43,7 @@ At this point the result is entered but **not yet official**.
 2. `result_state` transitions from `draft` → `submitted`.
 3. `result_submitted_by_id` and `result_submitted_on` are recorded automatically.
 4. The result is now in the verification queue.
+5. A todo activity is created for each user in the Result Verifier group.
 
 ### 3. Result Verification
 
@@ -68,6 +70,7 @@ At this point the result is entered but **not yet official**.
 6. Any non-frozen standings linked to the same tournament, stage, or group are recomputed automatically.
 7. The approver must be different from both the submitter and the verifier for the same result.
 8. Approved scores are treated as immutable until the result leaves the approved state.
+9. Home and away team / club contacts receive an approval email with the official scoreline.
 
 The result is now **official** and eligible for standings computation.
 
@@ -80,6 +83,7 @@ The result is now **official** and eligible for standings computation.
 2. `result_state` transitions to `contested`.
 3. `result_contest_reason` is filled in with the dispute justification.
 4. The result is excluded from standings until resolved and linked non-frozen standings are recomputed automatically.
+5. Home and away team / club contacts plus federation managers receive a contest notification.
 
 ### 6. Correction (Exception Path)
 

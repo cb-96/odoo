@@ -33,6 +33,21 @@ class FederationTournament(models.Model):
         self.ensure_one()
         return bool(self.website_published)
 
+    def write(self, vals):
+        to_publish = self.env["federation.tournament"].browse([])
+        if vals.get("website_published"):
+            to_publish = self.filtered(lambda record: not record.website_published)
+
+        res = super().write(vals)
+
+        if vals.get("website_published"):
+            Dispatcher = self.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                for record in to_publish.filtered("website_published"):
+                    Dispatcher.send_tournament_published(record)
+
+        return res
+
     def can_access_public_results(self):
         self.ensure_one()
         return bool(self.can_access_public_detail() and self.show_public_results)

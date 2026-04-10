@@ -139,6 +139,9 @@ class FederationMatchResultControl(models.Model):
                 from_state,
                 "submitted",
             )
+            Dispatcher = rec.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_result_submitted(rec)
 
     def action_verify_result(self):
         """Verify the submitted result."""
@@ -200,6 +203,9 @@ class FederationMatchResultControl(models.Model):
                 from_state,
                 "approved",
             )
+            Dispatcher = rec.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_result_approved(rec)
         self._recompute_related_standings()
 
     def action_contest_result(self):
@@ -225,6 +231,9 @@ class FederationMatchResultControl(models.Model):
                 "contested",
                 reason=rec.result_contest_reason,
             )
+            Dispatcher = rec.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_result_contested(rec)
         self._recompute_related_standings()
 
     def action_correct_result(self):

@@ -17,6 +17,7 @@ and public page controllers.
 | `sports_federation_tournament` | Tournament and match data |
 | `sports_federation_standings` | Standings data |
 | `sports_federation_result_control` | Approved results |
+| `sports_federation_notifications` | Publication emails to participating clubs/teams |
 | `sports_federation_venues` | Venue information on match pages |
 | `website` | Odoo website framework |
 
@@ -44,6 +45,9 @@ Before publishing, ensure the tournament has:
    - `public_description` — Rich-text HTML description for the public page.
    - `show_public_results` — Toggle match results visibility.
    - `show_public_standings` — Toggle standings visibility.
+3. When `website_published` changes from `False` to `True`, the notification
+   dispatcher emails the participating club and team contacts so publication is
+   visible outside the back office.
 
 ### 3. Standings Publication
 
@@ -80,6 +84,8 @@ As the tournament progresses:
 2. Standings are recomputed and published.
 3. Public pages automatically reflect the latest approved data.
 4. Schedule pages show upcoming fixtures.
+5. Publication emails are only sent on the publish transition itself; later
+   content updates reuse the live public pages instead of re-emailing everyone.
 
 ### 6. End-of-Season
 

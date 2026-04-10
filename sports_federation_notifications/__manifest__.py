@@ -1,6 +1,6 @@
 {
     "name": "Sports Federation Notifications",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.2.0",
     "category": "Sports",
     "summary": "Centralized federation notification helpers, templates, and scheduled reminders",
     "description": "Notification templates, reminder jobs, and outbound communication logs.",
@@ -12,6 +12,11 @@
         "sports_federation_people",
         "sports_federation_tournament",
         "sports_federation_portal",
+        "sports_federation_public_site",
+        "sports_federation_result_control",
+        "sports_federation_standings",
+        "sports_federation_finance_bridge",
+        "sports_federation_officiating",
         "mail",
     ],
     "data": [

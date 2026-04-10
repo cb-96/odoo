@@ -12,8 +12,49 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_NAME="sf_ci"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.ci.yaml"
+ENV_FILE="$SCRIPT_DIR/.env"
+EXAMPLE_ENV_FILE="$SCRIPT_DIR/.env.example"
+GENERATED_CONF="$SCRIPT_DIR/odoo-ci.generated.conf"
+
+if [[ -f "$ENV_FILE" ]]; then
+  LOADED_ENV_FILE="$ENV_FILE"
+elif [[ -f "$EXAMPLE_ENV_FILE" ]]; then
+  LOADED_ENV_FILE="$EXAMPLE_ENV_FILE"
+else
+  echo "Missing CI environment file. Create $ENV_FILE from $EXAMPLE_ENV_FILE." >&2
+  exit 1
+fi
+
+set -a
+# shellcheck disable=SC1090
+source "$LOADED_ENV_FILE"
+set +a
+
+: "${CI_PROJECT_NAME:=sf_ci}"
+: "${CI_POSTGRES_USER:=odoo}"
+: "${CI_POSTGRES_PASSWORD:=change_me}"
+: "${CI_POSTGRES_DB:=postgres}"
+: "${CI_ODOO_DB_NAME:=odoo_ci_test}"
+: "${CI_ODOO_DB_HOST:=ci-db}"
+: "${CI_ODOO_DB_PORT:=5432}"
+
+PROJECT_NAME="$CI_PROJECT_NAME"
+
+cat > "$GENERATED_CONF" <<EOF
+[options]
+db_host = ${CI_ODOO_DB_HOST}
+db_port = ${CI_ODOO_DB_PORT}
+db_user = ${CI_POSTGRES_USER}
+db_password = ${CI_POSTGRES_PASSWORD}
+
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+data_dir = /var/lib/odoo
+
+list_db = False
+without_demo = True
+log_level = info
+EOF
 
 # ── Topological install order (dependency-safe) ──────────────────────
 ALL_MODULES=(
@@ -66,6 +107,7 @@ ERRORS_LOG="$LOG_DIR/errors.log"
 
 echo "=== SF CI Run – $TIMESTAMP ===" | tee "$SUMMARY_LOG"
 echo "Modules: $MODULE_CSV" | tee -a "$SUMMARY_LOG"
+echo "Config:  $LOADED_ENV_FILE" | tee -a "$SUMMARY_LOG"
 echo "Logs:    $LOG_DIR" | tee -a "$SUMMARY_LOG"
 echo "────────────────────────────────────────────" | tee -a "$SUMMARY_LOG"
 
@@ -77,10 +119,10 @@ docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d --wait ci-db
 
 # Create the test database
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" exec -T ci-db \
-  psql -U odoo -d postgres -c "SELECT 1 FROM pg_database WHERE datname='odoo_ci_test'" \
+  psql -U "$CI_POSTGRES_USER" -d "$CI_POSTGRES_DB" -c "SELECT 1 FROM pg_database WHERE datname='$CI_ODOO_DB_NAME'" \
   | grep -q 1 || \
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" exec -T ci-db \
-  psql -U odoo -d postgres -c "CREATE DATABASE odoo_ci_test OWNER odoo;"
+  psql -U "$CI_POSTGRES_USER" -d "$CI_POSTGRES_DB" -c "CREATE DATABASE \"$CI_ODOO_DB_NAME\" OWNER \"$CI_POSTGRES_USER\";"
 
 # ── Run tests ────────────────────────────────────────────────────────
 echo "[CI] Installing & testing: $MODULE_CSV"
@@ -99,7 +141,7 @@ done
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm \
   ci-odoo \
   --stop-after-init --test-enable --test-tags="$TEST_TAGS" \
-  -d odoo_ci_test -i "$MODULE_CSV" \
+  -d "$CI_ODOO_DB_NAME" -i "$MODULE_CSV" \
   2>&1 | tee "$RAW_LOG" || EXIT_CODE=$?
 
 # ── Parse results ────────────────────────────────────────────────────
@@ -134,6 +176,7 @@ if [[ "$KEEP" == "false" ]]; then
   echo ""
   echo "[CI] Tearing down containers …"
   docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" down -v --remove-orphans 2>/dev/null || true
+  rm -f "$GENERATED_CONF"
 else
   echo ""
   echo "[CI] --keep: containers left running (project: $PROJECT_NAME)"

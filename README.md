@@ -92,11 +92,13 @@ flake8 sports_federation_base sports_federation_tournament sports_federation_sta
 Containerized module tests (Git Bash / WSL on Windows, or any POSIX shell):
 
 ```bash
+cp ci/.env.example ci/.env
 bash ./ci/run_tests.sh --module sports_federation_standings
 ```
 
 Notes and tips
 - `requirements.txt` pins repository-local tooling only. The Odoo runtime used by CI comes from the `odoo:19` Docker image declared in `ci/docker-compose.ci.yaml`.
+- Keep local runtime credentials in `ci/.env`; do not commit that file. The checked-in `ci/.env.example` is the safe template.
 - This repository does not ship `odoo-bin`. If you use a separate local Odoo checkout, point its `addons_path` at this repository and run tests from that checkout.
 - Use the module manifest `__manifest__.py` `data` entries to register new
   views/security/data files. If you add or change models, update

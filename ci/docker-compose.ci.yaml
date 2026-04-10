@@ -3,20 +3,21 @@
 #
 # Spins up a throwaway Postgres (tmpfs) and Odoo instance that installs
 # modules with --test-enable, then tears everything down.
+# Runtime credentials come from shell-exported values loaded by ci/run_tests.sh.
 
 services:
   ci-db:
     image: postgres:18
     user: root
     environment:
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo_ci
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${CI_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CI_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CI_POSTGRES_DB}
     # tmpfs for speed – data is discarded after the run
     tmpfs:
       - /var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      test: ["CMD-SHELL", "pg_isready -U ${CI_POSTGRES_USER}"]
       interval: 3s
       timeout: 5s
       retries: 10
@@ -28,11 +29,12 @@ services:
       ci-db:
         condition: service_healthy
     environment:
-      HOST: ci-db
-      USER: odoo
-      PASSWORD: odoo_ci
+      HOST: ${CI_ODOO_DB_HOST}
+      PORT: ${CI_ODOO_DB_PORT}
+      USER: ${CI_POSTGRES_USER}
+      PASSWORD: ${CI_POSTGRES_PASSWORD}
     volumes:
       - ../:/mnt/extra-addons:ro
-      - ./odoo-ci.conf:/etc/odoo/odoo.conf:ro
+      - ./odoo-ci.generated.conf:/etc/odoo/odoo.conf:ro
     # No HTTP – headless test runner; stop after init + test
     command: ["--no-http", "--stop-after-init", "--test-enable"]

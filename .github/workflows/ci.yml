@@ -71,6 +71,40 @@ jobs:
       - name: Verify Docker Compose availability
         run: docker compose version
 
+      - name: Prepare CI environment file
+        run: |
+          cp ci/.env.example ci/.env
+          password="$(openssl rand -hex 16)"
+          sed -i "s/^CI_PROJECT_NAME=.*/CI_PROJECT_NAME=sf_ci_${GITHUB_RUN_ID}/" ci/.env
+          sed -i "s/^CI_POSTGRES_PASSWORD=.*/CI_POSTGRES_PASSWORD=${password}/" ci/.env
+          # Append optional integration envs populated from GitHub Secrets.
+          # Secrets that are not set will expand to empty strings.
+          cat >> ci/.env <<EOF
+# Integration envs (optional — populated from GitHub Secrets)
+SMTP_HOST=${{ secrets.SMTP_HOST }}
+SMTP_PORT=${{ secrets.SMTP_PORT }}
+SMTP_USER=${{ secrets.SMTP_USER }}
+SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+SMTP_USE_TLS=${{ secrets.SMTP_USE_TLS }}
+EMAIL_FROM=${{ secrets.EMAIL_FROM }}
+SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}
+OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+OAUTH_GOOGLE_REDIRECT_URI=${{ secrets.OAUTH_GOOGLE_REDIRECT_URI }}
+OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+OAUTH_GITHUB_REDIRECT_URI=${{ secrets.OAUTH_GITHUB_REDIRECT_URI }}
+TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
+TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
+SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
+AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+S3_BUCKET=${{ secrets.S3_BUCKET }}
+S3_REGION=${{ secrets.S3_REGION }}
+ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+EOF
+
       - name: Run Odoo module tests
         run: |
           chmod +x ci/run_tests.sh

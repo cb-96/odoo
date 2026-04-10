@@ -61,3 +61,14 @@ Reusable service methods callable by any module.
 2. **Comprehensive logging** — Every send/activity creation produces a log entry.
 3. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
 4. **Scheduled scan** — Cron job detects stale draft registrations and logs reminders.
+
+## Integration configuration (env)
+
+The notification service and mail templates assume an external mail delivery configuration managed by the Odoo instance (SMTP or provider API). Do not hardcode credentials in code or data files. Recommended practice:
+
+- Store runtime credentials in environment variables and/or CI secret stores.
+- Use `ci/integrations.env.example` as a template for common variables (SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SENDGRID_API_KEY, etc.).
+- Keep real `.env` files out of source control (the repository `.gitignore` already excludes `.env` and `ci/.env`).
+
+To apply values to Odoo system parameters you can either configure them via the Odoo Settings UI or set `ir.config_parameter` entries using an Odoo shell script or the admin UI.
+

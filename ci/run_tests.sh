@@ -124,6 +124,11 @@ docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" exec -T ci-db \
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" exec -T ci-db \
   psql -U "$CI_POSTGRES_USER" -d "$CI_POSTGRES_DB" -c "CREATE DATABASE \"$CI_ODOO_DB_NAME\" OWNER \"$CI_POSTGRES_USER\";"
 
+# Apply integration envs (if any) into Odoo system parameters so tests
+# that rely on configured providers can read them from ir.config_parameter.
+echo "[CI] Applying integration envs to Odoo..."
+bash "$SCRIPT_DIR/apply_env_to_ir_config.sh" "$PROJECT_NAME" "$COMPOSE_FILE" "$LOADED_ENV_FILE" "$GENERATED_CONF" || echo "[CI] apply_env_to_ir_config.sh failed; continuing"
+
 # ── Run tests ────────────────────────────────────────────────────────
 echo "[CI] Installing & testing: $MODULE_CSV"
 EXIT_CODE=0
@@ -138,7 +143,7 @@ for mod in "${MODULES[@]}"; do
   fi
 done
 
-docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm \
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm --env-file "$LOADED_ENV_FILE" \
   ci-odoo \
   --stop-after-init --test-enable --test-tags="$TEST_TAGS" \
   -d "$CI_ODOO_DB_NAME" -i "$MODULE_CSV" \

@@ -369,3 +369,108 @@ class TestEligibilityService(TransactionCase):
         player = self._make_player(state="suspended")  # would fail suspension
         result = self.service.check_player_eligibility(player, self.env["federation.rule.set"].browse([]))
         self.assertTrue(result["eligible"])
+
+    def test_license_rule_respects_season_and_club_context(self):
+        """License validation must respect the workflow season and club context."""
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "License Context RS", "code": "LCRS",
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "Active Seasonal License",
+            "eligibility_type": "license_valid",
+        })
+        other_season = self.env["federation.season"].create({
+            "name": "Other Elig Season",
+            "code": "OES24",
+            "date_start": "2024-01-01",
+            "date_end": "2024-12-31",
+        })
+        other_club = self.env["federation.club"].create({
+            "name": "Other Elig Club",
+            "code": "OEC",
+        })
+        player = self._make_player(state="active")
+        self.env["federation.player.license"].create({
+            "name": "LIC-CONTEXT",
+            "player_id": player.id,
+            "season_id": self.season.id,
+            "club_id": self.club.id,
+            "issue_date": "2024-01-01",
+            "expiry_date": "2024-12-31",
+            "state": "active",
+        })
+
+        good = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={
+                "season_id": self.season.id,
+                "club_id": self.club.id,
+                "match_date": date(2024, 6, 1),
+            },
+        )
+        self.assertTrue(good["eligible"])
+
+        wrong_season = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={
+                "season_id": other_season.id,
+                "club_id": self.club.id,
+                "match_date": date(2024, 6, 1),
+            },
+        )
+        self.assertFalse(wrong_season["eligible"])
+        self.assertIn("no active license", wrong_season["reasons"][0].lower())
+
+        wrong_club = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={
+                "season_id": self.season.id,
+                "club_id": other_club.id,
+                "match_date": date(2024, 6, 1),
+            },
+        )
+        self.assertFalse(wrong_club["eligible"])
+        self.assertIn("no active license", wrong_club["reasons"][0].lower())
+
+    def test_registration_rule_requires_team_season_registration(self):
+        """Registration eligibility should follow the team season-registration model."""
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Registration RS", "code": "REGRS",
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "Season Registration Required",
+            "eligibility_type": "registration",
+        })
+        player = self._make_player(state="active")
+
+        missing = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={
+                "season_id": self.season.id,
+                "team_id": self.team.id,
+            },
+        )
+        self.assertFalse(missing["eligible"])
+        self.assertIn("not registered for season", missing["reasons"][0].lower())
+
+        self.env["federation.season.registration"].create({
+            "name": "REG-TEAM",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+            "state": "confirmed",
+        })
+        registered = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={
+                "season_id": self.season.id,
+                "team_id": self.team.id,
+            },
+        )
+        self.assertTrue(registered["eligible"])

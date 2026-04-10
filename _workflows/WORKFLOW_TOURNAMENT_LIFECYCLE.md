@@ -64,7 +64,10 @@ journey from initial setup to final completion.
 2. Optionally assign participants to specific stages and groups.
 3. Set seeding ranks for bracket placement.
 4. Participant states: `registered` → `confirmed` → `withdrawn` / `eliminated`.
-5. Move tournament to `open` state once enrolment is complete.
+5. Participant confirmation requires an active ready roster for the tournament
+   season. When both a competition-specific roster and a season-wide roster are
+   available, the competition-specific roster is used for readiness checks.
+6. Move tournament to `open` state once enrolment is complete.
 
 Bulk enrolment is available via the **Import Tournament Participants** wizard.
 

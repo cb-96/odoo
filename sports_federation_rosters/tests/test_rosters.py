@@ -189,3 +189,44 @@ class TestRosters(TransactionCase):
                 "roster_id": roster.id,
                 "player_id": male_player.id,
             })
+
+    def test_roster_activation_blocks_lines_with_invalid_season_license(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Roster License Rules",
+            "code": "RLR",
+            "squad_min_size": 1,
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "Season License Required",
+            "eligibility_type": "license_valid",
+        })
+        roster = self.env["federation.team.roster"].create({
+            "name": "Licensed Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        license_record = self.env["federation.player.license"].create({
+            "name": "LIC-ROSTER-1",
+            "player_id": self.player1.id,
+            "season_id": self.season.id,
+            "club_id": self.club.id,
+            "issue_date": "2024-01-01",
+            "expiry_date": "2024-12-31",
+            "state": "active",
+        })
+        line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+            "license_id": license_record.id,
+        })
+
+        roster.action_activate()
+        self.assertEqual(roster.status, "active")
+
+        license_record.write({"state": "cancelled"})
+        self.assertFalse(line.eligible)
+        self.assertIn("not active", line.eligibility_feedback.lower())
+        self.assertFalse(roster.ready_for_activation)
+        self.assertIn(self.player1.display_name, roster.readiness_feedback)

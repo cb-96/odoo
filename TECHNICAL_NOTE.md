@@ -2,6 +2,30 @@
 
 Last updated: 2026-04-10
 
+## Eligibility workflow hardening (2026-04-10)
+
+Year 1 Priority 1 item 1 connected the existing eligibility models to live
+workflow boundaries instead of leaving them as isolated checks.
+
+- `sports_federation_rules` now evaluates license rules with season, club,
+    selected-license, and reference-date context. Registration rules validate the
+    actual `federation.season.registration` team/season model rather than
+    non-existent player-level registration fields.
+- `sports_federation_rosters` now computes `ready_for_activation` and
+    `readiness_feedback` on rosters. Activation blocks until the active lines meet
+    the rule-set size limits and all players pass eligibility checks.
+- `sports_federation_rosters` now computes `ready_for_submission` and
+    `readiness_feedback` on match sheets. Submission blocks when players are not
+    tied to valid active roster lines, do not satisfy license or registration
+    rules, or the submitted squad size is outside the allowed bounds.
+- `sports_federation_rosters` extends `federation.tournament.participant` so
+    participant confirmation requires an active ready roster for the tournament
+    season, with competition-specific rosters preferred over generic season
+    rosters.
+- Regression coverage was added for season-aware license checks, team-season
+    registration checks, roster activation gating, match-sheet submission gating,
+    and participant confirmation readiness.
+
 ## New competition models and behaviours (2026-04-07)
 
 Several new models and scheduling behaviours were added to support more realistic tournaments and automated stage progression:

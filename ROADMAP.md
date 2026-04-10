@@ -89,14 +89,14 @@ Modules: repository-wide, with emphasis on `ci/`, `sports_federation_public_site
 Work: keep CI env-driven, expand targeted module tests, validate scripts, and document local execution for maintainers.
 Done when: contributors can run focused tests locally and GitHub Actions can validate critical flows without committed secrets.
 
-7. Bring repository documentation up to release quality. Done (2026-04-10)
+7. Done (2026-04-10): Bring repository documentation up to release quality.
 Modules: repository docs plus every module touched by critical workflow work.
 Work: keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, workflow documents, module READMEs, integration docs, and state/ownership references aligned with the implemented code.
 Done when: a new maintainer can understand the main system flows without relying on tribal knowledge.
 
 ### Priority 1 — High-Value Operational Completeness
 
-1. Apply eligibility and license rules in real workflows.
+1. Done (2026-04-10): Apply eligibility and license rules in real workflows.
 Modules: `sports_federation_people`, `sports_federation_rules`, `sports_federation_rosters`, `sports_federation_portal`, `sports_federation_tournament`.
 Work: connect eligibility checks to participant confirmation, roster validation, and match-sheet readiness; present operator-readable failure reasons instead of opaque blocks.
 Done when: ineligible players are blocked consistently before official competition actions.

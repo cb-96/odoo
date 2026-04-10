@@ -31,9 +31,10 @@ the operational sequence from pre-match preparation through to the final whistle
 
 1. Create a **team roster** for the season/competition.
 2. Link to the team, season, and optionally the competition and rule set.
-3. Add **roster lines** — each line is a player with role (player/captain/vice_captain).
-4. Validate squad size against rule-set limits (min/max players).
-5. Set roster status: `draft` → `active`.
+3. Add **roster lines** — each line links a player and can mark captain or vice-captain responsibilities.
+4. Validate squad size and player eligibility against the rule set, including
+   season registration, suspensions, and season/club-scoped license checks.
+5. Review readiness feedback and set roster status: `draft` → `active`.
 6. An active roster is the pool from which match sheets draw players.
 
 ### 2. Match Sheet Creation
@@ -44,14 +45,16 @@ the operational sequence from pre-match preparation through to the final whistle
 1. For each match, create a **match sheet** for each participating team (home/away).
 2. Link the match sheet to the match, team, and source roster.
 3. Set the side (`home` or `away`).
-4. Add **match sheet lines** — select players from the active roster.
-5. Mark starters vs. substitutes (`is_starter` flag).
-6. Assign jersey numbers and positions.
+4. Add **match sheet lines** — typically by selecting active roster lines from
+   the team's source roster.
+5. Mark starters vs. substitutes.
+6. Assign jersey numbers and captaincy where needed.
 7. Add coach and manager names.
-8. Validate: check that selected players are on the active roster, not suspended,
-   and hold valid licenses.
+8. Validate: selected players must belong to active roster lines for the same
+   team, satisfy license and registration rules for the match context, and any
+   blockers are shown as readable feedback before submission.
 
-Match sheet states: `draft` → `submitted` → `confirmed` → `locked`.
+Match sheet states: `draft` → `submitted` → `approved` → `locked`.
 
 ### 3. Referee Assignment
 
@@ -101,7 +104,7 @@ Before the match starts, verify:
 
 | Check | Module | Detail |
 |-------|--------|--------|
-| Match sheets submitted | `rosters` | Both teams have confirmed sheets |
+| Match sheets submitted | `rosters` | Both teams have approved sheets |
 | Squad sizes valid | `rules` | Within min/max from rule set |
 | Player licenses active | `people` | All listed players have active season licenses |
 | No active suspensions | `discipline` | No player on the sheet is currently suspended |
@@ -141,7 +144,7 @@ After the match completes:
 ```
 Roster: draft → active → locked → archived
 
-Match Sheet: draft → submitted → confirmed → locked
+Match Sheet: draft → submitted → approved → locked
 
 Referee Assignment: assigned → confirmed → completed
                                           → cancelled
@@ -158,7 +161,7 @@ Match: draft → scheduled → in_progress → completed
 | 1 week before | Assign referees to match |
 | 48 hours before | Confirm referee assignments |
 | 24 hours before | Submit match sheets |
-| Match day | Confirm match sheets, verify eligibility |
+| Match day | Approve match sheets, verify eligibility |
 | Kick-off | Set match to in_progress |
 | Full time | Enter scores, log incidents |
 | Post-match | Lock sheets, submit result, update standings |

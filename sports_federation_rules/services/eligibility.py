@@ -18,7 +18,8 @@ Usage::
         raise ValidationError("\\n".join(result["reasons"]))
 """
 from datetime import date, timedelta
-from odoo import api, models
+
+from odoo import api, fields, models
 
 
 class EligibilityResult:
@@ -66,6 +67,10 @@ class FederationEligibilityService(models.AbstractModel):
             context: Optional dict with extra context keys:
                 - ``tournament_id``: int — to check registration rule
                 - ``competition_id``: int — to check registration rule
+                - ``season_id``: int — to resolve season-scoped license or registration rules
+                - ``club_id``: int — to resolve club-scoped license rules
+                - ``team_id``: int — to resolve registration rules
+                - ``license_id``: int — selected license to validate explicitly
                 - ``match_date``: date — overrides today for age calculation
 
         Returns:
@@ -105,13 +110,27 @@ class FederationEligibilityService(models.AbstractModel):
         """
         effective_rule_set = rule_set or roster.rule_set_id
         results = {}
+        reference_date_getter = getattr(roster, "_get_reference_date", None)
+        reference_date = (
+            reference_date_getter() if callable(reference_date_getter) else date.today()
+        )
         for line in roster.line_ids:
             player = getattr(line, "player_id", None)
             if not player:
                 continue
-            context = {}
+            context = {
+                "match_date": reference_date,
+            }
             if roster.season_id:
                 context["season_id"] = roster.season_id.id
+            if roster.club_id:
+                context["club_id"] = roster.club_id.id
+            if roster.team_id:
+                context["team_id"] = roster.team_id.id
+            if roster.competition_id:
+                context["competition_id"] = roster.competition_id.id
+            if getattr(line, "license_id", False):
+                context["license_id"] = line.license_id.id
             results[player.id] = self.check_player_eligibility(player, effective_rule_set, context)
         return results
 
@@ -134,6 +153,12 @@ class FederationEligibilityService(models.AbstractModel):
             "tournament_id": match.tournament_id.id if match.tournament_id else None,
             "match_date": match.date_scheduled.date() if match.date_scheduled else date.today(),
         }
+        if match.tournament_id and match.tournament_id.season_id:
+            context["season_id"] = match.tournament_id.season_id.id
+        if team:
+            context["team_id"] = team.id
+            if team.club_id:
+                context["club_id"] = team.club_id.id
         results = {}
         for player in players:
             results[player.id] = self.check_player_eligibility(player, rule_set, context)
@@ -156,7 +181,7 @@ class FederationEligibilityService(models.AbstractModel):
         if etype == "gender":
             return self._check_gender(rule, player)
         if etype == "license_valid":
-            return self._check_license(player)
+            return self._check_license(player, context)
         if etype == "suspension":
             return self._check_suspension(player)
         if etype == "registration":
@@ -221,28 +246,88 @@ class FederationEligibilityService(models.AbstractModel):
             )
         return EligibilityResult()
 
-    def _check_license(self, player):
+    def _check_license(self, player, context=None):
         """Check that the player has at least one active license.
 
         The ``federation.player.license`` model is in ``sports_federation_people``.
         If the model is absent (module not installed), this check is skipped.
         """
+        context = context or {}
         License = self.env.get("federation.player.license")
         if License is None:
             return EligibilityResult()
 
-        today = date.today()
-        active_license = License.search([
+        reference_date = context.get("match_date") or date.today()
+        if isinstance(reference_date, str):
+            reference_date = fields.Date.to_date(reference_date)
+
+        season_id = context.get("season_id")
+        club_id = context.get("club_id")
+        selected_license_id = context.get("license_id")
+
+        if selected_license_id:
+            selected_license = License.browse(selected_license_id)
+            reasons = []
+            if not selected_license.exists() or selected_license.player_id != player:
+                reasons.append(f"Player '{player.name}' does not have the selected license.")
+            else:
+                if selected_license.state != "active":
+                    reasons.append(
+                        f"Selected license '{selected_license.name}' is not active."
+                    )
+                if selected_license.issue_date and selected_license.issue_date > reference_date:
+                    reasons.append(
+                        f"Selected license '{selected_license.name}' is not valid yet for {reference_date}."
+                    )
+                if (
+                    selected_license.expiry_date
+                    and selected_license.expiry_date < reference_date
+                ):
+                    reasons.append(
+                        f"Selected license '{selected_license.name}' expired before {reference_date}."
+                    )
+                if season_id and selected_license.season_id.id != season_id:
+                    reasons.append(
+                        f"Selected license '{selected_license.name}' does not cover the required season."
+                    )
+                if club_id and selected_license.club_id.id != club_id:
+                    reasons.append(
+                        f"Selected license '{selected_license.name}' does not belong to the required club."
+                    )
+            if reasons:
+                return EligibilityResult(eligible=False, reasons=reasons)
+            return EligibilityResult()
+
+        domain = [
             ("player_id", "=", player.id),
             ("state", "=", "active"),
+            ("issue_date", "<=", reference_date),
             "|",
             ("expiry_date", "=", False),
-            ("expiry_date", ">=", today),
-        ], limit=1)
+            ("expiry_date", ">=", reference_date),
+        ]
+        if season_id:
+            domain.append(("season_id", "=", season_id))
+        if club_id:
+            domain.append(("club_id", "=", club_id))
+
+        active_license = License.search(domain, limit=1)
         if not active_license:
+            scope_bits = []
+            if season_id:
+                season = self.env["federation.season"].browse(season_id)
+                if season.exists():
+                    scope_bits.append(f"season '{season.name}'")
+            if club_id:
+                club = self.env["federation.club"].browse(club_id)
+                if club.exists():
+                    scope_bits.append(f"club '{club.name}'")
+            scope = " for " + " and ".join(scope_bits) if scope_bits else ""
             return EligibilityResult(
                 eligible=False,
-                reasons=[f"Player '{player.name}' has no active license."],
+                reasons=[
+                    f"Player '{player.name}' has no active license{scope} on {reference_date}."
+                ],
             )
         return EligibilityResult()
 
@@ -256,29 +341,35 @@ class FederationEligibilityService(models.AbstractModel):
         return EligibilityResult()
 
     def _check_registration(self, player, context):
-        """Check that the player is registered for the competition/tournament.
+        """Check that the team context is registered for the season.
 
-        Looks for a ``federation.season.registration`` with matching player
-        and tournament or competition in context.  If the model is absent,
-        the check is skipped.
+        The current data model ties season registration to teams, not directly
+        to individual players. When a registration rule is active in a roster or
+        match workflow, the player's selected team must therefore hold a
+        non-cancelled season registration for the current season.
         """
         Registration = self.env.get("federation.season.registration")
         if Registration is None:
             return EligibilityResult()
 
-        tournament_id = context.get("tournament_id")
-        if not tournament_id:
+        season_id = context.get("season_id")
+        team_id = context.get("team_id")
+        if not season_id or not team_id:
             return EligibilityResult()
 
         reg = Registration.search([
-            ("player_id", "=", player.id),
-            ("tournament_id", "=", tournament_id),
+            ("team_id", "=", team_id),
+            ("season_id", "=", season_id),
             ("state", "!=", "cancelled"),
         ], limit=1)
         if not reg:
+            team = self.env["federation.team"].browse(team_id)
+            season = self.env["federation.season"].browse(season_id)
             return EligibilityResult(
                 eligible=False,
-                reasons=[f"Player '{player.name}' is not registered for this tournament."],
+                reasons=[
+                    f"Team '{team.display_name}' is not registered for season '{season.name}'."
+                ],
             )
         return EligibilityResult()
 

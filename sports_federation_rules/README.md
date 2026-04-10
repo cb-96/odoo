@@ -88,10 +88,34 @@ Determines how teams advance between stages.
 | `value_integer` / `value_percent` | Number | Threshold values |
 | `target_stage_id` | Char | Extension point for stage linking |
 
+## Services
+
+### `federation.eligibility.service`
+
+Central evaluation service consumed by rosters and match-day workflows.
+
+| Method | Purpose |
+|-------|---------|
+| `check_player_eligibility(player, rule_set, context)` | Evaluate one player and return `eligible` plus human-readable `reasons` |
+| `check_roster_eligibility(roster, rule_set=None)` | Evaluate every roster line in season/team/club context |
+| `check_match_eligibility(match, team, players)` | Evaluate players for a specific match and tournament context |
+
+Important context keys:
+
+- `season_id` and `club_id` scope license validation to the actual competition context.
+- `team_id` scopes registration checks to the team that is trying to compete.
+- `license_id` validates an explicitly selected roster-line license.
+- `match_date` evaluates age and license windows against the operational date.
+
 ## Key Behaviours
 
 1. **Reusable rule sets** — One rule set can be shared by many competitions.
 2. **Configurable scoring** — Default win/draw/loss points plus extended result types.
 3. **Ordered tie-breaks** — Sequence-based priority resolves equal points systematically.
-4. **Placeholder eligibility** — Rules can be defined structurally before enforcement
-   logic is implemented.
+4. **Operational eligibility enforcement** — Age, gender, license, suspension,
+   and registration rules are enforced through the shared eligibility service.
+5. **Context-aware license validation** — License rules can require the correct
+   season, club, selected license, and active date window instead of checking
+   only for any generic active license.
+6. **Readable failure reasons** — Eligibility checks return structured reasons so
+   workflow layers can block actions with operator-friendly messages.

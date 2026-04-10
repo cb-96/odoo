@@ -159,3 +159,84 @@ class TestMatchSheets(TransactionCase):
                 "is_starter": True,
                 "is_substitute": True,
             })
+
+    def test_match_sheet_submit_blocks_ineligible_players_with_reason(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Match Suspension Rules",
+            "code": "MSR",
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "No Suspended Players",
+            "eligibility_type": "suspension",
+        })
+        self.tournament.write({"rule_set_id": rule_set.id})
+
+        roster = self.env["federation.team.roster"].create({
+            "name": "Home Active Roster",
+            "team_id": self.team_home.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        roster_line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+        self.player1.write({"state": "suspended"})
+
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Eligibility Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "roster_id": roster.id,
+            "side": "home",
+        })
+        line = self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "roster_line_id": roster_line.id,
+        })
+
+        self.assertFalse(line.eligible)
+        self.assertIn("suspended", line.eligibility_feedback.lower())
+        with self.assertRaises(ValidationError):
+            sheet.action_submit()
+
+    def test_match_sheet_submit_enforces_squad_minimum(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Match Squad Rules",
+            "code": "MQR",
+            "squad_min_size": 2,
+        })
+        self.tournament.write({"rule_set_id": rule_set.id})
+
+        roster = self.env["federation.team.roster"].create({
+            "name": "Sized Roster",
+            "team_id": self.team_home.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        roster_line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Sized Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "roster_id": roster.id,
+            "side": "home",
+        })
+        self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "roster_line_id": roster_line.id,
+        })
+
+        self.assertFalse(sheet.ready_for_submission)
+        self.assertIn("required minimum of 2", sheet.readiness_feedback)
+        with self.assertRaises(ValidationError):
+            sheet.action_submit()

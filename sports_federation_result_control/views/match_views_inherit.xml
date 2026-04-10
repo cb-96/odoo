@@ -9,7 +9,7 @@
         <field name="arch" type="xml">
             <!-- Add result control buttons in header -->
             <xpath expr="//header" position="inside">
-                <field name="result_state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved"/>
+                <field name="result_state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved,contested,corrected"/>
             </xpath>
             <!-- Add result control buttons -->
             <xpath expr="//header/button[@name='action_draft']" position="after">
@@ -42,9 +42,13 @@
                         <field name="result_approved_on"/>
                     </group>
                 </group>
-                <group string="Contest/Correction" invisible="result_state not in ('contested', 'corrected')">
-                    <field name="result_contest_reason" invisible="result_state != 'contested'"/>
-                    <field name="result_correction_reason" invisible="result_state != 'corrected'"/>
+                <group string="Contest/Correction">
+                    <field name="result_contest_reason"
+                           placeholder="Required before contesting a result."
+                           invisible="result_state not in ('submitted', 'verified', 'approved', 'contested')"/>
+                    <field name="result_correction_reason"
+                           placeholder="Required before correcting a result."
+                           invisible="result_state not in ('approved', 'contested', 'corrected')"/>
                 </group>
             </xpath>
         </field>

@@ -74,7 +74,7 @@ Modules: `sports_federation_tournament`, `sports_federation_competition_engine`,
 Work: harden tournament templates, stage/group setup, round-robin generation, knockout bracket generation, gameday assignment, and stage progression; ensure preview-first behavior and overwrite safeguards in wizards.
 Done when: administrators can generate schedules repeatedly with deterministic outputs and no destructive surprises.
 
-4. Lock down result integrity and standings correctness.
+4. Done (2026-04-10): Lock down result integrity and standings correctness.
 Modules: `sports_federation_result_control`, `sports_federation_standings`, `sports_federation_rules`.
 Work: enforce submit, verify, approve separation of duties; ensure contested and corrected results behave correctly; keep official standings limited to approved outcomes; preserve tie-break explanation visibility.
 Done when: official standings can be defended operationally and every exception path has regression coverage.

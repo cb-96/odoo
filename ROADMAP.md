@@ -69,7 +69,7 @@ Modules: `sports_federation_base`, `sports_federation_people`, `sports_federatio
 Work: move a club from draft registration through portal submission, validation, confirmation, finance-event creation, and notification logging without manual bridging steps.
 Done when: one reproducible flow covers draft to confirmed registration with side effects that are idempotent and tested.
 
-3. Make competition setup deterministic and operator-safe.
+3. Done (2026-04-10): Make competition setup deterministic and operator-safe.
 Modules: `sports_federation_tournament`, `sports_federation_competition_engine`, `sports_federation_rules`, `sports_federation_venues`.
 Work: harden tournament templates, stage/group setup, round-robin generation, knockout bracket generation, gameday assignment, and stage progression; ensure preview-first behavior and overwrite safeguards in wizards.
 Done when: administrators can generate schedules repeatedly with deterministic outputs and no destructive surprises.

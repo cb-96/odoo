@@ -70,5 +70,8 @@ follows standard tournament bracket placement.
    explicitly checked.
 2. **Tournament state check** — Wizards enforce that the tournament is in the correct
    state (open or in_progress) before generating.
-3. **Minimum participants** — At least 2 teams are required.
-4. **Button integration** — Wizard launch buttons are added to the tournament form view.
+3. **Rule-set requirement** — Wizard-driven generation requires an effective rule set on the tournament or linked competition before fixtures can be created.
+4. **Preview-first UI** — Both wizards show a computed preview summary before confirmation and display an explicit warning when overwrite mode is enabled.
+5. **Minimum participants** — At least 2 teams are required.
+6. **Tournament templates** — `federation.tournament.template.action_apply()` scaffolds stages, groups, and progression rules and now has regression coverage.
+7. **Button integration** — Wizard launch buttons are added to the tournament form view.

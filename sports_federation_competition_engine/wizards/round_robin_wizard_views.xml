@@ -32,6 +32,9 @@
                 </group>
                 <separator string="Preview"/>
                 <field name="summary" readonly="1"/>
+                <div class="alert alert-warning" invisible="not overwrite">
+                    Overwrite will replace existing matches for the selected stage or group.
+                </div>
                 <footer>
                     <button name="action_generate" string="Generate" type="object" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>

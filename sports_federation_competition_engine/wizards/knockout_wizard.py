@@ -81,8 +81,7 @@ class KnockoutWizard(models.TransientModel):
     def action_generate(self):
         self.ensure_one()
         participants = self._get_participants()
-        if len(participants) < 2:
-            raise UserError(_("At least 2 confirmed participants required."))
+        self._validate_generation_request(participants)
         options = {
             "seeding": self.seeding,
             "bracket_size": self.bracket_size,
@@ -106,3 +105,19 @@ class KnockoutWizard(models.TransientModel):
                 "next": {"type": "ir.actions.act_window_close"},
             },
         }
+
+    def _validate_generation_request(self, participants):
+        if self.tournament_id.state not in ("open", "in_progress"):
+            raise UserError(_("Tournament must be Open or In Progress."))
+
+        if not self.tournament_id._get_effective_rule_set():
+            raise UserError(_("Assign a rule set before generating a knockout bracket."))
+
+        if self.stage_id.tournament_id != self.tournament_id:
+            raise UserError(_("The selected stage must belong to the selected tournament."))
+
+        if self.participant_source == "stage" and not self.source_stage_id:
+            raise UserError(_("Select a source stage when using previous-stage participants."))
+
+        if len(participants) < 2:
+            raise UserError(_("At least 2 confirmed participants required."))

@@ -88,6 +88,7 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
 2. Open the **Round Robin Wizard** or **Knockout Wizard** from the tournament form.
 3. Configure scheduling options in the wizard:
    - Select participants and (optionally) a group.
+   - Ensure the tournament or linked competition already has an effective rule set; the wizard will block generation otherwise.
    - Set `Start Date/Time` and `Interval (hours)` — the intra-round spacing.
    - Use `Full Cycles (repeats)` to repeat the entire round-robin cycle N times
      (useful for formats that play multiple cycles; combined with the double-round
@@ -104,9 +105,10 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
        - The round scheduler will attempt to alternate `male` / `female` fixtures
           inside each round to provide rest; this is a best-effort interleaving and
           does not change seeding or pairings.
-    - Set a default `Venue` and enable `Overwrite Existing` to replace prior matches.
+   - Set a default `Venue` and enable `Overwrite Existing` to replace prior matches.
 4. Preview the generated schedule via the wizard `Summary` (shows total matches
-   given participants, cycles, and round type).
+   given participants, cycles, and round type). When overwrite is enabled, the
+   wizard shows an explicit warning before confirmation.
 5. Confirm to create all match records automatically.
 
 **Round Robin**: Circle method generates a complete schedule where every team plays
@@ -120,7 +122,7 @@ every other team once (single) or twice (double).
 **Module**: `sports_federation_tournament`
 
 1. Matches are scheduled with date/time, venue, home/away teams.
-2. Match states progress: `draft` → `scheduled` → `in_progress` → `completed`.
+2. Match states progress: `draft` → `scheduled` → `in_progress` → `done`.
 3. Scores are entered on the match form (home_score, away_score).
 4. Match-day details are handled by the [Match Day Operations](WORKFLOW_MATCH_DAY_OPERATIONS.md)
    workflow.
@@ -133,8 +135,8 @@ every other team once (single) or twice (double).
 1. Create a **standings** record scoped to the tournament, stage, or group.
 2. Link the rule set for scoring and tie-break rules.
 3. Compute standings: aggregates match results into ranked lines.
-4. States: `draft` → `computed` → `published`.
-5. Publish to make visible on the public site.
+4. States: `draft` → `computed` → `frozen`.
+5. Frozen standings are the publication candidates for the public site.
 
 ### 9. Stage Progression
 
@@ -164,7 +166,7 @@ every other team once (single) or twice (double).
 
 1. After the final stage, review and approve all remaining results.
 2. Compute and publish final standings.
-3. Set tournament state to `completed`.
+3. Set tournament state to `closed`.
 4. Competition can be closed at end of season.
 
 ### 11. Public Publication
@@ -182,13 +184,13 @@ every other team once (single) or twice (double).
 ```
 Competition: draft → active → closed
 
-Tournament: draft → open → in_progress → completed
+Tournament: draft → open → in_progress → closed
                                        → cancelled
 
-Match: draft → scheduled → in_progress → completed
+Match: draft → scheduled → in_progress → done
                                         → cancelled
 
-Standings: draft → computed → published
+Standings: draft → computed → frozen
 
 Participant: registered → confirmed → withdrawn
                                     → eliminated

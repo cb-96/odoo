@@ -39,6 +39,7 @@ draft -> submitted -> confirmed / rejected / cancelled
 
 The existing `federation.season.registration` model is extended with a `submitted` state and portal fields (`user_id`, `partner_id`, `rejection_reason`). This avoids creating a duplicate model while adding the portal workflow.
 The same model now also enforces club ownership at ORM level so portal-created season registrations cannot bypass controller checks.
+Federation staff review the same record in the backend, where they can submit, confirm, reject back to draft with a reason, or cancel the registration without creating a second review model.
 
 #### 4. Public vs Portal Separation
 
@@ -141,6 +142,7 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Duplicate registration** is rejected with an error message.
 - [ ] **Max participants** limit is enforced.
 - [ ] **Season registration** creates a `federation.season.registration` in `submitted` state.
+- [ ] **Season registration backend review** shows submit, confirm, reject, and portal metadata (`user_id`, `partner_id`, `rejection_reason`).
 - [ ] **Cancel registration** sets state to `cancelled`.
 - [ ] **Confirm registration** in backend creates `federation.tournament.participant`.
 - [ ] **Portal dashboard** shows federation cards for club representatives.

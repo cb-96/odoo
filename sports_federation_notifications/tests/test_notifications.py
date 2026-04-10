@@ -66,3 +66,110 @@ class TestNotifications(TransactionCase):
             service._cron_placeholder_notification_scan()
         except Exception as e:
             self.fail(f"Cron method raised exception: {e}")
+
+    def test_season_registration_confirm_creates_notification_log(self):
+        portal_group = self.env.ref(
+            "sports_federation_portal.group_federation_portal_club"
+        )
+        role_type = self.env.ref(
+            "sports_federation_portal.role_type_competition_contact"
+        )
+        season = self.env["federation.season"].create({
+            "name": "Notification Season",
+            "code": "NOTIFSEASON",
+            "date_start": "2026-01-01",
+            "date_end": "2026-12-31",
+        })
+        team = self.env["federation.team"].create({
+            "name": "Notification Team",
+            "club_id": self.club.id,
+            "code": "NOTIFTEAM",
+        })
+        user = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Notification Portal User",
+            "login": "notification.portal.user@example.com",
+            "email": "notification.portal.user@example.com",
+            "groups_id": [(6, 0, [portal_group.id])],
+        })
+        self.env["federation.club.representative"].create({
+            "club_id": self.club.id,
+            "partner_id": user.partner_id.id,
+            "user_id": user.id,
+            "role_type_id": role_type.id,
+        })
+
+        registration = self.env["federation.season.registration"].with_user(user).create({
+            "season_id": season.id,
+            "team_id": team.id,
+        })
+        registration.action_submit()
+        registration.action_confirm()
+
+        log = self.env["federation.notification.log"].search(
+            [
+                ("target_model", "=", "federation.season.registration"),
+                ("target_res_id", "=", registration.id),
+                (
+                    "template_xmlid",
+                    "=",
+                    "sports_federation_notifications.template_federation_season_registration_confirmed",
+                ),
+            ],
+            limit=1,
+        )
+        self.assertTrue(log)
+        self.assertIn(log.state, ("sent", "failed"))
+
+    def test_season_registration_reject_creates_notification_log(self):
+        portal_group = self.env.ref(
+            "sports_federation_portal.group_federation_portal_club"
+        )
+        role_type = self.env.ref(
+            "sports_federation_portal.role_type_competition_contact"
+        )
+        season = self.env["federation.season"].create({
+            "name": "Rejected Notification Season",
+            "code": "REJNOTIF",
+            "date_start": "2026-01-01",
+            "date_end": "2026-12-31",
+        })
+        team = self.env["federation.team"].create({
+            "name": "Rejected Notification Team",
+            "club_id": self.club.id,
+            "code": "REJTEAM",
+        })
+        user = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Rejected Notification User",
+            "login": "rejected.notification.user@example.com",
+            "email": "rejected.notification.user@example.com",
+            "groups_id": [(6, 0, [portal_group.id])],
+        })
+        self.env["federation.club.representative"].create({
+            "club_id": self.club.id,
+            "partner_id": user.partner_id.id,
+            "user_id": user.id,
+            "role_type_id": role_type.id,
+        })
+
+        registration = self.env["federation.season.registration"].with_user(user).create({
+            "season_id": season.id,
+            "team_id": team.id,
+        })
+        registration.action_submit()
+        registration.action_reject("Missing supporting document")
+
+        log = self.env["federation.notification.log"].search(
+            [
+                ("target_model", "=", "federation.season.registration"),
+                ("target_res_id", "=", registration.id),
+                (
+                    "template_xmlid",
+                    "=",
+                    "sports_federation_notifications.template_federation_season_registration_rejected",
+                ),
+            ],
+            limit=1,
+        )
+        self.assertTrue(log)
+        self.assertIn(log.state, ("sent", "failed"))
+        self.assertEqual(registration.rejection_reason, "Missing supporting document")

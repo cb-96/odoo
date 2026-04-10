@@ -76,3 +76,21 @@ class TestSeasonRegistrationOwnership(TransactionCase):
                     "team_id": self.other_team.id,
                 }
             )
+
+    def test_submitted_registration_can_be_confirmed_by_staff(self):
+        registration = self.env["federation.season.registration"].with_user(
+            self.user
+        ).create(
+            {
+                "season_id": self.season.id,
+                "team_id": self.team.id,
+            }
+        )
+
+        registration.action_submit()
+        self.assertEqual(registration.state, "submitted")
+        self.assertEqual(registration.user_id, self.user)
+        self.assertEqual(registration.partner_id, self.user.partner_id)
+
+        registration.action_confirm()
+        self.assertEqual(registration.state, "confirmed")

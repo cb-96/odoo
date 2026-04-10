@@ -373,6 +373,8 @@ class FederationPortal(CustomerPortal):
             "registrations": registrations,
             "pager": pager,
             "page_name": "my_season_registrations",
+            "success": kw.get("success"),
+            "error": kw.get("error"),
         }
         return request.render(
             "sports_federation_portal.portal_my_season_registrations", values
@@ -466,6 +468,11 @@ class FederationPortal(CustomerPortal):
                 "/my/season-registration/new?error=Invalid+selection"
             )
         team = request.env["federation.team"].sudo().browse(team_id)
+        season = request.env["federation.season"].sudo().browse(season_id)
+        if not season.exists() or season.state != "open":
+            return request.redirect(
+                "/my/season-registration/new?error=The+selected+season+is+not+open+for+registrations"
+            )
         if team.club_id not in clubs:
             return request.redirect(
                 "/my/season-registration/new?error=You+can+only+register+your+own+teams"

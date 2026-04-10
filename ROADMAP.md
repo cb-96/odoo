@@ -64,7 +64,7 @@ Modules: `sports_federation_base`, `sports_federation_people`, `sports_federatio
 Work: review all core records for mandatory fields, sequences, archive behavior, ownership fields, and state transitions; align technical notes, workflows, and tests with the actual ORM implementation.
 Done when: core records used in season registration and competition operations have clear lifecycle coverage, explicit ACLs, and focused tests.
 
-2. Close the season registration flow end to end.
+2. Done (2026-04-10): Close the season registration flow end to end.
 Modules: `sports_federation_base`, `sports_federation_people`, `sports_federation_portal`, `sports_federation_finance_bridge`, `sports_federation_notifications`.
 Work: move a club from draft registration through portal submission, validation, confirmation, finance-event creation, and notification logging without manual bridging steps.
 Done when: one reproducible flow covers draft to confirmed registration with side effects that are idempotent and tested.

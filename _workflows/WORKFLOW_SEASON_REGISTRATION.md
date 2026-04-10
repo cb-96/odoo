@@ -29,7 +29,7 @@ teams, and players receive licenses that certify their eligibility to compete.
 
 1. Navigate to **Federation → Configuration → Seasons**.
 2. Create a new season with name, code, and date range (e.g. "2025-2026").
-3. Set the season state to **active**.
+3. Set the season state to **open**.
 
 The season record becomes the scoping key for all registrations, tournaments,
 rosters, and licenses throughout the year.
@@ -40,10 +40,10 @@ rosters, and licenses throughout the year.
 **Module**: `sports_federation_base`
 
 1. Navigate to **Federation → Registrations → Season Registrations**.
-2. Create registration records (one per club) or let clubs self-register via the portal.
-3. Each registration links a club to the active season.
+2. Create registration records (one per team) or let clubs self-register via the portal.
+3. Each registration links a team and its club to an open season.
 
-Registration states: `draft` → `submitted` → `approved` → `rejected` / `withdrawn`.
+Registration states: `draft` → `submitted` → `confirmed` / `cancelled`.
 
 ### 3. Portal Self-Service (Optional)
 
@@ -53,7 +53,7 @@ Registration states: `draft` → `submitted` → `approved` → `rejected` / `wi
 1. Club representative logs into the portal.
 2. Navigates to the federation registration section.
 3. Submits their club's season registration request.
-4. Uploads required compliance documents (insurance, certificates).
+4. Adds supporting notes when needed.
 5. Registration is created in `submitted` state for federation review.
 
 ### 4. Registration Review & Approval
@@ -61,17 +61,17 @@ Registration states: `draft` → `submitted` → `approved` → `rejected` / `wi
 **Actor**: Federation administrator
 **Module**: `sports_federation_base`
 
-1. Review submitted registrations.
-2. Verify attached documents and compliance status.
-3. **Approve** or **reject** the registration.
-4. Approved clubs are eligible to enrol teams and register players.
+1. Review submitted registrations from the backend review screen.
+2. Verify club ownership, season status, and any federation prerequisites.
+3. **Confirm** the registration or **reject** it back to `draft` with a rejection reason.
+4. Confirmed teams are eligible to enrol players and proceed into competition operations.
 
 ### 5. Team Enrolment
 
 **Actor**: Club administrator or federation staff
 **Module**: `sports_federation_base`
 
-1. Under each approved club, create or confirm teams for the season.
+1. Under each confirmed club registration, create or confirm teams for the season.
 2. Teams inherit the club's season registration scope.
 3. Teams become available for tournament participation and roster creation.
 
@@ -103,7 +103,7 @@ rosters and match sheets.
 **Actor**: Federation administrator
 **Module**: `sports_federation_finance_bridge`
 
-1. Upon registration approval, a finance event is created for the registration fee.
+1. Upon registration confirmation, a finance event is created for the registration fee.
 2. The default catalogue fee type code is `season_registration` (created on demand
     as "Season Registration Fee" if it does not exist yet).
 3. Finance event follows: `draft` → `confirmed` → `settled` / `cancelled`.
@@ -113,18 +113,18 @@ rosters and match sheets.
 **Actor**: System (automated)
 **Module**: `sports_federation_notifications`
 
-- Registration confirmation emails sent to club representatives.
+- Registration confirmation and rejection emails are logged and sent to the submitting club representative.
 - Reminders for incomplete or stale draft registrations (cron job).
 - Missing-document notices triggered by compliance checks.
 
 ## State Diagram
 
 ```
-Season: draft → active → closed
+Season: draft → open → closed
 
-Registration: draft → submitted → approved
-                                 → rejected
-                                 → withdrawn
+Registration: draft → submitted → confirmed
+                                 → cancelled
+                                 ↘ draft (via rejection)
 
 License: draft → active → expired
                         → revoked

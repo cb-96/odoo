@@ -52,7 +52,7 @@ Reusable service methods callable by any module.
 
 | File | Content |
 |------|---------|
-| `data/mail_templates.xml` | Generic contact, registration reminder, missing data notice templates |
+| `data/mail_templates.xml` | Generic contact, season registration reminder, season registration confirmed/rejected, missing data notice templates |
 | `data/ir_cron.xml` | Daily notification scan scheduled action (inactive by default) |
 
 ## Key Behaviours
@@ -61,6 +61,7 @@ Reusable service methods callable by any module.
 2. **Comprehensive logging** — Every send/activity creation produces a log entry.
 3. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
 4. **Scheduled scan** — Cron job detects stale draft registrations and logs reminders.
+5. **Season-registration hooks** — When `sports_federation_portal` is installed, season registration confirmation and rejection automatically dispatch logged email notifications to the submitting representative or club contact.
 
 ## Integration configuration (env)
 

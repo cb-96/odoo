@@ -29,6 +29,41 @@ class FederationNotificationDispatcher(models.AbstractModel):
     _inherit = "federation.notification.service"
 
     # ------------------------------------------------------------------
+    # Season registration events
+    # ------------------------------------------------------------------
+
+    def _get_season_registration_recipient(self, registration):
+        partner = False
+        if "partner_id" in registration._fields and registration.partner_id and registration.partner_id.email:
+            partner = registration.partner_id
+
+        email_to = False
+        if not partner:
+            email_to = registration.club_id.email or False
+
+        return partner, email_to
+
+    def send_season_registration_confirmed(self, registration):
+        partner, email_to = self._get_season_registration_recipient(registration)
+        return self.send_email_template(
+            registration,
+            "sports_federation_notifications.template_federation_season_registration_confirmed",
+            partner=partner,
+            email_to=email_to,
+            log_name=f"Season registration confirmed: {registration.name}",
+        )
+
+    def send_season_registration_rejected(self, registration):
+        partner, email_to = self._get_season_registration_recipient(registration)
+        return self.send_email_template(
+            registration,
+            "sports_federation_notifications.template_federation_season_registration_rejected",
+            partner=partner,
+            email_to=email_to,
+            log_name=f"Season registration rejected: {registration.name}",
+        )
+
+    # ------------------------------------------------------------------
     # Tournament events
     # ------------------------------------------------------------------
 

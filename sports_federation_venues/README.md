@@ -60,3 +60,6 @@ A single playing surface within a venue.
 2. **Multi-area venues** — A sports complex can have several pitches or courts.
 3. **Tournament ↔ Venue link** — Tournaments declare which venues are available;
    matches reference specific venues.
+4. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
+  scheduling a match with a venue automatically creates or reuses a draft venue
+  booking charge for passthrough settlement.

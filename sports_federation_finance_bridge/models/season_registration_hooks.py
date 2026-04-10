@@ -21,22 +21,11 @@ class FederationSeasonRegistrationFinanceHooks(models.Model):
         finance_event_model = self.env["federation.finance.event"]
         for registration in self:
             fee_type = registration._get_registration_fee_type()
-            existing_event = finance_event_model.search(
-                [
-                    ("fee_type_id", "=", fee_type.id),
-                    ("source_model", "=", registration._name),
-                    ("source_res_id", "=", registration.id),
-                ],
-                limit=1,
-            )
-            if existing_event:
-                continue
-
             partner = False
             if "partner_id" in registration._fields:
                 partner = registration.partner_id
 
-            finance_event_model.create_from_source(
+            finance_event_model.ensure_from_source(
                 registration,
                 fee_type,
                 event_type="charge",

@@ -101,7 +101,7 @@ A time-bound match ban for a player:
 
 1. For sanctions of type `fine`, create a **finance event**.
 2. Link to the sanction source via `source_model` / `source_res_id`.
-3. Finance event tracks payment: `draft` → `confirmed` → `invoiced` → `paid`.
+3. Finance event is created automatically and tracks payment: `draft` → `confirmed` → `settled`.
 
 ### 6. Case Closure
 
@@ -136,8 +136,8 @@ Suspension: active → served
 
 Sanction: (no state machine — created as final)
 
-Finance Event: draft → confirmed → invoiced → paid
-                                             → cancelled
+Finance Event: draft → confirmed → settled
+                                 → cancelled
 ```
 
 ## Integration Points

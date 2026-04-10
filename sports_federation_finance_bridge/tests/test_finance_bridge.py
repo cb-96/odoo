@@ -68,6 +68,36 @@ class TestFinanceBridge(TransactionCase):
         self.assertEqual(event.source_res_id, self.club.id)
         self.assertEqual(event.club_id, self.club)
         self.assertEqual(event.amount, 100.00)
+        self.assertEqual(event.external_ref, f"TESTFEE-federation_club-{self.club.id}")
+
+    def test_ensure_finance_event_from_source_is_idempotent(self):
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Idempotent Fee",
+            "code": "IDEMP",
+            "category": "registration",
+            "default_amount": 90.00,
+        })
+
+        event_one = self.env["federation.finance.event"].ensure_from_source(
+            self.club,
+            fee_type,
+            note="First pass",
+        )
+        event_two = self.env["federation.finance.event"].ensure_from_source(
+            self.club,
+            fee_type,
+            note="Second pass",
+        )
+
+        self.assertEqual(event_one, event_two)
+        self.assertEqual(
+            self.env["federation.finance.event"].search_count([
+                ("fee_type_id", "=", fee_type.id),
+                ("source_model", "=", "federation.club"),
+                ("source_res_id", "=", self.club.id),
+            ]),
+            1,
+        )
 
     def test_finance_event_amount_validation(self):
         """Test amount validation on finance event."""

@@ -49,7 +49,7 @@ class TestFinanceHooks(TransactionCase):
         })
         cls.fee_type_venue = cls.env["federation.fee.type"].create({
             "name": "Venue Booking",
-            "code": "VENUE_BOOK",
+            "code": "venue_booking",
             "category": "other",
             "default_amount": 150.00,
         })
@@ -84,7 +84,7 @@ class TestFinanceHooks(TransactionCase):
         """action_create_venue_finance_event creates a finance event for a venue match."""
         match = self._create_done_match(with_venue=True)
         events = match.action_create_venue_finance_event(
-            fee_type_code="VENUE_BOOK",
+            fee_type_code="venue_booking",
             amount=150.0,
         )
         self.assertTrue(events, "Finance event should be created.")
@@ -94,11 +94,47 @@ class TestFinanceHooks(TransactionCase):
         self.assertEqual(event.event_type, "charge")
         self.assertEqual(event.state, "draft")
 
+    def test_venue_finance_event_helper_is_idempotent(self):
+        match = self._create_done_match(with_venue=True)
+
+        match.action_create_venue_finance_event(fee_type_code="venue_booking", amount=150.0)
+        match.action_create_venue_finance_event(fee_type_code="venue_booking", amount=200.0)
+
+        self.assertEqual(
+            self.env["federation.finance.event"].search_count([
+                ("fee_type_id", "=", self.fee_type_venue.id),
+                ("source_model", "=", "federation.match"),
+                ("source_res_id", "=", match.id),
+            ]),
+            1,
+        )
+
+    def test_scheduling_match_with_venue_creates_automatic_venue_event(self):
+        match = self.env["federation.match"].create({
+            "tournament_id": self.tournament.id,
+            "home_team_id": self.team_a.id,
+            "away_team_id": self.team_b.id,
+            "venue_id": self.venue.id,
+        })
+
+        match.action_schedule()
+
+        event = self.env["federation.finance.event"].search(
+            [
+                ("source_model", "=", "federation.match"),
+                ("source_res_id", "=", match.id),
+                ("fee_type_id", "=", self.fee_type_venue.id),
+            ],
+            limit=1,
+        )
+        self.assertTrue(event)
+        self.assertEqual(event.state, "draft")
+
     def test_venue_finance_event_fails_without_venue(self):
         """action_create_venue_finance_event raises ValidationError if venue field is blank."""
         match = self._create_done_match(with_venue=False)
         with self.assertRaises(ValidationError):
-            match.action_create_venue_finance_event(fee_type_code="VENUE_BOOK")
+            match.action_create_venue_finance_event(fee_type_code="venue_booking")
 
     def test_venue_finance_event_creates_fee_type_if_missing(self):
         """action_create_venue_finance_event creates a new fee type if it doesn't exist."""
@@ -155,6 +191,27 @@ class TestFinanceHooks(TransactionCase):
         self.assertEqual(event.event_type, "charge")
         self.assertEqual(event.state, "draft")
         self.assertEqual(event.amount, self.fee_type_result.default_amount)
+
+    def test_result_approval_reuses_existing_finance_event(self):
+        if not self.has_result_control:
+            self.skipTest("result_control not installed.")
+        match = self._create_done_match(with_venue=False, with_result_fee=True)
+        match.action_submit_result()
+        match.action_verify_result()
+        match.action_approve_result()
+        match.action_reset_result_to_draft()
+        match.action_submit_result()
+        match.action_verify_result()
+        match.action_approve_result()
+
+        self.assertEqual(
+            self.env["federation.finance.event"].search_count([
+                ("fee_type_id", "=", self.fee_type_result.id),
+                ("source_model", "=", "federation.match"),
+                ("source_res_id", "=", match.id),
+            ]),
+            1,
+        )
 
     def test_result_finance_events_compute(self):
         """result_finance_event_ids computed field returns events for this match."""

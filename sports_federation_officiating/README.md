@@ -98,3 +98,5 @@ before the match goes live.
 5. **Assignment state machine** — assigned → confirmed → done / cancelled.
 6. **Tournament context** — Assignments carry a computed tournament reference for
    filtering and reporting.
+7. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
+   assignments that reach `done` automatically create reusable reimbursement events.

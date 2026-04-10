@@ -7,7 +7,7 @@ financial tracking layer.
 ## Purpose
 
 Bridges the gap between federation operations and future accounting integration.
-Every registration fee, disciplinary fine, or referee reimbursement is logged as a
+Every registration fee, disciplinary fine, referee reimbursement, or venue booking is logged as a
 **finance event** with amount, state, and source reference — ready to be fed into
 an accounting system when one is connected.
 
@@ -21,6 +21,7 @@ an accounting system when one is connected.
 | `sports_federation_result_control` | Result approval pipeline (automatic event hooks) |
 | `sports_federation_officiating` | Referees |
 | `sports_federation_discipline` | Fines and sanctions |
+| `sports_federation_venues` | Venue booking passthroughs |
 
 ## Models
 
@@ -64,7 +65,9 @@ An individual financial occurrence.
 3. **Accounting-ready** — `invoice_ref` and `external_ref` keep the bridge ready
    for future accounting integration while the current lightweight workflow ends
    in `settled`.
-4. **Multi-entity** — Covers clubs, players, and referees.
+4. **Idempotent automation** — source-driven helpers reuse or reactivate matching
+  draft finance events instead of duplicating them on workflow re-entry.
+5. **Multi-entity** — Covers clubs, players, and referees.
 
 ## Season Registration Finance Hooks
 
@@ -76,6 +79,8 @@ The finance bridge now auto-creates a finance event when a
   record and does not create duplicates
 - Source traceability: events use `source_model = federation.season.registration`
   and `source_res_id = <registration id>`
+- Reconciliation support: auto-created events also receive a deterministic
+  `external_ref` using the fee-type code and source record identity
 
 ## Result Approval Finance Hooks (Phase 2)
 
@@ -84,12 +89,42 @@ match_result_hooks.py extends `federation.match` with:
 - **`result_fee_type_id`** (Many2one → `federation.fee.type`): optional; when set,
   a `federation.finance.event` (charge) is automatically created when
   `action_approve_result()` completes.
-- **`result_finance_event_ids`** (computed): all finance events whose source is
-  this match record.
+- **`result_finance_event_ids`** (computed): finance events created with the
+  configured result fee type for this match.
 - **`action_approve_result()`** override: calls the base result pipeline and then
-  fires the auto-event.
+  fires the auto-event through the idempotent source helper.
 
-### Migration note (v19.0.1.1.0)
+## Discipline Fine Hooks
 
-A new field `result_fee_type_id` (Many2one, nullable) is added to
-`federation.match`.  Run `-u sports_federation_finance_bridge` after upgrade.
+`sanction_finance_hooks.py` extends `federation.sanction` so that:
+
+- sanctions of type `fine` automatically create a `federation.finance.event`
+- the default fee type code is `discipline_fine`
+- fine events inherit subject references from the sanction or disciplinary case
+- changing the fine amount updates the linked draft finance event instead of
+  creating a second one
+
+## Referee Reimbursement Hooks
+
+`referee_reimbursement_hooks.py` extends `federation.match.referee` so that:
+
+- assignments reaching `done` automatically create a reimbursement event
+- the default fee type code is `referee_reimbursement`
+- reverting the assignment out of `done` cancels the draft reimbursement event
+- returning to `done` reuses the same source-traceable reimbursement event
+
+## Venue Booking Hooks
+
+`venue_finance_hooks.py` extends `federation.match` so that:
+
+- scheduled matches with a venue automatically create a venue booking charge
+- the default fee type code is `venue_booking`
+- removing the venue or unscheduling the match cancels the draft venue event
+- the manual `action_create_venue_finance_event()` helper now reuses the same
+  source event instead of failing on duplicate creation
+
+### Migration note (v19.0.1.2.0)
+
+The finance bridge now depends on `sports_federation_venues` and adds automatic
+hooks for discipline fines, completed referee assignments, and scheduled venue
+bookings. Run `-u sports_federation_finance_bridge` after upgrade.

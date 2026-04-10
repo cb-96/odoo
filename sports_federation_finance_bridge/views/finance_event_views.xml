@@ -61,6 +61,11 @@
                 <field name="amount"/>
                 <field name="currency_id"/>
                 <field name="club_id" optional="show"/>
+                <field name="referee_id" optional="hide"/>
+                <field name="external_ref" optional="show"/>
+                <field name="invoice_ref" optional="show"/>
+                <field name="source_model" optional="hide"/>
+                <field name="source_res_id" optional="hide"/>
                 <field name="state"/>
             </list>
         </field>
@@ -77,6 +82,9 @@
                 <field name="club_id"/>
                 <field name="player_id"/>
                 <field name="referee_id"/>
+                <field name="external_ref"/>
+                <field name="invoice_ref"/>
+                <field name="source_model"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="settled" string="Settled" domain="[('state', '=', 'settled')]"/>
@@ -85,6 +93,8 @@
                 <filter name="charge" string="Charge" domain="[('event_type', '=', 'charge')]"/>
                 <filter name="credit" string="Credit" domain="[('event_type', '=', 'credit')]"/>
                 <filter name="reimbursement" string="Reimbursement" domain="[('event_type', '=', 'reimbursement')]"/>
+                <filter name="open_items" string="Open Items" domain="[('state', 'in', ('draft', 'confirmed'))]"/>
+                <filter name="needs_invoice" string="Needs Invoice Ref" domain="[('state', '=', 'confirmed'), ('invoice_ref', '=', False)]"/>
                 <separator/>
                 <group>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>

@@ -120,6 +120,9 @@ Design goals
 - `sports_federation_people` — Player and license models used for eligibility checks and rosters.
 - `sports_federation_rosters` — Season rosters and match sheet management.
 - `sports_federation_officiating` — Referee registry and assignment workflows.
+- `sports_federation_finance_bridge` — Lightweight finance events with source-linked,
+  idempotent hooks for registrations, result approval, sanctions, officiating,
+  and venue settlements.
 - `sports_federation_result_control` — Result submission, verification, approval, contest and correction flows.
 - `sports_federation_standings` — Standings computation, tie-break logic, and publishing controls.
 - `sports_federation_public_site` / `sports_federation_portal` — Website and portal layers for public pages and club self-service.

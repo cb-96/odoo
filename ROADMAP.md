@@ -111,7 +111,7 @@ Modules: `sports_federation_officiating`, `sports_federation_tournament`, `sport
 Work: add assignment statuses, confirmation deadlines, shortage alerts, and readiness checks for required official roles.
 Done when: operationally ready matches can be identified automatically and missing-official cases create visible exceptions.
 
-4. Expand finance automation from events to process support.
+4. Done (2026-04-10): Expand finance automation from events to process support.
 Modules: `sports_federation_finance_bridge`, `sports_federation_base`, `sports_federation_tournament`, `sports_federation_discipline`, `sports_federation_venues`, `sports_federation_reporting`.
 Work: extend hooks for reimbursements, discipline-related charges, venue settlements, and reconciliation-friendly references.
 Done when: most federation-triggered monetary events are created automatically, remain idempotent, and are exportable.

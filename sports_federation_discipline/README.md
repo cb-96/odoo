@@ -107,3 +107,6 @@ A time-bound match ban for a player.
 3. **Multiple outcomes** — A single case can produce multiple sanctions and suspensions.
 4. **Player integration** — Inherited views add discipline tabs to player forms.
 5. **Match integration** — Inherited views add incident lists to match forms.
+6. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
+   sanctions of type `fine` automatically create source-linked finance events and
+   keep draft amounts synchronized with sanction edits.

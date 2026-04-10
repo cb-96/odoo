@@ -58,10 +58,12 @@ Finance events are created in two ways:
 - Registration approved → registration fee event
 - Sanction with fine → fine event
 - Referee assignment completed → reimbursement event
- - Venue confirmed for a match → venue booking event (created manually via the
-     **Create Venue Charge** match header button or programmatically via
-     `match.action_create_venue_finance_event()`). The default fee type code used
-     is `venue_booking` but implementations may map to a different fee type.
+- Match result approved with `result_fee_type_id` → result-processing charge event
+- Match scheduled with a confirmed venue → venue booking event
+
+All automatic hooks create source-linked events idempotently and assign a
+deterministic `external_ref` so repeated workflow entries reuse the same draft
+record instead of creating duplicates.
 
 Each event records:
 - Fee type (from catalogue)
@@ -76,7 +78,7 @@ Each event records:
 **Module**: `sports_federation_finance_bridge`
 
 1. Review draft finance events.
-2. Verify amounts and source references.
+2. Verify amounts, source references, and the deterministic `external_ref`.
 3. **Confirm**: state `draft` → `confirmed`.
 4. Confirmed events represent accepted financial obligations.
 
@@ -133,12 +135,15 @@ Finance Event: draft → confirmed → settled
 | Season registration approved | Registration | Yes |
 | Player license issued | Registration | Extendable |
 | Tournament participation | Registration | Extendable |
-| Disciplinary fine | Fine | Extendable |
-| Referee assignment completed | Reimbursement | Extendable |
+| Disciplinary fine | Fine | Yes |
+| Referee assignment completed | Reimbursement | Yes |
+| Match result approved | Charge | Yes, when `result_fee_type_id` is set |
+| Match scheduled with venue | Other | Yes |
 
 > Note: The finance bridge provides the **framework** and now includes default
-> hooks for season-registration confirmation and match result approval. Other
-> modules can continue to create finance events programmatically via the shared
+> hooks for season-registration confirmation, match result approval,
+> disciplinary fines, completed referee assignments, and scheduled venue
+> bookings. Other modules can continue to create finance events programmatically via the shared
 > finance event API.
 
 ## Accounting Integration Points

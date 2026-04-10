@@ -101,22 +101,22 @@ class FederationFinanceEvent(models.Model):
             record.state = "cancelled"
 
     @api.model
-    def create_from_source(
-        self, source_record, fee_type, amount=None, event_type="charge", partner=None, note=None
+    def _build_external_ref(self, source_record, fee_type):
+        fee_code = (fee_type.code or str(fee_type.id)).upper()
+        model_token = source_record._name.replace(".", "_")
+        return f"{fee_code}-{model_token}-{source_record.id}"
+
+    @api.model
+    def _prepare_from_source_vals(
+        self,
+        source_record,
+        fee_type,
+        amount=None,
+        event_type="charge",
+        partner=None,
+        note=None,
+        extra_vals=None,
     ):
-        """Helper to create finance event from a source record.
-
-        Args:
-            source_record: The record that triggers this finance event.
-            fee_type: federation.fee.type record.
-            amount: Optional amount override; defaults to fee_type.default_amount.
-            event_type: "charge", "credit", or "reimbursement".
-            partner: Optional res.partner record.
-            note: Optional notes.
-
-        Returns:
-            The created federation.finance.event record.
-        """
         if amount is None:
             amount = fee_type.default_amount
 
@@ -129,6 +129,7 @@ class FederationFinanceEvent(models.Model):
             "source_model": source_record._name,
             "source_res_id": source_record.id,
             "partner_id": partner.id if partner else False,
+            "external_ref": self._build_external_ref(source_record, fee_type),
             "notes": note,
         }
 
@@ -146,4 +147,102 @@ class FederationFinanceEvent(models.Model):
         elif hasattr(source_record, "referee_id") and source_record.referee_id:
             vals["referee_id"] = source_record.referee_id.id
 
+        if extra_vals:
+            for key, value in extra_vals.items():
+                if key in self._fields:
+                    vals[key] = value
+
+        return vals
+
+    @api.model
+    def ensure_from_source(
+        self,
+        source_record,
+        fee_type,
+        amount=None,
+        event_type="charge",
+        partner=None,
+        note=None,
+        extra_vals=None,
+        update_existing=False,
+    ):
+        existing = self.search(
+            [
+                ("fee_type_id", "=", fee_type.id),
+                ("source_model", "=", source_record._name),
+                ("source_res_id", "=", source_record.id),
+            ],
+            limit=1,
+        )
+        vals = self._prepare_from_source_vals(
+            source_record,
+            fee_type,
+            amount=amount,
+            event_type=event_type,
+            partner=partner,
+            note=note,
+            extra_vals=extra_vals,
+        )
+
+        if existing:
+            if update_existing and existing.state in ("draft", "cancelled"):
+                update_vals = {}
+                for field_name in (
+                    "name",
+                    "amount",
+                    "currency_id",
+                    "partner_id",
+                    "club_id",
+                    "player_id",
+                    "referee_id",
+                    "external_ref",
+                    "notes",
+                ):
+                    value = vals.get(field_name)
+                    if value not in (False, None, "") and existing[field_name] != value:
+                        update_vals[field_name] = value
+                if existing.state == "cancelled":
+                    update_vals["state"] = "draft"
+                if update_vals:
+                    existing.write(update_vals)
+            elif not existing.external_ref and vals.get("external_ref"):
+                existing.external_ref = vals["external_ref"]
+            return existing
+
         return self.create(vals)
+
+    @api.model
+    def create_from_source(
+        self,
+        source_record,
+        fee_type,
+        amount=None,
+        event_type="charge",
+        partner=None,
+        note=None,
+        extra_vals=None,
+    ):
+        """Helper to create finance event from a source record.
+
+        Args:
+            source_record: The record that triggers this finance event.
+            fee_type: federation.fee.type record.
+            amount: Optional amount override; defaults to fee_type.default_amount.
+            event_type: "charge", "credit", or "reimbursement".
+            partner: Optional res.partner record.
+            note: Optional notes.
+
+        Returns:
+            The created federation.finance.event record.
+        """
+        return self.create(
+            self._prepare_from_source_vals(
+                source_record,
+                fee_type,
+                amount=amount,
+                event_type=event_type,
+                partner=partner,
+                note=note,
+                extra_vals=extra_vals,
+            )
+        )

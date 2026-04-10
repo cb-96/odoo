@@ -16,6 +16,12 @@ Table of contents
 - Contributing & docs
 - Module list (high level)
 
+Quick links
+- High-level context: `odoo/CONTEXT.md`
+- Technical notes: `odoo/TECHNICAL_NOTE.md`
+- Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
+- Contributor guide: `CONTRIBUTING.md`
+
 **Architecture overview**
 
 High-level architecture (graph):
@@ -62,11 +68,6 @@ Notes:
 - Standings computation and `stage_progression` rules automate advancement
   across stages (optional `auto_advance`). See `odoo/TECHNICAL_NOTE.md`.
 
-Quick links
-- High-level context: `odoo/CONTEXT.md`
-- Technical notes: `odoo/TECHNICAL_NOTE.md`
-- Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
-
 Quickstart / Installation (example)
 
 Prerequisites
@@ -94,6 +95,15 @@ Containerized module tests (Git Bash / WSL on Windows, or any POSIX shell):
 ```bash
 cp ci/.env.example ci/.env
 bash ./ci/run_tests.sh --module sports_federation_standings
+bash ./ci/run_tests.sh --suite competition_core
+bash ./ci/run_tests.sh --suite portal_public_ops
+```
+
+Validate CI helper scripts before pushing changes:
+
+```bash
+bash -n ci/run_tests.sh
+bash -n ci/apply_env_to_ir_config.sh
 ```
 
 Notes and tips
@@ -124,6 +134,8 @@ Contributing & docs
   TODO in the change and notify maintainers.
 - The canonical lifecycle and ownership reference for the core records is in
   `STATE_AND_OWNERSHIP_MATRIX.md`.
+- Use `CONTRIBUTING.md` for the maintainer workflow: local prerequisites,
+  env setup, focused CI suites, and pre-push validation commands.
 
 Module list (high level)
 - `sports_federation_base` — master data (clubs, teams, seasons)

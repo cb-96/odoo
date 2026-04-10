@@ -79,12 +79,12 @@ Modules: `sports_federation_result_control`, `sports_federation_standings`, `spo
 Work: enforce submit, verify, approve separation of duties; ensure contested and corrected results behave correctly; keep official standings limited to approved outcomes; preserve tie-break explanation visibility.
 Done when: official standings can be defended operationally and every exception path has regression coverage.
 
-5. Harden portal and public-site security before wider rollout. Done (2026-04-10)
+5. Done (2026-04-10): Harden portal and public-site security before wider rollout.
 Modules: `sports_federation_portal`, `sports_federation_public_site`.
 Work: verify ownership checks on portal writes, validate all public visibility flags, avoid unsafe template rendering, and cover direct-URL access paths with controller tests.
 Done when: public and portal surfaces enforce the same data-ownership and publication rules described in the workflows.
 
-6. Standardize CI, secrets handling, and contributor setup.
+6. Standardize CI, secrets handling, and contributor setup. Done (2026-04-10)
 Modules: repository-wide, with emphasis on `ci/`, `sports_federation_public_site`, `sports_federation_portal`, `sports_federation_standings`, `sports_federation_venues`, `sports_federation_finance_bridge`, `sports_federation_reporting`.
 Work: keep CI env-driven, expand targeted module tests, validate scripts, and document local execution for maintainers.
 Done when: contributors can run focused tests locally and GitHub Actions can validate critical flows without committed secrets.

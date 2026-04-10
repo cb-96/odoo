@@ -93,7 +93,7 @@ The result is now **official** and eligible for standings computation.
 5. `result_correction_reason` is recorded.
 6. A governance override request may be filed for audit purposes.
 7. The corrected result can be edited and re-submitted through the pipeline.
-7. If staff need a clean restart, an approver can reset the corrected or contested result back to `draft` before re-submission.
+8. If staff need a clean restart, an approver can reset the corrected or contested result back to `draft` before re-submission.
 
 ### 7. Standings Update
 

@@ -79,3 +79,12 @@ Financial event summary by fee type and state.
    analysis.
 3. **Cross-module joins** — Each report aggregates from multiple modules' tables.
 4. **Zero maintenance** — Reports auto-refresh as underlying data changes.
+
+## CSV exports
+
+Authenticated backend users can export lightweight KPI CSV files from the
+reporting controllers:
+
+- `/reporting/export/standings/<tournament_id>` — standings lines with tie-break notes
+- `/reporting/export/participation/<season_id>` — season participation roster
+- `/reporting/export/finance` — finance summary grouped by fee type and state

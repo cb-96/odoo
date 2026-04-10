@@ -13,6 +13,7 @@ controllers, record rules, tests, and workflow docs aligned with the code.
 | `federation.tournament.participant` | `sports_federation_tournament` | Federation competition operations | Backend UI or confirmed tournament registration | `registered`, `confirmed`, `withdrawn` | Team's club within a federation tournament | Portal users do not write participants directly; confirmed registrations may create them. |
 | `federation.tournament.registration` | `sports_federation_portal` | Shared: club representative submits, federation staff reviews | Portal form or backend UI | `draft`, `submitted`, `confirmed`, `rejected`, `cancelled` | Team must belong to one of the submitting user's represented clubs | This is the review buffer before participant creation. |
 | `federation.season.registration` | `sports_federation_base` + `sports_federation_portal` | Shared: club representative submits, federation staff confirms | Portal form or backend UI | `draft`, `submitted`, `confirmed`, `cancelled` | Team must belong to one of the submitting user's represented clubs | Portal extension adds `submitted`, `user_id`, and `rejection_reason`. |
+| `federation.finance.event` | `sports_federation_finance_bridge` | Federation finance operations and approved workflow hooks | Backend UI or workflow automation | `draft`, `confirmed`, `settled`, `cancelled` | Source record remains authoritative; finance staff own settlement/cancellation | Season-registration confirmation and match finance hooks create events automatically. |
 
 ## Transition ownership
 
@@ -23,6 +24,7 @@ controllers, record rules, tests, and workflow docs aligned with the code.
 | `federation.tournament.participant` | Federation staff, confirmed registration flow | Tournament/team eligibility is validated on create and update. |
 | `federation.tournament.registration` | Portal club representatives for submission/cancel, federation staff for confirm/reject | Controllers validate club ownership and the model enforces ownership as defense in depth. |
 | `federation.season.registration` | Portal club representatives for submission/cancel, federation staff for confirm | Controllers validate club ownership and the model must enforce ownership as defense in depth. |
+| `federation.finance.event` | Federation finance staff for confirm/settle/cancel; approved workflow hooks for draft creation | Auto-created events must stay idempotent per source record and fee type. |
 
 ## Enum reconciliation
 
@@ -32,6 +34,7 @@ Use the model enums below in code, docs, and tests:
 - Match lifecycle ends in `done`, not `completed`.
 - Tournament registration review uses `submitted` and `rejected`.
 - Season registration review uses `submitted`; there is no `rejected` state in the current model.
+- Finance event lifecycle uses `settled`; `invoiced` and `paid` are future integration concepts, not current model states.
 
 ## Review checklist
 

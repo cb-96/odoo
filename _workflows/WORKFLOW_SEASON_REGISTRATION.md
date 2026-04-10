@@ -104,8 +104,9 @@ rosters and match sheets.
 **Module**: `sports_federation_finance_bridge`
 
 1. Upon registration approval, a finance event is created for the registration fee.
-2. Fee type is selected from the catalogue (e.g. "Season Registration Fee").
-3. Finance event follows: `draft` → `confirmed` → `invoiced` → `paid`.
+2. The default catalogue fee type code is `season_registration` (created on demand
+    as "Season Registration Fee" if it does not exist yet).
+3. Finance event follows: `draft` → `confirmed` → `settled` / `cancelled`.
 
 ### 9. Notifications
 

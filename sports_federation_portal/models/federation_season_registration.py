@@ -79,9 +79,11 @@ class FederationSeasonRegistration(models.Model):
 
     def action_confirm(self):
         """Confirm a submitted or draft registration."""
-        for rec in self:
-            if rec.state not in ("draft", "submitted"):
-                raise ValidationError(
-                    "Only draft or submitted registrations can be confirmed."
-                )
-            rec.state = "confirmed"
+        invalid_registrations = self.filtered(
+            lambda rec: rec.state not in ("draft", "submitted")
+        )
+        if invalid_registrations:
+            raise ValidationError(
+                "Only draft or submitted registrations can be confirmed."
+            )
+        return super().action_confirm()

@@ -47,28 +47,41 @@ An individual financial occurrence.
 | `fee_type_id` | Many2one | Fee category |
 | `event_type` | Selection | Type classification |
 | `amount` / `currency_id` | Monetary | Actual amount |
-| `state` | Selection | draft / confirmed / invoiced / paid / cancelled |
+| `state` | Selection | draft / confirmed / settled / cancelled |
 | `source_model` / `source_res_id` | Char / Integer | Origin record |
 | `partner_id` | Many2one | Related partner |
 | `club_id` / `player_id` / `referee_id` | Many2one | Federation entity |
 | `invoice_ref` / `external_ref` | Char | External references |
 | `notes` | Text | Details |
 
-- **State machine**: draft → confirmed → invoiced → paid / cancelled.
+- **State machine**: draft → confirmed → settled / cancelled.
 
 ## Key Behaviours
 
 1. **Source traceability** — Every finance event links back to its originating record
    (registration, sanction, assignment) via model/res_id.
 2. **Fee catalogue** — Standardised fee types with default amounts.
-3. **Accounting-ready** — The `invoiced` and `paid` states plus `invoice_ref` field
-   prepare for future accounting module bridging.
+3. **Accounting-ready** — `invoice_ref` and `external_ref` keep the bridge ready
+   for future accounting integration while the current lightweight workflow ends
+   in `settled`.
 4. **Multi-entity** — Covers clubs, players, and referees.
+
+## Season Registration Finance Hooks
+
+The finance bridge now auto-creates a finance event when a
+`federation.season.registration` record moves into `confirmed`.
+
+- Default fee type code: `season_registration`
+- Creation mode: idempotent; reconfirming a registration reuses the same source
+  record and does not create duplicates
+- Source traceability: events use `source_model = federation.season.registration`
+  and `source_res_id = <registration id>`
+
 ## Result Approval Finance Hooks (Phase 2)
 
 match_result_hooks.py extends `federation.match` with:
 
-- **`result_fee_type_id`** (Many2one ? ederation.fee.type): optional; when set,
+- **`result_fee_type_id`** (Many2one → `federation.fee.type`): optional; when set,
   a `federation.finance.event` (charge) is automatically created when
   `action_approve_result()` completes.
 - **`result_finance_event_ids`** (computed): all finance events whose source is

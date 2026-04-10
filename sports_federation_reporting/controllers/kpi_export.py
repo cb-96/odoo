@@ -118,3 +118,42 @@ class KpiExportController(http.Controller):
                 "Content-Disposition": f'attachment; filename="{filename}"',
             },
         )
+
+    @http.route(
+        "/reporting/export/finance",
+        type="http",
+        auth="user",
+        methods=["GET"],
+    )
+    def export_finance_csv(self, **kw):
+        """Return a CSV file of the finance summary report."""
+        finance_rows = request.env["federation.report.finance"].search(
+            [],
+            order="fee_type_id asc, state asc",
+        )
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Fee Type",
+            "Category",
+            "State",
+            "Event Count",
+            "Total Amount",
+        ])
+        for row in finance_rows:
+            writer.writerow([
+                row.fee_type_id.name if row.fee_type_id else "",
+                row.fee_type_id.category if row.fee_type_id else "",
+                row.state or "",
+                row.event_count,
+                row.total_amount,
+            ])
+
+        return Response(
+            output.getvalue(),
+            content_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": 'attachment; filename="finance_summary.csv"',
+            },
+        )

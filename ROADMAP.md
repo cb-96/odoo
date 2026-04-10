@@ -20,6 +20,8 @@ reporting and finance.
 - Pinned tooling dependencies are defined in `requirements.txt` and lint config in `.flake8`.
 - `STATE_AND_OWNERSHIP_MATRIX.md` now documents canonical states and ownership boundaries.
 - Public/portal security hardening is in place for visibility gating, portal season-registration ownership, and raw HTML rendering.
+- Eligibility service, tie-break explanations, and KPI CSV exports are available in the rules, standings, and reporting modules.
+- Finance automation now covers season-registration confirmation and venue charges in addition to result-approval hooks.
 
 ## Top priorities (next 30 days)
 
@@ -31,9 +33,9 @@ reporting and finance.
 
 ## 90-day plan
 
-- Harden progression & eligibility logic: implement a central eligibility service and explainable standings.
-- Automate finance events in `sports_federation_finance_bridge` for key triggers.
-- Improve public/portal UX and add exportable KPI reports under `sports_federation_reporting`.
+- Continue applying the eligibility service in downstream workflows and surface clearer qualification outcomes.
+- Extend finance automation in `sports_federation_finance_bridge` beyond registrations, venue charges, and result approvals.
+- Improve public/portal UX and broaden reporting/dashboard coverage beyond the current CSV exports.
 
 ## 6-month plan
 
@@ -44,7 +46,8 @@ reporting and finance.
 
 - `sports_federation_competition_engine`: add/expand tests for round-robin and knockout, and ensure deterministic scheduling.
 - `sports_federation_standings`: tie-break explanation chain and contested/unapproved result filtering tests are in place.
-- `sports_federation_finance_bridge`: implement and test auto finance events for registrations and venue fees.
+- `sports_federation_finance_bridge`: auto finance events for registrations and venue fees are in place; continue with reimbursements and discipline-triggered charges.
+- `sports_federation_reporting`: standings, participation, and finance CSV exports are available for KPI extraction.
 - `sports_federation_public_site` / `sports_federation_portal`: visibility gating and HTML sanitization are in place; continue broader acceptance coverage as follow-up work.
 
 ## Quality & release checklist (for each PR that changes models/fields)

@@ -85,18 +85,18 @@ Each event records:
 **Actor**: Federation finance staff
 **Module**: `sports_federation_finance_bridge`
 
-1. For confirmed events that require invoicing (fees, fines):
-2. Create an invoice in the accounting system (future integration point).
+1. For confirmed events that need an external accounting reference:
+2. Create or look up the invoice in the accounting system (future integration point).
 3. Record the invoice reference in `invoice_ref`.
-4. Set state to `invoiced`.
+4. Keep the bridge event in `confirmed` until it is financially settled.
 
 ### 5. Payment Recording
 
 **Actor**: Federation finance staff
 **Module**: `sports_federation_finance_bridge`
 
-1. When payment is received or made:
-2. Set state to `paid`.
+1. When payment is received or reimbursement is completed:
+2. Set state to `settled`.
 3. Record external references if applicable (`external_ref`).
 
 ### 6. Cancellation
@@ -104,7 +104,7 @@ Each event records:
 **Actor**: Federation administrator
 **Module**: `sports_federation_finance_bridge`
 
-1. Events can be cancelled at any stage before `paid`.
+1. Events can be cancelled at any stage before `settled`.
 2. State → `cancelled`.
 3. Cancelled events remain in the system for audit but are excluded from totals.
 
@@ -117,27 +117,29 @@ The **Finance Report** (SQL view-backed model) provides:
 - Summary by fee type and state
 - Total amounts per category
 - Event counts for monitoring
+- CSV export via `/reporting/export/finance` for leadership dashboards
 
 ## State Diagram
 
 ```
-Finance Event: draft → confirmed → invoiced → paid
-                     → cancelled (from any pre-paid state)
+Finance Event: draft → confirmed → settled
+                     → cancelled (from any pre-settled state)
 ```
 
 ## Financial Event Sources
 
 | Source Action | Fee Category | Auto-Created? |
 |--------------|-------------|---------------|
-| Season registration approved | Registration | Extendable |
+| Season registration approved | Registration | Yes |
 | Player license issued | Registration | Extendable |
 | Tournament participation | Registration | Extendable |
 | Disciplinary fine | Fine | Extendable |
 | Referee assignment completed | Reimbursement | Extendable |
 
-> Note: The finance bridge provides the **framework**. The actual auto-creation
-> of events from source modules is an extension point — modules can call the
-> finance event API to create events programmatically.
+> Note: The finance bridge provides the **framework** and now includes default
+> hooks for season-registration confirmation and match result approval. Other
+> modules can continue to create finance events programmatically via the shared
+> finance event API.
 
 ## Accounting Integration Points
 
@@ -149,7 +151,7 @@ The module is designed to bridge to a full accounting system:
 | `invoice_ref` | Links to accounting invoice |
 | `external_ref` | External system reference |
 | `currency_id` | Multi-currency support |
-| `state` (invoiced/paid) | Aligns with accounting workflow |
+| `state` (`confirmed`/`settled`) | Aligns with the current lightweight workflow |
 
 ## Related Workflows
 

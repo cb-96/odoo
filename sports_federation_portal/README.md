@@ -39,7 +39,7 @@ draft -> submitted -> confirmed / rejected / cancelled
 
 The existing `federation.season.registration` model is extended with a `submitted` state and portal fields (`user_id`, `partner_id`, `rejection_reason`). This avoids creating a duplicate model while adding the portal workflow.
 The same model now also enforces club ownership at ORM level so portal-created season registrations cannot bypass controller checks.
-Federation staff review the same record in the backend, where they can submit, confirm, reject back to draft with a reason, or cancel the registration without creating a second review model.
+Federation staff review the same record in the backend, where they can submit, confirm, reject back to draft with a reason, or cancel the registration without creating a second review model. There is no persistent `rejected` state on season registrations; rejection is represented by `state='draft'` plus `rejection_reason`.
 
 #### 4. Public vs Portal Separation
 
@@ -119,6 +119,8 @@ Every write operation in the controllers:
 3. Checks for duplicates and capacity limits.
 4. Creates records with `sudo()` after validation passes.
 
+The same ownership rules are also enforced in the ORM for portal-managed registration models. That second layer matters whenever data is created from tests, server actions, imports, or future controllers.
+
 ### Public Routes
 Public routes use `sudo()` to bypass ACL (since anonymous users have no federation access). They only expose:
 - Tournament name, dates, location, status, participant count.
@@ -143,6 +145,7 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Max participants** limit is enforced.
 - [ ] **Season registration** creates a `federation.season.registration` in `submitted` state.
 - [ ] **Season registration backend review** shows submit, confirm, reject, and portal metadata (`user_id`, `partner_id`, `rejection_reason`).
+- [ ] **Season registration rejection** returns the record to `draft` and preserves the rejection reason for the submitting representative.
 - [ ] **Cancel registration** sets state to `cancelled`.
 - [ ] **Confirm registration** in backend creates `federation.tournament.participant`.
 - [ ] **Portal dashboard** shows federation cards for club representatives.

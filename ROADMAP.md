@@ -89,7 +89,7 @@ Modules: repository-wide, with emphasis on `ci/`, `sports_federation_public_site
 Work: keep CI env-driven, expand targeted module tests, validate scripts, and document local execution for maintainers.
 Done when: contributors can run focused tests locally and GitHub Actions can validate critical flows without committed secrets.
 
-7. Bring repository documentation up to release quality.
+7. Bring repository documentation up to release quality. Done (2026-04-10)
 Modules: repository docs plus every module touched by critical workflow work.
 Work: keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, workflow documents, module READMEs, integration docs, and state/ownership references aligned with the implemented code.
 Done when: a new maintainer can understand the main system flows without relying on tribal knowledge.

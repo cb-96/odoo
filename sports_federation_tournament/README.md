@@ -44,14 +44,14 @@ A single tournament event within a competition or season.
 | `competition_id` | Many2one | Parent competition |
 | `rule_set_id` | Many2one | Rules (inherited from competition or set directly) |
 | `tournament_type` | Selection | league / cup / friendly / playoff |
-| `state` | Selection | draft / open / in_progress / completed / cancelled |
+| `state` | Selection | draft / open / in_progress / closed / cancelled |
 | `date_start` / `date_end` | Date | Event window |
 | `max_participants` | Integer | Participant cap |
 | `stage_ids` | One2many | Tournament stages |
 | `participant_ids` | One2many | Enrolled participants |
 | `match_ids` | One2many | All matches across stages |
 
-- **State machine**: draft → open → in_progress → completed / cancelled.
+- **State machine**: draft → open → in_progress → closed / cancelled.
 - **Stat buttons** for stages, participants, and matches.
 
 ### `federation.tournament.stage`
@@ -108,11 +108,10 @@ An individual game between two teams.
 | `stage_id` / `group_id` | Many2one | Location in hierarchy |
 | `home_team_id` / `away_team_id` | Many2one | Competing teams |
 | `date_scheduled` | Datetime | Kick-off time |
-| `venue` | Char | Playing location |
 | `home_score` / `away_score` | Integer | Final score |
-| `state` | Selection | draft / scheduled / in_progress / completed / cancelled |
+| `state` | Selection | draft / scheduled / in_progress / done / cancelled |
 
-- **State machine**: draft → scheduled → in_progress → completed / cancelled.
+- **State machine**: draft → scheduled → in_progress → done / cancelled.
 
 ## Key Behaviours
 
@@ -121,3 +120,6 @@ An individual game between two teams.
 3. **Score entry** — Match results are recorded with home/away scores.
 4. **State management** — Both tournaments and matches follow state machines that
    prevent illogical transitions.
+5. **Tournament open/start guards** — Only active draft tournaments linked to a season can open, and only open tournaments with at least one stage can start.
+6. **Archive safety** — Open or in-progress tournaments must be closed or cancelled before archiving.
+7. **Venue extensions** — Venue and gameday fields are supplied by `sports_federation_venues`; this module keeps the core match lifecycle and hierarchy only.

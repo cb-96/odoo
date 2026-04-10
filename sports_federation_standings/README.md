@@ -32,13 +32,13 @@ A standings table for a specific scope (tournament, stage, or group).
 | `group_id` | Many2one | Group scope (optional) |
 | `competition_id` | Many2one | Competition context |
 | `rule_set_id` | Many2one | Scoring and tie-break rules |
-| `state` | Selection | draft / computed / published |
+| `state` | Selection | draft / computed / frozen |
 | `line_ids` | One2many | Ranked team entries |
 | `line_count` | Integer | Stat-button counter |
 | `computed_on` | Datetime | When last computed |
 | `notes` | Text | Additional notes |
 
-- **State machine**: draft → computed → published.
+- **State machine**: draft → computed → frozen.
 
 ### `federation.standing.line`
 
@@ -64,5 +64,7 @@ One row per participant in the standings table.
    rule set are applied in sequence order.
 3. **Snapshot model** — Each standings record is a point-in-time computation, allowing
    historical comparison.
-4. **Publication flow** — draft → computed (results aggregated) → published (visible
-   to public site).
+4. **Official-result filtering** — When `sports_federation_result_control` is installed, only matches with `include_in_official_standings = True` are counted.
+5. **Freeze behavior** — Frozen standings reject recomputation unless `force_recompute` is provided in context.
+6. **Auto-advance hook** — Freezing a standing can trigger pending `federation.stage.progression` rules with `auto_advance = True`.
+7. **Publication is separate** — Public visibility is handled by `sports_federation_public_site` through `website_published`, not by a `published` standings state.

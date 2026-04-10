@@ -1,4 +1,8 @@
-New competition models and behaviours (2026-04-07)
+# Sports Federation — Technical Note
+
+Last updated: 2026-04-10
+
+## New competition models and behaviours (2026-04-07)
 
 Several new models and scheduling behaviours were added to support more realistic tournaments and automated stage progression:
 
@@ -36,9 +40,7 @@ Add unit and integration tests covering the following:
 - Knockout bracket generation: bracket size determination, bye handling, and automatic wiring of placeholder matches and advancement on `action_done()`.
 - Gameday constraints: enforce no duplicate same-category pairings on a gameday.
 
-# Sports Federation — Technical Note
-
-Last updated: 2026-04-07
+## Architecture and conventions
 
 This technical note documents architecture, coding conventions, workflows, and extension points for the Sports Federation Odoo 19 custom addons collection located in the `odoo/` folder. It is intended for developers, integrators, and release engineers working on federation features: tournaments, matches, rosters, refereeing, results pipelines, and public website publication.
 
@@ -108,6 +110,7 @@ Tournament lifecycle
 - States: `draft → open → in_progress → closed | cancelled`.
 - Preconditions for `open`: participants registered/confirmed, ruleset assigned, optional venues configured.
 - Schedule creation typically moves the tournament to `in_progress` (explicit action required).
+- Archive and restore are explicit backend actions. Open or in-progress tournaments must be closed or cancelled before archiving, and only active draft tournaments linked to a season may be opened.
 
 Match lifecycle and match-day operations
 
@@ -120,6 +123,8 @@ Result pipeline
 - States: `not_submitted → submitted → verified → approved` (exceptions: `contested`, `corrected`).
 - Permissions: separate groups for submit/verify/approve to enforce audit and separation of duties.
 - Approved results are the only ones included in official standings computations.
+- The same user must not submit, verify, and approve the same result. Self-verification is blocked and approvers cannot approve their own submissions or the result they verified.
+- Approving, contesting, correcting, or resetting a result triggers automatic recomputation of linked non-frozen standings. Approved scores become immutable until the result is moved out of the approved state.
 
 ## Competition engine — algorithms and wizards
 
@@ -164,6 +169,7 @@ Knockout bracket generation
 Wizards
 
 - Wizards (transient models under `wizards/`) do validations, produce a `summary` preview, and require explicit confirmation to persist matches. They must not perform destructive replacements unless the user explicitly enables `overwrite`.
+- Competition-generation wizards validate tournament state, the effective rule set, minimum participant counts, and stage/group ownership before creating matches. Overwrite mode is warning-first and should remain opt-in.
 
 ## Controllers, portal, and public site patterns
 
@@ -171,12 +177,14 @@ Portal patterns
 
 - Use a dedicated `federation.club.representative` model to map `res.users` → `federation.club` for portal ownership and record rules.
 - Controllers must perform ownership validation (`_get_clubs_for_user()`) before writes. Record rules are enforcement, controllers are defense-in-depth.
+- ORM-level ownership constraints should mirror controller checks for portal-created registrations so bypassing a controller does not widen access.
 
 Public site
 
 - Public controllers use `auth='public'` and `sudo()` for reads. Only expose non-sensitive fields (no emails/phones/notes) to public templates.
 - Enforce `website_published` and the relevant visibility toggle (`show_public_results`, `show_public_standings`) before serving direct public routes.
 - Render public rich text through sanitized website field rendering rather than raw `t-raw` output.
+- Keep `public_slug` unique even while the public routes remain model-bound, so publication metadata and future external references cannot collide.
 
 CSRF and forms
 
@@ -227,13 +235,16 @@ CI recommendations
 - Run module tests in CI and fail PRs on test regressions.
 - Include a lint step (flake8/black for Python where applicable) and XML/manifest validation.
 - The repository CI entrypoint is `ci/run_tests.sh`; the GitHub workflow at `.github/workflows/ci.yml` reuses that script and runs Black/Flake8 from `requirements.txt`.
+- `ci/run_tests.sh` also provides named suites (`competition_core`, `portal_public_ops`, `finance_reporting`) so maintainers can run the same focused coverage locally and in GitHub Actions.
 - Do not commit runtime credentials. Keep local CI values in `ci/.env`, commit only `ci/.env.example`, and let CI generate ephemeral values at runtime.
 - Integration environment variables: maintain `ci/integrations.env.example` with the common external-integration keys (SMTP, SendGrid/Mailgun keys, OAuth client IDs/secrets, Slack webhook, Twilio credentials, AWS S3 keys). Keep real values out of VCS and populate `ci/.env` locally or via your secret store in CI runs.
+- Contributor-facing local setup, suite selection, and script validation commands live in `CONTRIBUTING.md`.
 
 Example test command
 
 ```bash
 bash ./ci/run_tests.sh --module sports_federation_competition_engine
+bash ./ci/run_tests.sh --suite competition_core
 ```
 
 ## Upgrade, migrations and deployment notes

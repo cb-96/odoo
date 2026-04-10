@@ -53,6 +53,7 @@ At this point the result is entered but **not yet official**.
 3. Click **Verify Result**.
 4. `result_state` transitions from `submitted` → `verified`.
 5. `result_verified_by_id` and `result_verified_on` are recorded.
+6. The verifier cannot verify their own submission.
 
 ### 4. Result Approval
 
@@ -65,6 +66,8 @@ At this point the result is entered but **not yet official**.
 4. `result_approved_by_id` and `result_approved_on` are recorded.
 5. `include_in_official_standings` is set to `True`.
 6. Any non-frozen standings linked to the same tournament, stage, or group are recomputed automatically.
+7. The approver must be different from both the submitter and the verifier for the same result.
+8. Approved scores are treated as immutable until the result leaves the approved state.
 
 The result is now **official** and eligible for standings computation.
 
@@ -90,6 +93,7 @@ The result is now **official** and eligible for standings computation.
 5. `result_correction_reason` is recorded.
 6. A governance override request may be filed for audit purposes.
 7. The corrected result can be edited and re-submitted through the pipeline.
+7. If staff need a clean restart, an approver can reset the corrected or contested result back to `draft` before re-submission.
 
 ### 7. Standings Update
 
@@ -132,6 +136,7 @@ Standings: draft → computed → frozen
 | Result Approver | Approve verified results |
 
 Each step requires a different security group, enforcing **separation of duties**.
+The workflow is intentionally defensive: submitters cannot self-verify, and approvers cannot approve their own submissions or the result they verified.
 
 ## Audit Trail
 

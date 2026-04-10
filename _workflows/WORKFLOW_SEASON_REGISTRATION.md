@@ -66,6 +66,8 @@ Registration states: `draft` → `submitted` → `confirmed` / `cancelled`.
 3. **Confirm** the registration or **reject** it back to `draft` with a rejection reason.
 4. Confirmed teams are eligible to enrol players and proceed into competition operations.
 
+There is no persistent `rejected` season-registration state in the current model. Rejection is represented by the record returning to `draft` while keeping `rejection_reason` for follow-up.
+
 ### 5. Team Enrolment
 
 **Actor**: Club administrator or federation staff

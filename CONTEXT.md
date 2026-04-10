@@ -65,3 +65,15 @@ The competition engine and related modules received several new models to suppor
 
 See `odoo/TECHNICAL_NOTE.md` → "New competition models and behaviours (2026-04-07)" for details.
 
+Priority 0 hardening snapshot (2026-04-10)
+
+- Core master data now uses explicit archive and restore actions with guardrails on clubs, teams, seasons, and tournaments so operational records are retired intentionally rather than disappearing through direct writes to `active`.
+- Portal season registration review is now closed-loop: only open seasons accept submissions, federation staff review the same record in the backend, and confirmation or rejection notifications are logged for the submitting representative.
+- Competition setup wizards now validate tournament state, effective rule set, stage and group ownership, and minimum participant counts before they will generate fixtures. Overwrite mode is previewed and warned explicitly.
+- Result control now enforces separation of duties across submit, verify, and approve actions, keeps approved scores immutable, and automatically recomputes linked non-frozen standings whenever official-result eligibility changes.
+- Portal and public publication surfaces now document the same ownership and visibility rules enforced by the code: portal writes are club-scoped, public routes are toggle-gated, and `public_slug` is uniqueness-guarded metadata.
+- Contributor workflow is now centered on `ci/run_tests.sh` named suites plus `CONTRIBUTING.md`, keeping CI env-driven and focused on the highest-risk federation flows.
+
+Use this file as the quick orientation layer, then rely on the workflow docs and module READMEs for the operational details.
+For contributor-facing local setup and focused CI commands, continue with `CONTRIBUTING.md`.
+

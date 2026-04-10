@@ -40,11 +40,12 @@ Extends the match model with result-control fields.
 
 | Method | Transition | Description |
 |--------|-----------|-------------|
-| `action_submit_result()` | → submitted | Staff records the score |
+| `action_submit_result()` | `draft` or `corrected` → `submitted` | Staff records the score |
 | `action_verify_result()` | → verified | Verifier confirms accuracy |
 | `action_approve_result()` | → approved | Final sign-off; includes in standings |
 | `action_contest_result()` | → contested | A party disputes the result |
 | `action_correct_result()` | → corrected | Revised after contest |
+| `action_reset_result_to_draft()` | contested or corrected → draft | Re-open the record for a controlled restart |
 
 ## Security Groups
 
@@ -59,3 +60,7 @@ Extends the match model with result-control fields.
 2. **Contest / correction** — Disputed results can be flagged and later corrected.
 3. **Standings gating** — Only approved results set `include_in_official_standings = True`.
 4. **Audit trail** — Every transition records who and when via user/datetime fields.
+5. **Separation of duties** — Submitter, verifier, and approver must be distinct users for the same match.
+6. **Auto recomputation** — Approve, contest, correct, and reset actions recompute linked non-frozen standings automatically.
+7. **Approved score immutability** — Home and away scores cannot be edited while a result remains approved.
+8. **Corrected resubmission** — A corrected result is expected to re-enter the pipeline through `submitted` before it becomes official again.

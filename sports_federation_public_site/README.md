@@ -61,3 +61,10 @@ match results on public URLs without logging in.
 4. **Selective display** — Direct results and standings routes enforce their per-tournament visibility toggles.
 5. **Sanitized rich text** — Public descriptions render through website field rendering rather than raw `t-raw` output.
 6. **Website templates** — QWeb templates for responsive public pages.
+
+## Publication guards
+
+- Controllers read with `sudo()` only after validating `website_published` and the route-specific visibility flags.
+- Public results pages only expose approved results because the controller filters on `result_state = approved`.
+- Public participant lists exclude withdrawn tournament participants.
+- Unpublishing a tournament immediately removes direct public access, even if the record still has standings or results data behind it.

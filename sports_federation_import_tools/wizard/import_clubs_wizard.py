@@ -1,65 +1,62 @@
-import base64
-import csv
-import io
-
-from odoo import api, fields, models
+from odoo import models
 from odoo.exceptions import ValidationError
 
 
 class FederationImportClubsWizard(models.TransientModel):
     _name = "federation.import.clubs.wizard"
     _description = "Import Clubs Wizard"
+    _inherit = "federation.import.wizard.mixin"
 
-    upload_file = fields.Binary(string="CSV File", required=True)
-    upload_filename = fields.Char(string="Filename")
-    dry_run = fields.Boolean(string="Dry Run", default=True)
-    result_message = fields.Text(string="Result", readonly=True)
-    line_count = fields.Integer(string="Total Lines", readonly=True)
-    success_count = fields.Integer(string="Success", readonly=True)
-    error_count = fields.Integer(string="Errors", readonly=True)
+    def _get_mapping_guide(self):
+        return (
+            "Required columns: name.\n"
+            "Recommended columns for safe onboarding: code, email, phone, city.\n"
+            "Duplicate detection prefers code when provided and falls back to exact club name."
+        )
 
     def action_parse_and_import(self):
-        """Parse CSV and import clubs."""
         self.ensure_one()
+        reader = self._get_csv_reader()
+        self._require_columns(reader.fieldnames, ["name"])
 
-        if not self.upload_file:
-            raise ValidationError("Please upload a CSV file.")
-
-        # Decode file
-        content = base64.b64decode(self.upload_file)
-        content_str = content.decode("utf-8-sig")
-
-        # Parse CSV
-        reader = csv.DictReader(io.StringIO(content_str))
-        required_columns = ["name"]
-        if not reader.fieldnames:
-            raise ValidationError("CSV file is empty or invalid.")
-
-        missing = [col for col in required_columns if col not in reader.fieldnames]
-        if missing:
-            raise ValidationError(f"Missing required columns: {', '.join(missing)}")
-
-        # Process rows
         line_count = 0
         success_count = 0
         error_count = 0
         errors = []
+        error_categories = {}
 
         Club = self.env["federation.club"]
 
         for row_num, row in enumerate(reader, start=2):
             line_count += 1
-            name = row.get("name", "").strip()
+            name = self._get_row_value(row, "name")
+            code = self._get_row_value(row, "code")
 
             if not name:
-                errors.append(f"Row {row_num}: Name is required.")
+                self._record_error(
+                    errors,
+                    error_categories,
+                    row_num,
+                    "missing_required_field",
+                    "Name is required.",
+                )
                 error_count += 1
                 continue
 
-            # Check for duplicate
-            existing = Club.search([("name", "=", name)], limit=1)
+            existing = False
+            if code:
+                existing = Club.search([("code", "=", code)], limit=1)
+            if not existing:
+                existing = Club.search([("name", "=", name)], limit=1)
             if existing:
-                errors.append(f"Row {row_num}: Club '{name}' already exists.")
+                duplicate_key = f"code '{code}'" if code and existing.code == code else f"name '{name}'"
+                self._record_error(
+                    errors,
+                    error_categories,
+                    row_num,
+                    "duplicate_entry",
+                    f"Club already exists (matched by {duplicate_key}).",
+                )
                 error_count += 1
                 continue
 
@@ -67,35 +64,30 @@ class FederationImportClubsWizard(models.TransientModel):
                 try:
                     Club.create({
                         "name": name,
-                        "email": row.get("email", "").strip() or False,
-                        "phone": row.get("phone", "").strip() or False,
-                        "city": row.get("city", "").strip() or False,
+                        "code": code or False,
+                        "email": self._get_row_value(row, "email") or False,
+                        "phone": self._get_row_value(row, "phone") or False,
+                        "city": self._get_row_value(row, "city") or False,
                     })
                     success_count += 1
                 except Exception as e:
-                    errors.append(f"Row {row_num}: {str(e)}")
+                    category, message = self._categorize_exception(e)
+                    self._record_error(errors, error_categories, row_num, category, message)
                     error_count += 1
             else:
                 success_count += 1
-
-        # Build result message
-        result_parts = []
-        result_parts.append(f"Total lines processed: {line_count}")
-        result_parts.append(f"Successful: {success_count}")
-        result_parts.append(f"Errors: {error_count}")
-
-        if self.dry_run:
-            result_parts.append("\n*** DRY RUN - No records were created ***")
-
-        if errors:
-            result_parts.append("\nErrors:")
-            result_parts.extend(errors)
 
         self.write({
             "line_count": line_count,
             "success_count": success_count,
             "error_count": error_count,
-            "result_message": "\n".join(result_parts),
+            "result_message": self._build_result_message(
+                line_count,
+                success_count,
+                error_count,
+                errors,
+                error_categories=error_categories,
+            ),
         })
 
         return {

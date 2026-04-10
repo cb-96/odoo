@@ -126,7 +126,7 @@ Modules: `sports_federation_reporting`, `sports_federation_standings`, `sports_f
 Work: provide federation-facing KPI outputs, reconciliation views, and role-oriented reports that do not require direct database access.
 Done when: administrators can produce recurring weekly or monthly operational views from the application layer.
 
-7. Make imports safe enough for onboarding and seasonal rollover.
+7. Done (2026-04-10): Make imports safe enough for onboarding and seasonal rollover.
 Modules: `sports_federation_import_tools`, `sports_federation_base`, `sports_federation_people`, `sports_federation_tournament`.
 Work: add dry-run validation, duplicate detection, failure reporting, and mapping guidance for initial club, team, player, and season data imports.
 Done when: federation onboarding and annual data refreshes can be rehearsed with predictable outcomes.

@@ -2,6 +2,27 @@
 
 Last updated: 2026-04-10
 
+## Import safety hardening (2026-04-10)
+
+Year 1 Priority 1 item 7 hardened the onboarding and rollover import path in
+`sports_federation_import_tools`.
+
+- All import wizards now share `federation.import.wizard.mixin`, which provides
+    UTF-8 BOM handling, comma or semicolon delimiter support, mapping guidance,
+    shared dry-run statistics, and categorized row-level failure reporting.
+- A new `federation.import.seasons.wizard` covers season creation for annual
+    rollover work, including required-code enforcement and `YYYY-MM-DD` date
+    validation.
+- Club, team, player, and tournament-participant imports now prefer code-based
+    matching when codes are available, which aligns the implementation with the
+    documented onboarding workflow.
+- The player import path no longer attempts to create `federation.player`
+    records with a nonexistent writable `name` field. Imports now populate
+    `first_name` and `last_name`, while still accepting legacy full-name CSVs
+    when they contain both parts.
+- Duplicate rows are intentionally reported and skipped rather than overwritten,
+    so administrators can rehearse and rerun seasonal imports safely.
+
 ## Operational reporting expansion (2026-04-10)
 
 Year 1 Priority 1 item 6 expanded reporting from raw CSV extraction into

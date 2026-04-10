@@ -1,114 +1,142 @@
-import base64
-import csv
-import io
+from datetime import datetime
 
-from odoo import api, fields, models
+from odoo import models
 from odoo.exceptions import ValidationError
 
 
 class FederationImportPlayersWizard(models.TransientModel):
     _name = "federation.import.players.wizard"
     _description = "Import Players Wizard"
+    _inherit = "federation.import.wizard.mixin"
 
-    upload_file = fields.Binary(string="CSV File", required=True)
-    upload_filename = fields.Char(string="Filename")
-    dry_run = fields.Boolean(string="Dry Run", default=True)
-    result_message = fields.Text(string="Result", readonly=True)
-    line_count = fields.Integer(string="Total Lines", readonly=True)
-    success_count = fields.Integer(string="Success", readonly=True)
-    error_count = fields.Integer(string="Errors", readonly=True)
+    def _get_mapping_guide(self):
+        return (
+            "Required columns: first_name and last_name. Legacy full-name imports may use name.\n"
+            "Recommended columns: birth_date (YYYY-MM-DD), club_code (preferred) or club_name, gender, email, phone, state.\n"
+            "Duplicate detection uses first_name + last_name + birth_date, matching the player uniqueness rule."
+        )
 
     def action_parse_and_import(self):
-        """Parse CSV and import players."""
         self.ensure_one()
+        reader = self._get_csv_reader()
+        if not any(column in reader.fieldnames for column in ("first_name", "name")):
+            raise ValidationError("Missing required columns: first_name or name")
+        if not any(column in reader.fieldnames for column in ("last_name", "name")):
+            raise ValidationError("Missing required columns: last_name or name")
 
-        if not self.upload_file:
-            raise ValidationError("Please upload a CSV file.")
-
-        # Decode file
-        content = base64.b64decode(self.upload_file)
-        content_str = content.decode("utf-8-sig")
-
-        # Parse CSV
-        reader = csv.DictReader(io.StringIO(content_str))
-        required_columns = ["name"]
-        if not reader.fieldnames:
-            raise ValidationError("CSV file is empty or invalid.")
-
-        missing = [col for col in required_columns if col not in reader.fieldnames]
-        if missing:
-            raise ValidationError(f"Missing required columns: {', '.join(missing)}")
-
-        # Process rows
         line_count = 0
         success_count = 0
         error_count = 0
         errors = []
+        error_categories = {}
 
         Player = self.env["federation.player"]
         Club = self.env["federation.club"]
 
         for row_num, row in enumerate(reader, start=2):
             line_count += 1
-            name = row.get("name", "").strip()
+            first_name = self._get_row_value(row, "first_name")
+            last_name = self._get_row_value(row, "last_name")
+            full_name = self._get_row_value(row, "name")
 
-            if not name:
-                errors.append(f"Row {row_num}: Name is required.")
+            if full_name and not (first_name and last_name):
+                parts = full_name.split(None, 1)
+                if len(parts) == 2:
+                    first_name = first_name or parts[0]
+                    last_name = last_name or parts[1]
+
+            if not first_name or not last_name:
+                self._record_error(
+                    errors,
+                    error_categories,
+                    row_num,
+                    "missing_required_field",
+                    "Player first_name and last_name are required (or provide a full name with two parts).",
+                )
                 error_count += 1
                 continue
 
-            # Parse birth_date
             birth_date = False
-            birth_date_str = row.get("birth_date", "").strip()
+            birth_date_str = self._get_row_value(row, "birth_date")
             if birth_date_str:
                 try:
-                    from datetime import datetime
                     birth_date = datetime.strptime(birth_date_str, "%Y-%m-%d").date()
                 except ValueError:
-                    errors.append(f"Row {row_num}: Invalid birth_date format (use YYYY-MM-DD).")
+                    self._record_error(
+                        errors,
+                        error_categories,
+                        row_num,
+                        "format_error",
+                        "Invalid birth_date format (use YYYY-MM-DD).",
+                    )
                     error_count += 1
                     continue
 
-            # Resolve club
-            club_id = False
-            club_name = row.get("club_name", "").strip()
-            if club_name:
+            club = False
+            club_code = self._get_row_value(row, "club_code")
+            club_name = self._get_row_value(row, "club_name")
+            if club_code:
+                club = Club.search([("code", "=", club_code)], limit=1)
+            if not club and club_name:
                 club = Club.search([("name", "=", club_name)], limit=1)
-                if club:
-                    club_id = club.id
+            if (club_code or club_name) and not club:
+                self._record_error(
+                    errors,
+                    error_categories,
+                    row_num,
+                    "missing_reference",
+                    f"Club '{club_code or club_name}' not found.",
+                )
+                error_count += 1
+                continue
+
+            existing = Player.search([
+                ("first_name", "=", first_name),
+                ("last_name", "=", last_name),
+                ("birth_date", "=", birth_date or False),
+            ], limit=1)
+            if existing:
+                self._record_error(
+                    errors,
+                    error_categories,
+                    row_num,
+                    "duplicate_entry",
+                    f"Player '{first_name} {last_name}' already exists for the provided birth date.",
+                )
+                error_count += 1
+                continue
 
             if not self.dry_run:
                 try:
                     Player.create({
-                        "name": name,
+                        "first_name": first_name,
+                        "last_name": last_name,
                         "birth_date": birth_date,
-                        "club_id": club_id,
+                        "club_id": club.id if club else False,
+                        "gender": self._get_row_value(row, "gender") or False,
+                        "email": self._get_row_value(row, "email") or False,
+                        "phone": self._get_row_value(row, "phone") or False,
+                        "state": self._get_row_value(row, "state") or "active",
                     })
                     success_count += 1
                 except Exception as e:
-                    errors.append(f"Row {row_num}: {str(e)}")
+                    category, message = self._categorize_exception(e)
+                    self._record_error(errors, error_categories, row_num, category, message)
                     error_count += 1
             else:
                 success_count += 1
-
-        # Build result message
-        result_parts = []
-        result_parts.append(f"Total lines processed: {line_count}")
-        result_parts.append(f"Successful: {success_count}")
-        result_parts.append(f"Errors: {error_count}")
-
-        if self.dry_run:
-            result_parts.append("\n*** DRY RUN - No records were created ***")
-
-        if errors:
-            result_parts.append("\nErrors:")
-            result_parts.extend(errors)
 
         self.write({
             "line_count": line_count,
             "success_count": success_count,
             "error_count": error_count,
-            "result_message": "\n".join(result_parts),
+            "result_message": self._build_result_message(
+                line_count,
+                success_count,
+                error_count,
+                errors,
+                error_categories=error_categories,
+            ),
         })
 
         return {

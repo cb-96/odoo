@@ -252,6 +252,7 @@ class RoundRobinService(models.AbstractModel):
                 gameday = stage_gamedays[r_idx]
                 ordered = self._get_ordered_round_entries(round_pairs)
                 round_base = gameday.start_datetime or False
+                round_number = r_idx + 1
 
                 for m_idx, entry in enumerate(ordered):
                     home = entry["home"]
@@ -264,6 +265,7 @@ class RoundRobinService(models.AbstractModel):
                         "home_team_id": home.id,
                         "away_team_id": away.id,
                         "gameday_id": gameday.id,
+                        "round_number": round_number,
                         "state": "draft",
                     }
                     if group:
@@ -282,6 +284,7 @@ class RoundRobinService(models.AbstractModel):
             from datetime import timedelta
             for r_idx, round_pairs in enumerate(rounds):
                 round_base = start_dt + timedelta(hours=r_idx * round_interval)
+                round_number = r_idx + 1
 
                 # If we have a venue record, create/find a gameday for this round
                 gameday = None
@@ -302,6 +305,7 @@ class RoundRobinService(models.AbstractModel):
                         "stage_id": stage.id,
                         "home_team_id": home.id,
                         "away_team_id": away.id,
+                        "round_number": round_number,
                         "state": "draft",
                     }
                     if group:
@@ -322,13 +326,15 @@ class RoundRobinService(models.AbstractModel):
             # Flatten rounds and schedule sequentially
             from datetime import timedelta
             idx = 0
-            for round_pairs in rounds:
+            for r_idx, round_pairs in enumerate(rounds):
+                round_number = r_idx + 1
                 for (home, away) in round_pairs:
                     vals = {
                         "tournament_id": tournament.id,
                         "stage_id": stage.id,
                         "home_team_id": home.id,
                         "away_team_id": away.id,
+                        "round_number": round_number,
                         "state": "draft",
                     }
                     if group:

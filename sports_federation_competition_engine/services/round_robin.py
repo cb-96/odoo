@@ -179,6 +179,61 @@ class RoundRobinService(models.AbstractModel):
         ordered.extend(mixed)
         return ordered
 
+    def _split_round_entries(self, entries, chunk_count):
+        if chunk_count <= 1:
+            return [entries]
+
+        chunks = []
+        base_size, remainder = divmod(len(entries), chunk_count)
+        start = 0
+        for index in range(chunk_count):
+            chunk_size = base_size + (1 if index < remainder else 0)
+            end = start + chunk_size
+            chunks.append(entries[start:end])
+            start = end
+        return [chunk for chunk in chunks if chunk]
+
+    def _get_stage_gameday_chunk_counts(self, ordered_rounds, gameday_count):
+        allocations = [1] * len(ordered_rounds)
+        extra_slots = max(gameday_count - len(ordered_rounds), 0)
+        max_extra_slots = sum(max(len(entries) - 1, 0) for entries in ordered_rounds)
+        extra_slots = min(extra_slots, max_extra_slots)
+
+        while extra_slots > 0:
+            candidate_indexes = [
+                index
+                for index, entries in enumerate(ordered_rounds)
+                if allocations[index] < len(entries)
+            ]
+            if not candidate_indexes:
+                break
+
+            candidate_index = max(
+                candidate_indexes,
+                key=lambda index: (len(ordered_rounds[index]) / allocations[index], -index),
+            )
+            allocations[candidate_index] += 1
+            extra_slots -= 1
+
+        return allocations
+
+    def _get_stage_gameday_plan(self, rounds, stage_gamedays):
+        ordered_rounds = [self._get_ordered_round_entries(round_pairs) for round_pairs in rounds]
+        chunk_counts = self._get_stage_gameday_chunk_counts(ordered_rounds, len(stage_gamedays))
+
+        plan = []
+        gameday_index = 0
+        for round_index, entries in enumerate(ordered_rounds, start=1):
+            for chunk in self._split_round_entries(entries, chunk_counts[round_index - 1]):
+                plan.append({
+                    "round_number": round_index,
+                    "gameday": stage_gamedays[gameday_index],
+                    "entries": chunk,
+                })
+                gameday_index += 1
+
+        return plan
+
     def _check_duplicate_pairing_on_gameday(self, Match, gameday, home, away):
         if not gameday or home.category != away.category:
             return
@@ -248,11 +303,11 @@ class RoundRobinService(models.AbstractModel):
                     "required": len(rounds),
                 })
 
-            for r_idx, round_pairs in enumerate(rounds):
-                gameday = stage_gamedays[r_idx]
-                ordered = self._get_ordered_round_entries(round_pairs)
+            for assignment in self._get_stage_gameday_plan(rounds, stage_gamedays):
+                gameday = assignment["gameday"]
+                ordered = assignment["entries"]
                 round_base = gameday.start_datetime or False
-                round_number = r_idx + 1
+                round_number = assignment["round_number"]
 
                 for m_idx, entry in enumerate(ordered):
                     home = entry["home"]

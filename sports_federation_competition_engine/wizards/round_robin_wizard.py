@@ -80,6 +80,19 @@ class RoundRobinWizard(models.TransientModel):
             "total_matches": total_matches,
         }
 
+    def _get_stage_gameday_usage(self, round_stats):
+        self.ensure_one()
+        available = self.stage_gameday_count
+        required_rounds = round_stats["total_rounds"]
+        max_usable = round_stats["total_matches"]
+        used = min(available, max_usable)
+        return {
+            "available": available,
+            "required_rounds": required_rounds,
+            "used": used,
+            "max_usable": max_usable,
+        }
+
     def _get_stage_gamedays(self):
         self.ensure_one()
         Gameday = self.env.get("federation.gameday")
@@ -133,20 +146,40 @@ class RoundRobinWizard(models.TransientModel):
                 )
                 continue
 
-            if wiz.stage_gameday_count < stats["total_rounds"]:
+            usage = wiz._get_stage_gameday_usage(stats)
+
+            if usage["available"] < usage["required_rounds"]:
                 wiz.summary = summary + " " + _(
                     "This stage has %(available)s gamedays, but %(required)s rounds will be generated. Add more gamedays or disable Use Existing Stage Gamedays."
                 ) % {
-                    "available": wiz.stage_gameday_count,
-                    "required": stats["total_rounds"],
+                    "available": usage["available"],
+                    "required": usage["required_rounds"],
+                }
+                continue
+
+            if usage["used"] <= usage["required_rounds"]:
+                wiz.summary = summary + " " + _(
+                    "The generated rounds will use %(used)s of %(available)s stage gamedays in sequence order."
+                ) % {
+                    "used": usage["used"],
+                    "available": usage["available"],
+                }
+                continue
+
+            if usage["used"] == usage["available"]:
+                wiz.summary = summary + " " + _(
+                    "The generated schedule will use all %(available)s stage gamedays by splitting some rounds across consecutive gamedays."
+                ) % {
+                    "available": usage["available"],
                 }
                 continue
 
             wiz.summary = summary + " " + _(
-                "The generated rounds will use %(required)s of %(available)s stage gamedays in sequence order."
+                "The generated schedule can use %(used)s of %(available)s stage gamedays. The remaining gamedays stay unused because only %(matches)s matches are available to distribute."
             ) % {
-                "required": stats["total_rounds"],
-                "available": wiz.stage_gameday_count,
+                "used": usage["used"],
+                "available": usage["available"],
+                "matches": stats["total_matches"],
             }
 
     def _get_participants(self):

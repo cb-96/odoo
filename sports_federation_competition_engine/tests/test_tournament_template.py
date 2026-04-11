@@ -99,6 +99,24 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
         with self.assertRaises(UserError):
             wizard.action_generate()
 
+    def test_round_robin_wizard_rejects_stage_gamedays_without_venues(self):
+        if self.env.get("federation.gameday") is not None:
+            self.skipTest("venues module is installed; integration is covered elsewhere.")
+
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Wizard Gameday Rule Set",
+            "code": "WGRS",
+        })
+        self.tournament.rule_set_id = rule_set.id
+        wizard = self.env["federation.round.robin.wizard"].create({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.stage.id,
+            "use_stage_gamedays": True,
+        })
+
+        with self.assertRaises(UserError):
+            wizard.action_generate()
+
     def test_knockout_wizard_requires_rule_set(self):
         wizard = self.env["federation.knockout.wizard"].create({
             "tournament_id": self.tournament.id,

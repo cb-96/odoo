@@ -30,6 +30,20 @@ class RoundRobinWizard(models.TransientModel):
         string="Round Type", default="single", required=True
     )
     rounds_count = fields.Integer(string="Full Cycles (repeats)", default=1)
+    has_stage_gameday_support = fields.Boolean(
+        string="Has Stage Gameday Support",
+        compute="_compute_stage_gameday_support",
+        store=False,
+    )
+    stage_gameday_count = fields.Integer(
+        string="Stage Gamedays",
+        compute="_compute_stage_gameday_support",
+        store=False,
+    )
+    use_stage_gamedays = fields.Boolean(
+        string="Use Existing Stage Gamedays",
+        default=False,
+    )
     schedule_by_round = fields.Boolean(string="Schedule By Round", default=False)
     round_interval_hours = fields.Integer(string="Round Interval (hours)", default=24)
     start_datetime = fields.Datetime(string="Start Date/Time")
@@ -39,8 +53,54 @@ class RoundRobinWizard(models.TransientModel):
 
     summary = fields.Text(string="Summary", compute="_compute_summary", store=False)
 
-    @api.depends("tournament_id", "stage_id", "group_id", "use_all_participants",
-                 "participant_ids", "round_type")
+    @api.depends("stage_id")
+    def _compute_stage_gameday_support(self):
+        Gameday = self.env.get("federation.gameday")
+        has_support = Gameday is not None
+        for wiz in self:
+            wiz.has_stage_gameday_support = has_support
+            if has_support and wiz.stage_id:
+                wiz.stage_gameday_count = Gameday.search_count([
+                    ("stage_id", "=", wiz.stage_id.id),
+                ])
+            else:
+                wiz.stage_gameday_count = 0
+
+    def _get_round_stats(self, participant_count):
+        self.ensure_one()
+        base_rounds = participant_count - 1 if participant_count % 2 == 0 else participant_count
+        rounds_per_cycle = base_rounds * (2 if self.round_type == "double" else 1)
+        total_rounds = rounds_per_cycle * (self.rounds_count or 1)
+        matches_per_round = participant_count // 2
+        total_matches = matches_per_round * total_rounds
+        return {
+            "base_rounds": base_rounds,
+            "total_rounds": total_rounds,
+            "matches_per_round": matches_per_round,
+            "total_matches": total_matches,
+        }
+
+    def _get_stage_gamedays(self):
+        self.ensure_one()
+        Gameday = self.env.get("federation.gameday")
+        if Gameday is None or not self.stage_id:
+            return False
+        return Gameday.search(
+            [("stage_id", "=", self.stage_id.id)],
+            order="sequence asc, id asc",
+        )
+
+    @api.depends(
+        "tournament_id",
+        "stage_id",
+        "group_id",
+        "use_all_participants",
+        "participant_ids",
+        "round_type",
+        "rounds_count",
+        "use_stage_gamedays",
+        "stage_gameday_count",
+    )
     def _compute_summary(self):
         for wiz in self:
             parts = wiz._get_participants()
@@ -52,16 +112,42 @@ class RoundRobinWizard(models.TransientModel):
             if invalid_participants:
                 wiz.summary = wiz._get_participant_requirement_message(parts)
                 continue
-            rounds = n - 1 if n % 2 == 0 else n
-            matches_per_round = n // 2
-            per_cycle = rounds * matches_per_round
-            if wiz.round_type == "double":
-                per_cycle *= 2
-            total = per_cycle * (wiz.rounds_count or 1)
-            wiz.summary = (
-                f"{n} participants, {rounds} rounds, "
-                f"{matches_per_round} matches/round, {total} total matches."
+            stats = wiz._get_round_stats(n)
+            summary = (
+                f"{n} participants, {stats['total_rounds']} rounds, "
+                f"{stats['matches_per_round']} matches/round, {stats['total_matches']} total matches."
             )
+            if not wiz.use_stage_gamedays:
+                wiz.summary = summary
+                continue
+
+            if not wiz.has_stage_gameday_support:
+                wiz.summary = summary + " " + _(
+                    "Install the venues module to use existing stage gamedays."
+                )
+                continue
+
+            if not wiz.stage_id:
+                wiz.summary = summary + " " + _(
+                    "Select a stage to use its existing gamedays."
+                )
+                continue
+
+            if wiz.stage_gameday_count < stats["total_rounds"]:
+                wiz.summary = summary + " " + _(
+                    "This stage has %(available)s gamedays, but %(required)s rounds will be generated. Add more gamedays or disable Use Existing Stage Gamedays."
+                ) % {
+                    "available": wiz.stage_gameday_count,
+                    "required": stats["total_rounds"],
+                }
+                continue
+
+            wiz.summary = summary + " " + _(
+                "The generated rounds will use %(required)s of %(available)s stage gamedays in sequence order."
+            ) % {
+                "required": stats["total_rounds"],
+                "available": wiz.stage_gameday_count,
+            }
 
     def _get_participants(self):
         self.ensure_one()
@@ -126,6 +212,7 @@ class RoundRobinWizard(models.TransientModel):
             "start_datetime": self.start_datetime,
             "interval_hours": self.interval_hours,
             "rounds_count": self.rounds_count,
+            "use_stage_gamedays": self.use_stage_gamedays,
             "schedule_by_round": self.schedule_by_round,
             "round_interval_hours": self.round_interval_hours,
             "venue": self.venue or "",
@@ -166,3 +253,24 @@ class RoundRobinWizard(models.TransientModel):
         invalid_participants = participants.filtered(lambda participant: participant.state != "confirmed")
         if invalid_participants:
             raise UserError(self._get_participant_requirement_message(participants))
+
+        if self.use_stage_gamedays:
+            if not self.has_stage_gameday_support:
+                raise UserError(_(
+                    "Existing stage gamedays require the venues module to be installed."
+                ))
+
+            stage_gamedays = self._get_stage_gamedays()
+            if not stage_gamedays:
+                raise UserError(_(
+                    "No gamedays were found on the selected stage. Add stage gamedays or disable Use Existing Stage Gamedays."
+                ))
+
+            required_rounds = self._get_round_stats(len(participants))["total_rounds"]
+            if len(stage_gamedays) < required_rounds:
+                raise UserError(_(
+                    "This stage has %(available)s gamedays, but %(required)s rounds will be generated. Add more stage gamedays or disable Use Existing Stage Gamedays."
+                ) % {
+                    "available": len(stage_gamedays),
+                    "required": required_rounds,
+                })

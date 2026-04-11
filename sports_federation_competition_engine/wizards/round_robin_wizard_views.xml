@@ -16,23 +16,31 @@
                         <field name="rounds_count"/>
                         <field name="use_all_participants"/>
                         <field name="participant_ids" invisible="use_all_participants"/>
-                        <field name="schedule_by_round"/>
+                        <field name="has_stage_gameday_support" invisible="1"/>
+                        <field name="stage_gameday_count" readonly="1"
+                               invisible="not use_stage_gamedays or not stage_id or not has_stage_gameday_support"/>
+                        <field name="use_stage_gamedays"
+                               invisible="not stage_id or not has_stage_gameday_support"/>
+                        <field name="schedule_by_round" invisible="use_stage_gamedays"/>
                     </group>
                 </group>
                 <group>
                     <group>
-                        <field name="start_datetime"/>
+                        <field name="start_datetime" invisible="use_stage_gamedays"/>
                         <field name="interval_hours"/>
-                        <field name="round_interval_hours"/>
+                        <field name="round_interval_hours" invisible="use_stage_gamedays"/>
                     </group>
                     <group>
-                        <field name="venue"/>
+                        <field name="venue" invisible="use_stage_gamedays"/>
                         <field name="overwrite"/>
                     </group>
                 </group>
+                <div class="alert alert-info" role="status" invisible="not use_stage_gamedays">
+                    Each generated round will be assigned to the next existing gameday on the selected stage, ordered by sequence.
+                </div>
                 <separator string="Preview"/>
                 <field name="summary" readonly="1"/>
-                <div class="alert alert-warning" invisible="not overwrite">
+                <div class="alert alert-warning" role="status" invisible="not overwrite">
                     Overwrite will replace existing matches for the selected stage or group.
                 </div>
                 <footer>

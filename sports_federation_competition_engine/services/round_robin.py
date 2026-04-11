@@ -1,5 +1,4 @@
 import logging
-import itertools
 from odoo import models, _
 from odoo.exceptions import UserError
 
@@ -21,6 +20,7 @@ class RoundRobinService(models.AbstractModel):
             options: dict with keys:
                 - double_round: bool
                 - rounds_count: int (how many full cycles to repeat)
+                - use_stage_gamedays: bool (if True, assign each round to an existing stage gameday)
                 - schedule_by_round: bool (if True, schedule each round as a time block)
                 - round_interval_hours: int (hours between rounds when scheduling by round)
                 - start_datetime: datetime or False
@@ -113,11 +113,97 @@ class RoundRobinService(models.AbstractModel):
 
         return rounds_list
 
+    def _get_stage_gamedays(self, stage):
+        Gameday = self.env.get("federation.gameday")
+        if Gameday is None:
+            return None
+        return Gameday.search(
+            [("stage_id", "=", stage.id)],
+            order="sequence asc, id asc",
+        )
+
+    def _ensure_gameday_scope(self, gameday, tournament, stage):
+        if not gameday or not tournament or gameday.tournament_id:
+            return gameday
+
+        vals = {"tournament_id": tournament.id}
+        if stage and not gameday.stage_id:
+            vals["stage_id"] = stage.id
+        if not gameday.sequence:
+            vals["sequence"] = self.env["federation.gameday"]._next_tournament_sequence(
+                tournament.id
+            )
+
+        try:
+            gameday.write(vals)
+        except Exception:
+            # If another process scoped the gameday concurrently, reload it.
+            gameday = self.env["federation.gameday"].browse(gameday.id)
+
+        return gameday
+
+    def _get_ordered_round_entries(self, round_pairs):
+        entries = []
+        for home, away in round_pairs:
+            if not home or not away:
+                continue
+            h_gender = getattr(home, "gender", None)
+            a_gender = getattr(away, "gender", None)
+            if h_gender == "male" and a_gender == "male":
+                gender = "male"
+            elif h_gender == "female" and a_gender == "female":
+                gender = "female"
+            else:
+                gender = "mixed"
+            entries.append({"home": home, "away": away, "gender": gender})
+
+        male = [entry for entry in entries if entry["gender"] == "male"]
+        female = [entry for entry in entries if entry["gender"] == "female"]
+        mixed = [entry for entry in entries if entry["gender"] not in ("male", "female")]
+
+        ordered = []
+        last = None
+        while male or female:
+            if last != "male" and male:
+                ordered.append(male.pop(0))
+                last = "male"
+            elif last != "female" and female:
+                ordered.append(female.pop(0))
+                last = "female"
+            elif male:
+                ordered.append(male.pop(0))
+                last = "male"
+            elif female:
+                ordered.append(female.pop(0))
+                last = "female"
+        ordered.extend(mixed)
+        return ordered
+
+    def _check_duplicate_pairing_on_gameday(self, Match, gameday, home, away):
+        if not gameday or home.category != away.category:
+            return
+
+        dup_count = Match.search_count([
+            ("gameday_id", "=", gameday.id),
+            ("home_team_id", "=", home.id),
+            ("away_team_id", "=", away.id),
+        ]) + Match.search_count([
+            ("gameday_id", "=", gameday.id),
+            ("home_team_id", "=", away.id),
+            ("away_team_id", "=", home.id),
+        ])
+        if dup_count:
+            raise UserError(_(
+                "Duplicate pairing for same category on gameday %s: %s vs %s"
+            ) % (gameday.name, home.name, away.name))
+
     def _create_matches(self, tournament, stage, rounds, options):
         """
         Create `federation.match` records from rounds (list of rounds -> list of pairs).
 
         Scheduling behavior depends on options:
+        - If `use_stage_gamedays` is True, each generated round is assigned to the
+          next existing gameday on the selected stage, ordered by sequence.
         - If `schedule_by_round` is True and `start_datetime` is set, each round is
           scheduled at `start_datetime + round_index * round_interval_hours` and
           intra-round spacing uses `interval_hours`.
@@ -130,6 +216,7 @@ class RoundRobinService(models.AbstractModel):
         round_interval = options.get("round_interval_hours")
         venue = options.get("venue", "")
         group = options.get("group")
+        use_stage_gamedays = bool(options.get("use_stage_gamedays"))
         schedule_by_round = bool(options.get("schedule_by_round"))
 
         created = []
@@ -141,7 +228,54 @@ class RoundRobinService(models.AbstractModel):
         if venue and Venue is not None:
             venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
-        if schedule_by_round and start_dt:
+        if use_stage_gamedays:
+            from datetime import timedelta
+
+            stage_gamedays = self._get_stage_gamedays(stage)
+            if stage_gamedays is None:
+                raise UserError(_(
+                    "Existing stage gamedays require the venues module to be installed."
+                ))
+            if not stage_gamedays:
+                raise UserError(_(
+                    "No gamedays were found on the selected stage. Add stage gamedays or disable Use Existing Stage Gamedays."
+                ))
+            if len(stage_gamedays) < len(rounds):
+                raise UserError(_(
+                    "This stage has %(available)s gamedays, but %(required)s rounds will be generated. Add more stage gamedays or disable Use Existing Stage Gamedays."
+                ) % {
+                    "available": len(stage_gamedays),
+                    "required": len(rounds),
+                })
+
+            for r_idx, round_pairs in enumerate(rounds):
+                gameday = stage_gamedays[r_idx]
+                ordered = self._get_ordered_round_entries(round_pairs)
+                round_base = gameday.start_datetime or False
+
+                for m_idx, entry in enumerate(ordered):
+                    home = entry["home"]
+                    away = entry["away"]
+                    self._check_duplicate_pairing_on_gameday(Match, gameday, home, away)
+
+                    vals = {
+                        "tournament_id": tournament.id,
+                        "stage_id": stage.id,
+                        "home_team_id": home.id,
+                        "away_team_id": away.id,
+                        "gameday_id": gameday.id,
+                        "state": "draft",
+                    }
+                    if group:
+                        vals["group_id"] = group.id
+                    if round_base:
+                        if interval:
+                            vals["date_scheduled"] = round_base + timedelta(hours=m_idx * interval)
+                        else:
+                            vals["date_scheduled"] = round_base
+
+                    created.append(Match.create(vals))
+        elif schedule_by_round and start_dt:
             # default round interval to 24h if not set
             if not round_interval:
                 round_interval = interval or 24
@@ -153,63 +287,15 @@ class RoundRobinService(models.AbstractModel):
                 gameday = None
                 if venue_rec and Gameday is not None:
                     gameday = Gameday.find_or_create(venue_rec.id, round_base)
+                    gameday = self._ensure_gameday_scope(gameday, tournament, stage)
 
-                # Build annotated entries so we can alternate male/female matches
-                entries = []
-                for (home, away) in round_pairs:
-                    if not home or not away:
-                        continue
-                    h_gender = getattr(home, "gender", None)
-                    a_gender = getattr(away, "gender", None)
-                    if h_gender == "male" and a_gender == "male":
-                        g = "male"
-                    elif h_gender == "female" and a_gender == "female":
-                        g = "female"
-                    else:
-                        g = "mixed"
-                    entries.append({"home": home, "away": away, "gender": g})
-
-                # Partition and weave male/female entries to alternate genders for rest
-                male = [e for e in entries if e["gender"] == "male"]
-                female = [e for e in entries if e["gender"] == "female"]
-                mixed = [e for e in entries if e["gender"] not in ("male", "female")]
-
-                ordered = []
-                last = None
-                while male or female:
-                    if last != "male" and male:
-                        ordered.append(male.pop(0))
-                        last = "male"
-                    elif last != "female" and female:
-                        ordered.append(female.pop(0))
-                        last = "female"
-                    elif male:
-                        ordered.append(male.pop(0))
-                        last = "male"
-                    elif female:
-                        ordered.append(female.pop(0))
-                        last = "female"
-                ordered.extend(mixed)
+                ordered = self._get_ordered_round_entries(round_pairs)
 
                 for m_idx, entry in enumerate(ordered):
                     home = entry["home"]
                     away = entry["away"]
 
-                    # Prevent duplicate same-category pairings on the same gameday
-                    if gameday and home.category == away.category:
-                        dup_count = Match.search_count([
-                            ("gameday_id", "=", gameday.id),
-                            ("home_team_id", "=", home.id),
-                            ("away_team_id", "=", away.id),
-                        ]) + Match.search_count([
-                            ("gameday_id", "=", gameday.id),
-                            ("home_team_id", "=", away.id),
-                            ("away_team_id", "=", home.id),
-                        ])
-                        if dup_count:
-                            raise UserError(_(
-                                "Duplicate pairing for same category on gameday %s: %s vs %s"
-                            ) % (gameday.name, home.name, away.name))
+                    self._check_duplicate_pairing_on_gameday(Match, gameday, home, away)
 
                     vals = {
                         "tournament_id": tournament.id,

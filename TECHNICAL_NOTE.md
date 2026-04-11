@@ -120,7 +120,7 @@ Several new models and scheduling behaviours were added to support more realisti
 
 - Full knockout bracket generation — the knockout service now constructs a full bracket tree (all rounds) rather than only first-round matches. Placeholder matches for later rounds are created and linked to their source matches (by `source_match_*`); when a match is completed the system will auto-populate winners/losers into the next round using the `action_done()` / `_advance_bracket_teams()` logic.
 
-- Round-robin enhancements — the round-robin service now returns explicit per-round pairings, supports `rounds_count` (repeat full cycles), `schedule_by_round` (create a `gameday` per round) and attempts to alternate `male` / `female` fixtures within a round to provide rest. When a `venue` string matches a `federation.venue` record the scheduler will attach `venue_id` and create/find the `gameday` record.
+- Round-robin enhancements — the round-robin service now returns explicit per-round pairings, supports `rounds_count` (repeat full cycles), `schedule_by_round` (create a `gameday` per round), `use_stage_gamedays` (reuse planned stage gamedays in sequence order), and attempts to alternate `male` / `female` fixtures within a round to provide rest. When a `venue` string matches a `federation.venue` record the scheduler will attach `venue_id` and create/find the `gameday` record.
 
 Implementation notes
 

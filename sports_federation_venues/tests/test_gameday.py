@@ -431,3 +431,88 @@ class TestGameday(TransactionCase):
             all(len(group) == 2 for group in gameday_groups.values()),
             "Each round should reuse one gameday for its two matches.",
         )
+
+    def test_round_robin_wizard_uses_existing_stage_gamedays(self):
+        """The wizard can assign each generated round to an existing stage gameday."""
+        has_engine = self.env.get("federation.round.robin.wizard") is not None
+        if not has_engine:
+            self.skipTest("sports_federation_competition_engine not installed.")
+
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Existing Gameday Rule Set",
+            "code": "EGRS",
+        })
+        self.tournament.rule_set_id = rule_set.id
+        self.tournament.state = "open"
+
+        team_c = self.env["federation.team"].create({
+            "name": "GD Existing C",
+            "club_id": self.club.id,
+            "code": "GEC",
+            "category": "senior",
+        })
+        team_d = self.env["federation.team"].create({
+            "name": "GD Existing D",
+            "club_id": self.club.id,
+            "code": "GED",
+            "category": "senior",
+        })
+
+        participants = self.env["federation.tournament.participant"]
+        for index, team in enumerate(
+            [self.team_senior_a, self.team_senior_b, team_c, team_d],
+            start=1,
+        ):
+            participants |= self.env["federation.tournament.participant"].create({
+                "tournament_id": self.tournament.id,
+                "stage_id": self.group_stage.id,
+                "team_id": team.id,
+                "state": "confirmed",
+                "seed": index,
+            })
+
+        gameday_dates = [
+            datetime(2024, 12, 1, 9, 0),
+            datetime(2024, 12, 8, 9, 0),
+            datetime(2024, 12, 15, 9, 0),
+        ]
+        stage_gamedays = self.env["federation.gameday"]
+        for sequence, start_dt in enumerate(gameday_dates, start=1):
+            stage_gamedays |= self.env["federation.gameday"].create({
+                "tournament_id": self.tournament.id,
+                "stage_id": self.group_stage.id,
+                "sequence": sequence,
+                "start_datetime": start_dt,
+                "venue_id": self.venue.id,
+            })
+
+        wizard = self.env["federation.round.robin.wizard"].create({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.group_stage.id,
+            "use_all_participants": True,
+            "round_type": "single",
+            "rounds_count": 1,
+            "use_stage_gamedays": True,
+            "interval_hours": 2,
+            "overwrite": True,
+        })
+
+        wizard.action_generate()
+
+        matches = self.env["federation.match"].search([
+            ("tournament_id", "=", self.tournament.id),
+            ("stage_id", "=", self.group_stage.id),
+        ])
+        self.assertEqual(len(matches), 6)
+
+        used_gamedays = matches.mapped("gameday_id").sorted("sequence")
+        self.assertEqual(used_gamedays.ids, stage_gamedays.ids)
+        self.assertTrue(all(match.venue_id == self.venue for match in matches))
+
+        for gameday, start_dt in zip(stage_gamedays, gameday_dates):
+            gameday_matches = matches.filtered(lambda match: match.gameday_id == gameday)
+            self.assertEqual(len(gameday_matches), 2)
+            self.assertEqual(
+                sorted(gameday_matches.mapped("date_scheduled")),
+                [start_dt, start_dt + timedelta(hours=2)],
+            )

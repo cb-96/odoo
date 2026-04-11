@@ -126,6 +126,14 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
        - The round scheduler will attempt to alternate `male` / `female` fixtures
           inside each round to provide rest; this is a best-effort interleaving and
           does not change seeding or pairings.
+    - Toggle `Use Existing Stage Gamedays` to assign each generated round to the
+       next gameday already linked to the selected stage, ordered by sequence.
+       This is the planning-first workflow for tournaments that define matchdays
+       up front.
+         - The stage must already have at least as many gamedays as the generated
+            round-robin schedule needs.
+         - When a selected gameday already has a start date/time, generated matches
+            inherit that slot and use `Interval (hours)` for spacing within the round.
    - Set a default `Venue` and enable `Overwrite Existing` to replace prior matches.
 4. Preview the generated schedule via the wizard `Summary` (shows total matches
    given participants, cycles, and round type). When overwrite is enabled, the

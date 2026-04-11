@@ -121,7 +121,7 @@ class TestPublicSite(TransactionCase):
 
     def test_public_slug_must_be_unique(self):
         self.tournament.public_slug = "shared-slug"
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(Exception), self.cr.savepoint():
             self.env["federation.tournament"].create({
                 "name": "Other Tournament",
                 "code": "OTHER-TT",

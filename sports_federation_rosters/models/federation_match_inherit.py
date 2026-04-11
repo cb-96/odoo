@@ -1,4 +1,5 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class FederationMatch(models.Model):
@@ -26,3 +27,53 @@ class FederationMatch(models.Model):
         action["domain"] = [("match_id", "=", self.id)]
         action["context"] = {"default_match_id": self.id}
         return action
+
+    def _get_team_roster_deadline_issues(self):
+        self.ensure_one()
+        if (
+            not self.tournament_id
+            or not self.date_scheduled
+            or not (self.home_team_id or self.away_team_id)
+        ):
+            return []
+
+        scheduled_date = fields.Datetime.to_datetime(self.date_scheduled).date()
+        today = fields.Date.context_today(self)
+        if scheduled_date < today:
+            return []
+
+        issues = []
+        for team in (self.home_team_id | self.away_team_id):
+            assessment = team._get_tournament_roster_assessment(
+                self.tournament_id,
+                today=today,
+            )
+            if assessment["blocking_issues"]:
+                issues.append(
+                    _("Team '%(team)s': %(issues)s")
+                    % {
+                        "team": team.display_name,
+                        "issues": "; ".join(assessment["blocking_issues"]),
+                    }
+                )
+        return issues
+
+    @api.constrains(
+        "tournament_id",
+        "home_team_id",
+        "away_team_id",
+        "date_scheduled",
+        "state",
+    )
+    def _check_team_roster_deadlines(self):
+        for record in self:
+            if record.state == "cancelled":
+                continue
+            issues = record._get_team_roster_deadline_issues()
+            if issues:
+                raise ValidationError(
+                    _(
+                        "Matches cannot be scheduled on or after the roster deadline without an active ready team roster:\n- %(issues)s"
+                    )
+                    % {"issues": "\n- ".join(issues)}
+                )

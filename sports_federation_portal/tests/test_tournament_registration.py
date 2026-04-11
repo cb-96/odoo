@@ -59,13 +59,13 @@ class TestTournamentRegistration(TransactionCase):
             "name": "Portal Registration User A",
             "login": "portal.registration.a@example.com",
             "email": "portal.registration.a@example.com",
-            "groups_id": [(6, 0, [cls.portal_group.id])],
+            "group_ids": [(6, 0, [cls.portal_group.id])],
         })
         cls.user_b = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Portal Registration User B",
             "login": "portal.registration.b@example.com",
             "email": "portal.registration.b@example.com",
-            "groups_id": [(6, 0, [cls.portal_group.id])],
+            "group_ids": [(6, 0, [cls.portal_group.id])],
         })
         cls.env["federation.club.representative"].create({
             "club_id": cls.club.id,
@@ -140,3 +140,32 @@ class TestTournamentRegistration(TransactionCase):
 
         with self.assertRaises(AccessError):
             other_registration.with_user(self.user_a).write({"notes": "Not allowed"})
+
+    def test_tournament_action_view_registration_requests(self):
+        other_tournament = self.env["federation.tournament"].create({
+            "name": "Other Portal Tournament",
+            "code": "OPT",
+            "season_id": self.season.id,
+            "date_start": "2025-07-01",
+            "gender": "male",
+            "category": "senior",
+        })
+        self.env["federation.tournament.registration"].create({
+            "tournament_id": self.tournament.id,
+            "team_id": self.eligible_team.id,
+        })
+        self.env["federation.tournament.registration"].create({
+            "tournament_id": other_tournament.id,
+            "team_id": self.other_team.id,
+        })
+
+        self.assertEqual(self.tournament.registration_request_count, 1)
+
+        action = self.tournament.action_view_registration_requests()
+
+        self.assertEqual(
+            action["res_model"],
+            "federation.tournament.registration",
+        )
+        self.assertEqual(action["domain"], [("tournament_id", "=", self.tournament.id)])
+        self.assertEqual(action["context"], {"default_tournament_id": self.tournament.id})

@@ -11,7 +11,7 @@
                 <field name="readiness_status"/>
                 <filter name="blocked" string="Blocked" domain="[('readiness_status', '=', 'blocked')]"/>
                 <filter name="attention" string="Attention" domain="[('readiness_status', '=', 'attention')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="group_status" string="Status" context="{'group_by': 'readiness_status'}"/>
                 </group>
@@ -77,7 +77,7 @@
                 <field name="reconciliation_status"/>
                 <filter name="blocked" string="Blocked" domain="[('reconciliation_status', '=', 'blocked')]"/>
                 <filter name="attention" string="Attention" domain="[('reconciliation_status', '=', 'attention')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="group_status" string="Status" context="{'group_by': 'reconciliation_status'}"/>
                 </group>
@@ -136,7 +136,7 @@
                 <field name="counterparty_display"/>
                 <filter name="needs_follow_up" string="Needs Follow-up" domain="[('needs_follow_up', '=', True)]"/>
                 <filter name="awaiting_reference" string="Awaiting Reference" domain="[('follow_up_status', '=', 'awaiting_reference')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
                     <filter name="group_follow_up" string="Follow-up Status" context="{'group_by': 'follow_up_status'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>

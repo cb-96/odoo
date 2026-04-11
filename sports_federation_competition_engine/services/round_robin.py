@@ -135,10 +135,10 @@ class RoundRobinService(models.AbstractModel):
         created = []
 
         # Try to resolve a venue record if a venue name was provided
-        Venue = self.env["federation.venue"]
-        Gameday = self.env["federation.gameday"]
+        Venue = self.env.get("federation.venue")
+        Gameday = self.env.get("federation.gameday")
         venue_rec = None
-        if venue:
+        if venue and Venue is not None:
             venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
         if schedule_by_round and start_dt:
@@ -151,7 +151,7 @@ class RoundRobinService(models.AbstractModel):
 
                 # If we have a venue record, create/find a gameday for this round
                 gameday = None
-                if venue_rec:
+                if venue_rec and Gameday is not None:
                     gameday = Gameday.find_or_create(venue_rec.id, round_base)
 
                 # Build annotated entries so we can alternate male/female matches
@@ -247,12 +247,9 @@ class RoundRobinService(models.AbstractModel):
                     }
                     if group:
                         vals["group_id"] = group.id
-                    if venue:
+                    if venue and Venue is not None:
                         # try to attach venue record when possible
-                        try:
-                            venue_rec = Venue.search([("name", "=", venue)], limit=1)
-                        except Exception:
-                            venue_rec = None
+                        venue_rec = Venue.search([("name", "=", venue)], limit=1)
                         if venue_rec:
                             vals["venue_id"] = venue_rec.id
                     if start_dt and interval:

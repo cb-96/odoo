@@ -6,9 +6,66 @@
         <field name="model">federation.tournament</field>
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_generate_planned_gamedays"
+                        string="Generate Gamedays"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="planned_gameday_total &lt;= 0 or planned_gameday_total &lt;= gameday_count"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_gamedays" type="object"
+                        class="oe_stat_button" icon="fa-calendar">
+                    <field name="gameday_count" widget="statinfo" string="Gamedays"/>
+                </button>
+            </xpath>
             <xpath expr="//field[@name='rule_set_id']" position="after">
                 <field name="venue_id"/>
                 <field name="venue_notes"/>
+                <field name="planned_gameday_total"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Gamedays" name="gamedays">
+                    <field name="gameday_ids" context="{'default_tournament_id': id}">
+                        <list editable="bottom" default_order="sequence asc, id asc">
+                            <field name="sequence"/>
+                            <field name="name" readonly="1"/>
+                            <field name="stage_id"/>
+                            <field name="start_datetime"/>
+                            <field name="venue_id"/>
+                            <field name="playing_area_id" optional="hide"/>
+                            <field name="match_count" readonly="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_federation_tournament_stage_form_inherit_venue" model="ir.ui.view">
+        <field name="name">federation.tournament.stage.form.inherit.venue</field>
+        <field name="model">federation.tournament.stage</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_gamedays" type="object"
+                        class="oe_stat_button" icon="fa-calendar">
+                    <field name="gameday_count" widget="statinfo" string="Gamedays"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='notes']" position="after">
+                <separator string="Gamedays"/>
+                <field name="gameday_ids"
+                       context="{'default_tournament_id': tournament_id, 'default_stage_id': id}">
+                    <list editable="bottom" default_order="sequence asc, id asc">
+                        <field name="sequence"/>
+                        <field name="name" readonly="1"/>
+                        <field name="start_datetime"/>
+                        <field name="venue_id"/>
+                        <field name="playing_area_id" optional="hide"/>
+                        <field name="match_count" readonly="1"/>
+                    </list>
+                </field>
             </xpath>
         </field>
     </record>

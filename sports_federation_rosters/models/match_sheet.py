@@ -67,10 +67,12 @@ class FederationMatchSheet(models.Model):
     ready_for_submission = fields.Boolean(
         compute="_compute_readiness",
         string="Ready For Submission",
+        store=True,
     )
     readiness_feedback = fields.Text(
         compute="_compute_readiness",
         string="Readiness Feedback",
+        store=True,
     )
     substitution_count = fields.Integer(
         compute="_compute_substitution_count",
@@ -178,7 +180,7 @@ class FederationMatchSheet(models.Model):
         if self.roster_id:
             return self.roster_id._get_effective_rule_set()
         service = self.env.get("federation.eligibility.service")
-        if service:
+        if service is not None:
             return service._resolve_rule_set(self.match_id)
         return self.env["federation.rule.set"]
 
@@ -341,12 +343,12 @@ class FederationMatchSheetLine(models.Model):
     eligible = fields.Boolean(
         compute="_compute_eligible",
         string="Eligible",
-        store=False,
+        store=True,
     )
     eligibility_feedback = fields.Text(
         compute="_compute_eligible",
         string="Eligibility Feedback",
-        store=False,
+        store=True,
     )
 
     _unique_match_sheet_player = models.Constraint(
@@ -496,8 +498,11 @@ class FederationMatchSheetLine(models.Model):
     @api.constrains("entered_minute", "left_minute", "is_starter", "is_substitute")
     def _check_substitution_governance(self):
         for record in self:
-            if record.entered_minute is not False and record.entered_minute is not None:
-                if record.entered_minute <= 0:
+            entered_minute = record.entered_minute or False
+            left_minute = record.left_minute or False
+
+            if entered_minute:
+                if entered_minute <= 0:
                     raise ValidationError(
                         _("Entered minute must be a positive number.")
                     )
@@ -505,19 +510,19 @@ class FederationMatchSheetLine(models.Model):
                     raise ValidationError(
                         _("Only substitute lines can record an entered minute.")
                     )
-            if record.left_minute is not False and record.left_minute is not None:
-                if record.left_minute <= 0:
+            if left_minute:
+                if left_minute <= 0:
                     raise ValidationError(
                         _("Left minute must be a positive number.")
                     )
-                if not (record.is_starter or record.entered_minute):
+                if not (record.is_starter or entered_minute):
                     raise ValidationError(
                         _(
                             "Only starters or players who entered from the bench can record a left minute."
                         )
                     )
-            if record.entered_minute and record.left_minute:
-                if record.left_minute <= record.entered_minute:
+            if entered_minute and left_minute:
+                if left_minute <= entered_minute:
                     raise ValidationError(
                         _("A player cannot leave before or at the same minute they entered.")
                     )
@@ -565,7 +570,7 @@ class FederationMatchSheetLine(models.Model):
 
         service = self.env.get("federation.eligibility.service")
         rule_set = sheet._get_effective_rule_set()
-        if service and rule_set:
+        if service is not None and rule_set:
             context = {
                 "match_date": reference_date,
                 "tournament_id": sheet.match_id.tournament_id.id if sheet.match_id.tournament_id else None,

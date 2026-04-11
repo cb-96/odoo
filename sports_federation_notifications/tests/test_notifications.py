@@ -89,7 +89,7 @@ class TestNotifications(TransactionCase):
             "name": "Notification Portal User",
             "login": "notification.portal.user@example.com",
             "email": "notification.portal.user@example.com",
-            "groups_id": [(6, 0, [portal_group.id])],
+            "group_ids": [(6, 0, [portal_group.id])],
         })
         self.env["federation.club.representative"].create({
             "club_id": self.club.id,
@@ -102,8 +102,8 @@ class TestNotifications(TransactionCase):
             "season_id": season.id,
             "team_id": team.id,
         })
-        registration.action_submit()
-        registration.action_confirm()
+        registration.with_user(user).action_submit()
+        registration.with_user(user).action_confirm()
 
         log = self.env["federation.notification.log"].search(
             [
@@ -142,7 +142,7 @@ class TestNotifications(TransactionCase):
             "name": "Rejected Notification User",
             "login": "rejected.notification.user@example.com",
             "email": "rejected.notification.user@example.com",
-            "groups_id": [(6, 0, [portal_group.id])],
+            "group_ids": [(6, 0, [portal_group.id])],
         })
         self.env["federation.club.representative"].create({
             "club_id": self.club.id,
@@ -155,8 +155,8 @@ class TestNotifications(TransactionCase):
             "season_id": season.id,
             "team_id": team.id,
         })
-        registration.action_submit()
-        registration.action_reject("Missing supporting document")
+        registration.with_user(user).action_submit()
+        registration.with_user(user).action_reject("Missing supporting document")
 
         log = self.env["federation.notification.log"].search(
             [

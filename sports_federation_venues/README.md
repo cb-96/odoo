@@ -1,13 +1,16 @@
 # Sports Federation Venues
 
-Venue and playing-area management. Tracks physical locations where matches are
-held, including address, capacity, facilities, and individual playing surfaces.
+Venue, playing-area, and gameday planning management. Tracks physical locations
+where matches are held, including address, capacity, facilities, individual
+playing surfaces, and tournament/stage gameday slots.
 
 ## Purpose
 
 Centralises venue information so that tournaments and matches can reference
 structured location data rather than free-text fields. Playing areas allow a single
-venue (e.g. a sports complex) to contain multiple usable surfaces.
+venue (e.g. a sports complex) to contain multiple usable surfaces. Gamedays can
+also be planned before venue/date details are fixed, then assigned to stages and
+later used by matches.
 
 ## Dependencies
 
@@ -50,16 +53,27 @@ A single playing surface within a venue.
 
 ### Inherited Extensions
 
-- **`federation.tournament`** gains a `venues` Many2many field.
-- **`federation.match`** gains a `venue_id` Many2one field, replacing the plain
-  text `venue` field with a structured reference.
+- **`federation.tournament`** gains `venue_id`, `venue_notes`, `planned_gameday_total`,
+  and linked `gameday_ids` / `gameday_count` fields.
+- **`federation.tournament.stage`** gains linked `gameday_ids` / `gameday_count`
+  fields so administrators can reserve specific gamedays for each stage.
+- **`federation.match`** gains `venue_id`, `playing_area_id`, and `gameday_id` so
+  each match can later be attached to a planned or operational gameday.
+- **`federation.gameday`** can act as either a planning slot (tournament/stage +
+  sequence, no venue yet) or an operational venue-day bundle (venue + start date).
 
 ## Key Behaviours
 
 1. **Structured addresses** — Venues store full addresses with country reference.
 2. **Multi-area venues** — A sports complex can have several pitches or courts.
-3. **Tournament ↔ Venue link** — Tournaments declare which venues are available;
-   matches reference specific venues.
-4. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
+3. **Tournament gameday planning** — Administrators can declare a planned number
+  of gamedays for a tournament and generate numbered slots up front.
+4. **Stage allocation** — Planned gamedays can be assigned to a specific stage,
+  for example reserving gamedays 1-4 for a round-robin phase and gameday 5 for
+  a knockout phase.
+5. **Match ↔ Gameday consistency** — Assigning a gameday to a match propagates
+  the stage and venue when available and rejects mismatched tournament/stage/
+  venue combinations.
+6. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
   scheduling a match with a venue automatically creates or reuses a draft venue
   booking charge for passthrough settlement.

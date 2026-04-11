@@ -69,6 +69,36 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
         self.assertIn("4 participants", wizard.summary)
         self.assertIn("6 total matches", wizard.summary)
 
+    def test_round_robin_wizard_summary_explains_confirmed_scope_requirement(self):
+        self.participants[:3].write({"state": "registered"})
+        wizard = self.env["federation.round.robin.wizard"].new({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.stage.id,
+            "use_all_participants": True,
+        })
+
+        wizard._compute_summary()
+
+        self.assertIn("confirmed participants", wizard.summary)
+        self.assertIn("Found 1 confirmed", wizard.summary)
+
+    def test_round_robin_wizard_rejects_selected_unconfirmed_participants(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Wizard Rule Set",
+            "code": "WRS",
+        })
+        self.tournament.rule_set_id = rule_set.id
+        self.participants[0].state = "registered"
+        wizard = self.env["federation.round.robin.wizard"].create({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.stage.id,
+            "use_all_participants": False,
+            "participant_ids": [(6, 0, self.participants[:2].ids)],
+        })
+
+        with self.assertRaises(UserError):
+            wizard.action_generate()
+
     def test_knockout_wizard_requires_rule_set(self):
         wizard = self.env["federation.knockout.wizard"].create({
             "tournament_id": self.tournament.id,

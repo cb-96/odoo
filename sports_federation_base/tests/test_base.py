@@ -81,6 +81,9 @@ class TestFederationTeam(TransactionCase):
         self.assertTrue(self.team.id)
         self.assertEqual(self.team.category, "senior")
 
+    def test_team_display_name_includes_gender(self):
+        self.assertEqual(self.team.display_name, "Senior Squad (Men)")
+
     def test_team_code_unique(self):
         with self.assertRaises(Exception):
             self.env["federation.team"].create({

@@ -11,6 +11,7 @@ PROJECT_NAME="${1:-sf_ci}"
 COMPOSE_FILE="${2:-ci/docker-compose.ci.yaml}"
 LOADED_ENV_FILE="${3:-ci/.env}"
 GENERATED_CONF="${4:-ci/odoo-ci.generated.conf}"
+CONTAINER_CONF="/etc/odoo/odoo.conf"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -23,7 +24,7 @@ fi
 
 echo "[CI] Applying integration envs to Odoo ir.config_parameter (if any)" >&2
 
-docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm --env-file "$LOADED_ENV_FILE" ci-odoo odoo shell -c "$GENERATED_CONF" <<'PY'
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm ci-odoo odoo shell -c "$CONTAINER_CONF" <<'PY'
 import os
 
 keys = [

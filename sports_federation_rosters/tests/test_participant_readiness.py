@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase
 
@@ -6,6 +8,10 @@ class TestParticipantReadiness(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.today = date.today()
+        cls.season_start = cls.today - timedelta(days=30)
+        cls.season_end = cls.today + timedelta(days=365)
+        cls.tournament_start = cls.today + timedelta(days=30)
         cls.club = cls.env["federation.club"].create({
             "name": "Participant Ready Club",
             "code": "PRC1",
@@ -18,8 +24,8 @@ class TestParticipantReadiness(TransactionCase):
         cls.season = cls.env["federation.season"].create({
             "name": "Participant Ready Season",
             "code": "PRS1",
-            "date_start": "2025-01-01",
-            "date_end": "2025-12-31",
+            "date_start": cls.season_start.isoformat(),
+            "date_end": cls.season_end.isoformat(),
         })
         cls.rule_set = cls.env["federation.rule.set"].create({
             "name": "Participant Ready Rules",
@@ -35,7 +41,7 @@ class TestParticipantReadiness(TransactionCase):
             "name": "Participant Ready Tournament",
             "code": "PRT-TOUR",
             "season_id": cls.season.id,
-            "date_start": "2025-06-01",
+            "date_start": cls.tournament_start.isoformat(),
             "rule_set_id": cls.rule_set.id,
         })
         cls.player = cls.env["federation.player"].create({
@@ -43,40 +49,80 @@ class TestParticipantReadiness(TransactionCase):
             "last_name": "Player",
             "gender": "male",
         })
+        cls.opponent_team = cls.env["federation.team"].create({
+            "name": "Participant Opponent Team",
+            "club_id": cls.club.id,
+            "code": "PRT2",
+        })
+        cls.opponent_player = cls.env["federation.player"].create({
+            "first_name": "Opponent",
+            "last_name": "Player",
+            "gender": "male",
+        })
 
-    def test_participant_confirm_requires_ready_active_roster(self):
+    def _create_ready_roster(self, team, player, name):
+        roster = self.env["federation.team.roster"].create({
+            "name": name,
+            "team_id": team.id,
+            "season_id": self.season.id,
+            "rule_set_id": self.rule_set.id,
+        })
+        license_record = self.env["federation.player.license"].create({
+            "name": f"LIC-{name.upper().replace(' ', '-')}",
+            "player_id": player.id,
+            "season_id": self.season.id,
+            "club_id": self.club.id,
+            "issue_date": self.season_start.isoformat(),
+            "expiry_date": (self.season_end + timedelta(days=365)).isoformat(),
+            "state": "active",
+        })
+        self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": player.id,
+            "license_id": license_record.id,
+        })
+        roster.action_activate()
+        return roster
+
+    def test_participant_confirm_allows_missing_roster_before_deadline(self):
         participant = self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.team.id,
         })
 
+        self.assertTrue(participant.ready_for_confirmation)
+        self.assertTrue(participant.roster_deadline_date)
+        self.assertIn("must have an active ready roster by", participant.confirmation_feedback)
+
+        participant.action_confirm()
+
+        self.assertEqual(participant.state, "confirmed")
+
+    def test_participant_confirm_requires_ready_roster_once_deadline_reached(self):
+        urgent_tournament = self.env["federation.tournament"].create({
+            "name": "Participant Deadline Tournament",
+            "code": "PRT-DEADLINE",
+            "season_id": self.season.id,
+            "date_start": (self.today + timedelta(days=7)).isoformat(),
+            "rule_set_id": self.rule_set.id,
+        })
+        participant = self.env["federation.tournament.participant"].create({
+            "tournament_id": urgent_tournament.id,
+            "team_id": self.team.id,
+        })
+
         self.assertFalse(participant.ready_for_confirmation)
-        self.assertIn("Create and activate a team roster", participant.confirmation_feedback)
+        self.assertIn("Roster deadline reached", participant.confirmation_feedback)
+
         with self.assertRaises(ValidationError):
             participant.action_confirm()
 
     def test_participant_confirm_succeeds_with_ready_roster(self):
-        roster = self.env["federation.team.roster"].create({
-            "name": "Participant Ready Roster",
-            "team_id": self.team.id,
-            "season_id": self.season.id,
-            "rule_set_id": self.rule_set.id,
-        })
-        license_record = self.env["federation.player.license"].create({
-            "name": "LIC-PARTICIPANT-1",
-            "player_id": self.player.id,
-            "season_id": self.season.id,
-            "club_id": self.club.id,
-            "issue_date": "2025-01-01",
-            "expiry_date": "2025-12-31",
-            "state": "active",
-        })
-        self.env["federation.team.roster.line"].create({
-            "roster_id": roster.id,
-            "player_id": self.player.id,
-            "license_id": license_record.id,
-        })
-        roster.action_activate()
+        self._create_ready_roster(
+            self.team,
+            self.player,
+            "Participant Ready Roster",
+        )
 
         participant = self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
@@ -86,3 +132,45 @@ class TestParticipantReadiness(TransactionCase):
 
         self.assertTrue(participant.ready_for_confirmation)
         self.assertEqual(participant.state, "confirmed")
+        self.assertFalse(participant.confirmation_feedback)
+
+    def test_match_schedule_within_deadline_requires_ready_team_rosters(self):
+        urgent_tournament = self.env["federation.tournament"].create({
+            "name": "Roster Deadline Match Tournament",
+            "code": "PRT-MATCH-DEADLINE",
+            "season_id": self.season.id,
+            "date_start": (self.today + timedelta(days=6)).isoformat(),
+            "rule_set_id": self.rule_set.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.match"].create({
+                "tournament_id": urgent_tournament.id,
+                "home_team_id": self.team.id,
+                "away_team_id": self.opponent_team.id,
+                "date_scheduled": f"{(self.today + timedelta(days=6)).isoformat()} 18:00:00",
+            })
+
+    def test_match_schedule_within_deadline_allows_ready_team_rosters(self):
+        urgent_tournament = self.env["federation.tournament"].create({
+            "name": "Roster Deadline Match Ready Tournament",
+            "code": "PRT-MATCH-READY",
+            "season_id": self.season.id,
+            "date_start": (self.today + timedelta(days=6)).isoformat(),
+            "rule_set_id": self.rule_set.id,
+        })
+        self._create_ready_roster(self.team, self.player, "Home Deadline Roster")
+        self._create_ready_roster(
+            self.opponent_team,
+            self.opponent_player,
+            "Away Deadline Roster",
+        )
+
+        match = self.env["federation.match"].create({
+            "tournament_id": urgent_tournament.id,
+            "home_team_id": self.team.id,
+            "away_team_id": self.opponent_team.id,
+            "date_scheduled": f"{(self.today + timedelta(days=6)).isoformat()} 18:00:00",
+        })
+
+        self.assertTrue(match.id)

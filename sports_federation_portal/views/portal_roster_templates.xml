@@ -37,6 +37,64 @@
                     </div>
                 </div>
 
+                <div t-if="success" class="alert alert-success" role="status">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger" role="alert">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="row mb-4" t-if="roster_opportunities">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Confirmed Teams Ready For Rosters</h5>
+                                <p class="card-text text-muted">
+                                    Create a draft roster as soon as a season registration has been confirmed, or reopen the roster that already exists.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>Season</th>
+                                                <th>Registration</th>
+                                                <th>Roster</th>
+                                                <th class="text-end">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="roster_opportunities" t-as="item">
+                                                <tr>
+                                                    <td><t t-esc="item['registration'].team_id.display_name"/></td>
+                                                    <td><t t-esc="item['registration'].season_id.display_name"/></td>
+                                                    <td><t t-esc="item['registration'].name"/></td>
+                                                    <td>
+                                                        <span t-if="item['roster']"><t t-esc="item['roster'].name"/></span>
+                                                        <span t-if="not item['roster']" class="text-muted">No roster yet</span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <a t-if="item['roster']"
+                                                           t-attf-href="/my/rosters/#{item['roster'].id}"
+                                                           class="btn btn-sm btn-outline-primary">Open Roster</a>
+                                                        <form t-if="not item['roster']"
+                                                              t-attf-action="/my/rosters/create/#{item['registration'].id}"
+                                                              method="POST"
+                                                              class="d-inline">
+                                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                            <button type="submit" class="btn btn-sm btn-primary">Create Draft Roster</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <table class="table">
                     <thead>
                         <tr>
@@ -52,8 +110,8 @@
                         <t t-foreach="rosters" t-as="roster">
                             <tr>
                                 <td><t t-esc="roster.name"/></td>
-                                <td><t t-esc="roster.team_id.name"/></td>
-                                <td><t t-esc="roster.season_id.name"/></td>
+                                <td><t t-esc="roster.team_id.display_name"/></td>
+                                <td><t t-esc="roster.season_id.display_name"/></td>
                                 <td><t t-esc="dict(roster._fields['status'].selection).get(roster.status)"/></td>
                                 <td>
                                     <span t-if="roster.match_day_locked" class="badge bg-warning text-dark">Locked</span>
@@ -85,9 +143,25 @@
                     <div class="col">
                         <h2><i class="fa fa-id-card me-2"/><t t-esc="roster.name"/></h2>
                     </div>
-                    <div class="col-auto">
+                    <div class="col-auto d-flex gap-2">
+                        <a t-if="can_edit_roster"
+                           t-attf-href="/my/rosters/#{roster.id}/edit"
+                           class="btn btn-primary">Edit Roster</a>
+                        <a t-if="can_edit_roster"
+                           t-attf-href="/my/rosters/#{roster.id}/lines/new"
+                           class="btn btn-outline-primary">Add Player</a>
                         <a href="/my/rosters" class="btn btn-outline-secondary">Back to Rosters</a>
                     </div>
+                </div>
+
+                <div t-if="success" class="alert alert-success" role="status">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger" role="alert">
+                    <t t-esc="error"/>
+                </div>
+                <div t-if="portal_manage_error" class="alert alert-warning" role="alert">
+                    <t t-esc="portal_manage_error"/>
                 </div>
 
                 <div class="row g-4">
@@ -96,9 +170,10 @@
                             <div class="card-body">
                                 <h5 class="card-title">Roster Summary</h5>
                                 <table class="table table-sm mb-0">
-                                    <tr><th>Team</th><td><t t-esc="roster.team_id.name"/></td></tr>
-                                    <tr><th>Season</th><td><t t-esc="roster.season_id.name"/></td></tr>
+                                    <tr><th>Team</th><td><t t-esc="roster.team_id.display_name"/></td></tr>
+                                    <tr><th>Season</th><td><t t-esc="roster.season_id.display_name"/></td></tr>
                                     <tr t-if="roster.competition_id"><th>Competition</th><td><t t-esc="roster.competition_id.name"/></td></tr>
+                                    <tr t-if="roster.season_registration_id"><th>Registration</th><td><t t-esc="roster.season_registration_id.name"/></td></tr>
                                     <tr><th>Status</th><td><t t-esc="dict(roster._fields['status'].selection).get(roster.status)"/></td></tr>
                                     <tr><th>Players</th><td><t t-esc="roster.line_count"/></td></tr>
                                 </table>
@@ -118,6 +193,29 @@
                                 <div t-if="not roster.readiness_feedback and not roster.match_day_lock_feedback" class="text-muted">
                                     No current blocking issues are recorded.
                                 </div>
+                                <div t-if="can_manage_roster" class="d-flex flex-wrap gap-2 mt-3">
+                                    <form t-if="roster.status == 'draft'"
+                                          t-attf-action="/my/rosters/#{roster.id}/activate"
+                                          method="POST"
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-primary btn-sm">Activate Roster</button>
+                                    </form>
+                                    <form t-if="roster.status == 'active'"
+                                          t-attf-action="/my/rosters/#{roster.id}/draft"
+                                          method="POST"
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm">Set To Draft</button>
+                                    </form>
+                                    <form t-if="roster.status == 'active'"
+                                          t-attf-action="/my/rosters/#{roster.id}/close"
+                                          method="POST"
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Close Roster</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -125,21 +223,29 @@
 
                 <div class="row mt-4">
                     <div class="col-12">
-                        <h4>Roster Lines</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="mb-0">Roster Lines</h4>
+                            <a t-if="can_edit_roster"
+                               t-attf-href="/my/rosters/#{roster.id}/lines/new"
+                               class="btn btn-sm btn-outline-primary">Add Player</a>
+                        </div>
                         <table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>Player</th>
+                                    <th>License</th>
                                     <th>Status</th>
                                     <th>Captaincy</th>
                                     <th>Eligibility</th>
                                     <th>Dates</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="roster.line_ids" t-as="line">
                                     <tr>
                                         <td><t t-esc="line.player_id.display_name"/></td>
+                                        <td><t t-esc="line.license_id.name if line.license_id else ''"/></td>
                                         <td><t t-esc="dict(line._fields['status'].selection).get(line.status)"/></td>
                                         <td>
                                             <span t-if="line.is_captain">Captain</span>
@@ -157,10 +263,25 @@
                                             <t t-if="line.date_from and line.date_to"> - </t>
                                             <t t-if="line.date_to" t-esc="line.date_to" t-options='{"widget": "date"}'/>
                                         </td>
+                                        <td class="text-end">
+                                                          <a t-if="can_edit_roster and line.status == 'active'"
+                                               t-attf-href="/my/rosters/#{roster.id}/lines/#{line.id}/edit"
+                                               class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <form t-if="can_edit_roster"
+                                                  t-attf-action="/my/rosters/#{roster.id}/lines/#{line.id}/delete"
+                                                  method="POST"
+                                                  class="d-inline">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('Remove this player from the roster?')">Remove</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 </t>
                             </tbody>
                         </table>
+                        <div t-if="not roster.line_ids" class="text-muted">No players have been added to this roster yet.</div>
                     </div>
                 </div>
 
@@ -187,6 +308,199 @@
                                 </t>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_roster_edit" name="Edit Roster">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-pencil me-2"/>Edit Roster</h2>
+                    </div>
+                    <div class="col-auto">
+                        <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Back to Roster</a>
+                    </div>
+                </div>
+
+                <div t-if="error" class="alert alert-danger" role="alert">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Current Scope</h5>
+                                <table class="table table-sm mb-0">
+                                    <tr><th>Team</th><td><t t-esc="roster.team_id.display_name"/></td></tr>
+                                    <tr><th>Season</th><td><t t-esc="roster.season_id.display_name"/></td></tr>
+                                    <tr><th>Status</th><td><t t-esc="dict(roster._fields['status'].selection).get(roster.status)"/></td></tr>
+                                    <tr><th>Players</th><td><t t-esc="roster.line_count"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Roster Details</h5>
+                                <form t-attf-action="/my/rosters/#{roster.id}/edit" method="POST">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Roster Name</label>
+                                        <input type="text" name="name" class="form-control" required="required"
+                                               t-att-value="roster.name"/>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Valid From</label>
+                                            <input type="date" name="valid_from" class="form-control"
+                                                   t-att-value="roster.valid_from or ''"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Valid To</label>
+                                            <input type="date" name="valid_to" class="form-control"
+                                                   t-att-value="roster.valid_to or ''"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="form-label">Notes</label>
+                                        <textarea name="notes" class="form-control" rows="6"><t t-esc="roster.notes or ''"/></textarea>
+                                    </div>
+
+                                    <div class="mt-4 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Cancel</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_roster_line_form" name="Roster Line Form">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2><i class="fa fa-user-plus me-2"/><t t-esc="page_title"/></h2>
+                    </div>
+                    <div class="col-auto">
+                        <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Back to Roster</a>
+                    </div>
+                </div>
+
+                <div t-if="error" class="alert alert-danger" role="alert">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form t-att-action="submit_url" method="POST">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Team</label>
+                                    <input type="text" class="form-control" t-att-value="roster.team_id.display_name" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Season</label>
+                                    <input type="text" class="form-control" t-att-value="roster.season_id.display_name" readonly="readonly"/>
+                                </div>
+                            </div>
+
+                            <div class="mt-3" t-if="not line">
+                                <label class="form-label">Player</label>
+                                <select name="player_id" class="form-select" required="required">
+                                    <option value="">Select a player</option>
+                                    <t t-foreach="available_players" t-as="player">
+                                        <option t-att-value="player.id"><t t-esc="player.display_name"/></option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="mt-3" t-if="line">
+                                <label class="form-label">Player</label>
+                                <input type="text" class="form-control" t-att-value="line.player_id.display_name" readonly="readonly"/>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <label class="form-label">Status</label>
+                                    <input type="hidden" name="status" t-att-value="line and line.status or 'active'"/>
+                                    <input type="text" class="form-control"
+                                           t-att-value="dict(roster.line_ids._fields['status'].selection).get(line.status) if line else 'Active'"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Jersey Number</label>
+                                    <input type="text" name="jersey_number" class="form-control"
+                                           t-att-value="line and line.jersey_number or ''"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">License</label>
+                                    <select name="license_id" class="form-select">
+                                        <option value="">No license selected</option>
+                                        <t t-foreach="available_licenses" t-as="license">
+                                            <option t-att-value="license.id"
+                                                    t-att-selected="line and line.license_id == license and 'selected' or None">
+                                                <t t-esc="license.player_id.display_name"/> - <t t-esc="license.name"/> (<t t-esc="dict(license._fields['state'].selection).get(license.state)"/>)
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" name="date_from" class="form-control"
+                                           t-att-value="line and line.date_from or ''"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" name="date_to" class="form-control"
+                                           t-att-value="line and line.date_to or ''"/>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" name="is_captain"
+                                               t-att-checked="line and line.is_captain and 'checked' or None"/>
+                                        <label class="form-check-label">Captain</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" name="is_vice_captain"
+                                               t-att-checked="line and line.is_vice_captain and 'checked' or None"/>
+                                        <label class="form-check-label">Vice Captain</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="5"><t t-esc="line and line.notes or ''"/></textarea>
+                            </div>
+
+                            <div class="mt-4 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Save Player</button>
+                                <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

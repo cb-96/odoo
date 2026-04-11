@@ -37,7 +37,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         return unique
 
     def _log_missing_recipients(self, record, log_name, notification_type, message):
-        return self.env["federation.notification.log"].create({
+        return self.env["federation.notification.log"].sudo().create({
             "name": log_name,
             "target_model": record._name,
             "target_res_id": record.id,
@@ -64,7 +64,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
 
     def _create_group_activities(self, record, group_xmlid, summary, note=None):
         group = self.env.ref(group_xmlid, raise_if_not_found=False)
-        users = group.users if group else self.env["res.users"].browse([])
+        users = group.user_ids if group else self.env["res.users"].browse([])
         if not users:
             return self._log_missing_recipients(
                 record,
@@ -73,7 +73,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
                 f"No users configured in group {group_xmlid}.",
             )
 
-        logs = self.env["federation.notification.log"]
+        logs = self.env["federation.notification.log"].sudo()
         for user in users:
             logs |= self.create_activity(record, user.id, summary, note=note)
         return logs
@@ -170,7 +170,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
             "sports_federation_base.group_federation_manager",
             raise_if_not_found=False,
         )
-        manager_emails = manager_group.users.mapped("email") if manager_group else []
+        manager_emails = manager_group.user_ids.mapped("email") if manager_group else []
         emails = [
             match.home_team_id.email,
             match.home_team_id.club_id.email,

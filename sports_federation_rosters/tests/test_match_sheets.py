@@ -4,6 +4,31 @@ from odoo.exceptions import ValidationError
 
 class TestMatchSheets(TransactionCase):
 
+    def _create_active_roster(self, name, min_players=1):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": f"{name} Rules",
+            "code": name.upper().replace(" ", "_")[:20],
+            "squad_min_size": min_players,
+        })
+        roster = self.env["federation.team.roster"].create({
+            "name": name,
+            "team_id": self.team_home.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        line1 = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        line2 = False
+        if min_players > 1:
+            line2 = self.env["federation.team.roster.line"].create({
+                "roster_id": roster.id,
+                "player_id": self.player2.id,
+            })
+        roster.action_activate()
+        return roster, line1, line2
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -43,11 +68,13 @@ class TestMatchSheets(TransactionCase):
             "name": "Player One",
             "first_name": "Player",
             "last_name": "One",
+            "gender": "male",
         })
         cls.player2 = cls.env["federation.player"].create({
             "name": "Player Two",
             "first_name": "Player",
             "last_name": "Two",
+            "gender": "male",
         })
 
     def test_create_match_sheet(self):
@@ -198,30 +225,17 @@ class TestMatchSheets(TransactionCase):
             "roster_line_id": roster_line.id,
         })
 
+        line.invalidate_recordset()
         self.assertFalse(line.eligible)
         self.assertIn("suspended", line.eligibility_feedback.lower())
         with self.assertRaises(ValidationError):
             sheet.action_submit()
 
     def test_match_sheet_submit_enforces_squad_minimum(self):
-        rule_set = self.env["federation.rule.set"].create({
-            "name": "Match Squad Rules",
-            "code": "MQR",
-            "squad_min_size": 2,
-        })
-        self.tournament.write({"rule_set_id": rule_set.id})
-
-        roster = self.env["federation.team.roster"].create({
-            "name": "Sized Roster",
-            "team_id": self.team_home.id,
-            "season_id": self.season.id,
-            "rule_set_id": rule_set.id,
-        })
-        roster_line = self.env["federation.team.roster.line"].create({
-            "roster_id": roster.id,
-            "player_id": self.player1.id,
-        })
-        roster.action_activate()
+        roster, roster_line, _second_line = self._create_active_roster(
+            "Sized Roster",
+            min_players=2,
+        )
 
         sheet = self.env["federation.match.sheet"].create({
             "name": "Sized Sheet",
@@ -257,15 +271,21 @@ class TestMatchSheets(TransactionCase):
             })
 
     def test_approved_match_sheet_allows_substitution_updates_but_not_lineup_changes(self):
+        roster, _starter_line, line_roster = self._create_active_roster(
+            "Approved Sheet Roster",
+            min_players=1,
+        )
         sheet = self.env["federation.match.sheet"].create({
             "name": "Approved Sheet",
             "match_id": self.match.id,
             "team_id": self.team_home.id,
+            "roster_id": roster.id,
             "side": "home",
         })
         line = self.env["federation.match.sheet.line"].create({
             "match_sheet_id": sheet.id,
             "player_id": self.player1.id,
+            "roster_line_id": _starter_line.id,
             "is_substitute": True,
         })
         sheet.action_submit()
@@ -283,15 +303,21 @@ class TestMatchSheets(TransactionCase):
             line.write({"jersey_number": "12"})
 
     def test_lock_blocks_any_further_match_sheet_changes(self):
+        roster, starter_line, _unused = self._create_active_roster(
+            "Locked Sheet Roster",
+            min_players=1,
+        )
         sheet = self.env["federation.match.sheet"].create({
             "name": "Locked Sheet",
             "match_id": self.match.id,
             "team_id": self.team_home.id,
+            "roster_id": roster.id,
             "side": "home",
         })
         line = self.env["federation.match.sheet.line"].create({
             "match_sheet_id": sheet.id,
             "player_id": self.player1.id,
+            "roster_line_id": starter_line.id,
             "is_starter": True,
         })
         sheet.action_submit()

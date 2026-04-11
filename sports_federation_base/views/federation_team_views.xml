@@ -60,7 +60,7 @@
         <field name="model">federation.team</field>
         <field name="arch" type="xml">
             <list string="Teams">
-                <field name="name"/>
+                <field name="display_name" string="Team"/>
                 <field name="code"/>
                 <field name="club_id"/>
                 <field name="category"/>

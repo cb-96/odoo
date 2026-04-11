@@ -5,7 +5,8 @@
         <field name="model">federation.tournament.participant</field>
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_participant_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@string='Assignment']" position="inside">
+            <xpath expr="//field[@name='registration_date']" position="after">
+                <field name="roster_deadline_date" readonly="1"/>
                 <field name="readiness_roster_id" readonly="1"/>
                 <field name="confirmation_feedback"
                        readonly="1"

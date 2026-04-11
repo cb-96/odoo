@@ -213,7 +213,7 @@ class TestRosters(TransactionCase):
             "season_id": self.season.id,
             "club_id": self.club.id,
             "issue_date": "2024-01-01",
-            "expiry_date": "2024-12-31",
+            "expiry_date": "2099-12-31",
             "state": "active",
         })
         line = self.env["federation.team.roster.line"].create({
@@ -226,6 +226,8 @@ class TestRosters(TransactionCase):
         self.assertEqual(roster.status, "active")
 
         license_record.write({"state": "cancelled"})
+        line.invalidate_recordset()
+        roster.invalidate_recordset()
         self.assertFalse(line.eligible)
         self.assertIn("not active", line.eligibility_feedback.lower())
         self.assertFalse(roster.ready_for_activation)

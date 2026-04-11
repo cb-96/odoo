@@ -67,6 +67,17 @@ class TestGameday(TransactionCase):
             "season_id": cls.season.id,
             "date_start": "2024-06-01",
         })
+        cls.group_stage = cls.env["federation.tournament.stage"].create({
+            "name": "Group Phase",
+            "tournament_id": cls.tournament.id,
+            "stage_type": "group",
+        })
+        cls.knockout_stage = cls.env["federation.tournament.stage"].create({
+            "name": "Knockout Phase",
+            "tournament_id": cls.tournament.id,
+            "sequence": 20,
+            "stage_type": "knockout",
+        })
 
     # ------------------------------------------------------------------
     # find_or_create tests
@@ -106,6 +117,28 @@ class TestGameday(TransactionCase):
         """find_or_create returns False when venue_id is not provided."""
         result = self.env["federation.gameday"].find_or_create(False, datetime(2024, 7, 1, 10, 0))
         self.assertFalse(result)
+
+    def test_generate_planned_gamedays_creates_numbered_slots(self):
+        """Tournament planning should create numbered gameday slots without venue details."""
+        self.tournament.planned_gameday_total = 5
+
+        self.tournament.action_generate_planned_gamedays()
+
+        gamedays = self.tournament.gameday_ids.sorted("sequence")
+        self.assertEqual(gamedays.mapped("sequence"), [1, 2, 3, 4, 5])
+        self.assertTrue(all(not gameday.venue_id for gameday in gamedays))
+
+        gamedays.filtered(lambda gameday: gameday.sequence <= 4).write(
+            {"stage_id": self.group_stage.id}
+        )
+        gamedays.filtered(lambda gameday: gameday.sequence == 5).write(
+            {"stage_id": self.knockout_stage.id}
+        )
+
+        self.group_stage.invalidate_recordset()
+        self.knockout_stage.invalidate_recordset()
+        self.assertEqual(self.group_stage.gameday_count, 4)
+        self.assertEqual(self.knockout_stage.gameday_count, 1)
 
     # ------------------------------------------------------------------
     # No-duplicate pairing constraint tests
@@ -224,6 +257,58 @@ class TestGameday(TransactionCase):
         })
         self.assertTrue(m1.id)
         self.assertTrue(m2.id)
+
+    def test_match_gameday_assignment_inherits_scope_and_venue(self):
+        """Assigning a planned gameday should backfill tournament, stage, and venue."""
+        gameday = self.env["federation.gameday"].create({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.group_stage.id,
+            "sequence": 9,
+            "start_datetime": datetime(2024, 9, 15, 10, 0),
+            "venue_id": self.venue.id,
+        })
+
+        match = self.env["federation.match"].create({
+            "home_team_id": self.team_senior_a.id,
+            "away_team_id": self.team_senior_b.id,
+            "gameday_id": gameday.id,
+            "state": "draft",
+        })
+
+        self.assertEqual(match.tournament_id, self.tournament)
+        self.assertEqual(match.stage_id, self.group_stage)
+        self.assertEqual(match.venue_id, self.venue)
+
+    def test_match_rejects_conflicting_gameday_scope(self):
+        """A match cannot use a gameday from another tournament or stage."""
+        other_tournament = self.env["federation.tournament"].create({
+            "name": "Other Gameday Tournament",
+            "code": "OGT",
+            "season_id": self.season.id,
+            "date_start": "2024-08-01",
+        })
+        other_stage = self.env["federation.tournament.stage"].create({
+            "name": "Other Stage",
+            "tournament_id": other_tournament.id,
+            "stage_type": "group",
+        })
+        gameday = self.env["federation.gameday"].create({
+            "tournament_id": self.tournament.id,
+            "stage_id": self.group_stage.id,
+            "sequence": 10,
+            "venue_id": self.venue.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.match"].create({
+                "tournament_id": other_tournament.id,
+                "stage_id": other_stage.id,
+                "home_team_id": self.team_senior_a.id,
+                "away_team_id": self.team_senior_b.id,
+                "gameday_id": gameday.id,
+                "venue_id": self.venue.id,
+                "state": "draft",
+            })
 
     # ------------------------------------------------------------------
     # schedule_by_round integration test (uses round_robin service)

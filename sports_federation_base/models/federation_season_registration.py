@@ -44,7 +44,7 @@ class FederationSeasonRegistration(models.Model):
 
         for vals in vals_list:
             if vals.get("name", "New") == "New":
-                vals["name"] = self.env["ir.sequence"].next_by_code(
+                vals["name"] = self.env["ir.sequence"].sudo().next_by_code(
                     "federation.season.registration"
                 ) or "New"
         return super().create(vals_list)

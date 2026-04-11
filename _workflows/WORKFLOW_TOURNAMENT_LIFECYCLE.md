@@ -45,7 +45,9 @@ journey from initial setup to final completion.
 2. Set tournament type: `league`, `cup`, `friendly`, or `playoff`.
 3. Assign date range, rule set (inherited from competition or overridden).
 4. Set maximum participants if applicable.
-5. Tournament starts in `draft` state.
+5. If the competition is spread over multiple event days, set the tournament's
+   **Planned Gamedays** value and generate the numbered gameday slots up front.
+6. Tournament starts in `draft` state.
 
 ### 3. Venue Assignment
 
@@ -62,12 +64,20 @@ journey from initial setup to final completion.
 **Module**: `sports_federation_tournament`, `sports_federation_import_tools`
 
 1. Add **participants** to the tournament — each links a team to the tournament.
+    - If the flow starts from portal registration requests, an administrator first
+       confirms the `federation.tournament.registration` record. That creates or links
+       a `federation.tournament.participant` record in state `registered`.
+    - That participant must still be moved to state `confirmed` before schedule
+       generation can use it.
 2. Optionally assign participants to specific stages and groups.
 3. Set seeding ranks for bracket placement.
 4. Participant states: `registered` → `confirmed` → `withdrawn` / `eliminated`.
-5. Participant confirmation requires an active ready roster for the tournament
-   season. When both a competition-specific roster and a season-wide roster are
-   available, the competition-specific roster is used for readiness checks.
+5. Participant confirmation can happen before the team has an active roster, but
+   the team must have an active ready roster by one week before its first
+   scheduled match, or one week before tournament start if no match has been
+   scheduled yet. When both a competition-specific roster and a season-wide
+   roster are available, the competition-specific roster is used for readiness
+   checks.
 6. Confirming a participant sends an email to the team and club contacts.
 7. Move tournament to `open` state once enrolment is complete.
 
@@ -83,6 +93,9 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
 3. Order stages by sequence.
 4. Within each stage, create **groups** (e.g. "Group A", "Pool 1").
 5. Assign participants to groups.
+6. Reserve planned gamedays for each stage by assigning tournament gameday slots
+   to the relevant stage. Example: gamedays 1-4 for the round-robin stage,
+   gameday 5 for the knockout stage.
 
 ### 6. Schedule Generation
 
@@ -93,6 +106,9 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
 2. Open the **Round Robin Wizard** or **Knockout Wizard** from the tournament form.
 3. Configure scheduling options in the wizard:
    - Select participants and (optionally) a group.
+   - `Use All Confirmed Participants` only includes `federation.tournament.participant`
+     records in state `confirmed` inside the selected stage/group scope. Tournament
+     registration requests on their own are not enough.
    - Ensure the tournament or linked competition already has an effective rule set; the wizard will block generation otherwise.
    - Set `Start Date/Time` and `Interval (hours)` — the intra-round spacing.
    - Use `Full Cycles (repeats)` to repeat the entire round-robin cycle N times
@@ -115,6 +131,9 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
    given participants, cycles, and round type). When overwrite is enabled, the
    wizard shows an explicit warning before confirmation.
 5. Confirm to create all match records automatically.
+6. If venues or exact days were not known during initial planning, assign each
+   match to one of the planned `federation.gameday` slots later. The match will
+   inherit the gameday's stage and venue when those are set.
 
 **Round Robin**: Circle method generates a complete schedule where every team plays
 every other team once (single) or twice (double).
@@ -163,6 +182,9 @@ every other team once (single) or twice (double).
    tournaments). Use `action_apply()` from the template to create stages and
    progression rules for a tournament in a single step.
 5. Generate the next stage's schedule using competition engine wizards.
+6. Typical workflow: freeze the round-robin standing, auto-advance the top-ranked
+   teams into the knockout stage through a `federation.stage.progression` rule,
+   then schedule those knockout matches onto the remaining planned gameday slots.
 
 ### 10. Tournament Completion
 

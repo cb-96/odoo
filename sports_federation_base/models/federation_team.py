@@ -45,6 +45,22 @@ class FederationTeam(models.Model):
 
     _code_unique = models.Constraint('unique (code)', 'Team code must be unique.')
 
+    @api.depends("name", "gender")
+    def _compute_display_name(self):
+        gender_labels = {
+            "male": _("Men"),
+            "female": _("Women"),
+            "mixed": _("Mixed"),
+        }
+        for rec in self:
+            base_name = rec.name or _("New")
+            gender_label = gender_labels.get(rec.gender)
+            rec.display_name = (
+                "%s (%s)" % (base_name, gender_label)
+                if gender_label
+                else base_name
+            )
+
     @api.depends("registration_ids")
     def _compute_registration_count(self):
         for rec in self:

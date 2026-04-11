@@ -18,34 +18,36 @@ class FederationSeasonRegistrationFinanceHooks(models.Model):
         return res
 
     def _ensure_registration_finance_event(self):
-        finance_event_model = self.env["federation.finance.event"]
+        finance_event_model = self.env["federation.finance.event"].sudo()
         for registration in self:
-            fee_type = registration._get_registration_fee_type()
+            registration_sudo = registration.sudo()
+            fee_type = registration_sudo._get_registration_fee_type()
             partner = False
-            if "partner_id" in registration._fields:
-                partner = registration.partner_id
+            if "partner_id" in registration_sudo._fields:
+                partner = registration_sudo.partner_id
 
             finance_event_model.ensure_from_source(
-                registration,
+                registration_sudo,
                 fee_type,
                 event_type="charge",
                 partner=partner,
                 note=(
                     "Auto: season registration confirmed for "
-                    f"{registration.team_id.display_name} in {registration.season_id.display_name}"
+                    f"{registration_sudo.team_id.display_name} in {registration_sudo.season_id.display_name}"
                 ),
             )
 
     def _get_registration_fee_type(self):
         self.ensure_one()
-        fee_type = self.env["federation.fee.type"].search(
+        fee_type_model = self.env["federation.fee.type"].sudo()
+        fee_type = fee_type_model.search(
             [("code", "=", "season_registration")],
             limit=1,
         )
         if fee_type:
             return fee_type
 
-        return self.env["federation.fee.type"].create(
+        return fee_type_model.create(
             {
                 "name": "Season Registration Fee",
                 "code": "season_registration",

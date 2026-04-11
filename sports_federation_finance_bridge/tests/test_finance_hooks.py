@@ -59,6 +59,25 @@ class TestFinanceHooks(TransactionCase):
             "category": "other",
             "default_amount": 25.00,
         })
+        cls.manager_group = cls.env.ref("sports_federation_base.group_federation_manager")
+        cls.validator_group = cls.env.ref(
+            "sports_federation_result_control.group_result_validator"
+        )
+        cls.approver_group = cls.env.ref(
+            "sports_federation_result_control.group_result_approver"
+        )
+        cls.validator_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Finance Hook Validator",
+            "login": "finance.hook.validator@example.com",
+            "email": "finance.hook.validator@example.com",
+            "group_ids": [(6, 0, [cls.manager_group.id, cls.validator_group.id])],
+        })
+        cls.approver_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Finance Hook Approver",
+            "login": "finance.hook.approver@example.com",
+            "email": "finance.hook.approver@example.com",
+            "group_ids": [(6, 0, [cls.manager_group.id, cls.approver_group.id])],
+        })
 
     def _create_done_match(self, with_venue=True, with_result_fee=False):
         """Helper to create a done match with optional configuration."""
@@ -158,12 +177,12 @@ class TestFinanceHooks(TransactionCase):
         match = self._create_done_match(with_venue=False, with_result_fee=False)
         # go through result pipeline
         match.action_submit_result()
-        match.action_verify_result()
+        match.with_user(self.validator_user).action_verify_result()
         event_count_before = self.env["federation.finance.event"].search_count([
             ("source_model", "=", "federation.match"),
             ("source_res_id", "=", match.id),
         ])
-        match.action_approve_result()
+        match.with_user(self.approver_user).action_approve_result()
         event_count_after = self.env["federation.finance.event"].search_count([
             ("source_model", "=", "federation.match"),
             ("source_res_id", "=", match.id),
@@ -178,8 +197,8 @@ class TestFinanceHooks(TransactionCase):
         match = self._create_done_match(with_venue=False, with_result_fee=True)
         # go through result pipeline
         match.action_submit_result()
-        match.action_verify_result()
-        match.action_approve_result()
+        match.with_user(self.validator_user).action_verify_result()
+        match.with_user(self.approver_user).action_approve_result()
 
         events = self.env["federation.finance.event"].search([
             ("source_model", "=", "federation.match"),
@@ -197,12 +216,12 @@ class TestFinanceHooks(TransactionCase):
             self.skipTest("result_control not installed.")
         match = self._create_done_match(with_venue=False, with_result_fee=True)
         match.action_submit_result()
-        match.action_verify_result()
-        match.action_approve_result()
-        match.action_reset_result_to_draft()
+        match.with_user(self.validator_user).action_verify_result()
+        match.with_user(self.approver_user).action_approve_result()
+        match.with_user(self.approver_user).action_reset_result_to_draft()
         match.action_submit_result()
-        match.action_verify_result()
-        match.action_approve_result()
+        match.with_user(self.validator_user).action_verify_result()
+        match.with_user(self.approver_user).action_approve_result()
 
         self.assertEqual(
             self.env["federation.finance.event"].search_count([
@@ -219,8 +238,8 @@ class TestFinanceHooks(TransactionCase):
             self.skipTest("result_control not installed.")
         match = self._create_done_match(with_result_fee=True, with_venue=True)
         match.action_submit_result()
-        match.action_verify_result()
-        match.action_approve_result()
+        match.with_user(self.validator_user).action_verify_result()
+        match.with_user(self.approver_user).action_approve_result()
         self.assertTrue(match.result_finance_event_ids)
         for ev in match.result_finance_event_ids:
             self.assertEqual(ev.source_res_id, match.id)
@@ -232,7 +251,7 @@ class TestFinanceHooks(TransactionCase):
         match = self._create_done_match(with_result_fee=False, with_venue=False)
         self.assertFalse(match.include_in_official_standings)
         match.action_submit_result()
-        match.action_verify_result()
-        match.action_approve_result()
+        match.with_user(self.validator_user).action_verify_result()
+        match.with_user(self.approver_user).action_approve_result()
         self.assertTrue(match.include_in_official_standings,
                         "include_in_official_standings should be True after approval.")

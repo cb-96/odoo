@@ -128,14 +128,18 @@ Immutable operational log for roster and match-sheet activity.
 
 ### `federation.tournament.participant` (extension)
 
-This module extends tournament participants so confirmation is blocked until a
-team has an active, ready roster for the tournament season.
+This module extends tournament participants with team-linked roster readiness
+checks. Participants can be confirmed before a roster exists, but the team must
+have an active, ready roster by the roster deadline: one week before the first
+scheduled match, or one week before tournament start if no match has been
+scheduled yet.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `ready_for_confirmation` | Boolean (computed) | Whether participant confirmation checks pass |
-| `readiness_roster_id` | Many2one (computed) | Active roster used for confirmation checks |
-| `confirmation_feedback` | Text (computed) | Aggregated confirmation blockers |
+| `ready_for_confirmation` | Boolean (computed) | Whether participant confirmation currently satisfies the roster deadline rule |
+| `roster_deadline_date` | Date (computed) | Deadline for having an active ready roster |
+| `readiness_roster_id` | Many2one (computed) | Preferred team roster used for readiness checks |
+| `confirmation_feedback` | Text (computed) | Warning or blocking message about the roster deadline |
 
 ## Key Behaviours
 
@@ -156,8 +160,12 @@ team has an active, ready roster for the tournament season.
 7. **Participation audit trail** — Roster lifecycle changes, lineup changes,
    submissions, approvals, locks, and substitutions are captured in
    `federation.participation.audit`.
-8. **Participant confirmation gating** — Tournament participants can only be
-   confirmed when an active ready roster exists for the tournament season,
+8. **Participant roster deadline** — Tournament participants can be confirmed
+   before a roster exists, but the linked team must have an active ready roster
+   by one week before its first scheduled match or tournament start,
    preferring competition-specific rosters when available.
-9. **State locking** — Approved match sheets can be locked once match-day
+9. **Team-linked roster checks** — Team roster lookup and tournament deadline
+   assessment are owned by the team model so roster compliance follows the team
+   rather than being treated as a separate participant-only concern.
+10. **State locking** — Approved match sheets can be locked once match-day
    operations are complete.

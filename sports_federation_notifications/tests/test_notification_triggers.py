@@ -82,6 +82,9 @@ class TestNotificationTriggers(TransactionCase):
         cls.approver_group = cls.env.ref(
             "sports_federation_result_control.group_result_approver"
         )
+        cls.manager_group = cls.env.ref(
+            "sports_federation_base.group_federation_manager"
+        )
         cls.federation_user_group = cls.env.ref(
             "sports_federation_base.group_federation_user"
         )
@@ -89,22 +92,47 @@ class TestNotificationTriggers(TransactionCase):
             "name": "Trigger Submit User",
             "login": "trigger.submit@example.com",
             "email": "trigger.submit@example.com",
-            "groups_id": [(6, 0, [cls.federation_user_group.id])],
+            "group_ids": [(6, 0, [cls.manager_group.id])],
         })
         cls.validator_user = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Trigger Validator",
             "login": "trigger.validator@example.com",
             "email": "trigger.validator@example.com",
-            "groups_id": [(6, 0, [cls.federation_user_group.id, cls.validator_group.id])],
+            "group_ids": [(6, 0, [cls.manager_group.id, cls.validator_group.id])],
         })
         cls.approver_user = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Trigger Approver",
             "login": "trigger.approver@example.com",
             "email": "trigger.approver@example.com",
-            "groups_id": [(6, 0, [cls.federation_user_group.id, cls.approver_group.id])],
+            "group_ids": [(6, 0, [cls.manager_group.id, cls.approver_group.id])],
         })
 
+    def _create_active_roster(self, team):
+        player = self.env["federation.player"].create({
+            "first_name": team.code,
+            "last_name": "Roster Player",
+            "gender": "male",
+        })
+        rule_set = self.env["federation.rule.set"].create({
+            "name": f"{team.name} Trigger Roster Rules",
+            "code": f"TRR{team.id}",
+            "squad_min_size": 1,
+        })
+        roster = self.env["federation.team.roster"].create({
+            "name": f"{team.name} Trigger Roster",
+            "team_id": team.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": player.id,
+        })
+        roster.action_activate()
+        return roster
+
     def test_participant_confirm_action_creates_notification_log(self):
+        self._create_active_roster(self.team)
         participant = self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.team.id,

@@ -42,7 +42,7 @@ class TestSeasonRegistrationOwnership(TransactionCase):
                 "name": "Season Portal User",
                 "login": "season.portal.user@example.com",
                 "email": "season.portal.user@example.com",
-                "groups_id": [(6, 0, [cls.portal_group.id])],
+                "group_ids": [(6, 0, [cls.portal_group.id])],
             }
         )
         cls.env["federation.club.representative"].create(

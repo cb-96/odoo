@@ -1,4 +1,4 @@
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase
 
 
@@ -40,13 +40,13 @@ class TestRosterPortalAccess(TransactionCase):
             "name": "Portal Roster User A",
             "login": "portal.roster.a@example.com",
             "email": "portal.roster.a@example.com",
-            "groups_id": [(6, 0, [cls.portal_group.id])],
+            "group_ids": [(6, 0, [cls.portal_group.id])],
         })
         cls.user_b = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Portal Roster User B",
             "login": "portal.roster.b@example.com",
             "email": "portal.roster.b@example.com",
-            "groups_id": [(6, 0, [cls.portal_group.id])],
+            "group_ids": [(6, 0, [cls.portal_group.id])],
         })
         cls.env["federation.club.representative"].create({
             "club_id": cls.club_a.id,
@@ -65,22 +65,39 @@ class TestRosterPortalAccess(TransactionCase):
             "first_name": "Portal",
             "last_name": "Roster A",
             "gender": "male",
+            "club_id": cls.club_a.id,
         })
         cls.player_b = cls.env["federation.player"].create({
             "first_name": "Portal",
             "last_name": "Roster B",
             "gender": "male",
+            "club_id": cls.club_b.id,
         })
+
+        cls.registration_a = cls.env["federation.season.registration"].create({
+            "season_id": cls.season.id,
+            "team_id": cls.team_a.id,
+            "user_id": cls.user_a.id,
+        })
+        cls.registration_a.action_confirm()
+        cls.registration_b = cls.env["federation.season.registration"].create({
+            "season_id": cls.season.id,
+            "team_id": cls.team_b.id,
+            "user_id": cls.user_b.id,
+        })
+        cls.registration_b.action_confirm()
 
         cls.roster_a = cls.env["federation.team.roster"].create({
             "name": "Portal Roster A",
             "team_id": cls.team_a.id,
             "season_id": cls.season.id,
+            "season_registration_id": cls.registration_a.id,
         })
         cls.roster_b = cls.env["federation.team.roster"].create({
             "name": "Portal Roster B",
             "team_id": cls.team_b.id,
             "season_id": cls.season.id,
+            "season_registration_id": cls.registration_b.id,
         })
         cls.env["federation.team.roster.line"].create({
             "roster_id": cls.roster_a.id,
@@ -138,3 +155,128 @@ class TestRosterPortalAccess(TransactionCase):
             self.roster_a.with_user(self.user_a).write({"notes": "Not allowed"})
         with self.assertRaises(AccessError):
             self.sheet_a.with_user(self.user_a).write({"notes": "Not allowed"})
+
+    def test_portal_user_can_create_roster_for_confirmed_registration(self):
+        team_c = self.env["federation.team"].create({
+            "name": "Portal Roster Team C",
+            "club_id": self.club_a.id,
+            "code": "PRTC",
+        })
+        registration_c = self.env["federation.season.registration"].create({
+            "season_id": self.season.id,
+            "team_id": team_c.id,
+            "user_id": self.user_a.id,
+        })
+        registration_c.action_confirm()
+
+        roster = self.env["federation.team.roster"]._portal_create_roster_for_registration(
+            registration_c,
+            user=self.user_a,
+        )
+
+        self.assertEqual(roster.team_id, team_c)
+        self.assertEqual(roster.season_registration_id, registration_c)
+        self.assertEqual(roster.create_uid, self.user_a)
+
+    def test_portal_user_cannot_create_roster_without_confirmation_or_for_other_club(self):
+        draft_team = self.env["federation.team"].create({
+            "name": "Portal Draft Team",
+            "club_id": self.club_a.id,
+            "code": "PRTD",
+        })
+        draft_registration = self.env["federation.season.registration"].create({
+            "season_id": self.season.id,
+            "team_id": draft_team.id,
+            "user_id": self.user_a.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.team.roster"]._portal_create_roster_for_registration(
+                draft_registration,
+                user=self.user_a,
+            )
+
+        with self.assertRaises(AccessError):
+            self.env["federation.team.roster"]._portal_create_roster_for_registration(
+                self.registration_b,
+                user=self.user_a,
+            )
+
+    def test_portal_user_can_manage_owned_roster_with_portal_helpers(self):
+        self.roster_a._portal_update_roster(
+            user=self.user_a,
+            values={"notes": "Updated through portal helper"},
+        )
+        self.roster_a.invalidate_recordset()
+        self.assertEqual(self.roster_a.notes, "Updated through portal helper")
+
+        player_c = self.env["federation.player"].create({
+            "first_name": "Portal",
+            "last_name": "Roster C",
+            "gender": "male",
+            "club_id": self.club_a.id,
+            "team_ids": [(4, self.team_a.id)],
+        })
+        line = self.env["federation.team.roster.line"]._portal_create_line(
+            self.roster_a,
+            values={
+                "player_id": player_c.id,
+                "jersey_number": "9",
+            },
+            user=self.user_a,
+        )
+        self.assertEqual(line.create_uid, self.user_a)
+
+        line._portal_update_line(
+            values={
+                "jersey_number": "10",
+                "status": "active",
+            },
+            user=self.user_a,
+        )
+        line.invalidate_recordset()
+        self.assertEqual(line.jersey_number, "10")
+        self.assertEqual(line.status, "active")
+
+        line_id = line.id
+        line._portal_delete_line(user=self.user_a)
+        self.assertFalse(self.env["federation.team.roster.line"].browse(line_id).exists())
+
+    def test_portal_player_picker_filters_by_team_gender(self):
+        women_team = self.env["federation.team"].create({
+            "name": "Portal Women Team",
+            "club_id": self.club_a.id,
+            "code": "PRTW",
+            "gender": "female",
+        })
+        women_registration = self.env["federation.season.registration"].create({
+            "season_id": self.season.id,
+            "team_id": women_team.id,
+            "user_id": self.user_a.id,
+        })
+        women_registration.action_confirm()
+        women_roster = self.env["federation.team.roster"].create({
+            "name": "Portal Women Roster",
+            "team_id": women_team.id,
+            "season_id": self.season.id,
+            "season_registration_id": women_registration.id,
+        })
+        female_player = self.env["federation.player"].create({
+            "first_name": "Portal",
+            "last_name": "Roster D",
+            "gender": "female",
+            "club_id": self.club_a.id,
+        })
+        male_player = self.env["federation.player"].create({
+            "first_name": "Portal",
+            "last_name": "Roster E",
+            "gender": "male",
+            "club_id": self.club_a.id,
+        })
+
+        available_players = self.env[
+            "federation.team.roster.line"
+        ]._portal_get_available_players(women_roster, user=self.user_a)
+
+        self.assertIn(female_player, available_players)
+        self.assertNotIn(male_player, available_players)

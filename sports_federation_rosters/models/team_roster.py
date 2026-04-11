@@ -85,10 +85,12 @@ class FederationTeamRoster(models.Model):
     ready_for_activation = fields.Boolean(
         compute="_compute_readiness",
         string="Ready For Activation",
+        store=True,
     )
     readiness_feedback = fields.Text(
         compute="_compute_readiness",
         string="Readiness Feedback",
+        store=True,
     )
     match_sheet_ids = fields.One2many(
         "federation.match.sheet",
@@ -488,12 +490,12 @@ class FederationTeamRosterLine(models.Model):
     eligible = fields.Boolean(
         compute="_compute_eligible",
         string="Eligible",
-        store=False,
+        store=True,
     )
     eligibility_feedback = fields.Text(
         compute="_compute_eligible",
         string="Eligibility Feedback",
-        store=False,
+        store=True,
     )
     team_id = fields.Many2one(
         "federation.team",
@@ -754,7 +756,7 @@ class FederationTeamRosterLine(models.Model):
 
         Service = self.env.get("federation.eligibility.service")
         rule_set = roster._get_effective_rule_set()
-        if Service and rule_set:
+        if Service is not None and rule_set:
             result = Service.check_player_eligibility(
                 player,
                 rule_set,

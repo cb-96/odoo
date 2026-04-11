@@ -202,7 +202,10 @@ class FederationFinanceEvent(models.Model):
                     "notes",
                 ):
                     value = vals.get(field_name)
-                    if value not in (False, None, "") and existing[field_name] != value:
+                    existing_value = existing[field_name]
+                    if self._fields[field_name].type == "many2one":
+                        existing_value = existing_value.id
+                    if value not in (False, None, "") and existing_value != value:
                         update_vals[field_name] = value
                 if existing.state == "cancelled":
                     update_vals["state"] = "draft"

@@ -7,92 +7,76 @@ class FederationTournamentParticipant(models.Model):
 
     ready_for_confirmation = fields.Boolean(
         compute="_compute_confirmation_readiness",
-        string="Ready For Confirmation",
+        string="Roster Deadline Satisfied",
+    )
+    roster_deadline_date = fields.Date(
+        compute="_compute_confirmation_readiness",
+        string="Roster Deadline",
     )
     readiness_roster_id = fields.Many2one(
         "federation.team.roster",
         compute="_compute_confirmation_readiness",
-        string="Readiness Roster",
+        string="Team Roster",
     )
     confirmation_feedback = fields.Text(
         compute="_compute_confirmation_readiness",
-        string="Confirmation Feedback",
+        string="Roster Feedback",
     )
 
     @api.depends(
         "team_id",
         "tournament_id",
         "tournament_id.season_id",
+        "tournament_id.date_start",
         "tournament_id.competition_id",
+        "tournament_id.match_ids.date_scheduled",
+        "tournament_id.match_ids.home_team_id",
+        "tournament_id.match_ids.away_team_id",
         "state",
     )
     def _compute_confirmation_readiness(self):
         for record in self:
-            roster = record._get_readiness_roster()
-            issues = record._get_confirmation_issues(roster=roster)
-            record.ready_for_confirmation = not bool(issues)
-            record.readiness_roster_id = roster.id if roster else False
-            record.confirmation_feedback = "\n".join(issues) if issues else False
+            assessment = record._get_roster_assessment()
+            record.ready_for_confirmation = not bool(assessment["blocking_issues"])
+            record.roster_deadline_date = assessment["deadline_date"] or False
+            record.readiness_roster_id = assessment["roster"].id if assessment["roster"] else False
+            record.confirmation_feedback = assessment["feedback"]
 
     def _get_readiness_roster(self):
         self.ensure_one()
-        Roster = self.env["federation.team.roster"]
-        if not self.team_id or not self.tournament_id.season_id:
-            return Roster.browse([])
-
-        domain = [
-            ("team_id", "=", self.team_id.id),
-            ("season_id", "=", self.tournament_id.season_id.id),
-            ("status", "=", "active"),
+        if not self.team_id or not self.tournament_id:
+            return self.env["federation.team.roster"]
+        return self.team_id._get_tournament_roster_assessment(self.tournament_id)[
+            "roster"
         ]
-        if self.tournament_id.competition_id:
-            competition_specific = Roster.search(
-                domain + [("competition_id", "=", self.tournament_id.competition_id.id)],
-                limit=1,
-                order="valid_from desc, id desc",
-            )
-            if competition_specific:
-                return competition_specific
 
-        return Roster.search(
-            domain + [("competition_id", "=", False)],
-            limit=1,
-            order="valid_from desc, id desc",
-        )
-
-    def _get_confirmation_issues(self, roster=None):
+    def _get_roster_assessment(self, today=None):
         self.ensure_one()
-        roster = roster if roster is not None else self._get_readiness_roster()
-        if not roster:
-            return [
-                _(
-                    "Create and activate a team roster for this team and season before confirming the participant."
-                )
-            ]
-
-        reference_date = self.tournament_id.date_start or fields.Date.context_today(self)
-        issues = roster._get_readiness_issues(reference_date=reference_date)
-        if issues:
-            return [
-                _("Roster '%(roster)s' is not ready: %(issues)s")
-                % {
-                    "roster": roster.display_name,
-                    "issues": "; ".join(issues),
-                }
-            ]
-        return []
+        if not self.team_id or not self.tournament_id:
+            return {
+                "roster": self.env["federation.team.roster"],
+                "first_match_date": False,
+                "deadline_date": False,
+                "deadline_reached": False,
+                "blocking_issues": [],
+                "feedback": False,
+            }
+        return self.team_id._get_tournament_roster_assessment(
+            self.tournament_id,
+            today=today,
+        )
 
     def action_confirm(self):
         for record in self:
-            issues = record._get_confirmation_issues()
-            if issues:
+            assessment = record._get_roster_assessment()
+            if assessment["blocking_issues"]:
                 raise ValidationError(
                     _(
-                        "Participant '%(participant)s' cannot be confirmed:\n- %(issues)s"
+                        "Participant '%(participant)s' cannot be confirmed because the roster deadline has been reached:\n- %(issues)s"
                     )
                     % {
                         "participant": record.display_name,
-                        "issues": "\n- ".join(issues),
+                        "issues": "\n- ".join(assessment["blocking_issues"]),
                     }
                 )
         return super().action_confirm()

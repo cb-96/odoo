@@ -280,7 +280,7 @@ for mod in "${MODULES[@]}"; do
   fi
 done
 
-docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm --env-file "$LOADED_ENV_FILE" \
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm \
   ci-odoo \
   --stop-after-init --test-enable --test-tags="$TEST_TAGS" \
   -d "$CI_ODOO_DB_NAME" -i "$MODULE_CSV" \

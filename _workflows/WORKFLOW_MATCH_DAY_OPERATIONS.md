@@ -91,17 +91,16 @@ Match sheet states: `draft` → `submitted` → `approved` → `locked`.
    automatically creates or reuses a draft venue booking finance event. Staff can
    still call `match.action_create_venue_finance_event()` to adjust the default
    `venue_booking` charge when needed.
-5. Gameday bundling and constraints:
-    - Matches may be attached to a `federation.gameday` record (`match.gameday_id`).
-       When schedules are generated with `Schedule By Round`, the scheduler
-       creates or finds a `gameday` per round and attaches the matches. This
-       groups matches at a venue/day for operational coordination (referees,
-       volunteers, venue logistics and finance events).
+5. Round scheduling and constraints:
+    - Matches belong to a `federation.tournament.round` (`match.round_id`). The
+       round carries the shared calendar date and venue; each match keeps the
+       exact kickoff time and optional playing area.
     - The venues module enforces a constraint that prevents teams in the same
-       `category` from playing the same opponent more than once on the same
-       gameday. This avoids repeated pairings in the same venue/day block.
-    - For programmatic creation or lookup use the gameday helper in
-       `sports_federation_venues.models.federation_gameday` (e.g. `find_or_create`).
+       `category` from playing the same opponent more than once inside the same
+       round. This avoids repeated pairings in one shared round block.
+    - Updating a round's venue propagates that venue to its matches. Updating a
+       round's date preserves each match's time-of-day while moving the match to
+       the round's calendar date.
 
 ### 5. Pre-Match Checks
 

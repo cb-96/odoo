@@ -1,5 +1,7 @@
 import logging
-from odoo import models, _
+from datetime import datetime, timedelta
+
+from odoo import fields, models, _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -20,7 +22,6 @@ class RoundRobinService(models.AbstractModel):
             options: dict with keys:
                 - double_round: bool
                 - rounds_count: int (how many full cycles to repeat)
-                - use_stage_gamedays: bool (if True, assign each round to an existing stage gameday)
                 - schedule_by_round: bool (if True, schedule each round as a time block)
                 - round_interval_hours: int (hours between rounds when scheduling by round)
                 - start_datetime: datetime or False
@@ -34,7 +35,9 @@ class RoundRobinService(models.AbstractModel):
         """
         self._validate_inputs(tournament, stage, participants, options)
 
-        if not options.get("overwrite"):
+        if options.get("overwrite"):
+            self._clear_existing_matches(stage, options.get("group"))
+        else:
             self._check_existing_matches(stage, options.get("group"))
 
         teams = [p.team_id for p in participants]
@@ -69,6 +72,12 @@ class RoundRobinService(models.AbstractModel):
                 "Existing matches found in this stage/group. "
                 "Enable overwrite mode to replace them."
             ))
+
+    def _clear_existing_matches(self, stage, group):
+        domain = [("stage_id", "=", stage.id)]
+        if group:
+            domain.append(("group_id", "=", group.id))
+        self.env["federation.match"].search(domain).unlink()
 
     def _generate_pairings(self, teams, double_round):
         """
@@ -113,34 +122,14 @@ class RoundRobinService(models.AbstractModel):
 
         return rounds_list
 
-    def _get_stage_gamedays(self, stage):
-        Gameday = self.env.get("federation.gameday")
-        if Gameday is None:
-            return None
-        return Gameday.search(
-            [("stage_id", "=", stage.id)],
+    def _get_stage_rounds(self, stage, group=False):
+        return self.env["federation.tournament.round"].search(
+            [
+                ("stage_id", "=", stage.id),
+                ("group_id", "=", group.id if group else False),
+            ],
             order="sequence asc, id asc",
         )
-
-    def _ensure_gameday_scope(self, gameday, tournament, stage):
-        if not gameday or not tournament or gameday.tournament_id:
-            return gameday
-
-        vals = {"tournament_id": tournament.id}
-        if stage and not gameday.stage_id:
-            vals["stage_id"] = stage.id
-        if not gameday.sequence:
-            vals["sequence"] = self.env["federation.gameday"]._next_tournament_sequence(
-                tournament.id
-            )
-
-        try:
-            gameday.write(vals)
-        except Exception:
-            # If another process scoped the gameday concurrently, reload it.
-            gameday = self.env["federation.gameday"].browse(gameday.id)
-
-        return gameday
 
     def _get_ordered_round_entries(self, round_pairs):
         entries = []
@@ -179,86 +168,73 @@ class RoundRobinService(models.AbstractModel):
         ordered.extend(mixed)
         return ordered
 
-    def _split_round_entries(self, entries, chunk_count):
-        if chunk_count <= 1:
-            return [entries]
+    def _get_round_records(
+        self,
+        stage,
+        rounds,
+        group=False,
+        start_dt=False,
+        schedule_by_round=False,
+        round_interval_hours=24,
+        venue_rec=False,
+    ):
+        Round = self.env["federation.tournament.round"]
+        existing_rounds = {
+            round_record.sequence: round_record
+            for round_record in self._get_stage_rounds(stage, group=group)
+        }
 
-        chunks = []
-        base_size, remainder = divmod(len(entries), chunk_count)
-        start = 0
-        for index in range(chunk_count):
-            chunk_size = base_size + (1 if index < remainder else 0)
-            end = start + chunk_size
-            chunks.append(entries[start:end])
-            start = end
-        return [chunk for chunk in chunks if chunk]
+        round_records = []
+        for round_number in range(1, len(rounds) + 1):
+            round_vals = {
+                "name": _("Round %(number)s") % {"number": round_number},
+            }
+            if schedule_by_round and start_dt:
+                round_vals["round_date"] = (
+                    fields.Datetime.to_datetime(start_dt)
+                    + timedelta(hours=(round_number - 1) * round_interval_hours)
+                ).date()
+            if venue_rec and "venue_id" in Round._fields:
+                round_vals["venue_id"] = venue_rec.id
 
-    def _get_stage_gameday_chunk_counts(self, ordered_rounds, gameday_count):
-        allocations = [1] * len(ordered_rounds)
-        extra_slots = max(gameday_count - len(ordered_rounds), 0)
-        max_extra_slots = sum(max(len(entries) - 1, 0) for entries in ordered_rounds)
-        extra_slots = min(extra_slots, max_extra_slots)
-
-        while extra_slots > 0:
-            candidate_indexes = [
-                index
-                for index, entries in enumerate(ordered_rounds)
-                if allocations[index] < len(entries)
-            ]
-            if not candidate_indexes:
-                break
-
-            candidate_index = max(
-                candidate_indexes,
-                key=lambda index: (len(ordered_rounds[index]) / allocations[index], -index),
+            round_record = existing_rounds.get(round_number)
+            round_record = Round.get_or_create_stage_round(
+                stage,
+                round_number,
+                group=group,
+                values=round_vals,
+            ) if not round_record else Round.get_or_create_stage_round(
+                stage,
+                round_number,
+                group=group,
+                values=round_vals,
             )
-            allocations[candidate_index] += 1
-            extra_slots -= 1
+            round_records.append(round_record)
+        return round_records
 
-        return allocations
+    def _get_round_base_datetime(
+        self,
+        round_record,
+        start_dt,
+        round_number,
+        schedule_by_round,
+        round_interval_hours,
+    ):
+        if not start_dt:
+            return False
 
-    def _get_stage_gameday_plan(self, rounds, stage_gamedays):
-        ordered_rounds = [self._get_ordered_round_entries(round_pairs) for round_pairs in rounds]
-        chunk_counts = self._get_stage_gameday_chunk_counts(ordered_rounds, len(stage_gamedays))
-
-        plan = []
-        gameday_index = 0
-        for round_index, entries in enumerate(ordered_rounds, start=1):
-            for chunk in self._split_round_entries(entries, chunk_counts[round_index - 1]):
-                plan.append({
-                    "round_number": round_index,
-                    "gameday": stage_gamedays[gameday_index],
-                    "entries": chunk,
-                })
-                gameday_index += 1
-
-        return plan
-
-    def _check_duplicate_pairing_on_gameday(self, Match, gameday, home, away):
-        if not gameday or home.category != away.category:
-            return
-
-        dup_count = Match.search_count([
-            ("gameday_id", "=", gameday.id),
-            ("home_team_id", "=", home.id),
-            ("away_team_id", "=", away.id),
-        ]) + Match.search_count([
-            ("gameday_id", "=", gameday.id),
-            ("home_team_id", "=", away.id),
-            ("away_team_id", "=", home.id),
-        ])
-        if dup_count:
-            raise UserError(_(
-                "Duplicate pairing for same category on gameday %s: %s vs %s"
-            ) % (gameday.name, home.name, away.name))
+        start_dt = fields.Datetime.to_datetime(start_dt)
+        if round_record.round_date:
+            return datetime.combine(round_record.round_date, start_dt.time())
+        if schedule_by_round:
+            return start_dt + timedelta(hours=(round_number - 1) * round_interval_hours)
+        return False
 
     def _create_matches(self, tournament, stage, rounds, options):
         """
         Create `federation.match` records from rounds (list of rounds -> list of pairs).
 
         Scheduling behavior depends on options:
-        - If `use_stage_gamedays` is True, each generated round is assigned to the
-          next existing gameday on the selected stage, ordered by sequence.
         - If `schedule_by_round` is True and `start_datetime` is set, each round is
           scheduled at `start_datetime + round_index * round_interval_hours` and
           intra-round spacing uses `interval_hours`.
@@ -271,139 +247,67 @@ class RoundRobinService(models.AbstractModel):
         round_interval = options.get("round_interval_hours")
         venue = options.get("venue", "")
         group = options.get("group")
-        use_stage_gamedays = bool(options.get("use_stage_gamedays"))
         schedule_by_round = bool(options.get("schedule_by_round"))
 
         created = []
 
         # Try to resolve a venue record if a venue name was provided
         Venue = self.env.get("federation.venue")
-        Gameday = self.env.get("federation.gameday")
         venue_rec = None
         if venue and Venue is not None:
             venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
-        if use_stage_gamedays:
-            from datetime import timedelta
+        if not round_interval:
+            round_interval = interval or 24
 
-            stage_gamedays = self._get_stage_gamedays(stage)
-            if stage_gamedays is None:
-                raise UserError(_(
-                    "Existing stage gamedays require the venues module to be installed."
-                ))
-            if not stage_gamedays:
-                raise UserError(_(
-                    "No gamedays were found on the selected stage. Add stage gamedays or disable Use Existing Stage Gamedays."
-                ))
-            if len(stage_gamedays) < len(rounds):
-                raise UserError(_(
-                    "This stage has %(available)s gamedays, but %(required)s rounds will be generated. Add more stage gamedays or disable Use Existing Stage Gamedays."
-                ) % {
-                    "available": len(stage_gamedays),
-                    "required": len(rounds),
-                })
+        round_records = self._get_round_records(
+            stage,
+            rounds,
+            group=group,
+            start_dt=start_dt,
+            schedule_by_round=schedule_by_round,
+            round_interval_hours=round_interval,
+            venue_rec=venue_rec,
+        )
 
-            for assignment in self._get_stage_gameday_plan(rounds, stage_gamedays):
-                gameday = assignment["gameday"]
-                ordered = assignment["entries"]
-                round_base = gameday.start_datetime or False
-                round_number = assignment["round_number"]
+        sequential_index = 0
+        for round_number, (round_pairs, round_record) in enumerate(zip(rounds, round_records), start=1):
+            ordered_entries = self._get_ordered_round_entries(round_pairs)
+            round_base = self._get_round_base_datetime(
+                round_record,
+                start_dt,
+                round_number,
+                schedule_by_round,
+                round_interval,
+            )
 
-                for m_idx, entry in enumerate(ordered):
-                    home = entry["home"]
-                    away = entry["away"]
-                    self._check_duplicate_pairing_on_gameday(Match, gameday, home, away)
+            for match_index, entry in enumerate(ordered_entries):
+                vals = {
+                    "tournament_id": tournament.id,
+                    "stage_id": stage.id,
+                    "home_team_id": entry["home"].id,
+                    "away_team_id": entry["away"].id,
+                    "round_id": round_record.id,
+                    "round_number": round_number,
+                    "state": "draft",
+                }
+                if group:
+                    vals["group_id"] = group.id
 
-                    vals = {
-                        "tournament_id": tournament.id,
-                        "stage_id": stage.id,
-                        "home_team_id": home.id,
-                        "away_team_id": away.id,
-                        "gameday_id": gameday.id,
-                        "round_number": round_number,
-                        "state": "draft",
-                    }
-                    if group:
-                        vals["group_id"] = group.id
-                    if round_base:
-                        if interval:
-                            vals["date_scheduled"] = round_base + timedelta(hours=m_idx * interval)
-                        else:
-                            vals["date_scheduled"] = round_base
+                if venue_rec and Venue is not None:
+                    vals["venue_id"] = round_record.venue_id.id if "venue_id" in round_record._fields and round_record.venue_id else venue_rec.id
 
-                    created.append(Match.create(vals))
-        elif schedule_by_round and start_dt:
-            # default round interval to 24h if not set
-            if not round_interval:
-                round_interval = interval or 24
-            from datetime import timedelta
-            for r_idx, round_pairs in enumerate(rounds):
-                round_base = start_dt + timedelta(hours=r_idx * round_interval)
-                round_number = r_idx + 1
-
-                # If we have a venue record, create/find a gameday for this round
-                gameday = None
-                if venue_rec and Gameday is not None:
-                    gameday = Gameday.find_or_create(venue_rec.id, round_base)
-                    gameday = self._ensure_gameday_scope(gameday, tournament, stage)
-
-                ordered = self._get_ordered_round_entries(round_pairs)
-
-                for m_idx, entry in enumerate(ordered):
-                    home = entry["home"]
-                    away = entry["away"]
-
-                    self._check_duplicate_pairing_on_gameday(Match, gameday, home, away)
-
-                    vals = {
-                        "tournament_id": tournament.id,
-                        "stage_id": stage.id,
-                        "home_team_id": home.id,
-                        "away_team_id": away.id,
-                        "round_number": round_number,
-                        "state": "draft",
-                    }
-                    if group:
-                        vals["group_id"] = group.id
-                    if venue_rec:
-                        vals["venue_id"] = venue_rec.id
-                    if gameday:
-                        vals["gameday_id"] = gameday.id
-
-                    # intra-round spacing
+                if round_base:
                     if interval:
-                        vals["date_scheduled"] = round_base + timedelta(hours=m_idx * interval)
+                        vals["date_scheduled"] = round_base + timedelta(hours=match_index * interval)
                     else:
                         vals["date_scheduled"] = round_base
+                elif start_dt and interval:
+                    vals["date_scheduled"] = fields.Datetime.to_datetime(start_dt) + timedelta(hours=sequential_index * interval)
+                elif start_dt:
+                    vals["date_scheduled"] = start_dt
 
-                    created.append(Match.create(vals))
-        else:
-            # Flatten rounds and schedule sequentially
-            from datetime import timedelta
-            idx = 0
-            for r_idx, round_pairs in enumerate(rounds):
-                round_number = r_idx + 1
-                for (home, away) in round_pairs:
-                    vals = {
-                        "tournament_id": tournament.id,
-                        "stage_id": stage.id,
-                        "home_team_id": home.id,
-                        "away_team_id": away.id,
-                        "round_number": round_number,
-                        "state": "draft",
-                    }
-                    if group:
-                        vals["group_id"] = group.id
-                    if venue and Venue is not None:
-                        # try to attach venue record when possible
-                        venue_rec = Venue.search([("name", "=", venue)], limit=1)
-                        if venue_rec:
-                            vals["venue_id"] = venue_rec.id
-                    if start_dt and interval:
-                        vals["date_scheduled"] = start_dt + timedelta(hours=idx * interval)
-                    elif start_dt:
-                        vals["date_scheduled"] = start_dt
-                    created.append(Match.create(vals))
-                    idx += 1
+                created.append(Match.create(vals))
+                sequential_index += 1
 
         return created

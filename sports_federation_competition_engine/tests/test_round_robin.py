@@ -180,3 +180,5 @@ class TestRoundRobin(TransactionCase):
         for round_number in round_numbers:
             round_matches = matches.filtered(lambda match: match.round_number == round_number)
             self.assertEqual(len(round_matches), 3)
+            self.assertEqual(len(round_matches.mapped("round_id")), 1)
+            self.assertEqual(round_matches.mapped("round_id.sequence"), [round_number])

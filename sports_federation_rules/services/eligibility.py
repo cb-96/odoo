@@ -183,7 +183,7 @@ class FederationEligibilityService(models.AbstractModel):
         if etype == "license_valid":
             return self._check_license(player, context)
         if etype == "suspension":
-            return self._check_suspension(player)
+            return self._check_suspension(player, context)
         if etype == "registration":
             return self._check_registration(player, context)
         # "custom" and unknown → pass-through (no enforcement yet)
@@ -331,8 +331,34 @@ class FederationEligibilityService(models.AbstractModel):
             )
         return EligibilityResult()
 
-    def _check_suspension(self, player):
-        """Check that the player is not in a 'suspended' state."""
+    def _check_suspension(self, player, context=None):
+        """Check that the player is not suspended for the operational date."""
+        context = context or {}
+        reference_date = fields.Date.to_date(context.get("match_date") or date.today())
+        Suspension = self.env.get("federation.suspension")
+
+        if Suspension is not None:
+            active_suspension = Suspension.search(
+                [
+                    ("player_id", "=", player.id),
+                    ("state", "=", "active"),
+                    ("date_start", "<=", reference_date),
+                    ("date_end", ">=", reference_date),
+                ],
+                order="date_start desc, id desc",
+                limit=1,
+            )
+            if active_suspension:
+                return EligibilityResult(
+                    eligible=False,
+                    reasons=[
+                        (
+                            f"Player '{player.name}' is suspended from "
+                            f"{active_suspension.date_start} to {active_suspension.date_end}."
+                        )
+                    ],
+                )
+
         if player.state == "suspended":
             return EligibilityResult(
                 eligible=False,

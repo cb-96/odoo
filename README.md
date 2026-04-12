@@ -45,8 +45,8 @@ graph LR
 
   Engine -->|generates| Tournament
   Engine -->|generates| Matches[federation.match]
-  Matches -->|attached to| Gameday[federation.gameday]
-  Gameday --> Venues
+  Matches -->|belong to| Round[federation.tournament.round]
+  Round --> Venues
   Matches --> Standings
   Standings -->|feeds| Progression[federation.stage.progression]
   Progression --> Tournament
@@ -61,10 +61,11 @@ graph LR
 
 Notes:
 - The `competition_engine` contains deterministic scheduling services (round-
-  robin, knockout). It supports per-round scheduling, `gameday` bundling and
+  robin, knockout). It supports per-round scheduling, round-owned date/venue
+  planning, and
   full-bracket construction.
-- `federation.gameday` groups matches for a venue/day to simplify operations
-  (referees, volunteers, venue finance events).
+- `federation.tournament.round` is the shared schedule block for a stage: rounds
+  own the calendar date and venue, while matches keep the exact kickoff time.
 - Standings computation and `stage_progression` rules automate advancement
   across stages (optional `auto_advance`). See `odoo/TECHNICAL_NOTE.md`.
 
@@ -144,6 +145,6 @@ Module list (high level)
 - `sports_federation_standings` — standings computation and publishing
 - `sports_federation_rosters` — rosters and match-sheets
 - `sports_federation_officiating` — referee registry and assignments
-- `sports_federation_venues` — venues, gamedays and venue helpers
+- `sports_federation_venues` — venues, playing areas, and round-level venue scheduling
 - `sports_federation_finance_bridge` — finance event helpers
 - `sports_federation_public_site` / `sports_federation_portal` — public pages and portal flows

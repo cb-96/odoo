@@ -241,6 +241,83 @@ class TestEligibilityService(TransactionCase):
         result = self.service.check_player_eligibility(player, rule_set)
         self.assertTrue(result["eligible"])
 
+    def test_suspension_rejects_player_with_active_suspension_window(self):
+        """Date-bounded active suspensions must block eligibility checks."""
+        Suspension = self.env.get("federation.suspension")
+        Case = self.env.get("federation.disciplinary.case")
+        if not Suspension or not Case:
+            self.skipTest("Discipline module not installed.")
+
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Suspension Window RS", "code": "SUSWRS",
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "No Active Suspensions",
+            "eligibility_type": "suspension",
+        })
+        player = self._make_player(state="active")
+        case = Case.create({
+            "name": "Eligibility Suspension Case",
+            "subject_player_id": player.id,
+            "summary": "Suspension should block eligibility during its active window.",
+        })
+        suspension = Suspension.create({
+            "name": "Windowed Suspension",
+            "case_id": case.id,
+            "player_id": player.id,
+            "date_start": "2024-06-10",
+            "date_end": "2024-06-20",
+        })
+        suspension.action_activate()
+
+        result = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={"match_date": date(2024, 6, 15)},
+        )
+
+        self.assertFalse(result["eligible"])
+        self.assertIn("2024-06-10", result["reasons"][0])
+
+    def test_suspension_ignores_out_of_window_active_suspension(self):
+        """Past or future suspension windows should not block the current date."""
+        Suspension = self.env.get("federation.suspension")
+        Case = self.env.get("federation.disciplinary.case")
+        if not Suspension or not Case:
+            self.skipTest("Discipline module not installed.")
+
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Suspension Window Pass RS", "code": "SUSWPRS",
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "No Active Suspensions",
+            "eligibility_type": "suspension",
+        })
+        player = self._make_player(state="active")
+        case = Case.create({
+            "name": "Old Suspension Case",
+            "subject_player_id": player.id,
+            "summary": "Old suspension should not block later eligibility checks.",
+        })
+        suspension = Suspension.create({
+            "name": "Expired Window",
+            "case_id": case.id,
+            "player_id": player.id,
+            "date_start": "2024-05-01",
+            "date_end": "2024-05-05",
+        })
+        suspension.action_activate()
+
+        result = self.service.check_player_eligibility(
+            player,
+            rule_set,
+            context={"match_date": date(2024, 6, 15)},
+        )
+
+        self.assertTrue(result["eligible"])
+
     # ------------------------------------------------------------------
     # placeholder skipped
     # ------------------------------------------------------------------

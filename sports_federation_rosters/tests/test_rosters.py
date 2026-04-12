@@ -52,6 +52,29 @@ class TestRosters(TransactionCase):
         self.assertEqual(roster.team_id, self.team)
         self.assertEqual(roster.season_id, self.season)
 
+    def test_create_roster_generates_name_from_scope(self):
+        roster = self.env["federation.team.roster"].create({
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+            "competition_id": self.competition.id,
+        })
+
+        self.assertTrue(roster.name)
+        self.assertIn(self.team.display_name, roster.name)
+        self.assertIn(self.season.display_name, roster.name)
+        self.assertIn(self.competition.display_name, roster.name)
+
+    def test_team_roster_button_opens_single_roster_form(self):
+        roster = self.env["federation.team.roster"].create({
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+
+        action = self.team.action_view_rosters()
+
+        self.assertEqual(action["view_mode"], "form")
+        self.assertEqual(action["res_id"], roster.id)
+
     def test_roster_team_season_registration_consistency(self):
         """Test that season registration must match team and season."""
         registration = self.env["federation.season.registration"].create({

@@ -17,6 +17,8 @@ class FederationReportSchedule(models.Model):
         ("operational", "Operational Summary"),
         ("standing_reconciliation", "Standings Reconciliation"),
         ("finance_reconciliation", "Finance Reconciliation"),
+        ("workflow_exceptions", "Workflow Exceptions"),
+        ("season_checklist", "Season Checklist"),
         ("compliance_summary", "Compliance Summary"),
     ]
     PERIOD_TYPE_SELECTION = [
@@ -179,6 +181,86 @@ class FederationReportSchedule(models.Model):
         ]
         return headers, data, f"finance_reconciliation_{self.period_type}"
 
+    def _build_workflow_exception_rows(self):
+        season = self._get_effective_season()
+        domain = [(
+            "season_id",
+            "=",
+            season.id,
+        )] if season else []
+        rows = self.env["federation.report.workflow.exception"].search(
+            domain,
+            order="age_days desc, raised_on asc",
+        )
+        headers = [
+            "Season",
+            "Tournament",
+            "Reference",
+            "State",
+            "Exception Type",
+            "Raised On",
+            "Age (Days)",
+            "Responsible User",
+            "Note",
+        ]
+        data = [
+            [
+                row.season_id.name if row.season_id else "",
+                row.tournament_id.name if row.tournament_id else "",
+                row.reference_name or "",
+                row.state or "",
+                dict(self.env["federation.report.workflow.exception"]._fields["exception_type"].selection).get(
+                    row.exception_type,
+                    row.exception_type or "",
+                ),
+                row.raised_on or "",
+                row.age_days,
+                row.responsible_user_id.name if row.responsible_user_id else "",
+                row.exception_note or "",
+            ]
+            for row in rows
+        ]
+        season_code = season.code if season else "all_seasons"
+        return headers, data, f"workflow_exceptions_{self.period_type}_{season_code}"
+
+    def _build_season_checklist_rows(self):
+        season = self._get_effective_season()
+        domain = [("season_id", "=", season.id)] if season else []
+        rows = self.env["federation.report.season.checklist"].search(domain, order="season_id asc")
+        headers = [
+            "Season",
+            "Season State",
+            "Draft Season Registrations",
+            "Submitted Season Registrations",
+            "Draft Tournament Registrations",
+            "Submitted Tournament Registrations",
+            "Live Tournaments",
+            "Published Tournaments",
+            "Unpublished Tournaments",
+            "Workflow Exceptions",
+            "Checklist Status",
+            "Checklist Note",
+        ]
+        data = [
+            [
+                row.season_id.name if row.season_id else "",
+                row.season_state or "",
+                row.draft_season_registration_count,
+                row.submitted_season_registration_count,
+                row.draft_tournament_registration_count,
+                row.submitted_tournament_registration_count,
+                row.live_tournament_count,
+                row.published_tournament_count,
+                row.unpublished_tournament_count,
+                row.workflow_exception_count,
+                row.checklist_status or "",
+                row.checklist_note or "",
+            ]
+            for row in rows
+        ]
+        season_code = season.code if season else "all_seasons"
+        return headers, data, f"season_checklist_{self.period_type}_{season_code}"
+
     def _build_compliance_summary_rows(self):
         rows = self.env["federation.report.compliance"].search([], order="target_model asc")
         headers = [
@@ -208,6 +290,8 @@ class FederationReportSchedule(models.Model):
             "operational": self._build_operational_rows,
             "standing_reconciliation": self._build_standing_reconciliation_rows,
             "finance_reconciliation": self._build_finance_reconciliation_rows,
+            "workflow_exceptions": self._build_workflow_exception_rows,
+            "season_checklist": self._build_season_checklist_rows,
             "compliance_summary": self._build_compliance_summary_rows,
         }
         headers, rows, slug = builders[self.report_type]()
@@ -251,11 +335,18 @@ class FederationReportSchedule(models.Model):
             "operational": "sports_federation_reporting.action_federation_report_operational",
             "standing_reconciliation": "sports_federation_reporting.action_federation_report_standing_reconciliation",
             "finance_reconciliation": "sports_federation_reporting.action_federation_report_finance_reconciliation",
+            "workflow_exceptions": "sports_federation_reporting.action_federation_report_workflow_exception",
+            "season_checklist": "sports_federation_reporting.action_federation_report_season_checklist",
             "compliance_summary": "sports_federation_reporting.action_federation_report_compliance",
         }[self.report_type]
 
         action = self.env["ir.actions.act_window"]._for_xml_id(action_xmlid)
-        if self.report_type in ("operational", "standing_reconciliation") and self.season_id:
+        if self.report_type in (
+            "operational",
+            "standing_reconciliation",
+            "workflow_exceptions",
+            "season_checklist",
+        ) and self.season_id:
             action["domain"] = [("season_id", "=", self.season_id.id)]
         if self.report_type == "finance_reconciliation":
             action["context"] = {"search_default_needs_follow_up": 1}

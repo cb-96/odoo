@@ -73,6 +73,11 @@
                         </p>
                     </div>
                     <div class="col-md-6 text-right">
+                        <a t-if="tournament.get_public_schedule_sections()"
+                           t-attf-href="/competitions/{{tournament.id}}/schedule"
+                           class="btn btn-outline-primary mr-2">
+                            <i class="fa fa-calendar"/> Schedule
+                        </a>
                         <a t-if="tournament.show_public_standings"
                            t-attf-href="/competitions/{{tournament.id}}/standings"
                            class="btn btn-outline-primary mr-2">
@@ -82,6 +87,11 @@
                            t-attf-href="/competitions/{{tournament.id}}/results"
                            class="btn btn-outline-primary">
                             <i class="fa fa-list"/> Results
+                        </a>
+                        <a t-if="tournament.has_public_bracket()"
+                           t-attf-href="/competitions/{{tournament.id}}/bracket"
+                           class="btn btn-outline-primary ml-2">
+                            <i class="fa fa-sitemap"/> Bracket
                         </a>
                     </div>
                 </div>
@@ -212,6 +222,114 @@
                 </div>
                 <div t-if="not matches" class="alert alert-info">
                     No approved results are available for this competition.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_competition_schedule" name="Competition Schedule">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item active">Schedule</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4"><t t-esc="tournament.name"/> - Schedule</h1>
+                <t t-foreach="schedule_sections" t-as="section">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="mb-0" t-esc="section['title']"/>
+                            <small class="text-muted" t-if="section['subtitle']" t-esc="section['subtitle']"/>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Kickoff</th>
+                                        <th>Home Team</th>
+                                        <th>Away Team</th>
+                                        <th>Venue</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="section['matches']" t-as="match">
+                                        <tr>
+                                            <td>
+                                                <t t-if="match.date_scheduled">
+                                                    <t t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                                                </t>
+                                                <t t-else="">TBD</t>
+                                            </td>
+                                            <td t-esc="match.home_team_id.name"/>
+                                            <td t-esc="match.away_team_id.name"/>
+                                            <td>
+                                                <t t-if="match.venue_id" t-esc="match.venue_id.name"/>
+                                                <t t-if="match.playing_area_id">(<t t-esc="match.playing_area_id.name"/>)</t>
+                                            </td>
+                                            <td><span class="badge bg-secondary" t-esc="match.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+                <div t-if="not schedule_sections" class="alert alert-info">
+                    No fixtures are currently available for this competition.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_competition_bracket" name="Competition Bracket">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item active">Bracket</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4"><t t-esc="tournament.name"/> - Bracket</h1>
+                <div class="row">
+                    <t t-foreach="bracket_sections" t-as="section">
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong t-esc="section['title']"/>
+                                </div>
+                                <div class="card-body">
+                                    <t t-foreach="section['matches']" t-as="match">
+                                        <div class="border rounded p-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <strong t-esc="match.name"/>
+                                                <small class="text-muted" t-if="match.date_scheduled" t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                                            </div>
+                                            <div class="text-muted mb-2" t-if="match.source_match_1_id or match.source_match_2_id">
+                                                <div t-if="match.source_match_1_id">Source 1: <t t-esc="match.source_type_1"/> of <t t-esc="match.source_match_1_id.name"/></div>
+                                                <div t-if="match.source_match_2_id">Source 2: <t t-esc="match.source_type_2"/> of <t t-esc="match.source_match_2_id.name"/></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span t-esc="match.home_team_id.name or 'TBD'"/>
+                                                <strong>
+                                                    <t t-esc="match.home_score"/> - <t t-esc="match.away_score"/>
+                                                </strong>
+                                                <span t-esc="match.away_team_id.name or 'TBD'"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="not bracket_sections" class="alert alert-info">
+                    No bracket structure is currently published for this competition.
                 </div>
             </div>
         </t>

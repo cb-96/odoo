@@ -1,5 +1,4 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
 
 
 class FederationTournamentParticipant(models.Model):
@@ -66,17 +65,26 @@ class FederationTournamentParticipant(models.Model):
             today=today,
         )
 
+    def _ensure_linked_roster(self):
+        for record in self.filtered(
+            lambda participant: participant.team_id
+            and participant.tournament_id
+            and participant.tournament_id.season_id
+        ):
+            record.team_id._ensure_tournament_roster(record.tournament_id)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._ensure_linked_roster()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if {"team_id", "tournament_id"}.intersection(vals):
+            self._ensure_linked_roster()
+        return result
+
     def action_confirm(self):
-        for record in self:
-            assessment = record._get_roster_assessment()
-            if assessment["blocking_issues"]:
-                raise ValidationError(
-                    _(
-                        "Participant '%(participant)s' cannot be confirmed because the roster deadline has been reached:\n- %(issues)s"
-                    )
-                    % {
-                        "participant": record.display_name,
-                        "issues": "\n- ".join(assessment["blocking_issues"]),
-                    }
-                )
+        self._ensure_linked_roster()
         return super().action_confirm()

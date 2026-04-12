@@ -1,8 +1,9 @@
 import logging
 import math
 import random
-from datetime import timedelta
-from odoo import models, _
+from datetime import datetime, timedelta
+
+from odoo import fields, models, _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -22,7 +23,9 @@ class KnockoutService(models.AbstractModel):
         """
         self._validate_inputs(tournament, stage, participants, options)
 
-        if not options.get("overwrite"):
+        if options.get("overwrite"):
+            self._clear_existing_matches(stage)
+        else:
             self._check_existing_matches(stage)
 
         teams = self._apply_seeding(participants, options.get("seeding", "seed"))
@@ -53,6 +56,9 @@ class KnockoutService(models.AbstractModel):
         existing = self.env["federation.match"].search([("stage_id", "=", stage.id)])
         if existing:
             raise UserError(_("Existing matches found. Enable overwrite to replace."))
+
+    def _clear_existing_matches(self, stage):
+        self.env["federation.match"].search([("stage_id", "=", stage.id)]).unlink()
 
     def _apply_seeding(self, participants, seeding):
         if seeding == "random":
@@ -96,9 +102,14 @@ class KnockoutService(models.AbstractModel):
     def _create_full_bracket(self, tournament, stage, teams, bracket_size, first_round_pairs, options, bracket_type):
         """Build the entire bracket: round 1 matches + placeholder matches for subsequent rounds."""
         Match = self.env["federation.match"]
+        Round = self.env["federation.tournament.round"]
         start_dt = options.get("start_datetime")
         interval = options.get("interval_hours", 0)
         venue = options.get("venue", "")
+        Venue = self.env.get("federation.venue")
+        venue_rec = None
+        if venue and Venue is not None:
+            venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
         total_rounds = math.ceil(math.log2(bracket_size)) if bracket_size > 1 else 1
         n_actual = len(teams)
@@ -109,6 +120,15 @@ class KnockoutService(models.AbstractModel):
 
         # --- Round 1: real matches ---
         round_1_matches = []
+        round_1_base = fields.Datetime.to_datetime(start_dt) if start_dt else False
+        round_1_vals = {"name": round_names[1]}
+        if round_1_base:
+            round_1_vals["round_date"] = round_1_base.date()
+        if venue_rec and "venue_id" in Round._fields:
+            round_1_vals["venue_id"] = venue_rec.id
+        round_1_record = Round.get_or_create_stage_round(stage, 1, values=round_1_vals)
+        if round_1_record.round_date and round_1_base:
+            round_1_base = datetime.combine(round_1_record.round_date, round_1_base.time())
         for i, (home, away) in enumerate(first_round_pairs):
             vals = {
                 "tournament_id": tournament.id,
@@ -116,12 +136,15 @@ class KnockoutService(models.AbstractModel):
                 "home_team_id": home.id,
                 "away_team_id": away.id,
                 "state": "draft",
+                "round_id": round_1_record.id,
                 "round_number": 1,
                 "bracket_position": i + 1,
                 "bracket_type": bracket_type,
             }
-            if start_dt:
-                vals["date_scheduled"] = start_dt + timedelta(hours=i * interval)
+            if venue_rec and Venue is not None:
+                vals["venue_id"] = round_1_record.venue_id.id if "venue_id" in round_1_record._fields and round_1_record.venue_id else venue_rec.id
+            if round_1_base:
+                vals["date_scheduled"] = round_1_base + timedelta(hours=i * interval)
             round_1_matches.append(Match.create(vals))
 
         all_matches = list(round_1_matches)
@@ -166,7 +189,15 @@ class KnockoutService(models.AbstractModel):
         for rnd in range(2, total_rounds + 1):
             matches_in_round = len(prev_round_sources) // 2
             current_matches = []
-            round_dt = start_dt + timedelta(hours=(rnd - 1) * 24) if start_dt else None
+            round_dt = fields.Datetime.to_datetime(start_dt) + timedelta(hours=(rnd - 1) * 24) if start_dt else None
+            round_vals = {"name": round_names[rnd]}
+            if round_dt:
+                round_vals["round_date"] = round_dt.date()
+            if venue_rec and "venue_id" in Round._fields:
+                round_vals["venue_id"] = venue_rec.id
+            round_record = Round.get_or_create_stage_round(stage, rnd, values=round_vals)
+            if round_record.round_date and round_dt:
+                round_dt = datetime.combine(round_record.round_date, round_dt.time())
 
             for m in range(matches_in_round):
                 src_a = prev_round_sources[m * 2]
@@ -176,10 +207,13 @@ class KnockoutService(models.AbstractModel):
                     "tournament_id": tournament.id,
                     "stage_id": stage.id,
                     "state": "draft",
+                    "round_id": round_record.id,
                     "round_number": rnd,
                     "bracket_position": m + 1,
                     "bracket_type": bracket_type,
                 }
+                if venue_rec and Venue is not None:
+                    vals["venue_id"] = round_record.venue_id.id if "venue_id" in round_record._fields and round_record.venue_id else venue_rec.id
                 if round_dt:
                     vals["date_scheduled"] = round_dt + timedelta(hours=m * interval)
 

@@ -116,6 +116,61 @@ Finance follow-up queue by event.
 | `age_days` | Integer | Days since the event was created |
 | `invoice_ref` / `external_ref` | Char | Reconciliation references |
 
+### `federation.report.notification.exception`
+
+Failed-notification queue backed by the notification log.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `notification_log_id` | Many2one | Source notification log entry |
+| `created_on` | Datetime | When the failed log was created |
+| `target_model` / `target_res_id` | Char / Integer | Failing target record |
+| `recipient_email` | Char | Intended recipient |
+| `template_xmlid` | Char | Template attempted by the dispatcher |
+| `message` | Text | Failure reason |
+
+### `federation.report.finance.exception`
+
+Missing automation queue for discipline-side fine events.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sanction_id` | Many2one | Fine sanction missing a linked finance event |
+| `case_reference` | Char | Disciplinary case reference |
+| `player_id` / `club_id` / `referee_id` | Many2one | Sanction subject |
+| `expected_fee_type_id` | Many2one | Expected finance fee type |
+| `expected_amount` | Monetary | Expected finance event amount |
+| `issue_type` | Selection | Current exception classification |
+| `issue_note` | Text | Operator-readable explanation |
+
+### `federation.report.workflow.exception`
+
+Cross-module queue for stalled result-control and governance work.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` / `tournament_id` | Many2one | Seasonal or tournament scope when available |
+| `match_id` / `override_request_id` | Many2one | Source record needing follow-up |
+| `exception_type` | Selection | Verification backlog, approval backlog, review backlog, or implementation backlog |
+| `responsible_user_id` | Many2one | Current accountable operator when known |
+| `age_days` | Integer | How long the item has been waiting |
+| `exception_note` | Text | Operator-readable queue explanation |
+
+### `federation.report.season.checklist`
+
+Season-by-season readiness checklist for high-volume federation administration.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` | Many2one | Season being reviewed |
+| `draft_season_registration_count` / `submitted_season_registration_count` | Integer | Season registration work queue |
+| `draft_tournament_registration_count` / `submitted_tournament_registration_count` | Integer | Tournament registration work queue |
+| `live_tournament_count` | Integer | Open or in-progress tournaments |
+| `published_tournament_count` / `unpublished_tournament_count` | Integer | Public publication checklist |
+| `workflow_exception_count` | Integer | Linked stalled workflow items |
+| `checklist_status` | Selection | `healthy`, `attention`, or `blocked` |
+| `checklist_note` | Text | Summary of the main operational blocker |
+
 ### `federation.report.schedule`
 
 Persistent schedule for recurring application-layer report generation.
@@ -135,8 +190,9 @@ Persistent schedule for recurring application-layer report generation.
 2. **Role-oriented reporting surfaces** — Operational KPIs, standings reconciliation, finance reconciliation, and compliance summaries are separated into task-specific menus instead of a single generic export path.
 3. **Cross-module joins** — Operational KPIs combine tournament, standings, finance, and compliance data into one application-layer view.
 4. **Recurring snapshots** — `federation.report.schedule` can generate weekly or monthly CSV snapshots and a daily cron refreshes active schedules.
-5. **Reconciliation-first reporting** — Standings coverage and finance follow-up reports expose the specific gaps operators must resolve before relying on downstream outputs.
-6. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
+5. **Reconciliation-first reporting** — Standings coverage, finance follow-up, failed-notification queues, missing discipline-finance events, and stalled workflow queues expose the specific gaps operators must resolve before relying on downstream outputs.
+6. **Season operations checklist** — The reporting layer now includes a season-level checklist that surfaces review queues, publication gaps, and unresolved workflow exceptions in one place.
+7. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
 
 ## CSV exports
 

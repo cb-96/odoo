@@ -16,42 +16,33 @@ class FederationMatch(models.Model):
         domain="[('venue_id', '=', venue_id)]",
         tracking=True,
     )
-    gameday_id = fields.Many2one(
-        "federation.gameday",
-        string="Gameday",
-        domain="['|', ('tournament_id', '=', False), ('tournament_id', '=', tournament_id)]",
-        ondelete="set null",
-        tracking=True,
-    )
 
-    def _apply_gameday_defaults(self, vals):
-        gameday_id = vals.get("gameday_id")
-        if not gameday_id:
+    def _apply_round_venue_defaults(self, vals):
+        round_id = vals.get("round_id")
+        if not round_id:
             return vals
 
-        gameday = self.env["federation.gameday"].browse(gameday_id)
-        if not gameday.exists():
+        round_record = self.env["federation.tournament.round"].browse(round_id)
+        if not round_record.exists():
             return vals
 
-        if gameday.tournament_id and not vals.get("tournament_id"):
-            vals["tournament_id"] = gameday.tournament_id.id
-        if gameday.stage_id and not vals.get("stage_id"):
-            vals["stage_id"] = gameday.stage_id.id
-        if gameday.venue_id and not vals.get("venue_id"):
-            vals["venue_id"] = gameday.venue_id.id
-        if gameday.playing_area_id and not vals.get("playing_area_id"):
-            vals["playing_area_id"] = gameday.playing_area_id.id
+        if round_record.venue_id and not vals.get("venue_id"):
+            vals["venue_id"] = round_record.venue_id.id
+        if vals.get("playing_area_id") and vals.get("venue_id"):
+            playing_area = self.env["federation.playing.area"].browse(vals["playing_area_id"])
+            if playing_area.exists() and playing_area.venue_id.id != vals["venue_id"]:
+                vals["playing_area_id"] = False
         return vals
 
     @api.model_create_multi
     def create(self, vals_list):
         prepared_vals_list = [
-            self._apply_gameday_defaults(dict(vals)) for vals in vals_list
+            self._apply_round_venue_defaults(dict(vals)) for vals in vals_list
         ]
         return super().create(prepared_vals_list)
 
     def write(self, vals):
-        prepared_vals = self._apply_gameday_defaults(dict(vals))
+        prepared_vals = self._apply_round_venue_defaults(dict(vals))
         return super().write(prepared_vals)
 
     @api.constrains("venue_id", "playing_area_id")
@@ -68,47 +59,36 @@ class FederationMatch(models.Model):
         if self.playing_area_id and not self.venue_id:
             self.venue_id = self.playing_area_id.venue_id
 
-    @api.onchange("gameday_id")
-    def _onchange_gameday_id(self):
-        if not self.gameday_id:
+    @api.onchange("round_id")
+    def _onchange_round_id(self):
+        super()._onchange_round_id()
+        if not self.round_id:
             return
-        if self.gameday_id.tournament_id and not self.tournament_id:
-            self.tournament_id = self.gameday_id.tournament_id
-        if self.gameday_id.stage_id and not self.stage_id:
-            self.stage_id = self.gameday_id.stage_id
-        if self.gameday_id.venue_id:
-            self.venue_id = self.gameday_id.venue_id
-        if self.gameday_id.playing_area_id:
-            self.playing_area_id = self.gameday_id.playing_area_id
+        if self.round_id.venue_id:
+            self.venue_id = self.round_id.venue_id
+        if self.playing_area_id and self.venue_id and self.playing_area_id.venue_id != self.venue_id:
+            self.playing_area_id = False
 
-    @api.constrains("gameday_id", "tournament_id", "stage_id", "venue_id")
-    def _check_gameday_scope(self):
+    @api.constrains("round_id", "venue_id")
+    def _check_round_venue_scope(self):
         for rec in self:
-            if not rec.gameday_id:
+            if not rec.round_id:
                 continue
-            if rec.gameday_id.tournament_id and rec.gameday_id.tournament_id != rec.tournament_id:
+            if rec.round_id.venue_id and rec.round_id.venue_id != rec.venue_id:
                 raise ValidationError(
-                    _("A match can only use a gameday from the same tournament.")
-                )
-            if rec.gameday_id.stage_id and rec.gameday_id.stage_id != rec.stage_id:
-                raise ValidationError(
-                    _("A match can only use a gameday assigned to the same stage.")
-                )
-            if rec.gameday_id.venue_id and rec.gameday_id.venue_id != rec.venue_id:
-                raise ValidationError(
-                    _("A match venue must match the selected gameday venue.")
+                    _("A match venue must match the selected round venue.")
                 )
 
-    @api.constrains("gameday_id", "home_team_id", "away_team_id")
-    def _check_no_duplicate_pairings_on_gameday(self):
+    @api.constrains("round_id", "home_team_id", "away_team_id")
+    def _check_no_duplicate_pairings_in_round(self):
         for rec in self:
-            if not rec.gameday_id or not rec.home_team_id or not rec.away_team_id:
+            if not rec.round_id or not rec.home_team_id or not rec.away_team_id:
                 continue
             # Only enforce when teams belong to the same category
             if rec.home_team_id.category != rec.away_team_id.category:
                 continue
             domain = [
-                ("gameday_id", "=", rec.gameday_id.id),
+                ("round_id", "=", rec.round_id.id),
                 "|",
                 "&", ("home_team_id", "=", rec.home_team_id.id), ("away_team_id", "=", rec.away_team_id.id),
                 "&", ("home_team_id", "=", rec.away_team_id.id), ("away_team_id", "=", rec.home_team_id.id),
@@ -117,5 +97,5 @@ class FederationMatch(models.Model):
             dup = self.search(domain, limit=1)
             if dup:
                 raise ValidationError(
-                    "Teams in the same category cannot play the same opponent more than once on the same gameday."
+                    "Teams in the same category cannot play the same opponent more than once in the same round."
                 )

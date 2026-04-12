@@ -51,7 +51,9 @@ match results on public URLs without logging in.
 | `GET /competitions/<tournament>/teams` | public | Published participant list excluding withdrawn entries |
 | `GET /competitions/<tournament>/standings` | public | Standings table |
 | `GET /competitions/<tournament>/results` | public | Match results |
-| `GET /competitions/<tournament>/schedule` | public | Upcoming fixtures |
+| `GET /competitions/<tournament>/schedule` | public | Upcoming fixtures grouped by round, stage, or date |
+| `GET /competitions/<tournament>/bracket` | public | Knockout bracket sections when bracket data exists |
+| `GET /api/v1/competitions/<tournament_id>/feed` | public | Stable v1 JSON competition feed |
 
 ## Key Behaviours
 
@@ -60,7 +62,10 @@ match results on public URLs without logging in.
 3. **Unique public identifiers** — `public_slug` is stored as the public identifier field and is now uniqueness-guarded so publication metadata cannot collide.
 4. **Selective display** — Direct results and standings routes enforce their per-tournament visibility toggles.
 5. **Sanitized rich text** — Public descriptions render through website field rendering rather than raw `t-raw` output.
-6. **Website templates** — QWeb templates for responsive public pages.
+6. **Grouped fixture presentation** — Schedule pages are grouped by round, stage, or fixture date to reduce operator-side ad hoc communication.
+7. **Bracket presentation** — Knockout matches can be exposed in bracket-oriented sections when bracket metadata is present.
+8. **Versioned feed contract** — The public v1 competition feed exposes stable tournament, participant, schedule, bracket, result, and standings payload keys.
+9. **Website templates** — QWeb templates for responsive public pages.
 
 ## Publication guards
 

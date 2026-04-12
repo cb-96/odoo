@@ -17,7 +17,7 @@ class FederationTeamRoster(models.Model):
     _description = "Team Roster"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    name = fields.Char(required=True, tracking=True)
+    name = fields.Char(string="Roster", tracking=True, copy=False)
     active = fields.Boolean(default=True)
     team_id = fields.Many2one(
         "federation.team",
@@ -120,6 +120,78 @@ class FederationTeamRoster(models.Model):
         'A roster with this name already exists for this team, season, and competition.',
     )
 
+    def _build_generated_name(self, team, season, competition=False):
+        team_label = team.display_name if team else _("Team")
+        season_label = season.display_name if season else _("Season")
+        if competition:
+            return _("%(team)s - %(competition)s - %(season)s Roster") % {
+                "team": team_label,
+                "competition": competition.display_name,
+                "season": season_label,
+            }
+        return _("%(team)s - %(season)s Roster") % {
+            "team": team_label,
+            "season": season_label,
+        }
+
+    def _resolve_scope_for_name(self, vals=None, record=False):
+        vals = vals or {}
+        Team = self.env["federation.team"]
+        Season = self.env["federation.season"]
+        Competition = self.env["federation.competition"]
+
+        if "team_id" in vals:
+            team = Team.browse(vals["team_id"]) if vals["team_id"] else Team.browse([])
+        else:
+            team = record.team_id if record else Team.browse([])
+
+        if "season_id" in vals:
+            season = Season.browse(vals["season_id"]) if vals["season_id"] else Season.browse([])
+        else:
+            season = record.season_id if record else Season.browse([])
+
+        if "competition_id" in vals:
+            competition = (
+                Competition.browse(vals["competition_id"])
+                if vals["competition_id"]
+                else Competition.browse([])
+            )
+        else:
+            competition = record.competition_id if record else Competition.browse([])
+
+        return team, season, competition
+
+    def _get_generated_name(self, vals=None, record=False):
+        team, season, competition = self._resolve_scope_for_name(vals=vals, record=record)
+        if not team or not season:
+            return False
+
+        base_name = self._build_generated_name(team, season, competition)
+        scope_domain = [
+            ("team_id", "=", team.id),
+            ("season_id", "=", season.id),
+            ("competition_id", "=", competition.id if competition else False),
+        ]
+        if record and record.id:
+            scope_domain.append(("id", "!=", record.id))
+
+        name = base_name
+        suffix = 2
+        while self.search_count(scope_domain + [("name", "=", name)]):
+            name = _("%(base)s (%(suffix)s)") % {
+                "base": base_name,
+                "suffix": suffix,
+            }
+            suffix += 1
+        return name
+
+    @api.onchange("team_id", "season_id", "competition_id")
+    def _onchange_scope_fields(self):
+        for record in self:
+            generated_name = record._get_generated_name(record=record)
+            if generated_name:
+                record.name = generated_name
+
     @api.depends("line_ids")
     def _compute_line_count(self):
         for record in self:
@@ -214,6 +286,8 @@ class FederationTeamRoster(models.Model):
                 )
                 if competition.rule_set_id:
                     vals["rule_set_id"] = competition.rule_set_id.id
+            if not vals.get("name"):
+                vals["name"] = self._get_generated_name(vals=vals)
         records = super().create(vals_list)
         for record in records:
             record._log_audit_event(
@@ -237,7 +311,23 @@ class FederationTeamRoster(models.Model):
             )
             if competition.rule_set_id:
                 vals["rule_set_id"] = competition.rule_set_id.id
-        result = super().write(vals)
+        vals = dict(vals)
+        force_generated_name = "name" in vals and not vals["name"]
+        if force_generated_name:
+            vals.pop("name")
+
+        scope_fields = {"team_id", "season_id", "competition_id"}
+        if (scope_fields.intersection(vals) or force_generated_name) and "name" not in vals:
+            result = True
+            for record in self:
+                record_vals = dict(vals)
+                record_vals["name"] = record._get_generated_name(
+                    vals=record_vals,
+                    record=record,
+                )
+                result = super(FederationTeamRoster, record).write(record_vals) and result
+        else:
+            result = super().write(vals)
         tracked_fields = {
             "team_id",
             "season_id",

@@ -25,9 +25,40 @@ class FederationTeam(models.Model):
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_rosters.action_federation_team_roster"
         )
-        action["domain"] = [("team_id", "=", self.id)]
         action["context"] = {"default_team_id": self.id}
+        rosters = self.roster_ids
+        if len(rosters) == 1:
+            action.update({
+                "view_mode": "form",
+                "res_id": rosters.id,
+                "domain": [],
+            })
+            return action
+        action["domain"] = [("team_id", "=", self.id)]
         return action
+
+    def _ensure_tournament_roster(self, tournament):
+        self.ensure_one()
+        Roster = self.env["federation.team.roster"]
+        if not tournament or not tournament.season_id:
+            return Roster.browse([])
+
+        roster = self._get_preferred_roster(
+            tournament.season_id,
+            competition=tournament.competition_id,
+            statuses=("draft", "active"),
+        )
+        if roster:
+            return roster
+
+        roster_vals = {
+            "team_id": self.id,
+            "season_id": tournament.season_id.id,
+            "competition_id": tournament.competition_id.id if tournament.competition_id else False,
+        }
+        if tournament.rule_set_id and not tournament.competition_id:
+            roster_vals["rule_set_id"] = tournament.rule_set_id.id
+        return Roster.create(roster_vals)
 
     def _get_preferred_roster(self, season, competition=False, statuses=None):
         self.ensure_one()

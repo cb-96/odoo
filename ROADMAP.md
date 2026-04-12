@@ -1,6 +1,6 @@
 # ROADMAP — Multi-Year Product and Engineering Plan
 
-Last updated: 2026-04-10
+Last updated: 2026-04-12
 
 This roadmap replaces the short tactical plan with a multi-year view organized
 around the module boundaries already present in the repository. The goal is to
@@ -84,7 +84,7 @@ Modules: `sports_federation_portal`, `sports_federation_public_site`.
 Work: verify ownership checks on portal writes, validate all public visibility flags, avoid unsafe template rendering, and cover direct-URL access paths with controller tests.
 Done when: public and portal surfaces enforce the same data-ownership and publication rules described in the workflows.
 
-6. Standardize CI, secrets handling, and contributor setup. Done (2026-04-10)
+6. Done (2026-04-10): Standardize CI, secrets handling, and contributor setup. 
 Modules: repository-wide, with emphasis on `ci/`, `sports_federation_public_site`, `sports_federation_portal`, `sports_federation_standings`, `sports_federation_venues`, `sports_federation_finance_bridge`, `sports_federation_reporting`.
 Work: keep CI env-driven, expand targeted module tests, validate scripts, and document local execution for maintainers.
 Done when: contributors can run focused tests locally and GitHub Actions can validate critical flows without committed secrets.
@@ -133,69 +133,84 @@ Done when: federation onboarding and annual data refreshes can be rehearsed with
 
 ### Priority 2 — Control, Oversight, and Policy Execution
 
-1. Complete the discipline pipeline and connect it to operations.
+1. Done (2026-04-12): Complete the discipline pipeline and connect it to operations.
 Modules: `sports_federation_discipline`, `sports_federation_result_control`, `sports_federation_people`, `sports_federation_rosters`, `sports_federation_standings`.
-Work: turn recorded incidents into sanctions, suspensions, and downstream eligibility effects that are visible in roster and match validation.
+Work: turn recorded incidents into sanctions, suspensions, and downstream eligibility effects that are visible in roster and match validation; keep sanction-side finance hooks and suspension-aware eligibility checks aligned with the operational date.
 Done when: discipline outcomes automatically affect player availability and remain auditable.
 
-2. Build compliance operations around real federation obligations.
+2. Done (2026-04-12): Build compliance operations around real federation obligations.
 Modules: `sports_federation_compliance`, `sports_federation_people`, `sports_federation_governance`, `sports_federation_portal`, `sports_federation_reporting`.
 Work: track required documents, expiries, remediation tasks, and escalation states for clubs, officials, and staff.
 Done when: overdue compliance items appear in actionable queues and reporting outputs.
 
-3. Formalize governance and override controls.
+3. Done (2026-04-12): Formalize governance and override controls.
 Modules: `sports_federation_governance`, `sports_federation_standings`, `sports_federation_result_control`, `sports_federation_compliance`.
 Work: capture approval trails for exceptional decisions, appeals, competition overrides, and federation directives.
 Done when: extraordinary decisions are role-gated, auditable, and visible in reporting.
 
-4. Add cross-module reconciliation and audit support.
+4. Done (2026-04-12): Add cross-module reconciliation and audit support.
 Modules: `sports_federation_reporting`, `sports_federation_finance_bridge`, `sports_federation_notifications`, `sports_federation_governance`, `sports_federation_compliance`.
-Work: build exception reporting for failed notifications, missing finance events, stalled approvals, and inconsistent workflow states.
+Work already landed: operational KPI reporting, standings reconciliation, finance follow-up reconciliation, failed-notification exception views, missing disciplinary-fine-event exception views, stalled workflow exception queues, approved-but-unimplemented override visibility, and season-level operator checklists.
 Done when: federation operators can detect broken processes before end users report them.
 
 ### Priority 3 — Strategic Stretch Work If Capacity Remains
 
-1. Deepen public competition storytelling and discoverability.
+1. Done (2026-04-12): Deepen public competition storytelling and discoverability.
 Modules: `sports_federation_public_site`, `sports_federation_reporting`, `sports_federation_standings`, `sports_federation_tournament`.
-Work: improve competition pages, bracket views, fixture presentation, standings explanations, and publication cadence.
+Work already landed: published competition list, archive, detail, teams, standings, results, grouped schedule sections, bracket views, public JSON listing, versioned competition feed payloads, and publication guards.
 Done when: public pages reduce ad hoc communication load on federation staff.
 
-2. Add federation-admin productivity tooling.
+2. Done (2026-04-12): Add federation-admin productivity tooling.
 Modules: `sports_federation_portal`, `sports_federation_import_tools`, `sports_federation_notifications`, `sports_federation_reporting`.
-Work: add saved filters, bulk actions, seasonal checklists, and operational queues for high-volume administrative work.
+Work already landed: portal club workflows, roster and match-sheet review pages, import dry-run wizards, recurring report schedules, season checklists, and queue-first review screens for workflow exceptions.
 Done when: recurring seasonal administration takes fewer manual steps and fewer side-channel spreadsheets.
 
-3. Prototype outward-facing integration contracts.
+3. Done (2026-04-12): Prototype outward-facing integration contracts.
 Modules: `sports_federation_reporting`, `sports_federation_finance_bridge`, `sports_federation_notifications`, `sports_federation_import_tools`.
-Work: define stable export contracts or lightweight APIs for accounting systems, federation partners, and public data feeds.
+Work already landed: authenticated CSV export endpoints for standings, participation, and finance summaries, repeatable import contracts for onboarding and seasonal rollover, and a stable versioned public competition feed.
 Done when: external integrations can be introduced without bypassing the module architecture.
 
 ## Year 1 Sequencing Guidance
 
-The intended order inside Year 1 is simple: finish Priority 0 before moving
-seriously into Priority 1, use Priority 2 only once the operational core is
-stable, and reserve Priority 3 for spare capacity or external pressure. In
-practice, that means the first half of the year should be dominated by workflow
-closure and hardening, while the second half should emphasize operational depth,
-oversight, and selective public experience improvements.
+Priority 0 through Priority 3 are now complete for the Year 1 scope.
+Priority 2 closed with live workflow-exception queues and season checklist
+reporting on top of the earlier standings, finance, notification-failure, and
+missing-finance-event visibility. Priority 3 also closed: public competition
+surfaces now include grouped schedule and bracket presentation, and external
+consumers have a stable versioned competition feed alongside the existing CSV
+contracts.
+
+Year 1 is therefore complete as a release-readiness phase. Remaining follow-up
+work should be treated as Year 2+ optimization, scale, and operational depth,
+not as missing baseline capability for pilot rollout.
+
+Current Year 1 execution batch completed in this pass:
+
+1. Done (2026-04-12): Wire active discipline suspensions into shared eligibility checks used by roster and match workflows.
+2. Done (2026-04-12): Add operator-facing exception reports for failed notifications and missing disciplinary fine finance events.
+3. Done (2026-04-12): Add workflow exception queues and season checklist reporting for federation operators.
+4. Done (2026-04-12): Ship grouped public schedule and bracket pages for published competitions.
+5. Done (2026-04-12): Publish a stable v1 public competition feed for external consumers.
 
 ## Year 2 Overview — Operational Depth and Federation Control
 
-Year 2 should move the suite from "works for the core competition lifecycle" to
-"operates the federation more broadly." The focus should be on making
-discipline, compliance, and governance first-class operational modules,
-completing finance process support, deepening officiating operations, and making
-reporting useful for management and audit.
+Year 2 should build on modules that are already present rather than treating
+discipline, compliance, governance, and reporting as net-new work. The focus
+should move to queue management, SLA-style escalation, board and audit pack
+reporting, cross-module exception closure, and stronger finance and policy
+reconciliation workflows.
 
-Target outcome: federation staff can run policy-heavy operations inside the
-platform rather than through email, spreadsheets, and ad hoc decisions.
+Target outcome: federation staff can run policy-heavy operations from explicit
+queues and audit views inside the platform rather than through email,
+spreadsheets, and ad hoc follow-up.
 
 ## Year 3 Overview — Self-Service and Ecosystem Expansion
 
-Year 3 should expand self-service for clubs and external visibility for the
-public. The portal should become the preferred interface for club-facing
-processes, the public site should present richer competition data safely, and
-external integrations should become stable enough for broader ecosystem use.
+Year 3 should deepen the self-service and integration layers that now exist in
+baseline form. The portal should become the preferred interface for more club
+operations, the public site should present richer competition narratives and
+fixtures safely, and export contracts should mature from internal CSV endpoints
+into stable partner-facing feeds.
 
 Target outcome: fewer manual interventions by federation staff and cleaner data
 exchange with external systems and stakeholders.
@@ -203,9 +218,10 @@ exchange with external systems and stakeholders.
 ## Year 4 Overview — Intelligence, Planning, and Scale
 
 Year 4 should focus on federation-wide planning and operational intelligence.
-Reporting should evolve from exports into decision support, compliance and
-governance should produce audit-grade traces, and cross-season analysis should
-support strategic planning, budgeting, and performance monitoring.
+Reporting should evolve from exports and exception queues into decision support,
+compliance and governance should produce audit-grade traces with historical
+trend analysis, and cross-season analysis should support strategic planning,
+budgeting, and performance monitoring.
 
 Target outcome: the platform becomes not just a workflow system, but a planning
 and insight system for the federation.

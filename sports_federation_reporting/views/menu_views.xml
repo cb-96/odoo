@@ -53,6 +53,30 @@
               action="action_federation_report_finance_reconciliation"
               sequence="45"/>
 
+    <menuitem id="menu_federation_report_notification_exception"
+              name="Notification Exceptions"
+              parent="menu_federation_reporting"
+              action="action_federation_report_notification_exception"
+              sequence="50"/>
+
+    <menuitem id="menu_federation_report_finance_exception"
+              name="Finance Exceptions"
+              parent="menu_federation_reporting"
+              action="action_federation_report_finance_exception"
+              sequence="55"/>
+
+    <menuitem id="menu_federation_report_workflow_exception"
+              name="Workflow Exceptions"
+              parent="menu_federation_reporting"
+              action="action_federation_report_workflow_exception"
+              sequence="60"/>
+
+    <menuitem id="menu_federation_report_season_checklist"
+              name="Season Checklists"
+              parent="menu_federation_reporting"
+              action="action_federation_report_season_checklist"
+              sequence="65"/>
+
     <menuitem id="menu_federation_report_schedule"
               name="Report Schedules"
               parent="menu_federation_reporting"

@@ -187,4 +187,177 @@
         <field name="context">{'search_default_needs_follow_up': 1}</field>
     </record>
 
+    <record id="view_federation_report_notification_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.notification.exception.search</field>
+        <field name="model">federation.report.notification.exception</field>
+        <field name="arch" type="xml">
+            <search string="Notification Exceptions">
+                <field name="target_model"/>
+                <field name="recipient_email"/>
+                <field name="template_xmlid"/>
+                <field name="notification_type"/>
+                <group>
+                    <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
+                    <filter name="group_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_notification_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.notification.exception.list</field>
+        <field name="model">federation.report.notification.exception</field>
+        <field name="arch" type="xml">
+            <list string="Notification Exceptions" create="0" edit="0" delete="0">
+                <field name="created_on"/>
+                <field name="name"/>
+                <field name="notification_type"/>
+                <field name="target_model"/>
+                <field name="target_res_id"/>
+                <field name="recipient_email"/>
+                <field name="template_xmlid"/>
+                <field name="message"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_notification_exception" model="ir.actions.act_window">
+        <field name="name">Notification Exceptions</field>
+        <field name="res_model">federation.report.notification.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_notification_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_finance_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.finance.exception.search</field>
+        <field name="model">federation.report.finance.exception</field>
+        <field name="arch" type="xml">
+            <search string="Finance Exceptions">
+                <field name="case_reference"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="issue_type"/>
+                <group>
+                    <filter name="group_issue" string="Issue Type" context="{'group_by': 'issue_type'}"/>
+                    <filter name="group_case" string="Case" context="{'group_by': 'case_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_finance_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.finance.exception.list</field>
+        <field name="model">federation.report.finance.exception</field>
+        <field name="arch" type="xml">
+            <list string="Finance Exceptions" create="0" edit="0" delete="0">
+                <field name="effective_date"/>
+                <field name="sanction_id"/>
+                <field name="case_reference"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <field name="expected_fee_type_id"/>
+                <field name="expected_amount"/>
+                <field name="issue_type"/>
+                <field name="issue_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_finance_exception" model="ir.actions.act_window">
+        <field name="name">Finance Exceptions</field>
+        <field name="res_model">federation.report.finance.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_finance_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_workflow_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.workflow.exception.search</field>
+        <field name="model">federation.report.workflow.exception</field>
+        <field name="arch" type="xml">
+            <search string="Workflow Exceptions">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="exception_type"/>
+                <field name="state"/>
+                <filter name="result_queue" string="Result Queue" domain="[('source_model', '=', 'federation.match')]"/>
+                <filter name="override_queue" string="Override Queue" domain="[('source_model', '=', 'federation.override.request')]"/>
+                <group>
+                    <filter name="group_type" string="Exception Type" context="{'group_by': 'exception_type'}"/>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_workflow_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.workflow.exception.list</field>
+        <field name="model">federation.report.workflow.exception</field>
+        <field name="arch" type="xml">
+            <list string="Workflow Exceptions" create="0" edit="0" delete="0">
+                <field name="raised_on"/>
+                <field name="season_id" optional="show"/>
+                <field name="tournament_id" optional="show"/>
+                <field name="reference_name"/>
+                <field name="state"/>
+                <field name="exception_type"/>
+                <field name="age_days"/>
+                <field name="responsible_user_id"/>
+                <field name="exception_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_workflow_exception" model="ir.actions.act_window">
+        <field name="name">Workflow Exceptions</field>
+        <field name="res_model">federation.report.workflow.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_workflow_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_season_checklist_search" model="ir.ui.view">
+        <field name="name">federation.report.season.checklist.search</field>
+        <field name="model">federation.report.season.checklist</field>
+        <field name="arch" type="xml">
+            <search string="Season Checklists">
+                <field name="season_id"/>
+                <field name="checklist_status"/>
+                <filter name="blocked" string="Blocked" domain="[('checklist_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('checklist_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_status" string="Status" context="{'group_by': 'checklist_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_season_checklist_list" model="ir.ui.view">
+        <field name="name">federation.report.season.checklist.list</field>
+        <field name="model">federation.report.season.checklist</field>
+        <field name="arch" type="xml">
+            <list string="Season Checklists" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="season_state"/>
+                <field name="draft_season_registration_count"/>
+                <field name="submitted_season_registration_count"/>
+                <field name="draft_tournament_registration_count"/>
+                <field name="submitted_tournament_registration_count"/>
+                <field name="live_tournament_count"/>
+                <field name="published_tournament_count"/>
+                <field name="unpublished_tournament_count"/>
+                <field name="workflow_exception_count"/>
+                <field name="checklist_status"/>
+                <field name="checklist_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_season_checklist" model="ir.actions.act_window">
+        <field name="name">Season Checklists</field>
+        <field name="res_model">federation.report.season.checklist</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_season_checklist_search"/>
+    </record>
+
 </odoo>

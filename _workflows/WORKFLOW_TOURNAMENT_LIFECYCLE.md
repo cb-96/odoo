@@ -45,8 +45,10 @@ journey from initial setup to final completion.
 2. Set tournament type: `league`, `cup`, `friendly`, or `playoff`.
 3. Assign date range, rule set (inherited from competition or overridden).
 4. Set maximum participants if applicable.
-5. If the competition is spread over multiple event days, set the tournament's
-   **Planned Gamedays** value and generate the numbered gameday slots up front.
+5. If the competition is spread over multiple event days, plan the shared
+   schedule blocks directly on the stage rounds. Each round can carry a
+   calendar date and a venue, while the matches inside that round keep their
+   own kickoff times.
 6. Tournament starts in `draft` state.
 
 ### 3. Venue Assignment
@@ -93,9 +95,8 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
 3. Order stages by sequence.
 4. Within each stage, create **groups** (e.g. "Group A", "Pool 1").
 5. Assign participants to groups.
-6. Reserve planned gamedays for each stage by assigning tournament gameday slots
-   to the relevant stage. Example: gamedays 1-4 for the round-robin stage,
-   gameday 5 for the knockout stage.
+6. Create or review the stage rounds that should exist for each phase. Example:
+   rounds 1-4 for the round-robin stage, then knockout rounds on the final stage.
 
 ### 6. Schedule Generation
 
@@ -114,34 +115,27 @@ Bulk enrolment is available via the **Import Tournament Participants** wizard.
    - Use `Full Cycles (repeats)` to repeat the entire round-robin cycle N times
      (useful for formats that play multiple cycles; combined with the double-round
      option this enables 4+ meetings per pair).
-    - Toggle `Schedule By Round` to allocate each round as a single gameday/time
+    - Toggle `Schedule By Round` to allocate each round as a shared date/time
        block. When enabled, `Round Interval (hours)` controls spacing between rounds
        (e.g., 24 hours for daily rounds). Intra-round spacing still uses
        `Interval (hours)`.
-       - When `Schedule By Round` is enabled the scheduler will create or find a
-          `federation.gameday` record (in `sports_federation_venues`) for each
-          round and attach created matches to that gameday. This enables venue-day
-          bundling and easier match-day coordination (referee assignment, venue
-          logistics, and finance events).
+       - Generated matches always bind to `federation.tournament.round` records.
+          Existing stage rounds are reused by sequence order; missing rounds are
+          created automatically.
+       - Round dates and venues live on the round. The scheduler can fill those
+          from the wizard inputs, but if the stage already has planned rounds with
+          dates or venues, those values are respected.
        - The round scheduler will attempt to alternate `male` / `female` fixtures
           inside each round to provide rest; this is a best-effort interleaving and
           does not change seeding or pairings.
-    - Toggle `Use Existing Stage Gamedays` to assign each generated round to the
-       next gameday already linked to the selected stage, ordered by sequence.
-       This is the planning-first workflow for tournaments that define matchdays
-       up front.
-         - The stage must already have at least as many gamedays as the generated
-            round-robin schedule needs.
-         - When a selected gameday already has a start date/time, generated matches
-            inherit that slot and use `Interval (hours)` for spacing within the round.
    - Set a default `Venue` and enable `Overwrite Existing` to replace prior matches.
 4. Preview the generated schedule via the wizard `Summary` (shows total matches
    given participants, cycles, and round type). When overwrite is enabled, the
    wizard shows an explicit warning before confirmation.
 5. Confirm to create all match records automatically.
-6. If venues or exact days were not known during initial planning, assign each
-   match to one of the planned `federation.gameday` slots later. The match will
-   inherit the gameday's stage and venue when those are set.
+6. If venues or exact days were not known during initial planning, update the
+   generated stage rounds later. Matches linked to those rounds will inherit the
+   round venue, and any scheduled match times must stay on the same calendar date.
 
 **Round Robin**: Circle method generates a complete schedule where every team plays
 every other team once (single) or twice (double).
@@ -192,7 +186,7 @@ every other team once (single) or twice (double).
 5. Generate the next stage's schedule using competition engine wizards.
 6. Typical workflow: freeze the round-robin standing, auto-advance the top-ranked
    teams into the knockout stage through a `federation.stage.progression` rule,
-   then schedule those knockout matches onto the remaining planned gameday slots.
+   then schedule those knockout matches onto the planned knockout rounds.
 
 ### 10. Tournament Completion
 

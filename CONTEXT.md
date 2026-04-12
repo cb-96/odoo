@@ -59,8 +59,8 @@ The competition engine and related modules received several new models to suppor
 
 - `sports_federation_competition_engine/models/stage_progression.py` — stage-to-stage progression rules (`auto_advance`, `cross_group`, seeding options).
 - `sports_federation_competition_engine/models/tournament_template.py` — tournament templates and `action_apply()` to scaffold stages/groups/progressions.
-- `sports_federation_tournament/models/federation_tournament_round.py` — persistent `tournament.round` objects used by per-round scheduling and reporting.
-- `sports_federation_venues/models/federation_gameday.py` — `gameday` bundles matches at a venue/day and is created by `schedule_by_round` flows.
+- `sports_federation_tournament/models/federation_tournament_round.py` — persistent `tournament.round` objects used by per-round scheduling, reporting, and round-owned calendar dates.
+- `sports_federation_venues/models/federation_tournament_round_inherit.py` — extends rounds with venue ownership so shared round logistics live in one place.
 - `sports_federation_tournament/models/federation_match.py` — bracket/linking fields and auto-advance wiring for knockout flows.
 
 See `odoo/TECHNICAL_NOTE.md` → "New competition models and behaviours (2026-04-07)" for details.

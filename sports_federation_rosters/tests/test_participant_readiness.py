@@ -90,6 +90,8 @@ class TestParticipantReadiness(TransactionCase):
             "team_id": self.team.id,
         })
 
+        self.assertTrue(participant.readiness_roster_id)
+        self.assertEqual(participant.readiness_roster_id.status, "draft")
         self.assertTrue(participant.ready_for_confirmation)
         self.assertTrue(participant.roster_deadline_date)
         self.assertIn("must have an active ready roster by", participant.confirmation_feedback)
@@ -98,7 +100,7 @@ class TestParticipantReadiness(TransactionCase):
 
         self.assertEqual(participant.state, "confirmed")
 
-    def test_participant_confirm_requires_ready_roster_once_deadline_reached(self):
+    def test_participant_confirm_allows_group_workflow_once_deadline_reached(self):
         urgent_tournament = self.env["federation.tournament"].create({
             "name": "Participant Deadline Tournament",
             "code": "PRT-DEADLINE",
@@ -113,9 +115,11 @@ class TestParticipantReadiness(TransactionCase):
 
         self.assertFalse(participant.ready_for_confirmation)
         self.assertIn("Roster deadline reached", participant.confirmation_feedback)
+        self.assertTrue(participant.readiness_roster_id)
 
-        with self.assertRaises(ValidationError):
-            participant.action_confirm()
+        participant.action_confirm()
+
+        self.assertEqual(participant.state, "confirmed")
 
     def test_participant_confirm_succeeds_with_ready_roster(self):
         self._create_ready_roster(

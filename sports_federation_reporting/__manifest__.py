@@ -17,6 +17,9 @@
         "sports_federation_discipline",
         "sports_federation_compliance",
         "sports_federation_finance_bridge",
+        "sports_federation_notifications",
+        "sports_federation_result_control",
+        "sports_federation_governance",
     ],
     "data": [
         "security/ir.model.access.csv",

@@ -1,5 +1,7 @@
+import json
+
 from odoo import http
-from odoo.http import request
+from odoo.http import Response, request
 
 
 class PublicCompetitionsController(http.Controller):
@@ -104,18 +106,44 @@ class PublicCompetitionsController(http.Controller):
         """Public results page for one tournament."""
         if not tournament.can_access_public_results():
             return request.not_found()
-        matches = request.env["federation.match"].sudo().search([
-            ("tournament_id", "=", tournament.id),
-            ("result_state", "=", "approved"),
-        ], order="date_scheduled asc")
         values = {
             "tournament": tournament,
-            "matches": matches,
+            "matches": tournament.get_public_result_matches(),
             "page_name": "competition_results",
         }
         return request.render("sports_federation_public_site.page_competition_results", values)
 
     @http.route("/competitions/<model('federation.tournament'):tournament>/schedule", type="http", auth="public", website=True)
     def competition_schedule(self, tournament, **kw):
-        """Public schedule page for one tournament (alias for results)."""
-        return self.competition_results(tournament, **kw)
+        """Public schedule page for one tournament."""
+        if not tournament.can_access_public_detail():
+            return request.not_found()
+        values = {
+            "tournament": tournament,
+            "schedule_sections": tournament.get_public_schedule_sections(),
+            "page_name": "competition_schedule",
+        }
+        return request.render("sports_federation_public_site.page_competition_schedule", values)
+
+    @http.route("/competitions/<model('federation.tournament'):tournament>/bracket", type="http", auth="public", website=True)
+    def competition_bracket(self, tournament, **kw):
+        """Public bracket page for one tournament."""
+        if not tournament.can_access_public_detail() or not tournament.has_public_bracket():
+            return request.not_found()
+        values = {
+            "tournament": tournament,
+            "bracket_sections": tournament.get_public_bracket_sections(),
+            "page_name": "competition_bracket",
+        }
+        return request.render("sports_federation_public_site.page_competition_bracket", values)
+
+    @http.route("/api/v1/competitions/<int:tournament_id>/feed", type="http", auth="public", methods=["GET"])
+    def competition_feed_v1(self, tournament_id, **kw):
+        """Versioned public competition feed."""
+        tournament = request.env["federation.tournament"].sudo().browse(tournament_id)
+        if not tournament.exists() or not tournament.can_access_public_detail():
+            return request.not_found()
+        return Response(
+            json.dumps(tournament.get_public_feed_payload()),
+            content_type="application/json; charset=utf-8",
+        )

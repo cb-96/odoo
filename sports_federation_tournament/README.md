@@ -106,8 +106,11 @@ An individual game between two teams.
 | `name` | Char (computed) | "Home vs Away" |
 | `tournament_id` | Many2one | Tournament |
 | `stage_id` / `group_id` | Many2one | Location in hierarchy |
+| `round_id` | Many2one | Single-day round assignment |
 | `home_team_id` / `away_team_id` | Many2one | Competing teams |
-| `date_scheduled` | Datetime | Kick-off time |
+| `date_scheduled` | Datetime | Stored kickoff datetime for downstream integrations |
+| `scheduled_date` | Date (computed) | Inherited from the assigned round |
+| `scheduled_time` | Float | Editable match kickoff time-of-day |
 | `home_score` / `away_score` | Integer | Final score |
 | `state` | Selection | draft / scheduled / in_progress / done / cancelled |
 
@@ -120,6 +123,8 @@ An individual game between two teams.
 3. **Score entry** — Match results are recorded with home/away scores.
 4. **State management** — Both tournaments and matches follow state machines that
    prevent illogical transitions.
-5. **Tournament open/start guards** — Only active draft tournaments linked to a season can open, and only open tournaments with at least one stage can start.
-6. **Archive safety** — Open or in-progress tournaments must be closed or cancelled before archiving.
-7. **Venue extensions** — Venue and gameday fields are supplied by `sports_federation_venues`; this module keeps the core match lifecycle and hierarchy only.
+5. **Round-owned scheduling** — Rounds are single-day containers. A match assigned to a round inherits that round's calendar date and only stores its own kickoff time.
+6. **Stage windows** — Stages remain the broader multi-day grouping above rounds.
+7. **Tournament open/start guards** — Only active draft tournaments linked to a season can open, and only open tournaments with at least one stage can start.
+8. **Archive safety** — Open or in-progress tournaments must be closed or cancelled before archiving.
+9. **Venue extensions** — Venue fields are supplied by `sports_federation_venues`; this module keeps the core match lifecycle and hierarchy only.

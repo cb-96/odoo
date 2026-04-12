@@ -326,3 +326,444 @@ class FederationReportFinanceReconciliation(models.Model):
             )
             """
         )
+
+
+class FederationReportNotificationException(models.Model):
+    _name = "federation.report.notification.exception"
+    _description = "Federation Notification Exception Report"
+    _auto = False
+    _order = "created_on desc, notification_log_id desc"
+
+    NOTIFICATION_TYPE_SELECTION = [
+        ("email", "Email"),
+        ("activity", "Activity"),
+        ("other", "Other"),
+    ]
+
+    STATE_SELECTION = [
+        ("pending", "Pending"),
+        ("sent", "Sent"),
+        ("failed", "Failed"),
+    ]
+
+    notification_log_id = fields.Many2one(
+        "federation.notification.log",
+        string="Notification Log",
+        readonly=True,
+    )
+    created_on = fields.Datetime(string="Created On", readonly=True)
+    name = fields.Char(string="Name", readonly=True)
+    target_model = fields.Char(string="Target Model", readonly=True)
+    target_res_id = fields.Integer(string="Target Record ID", readonly=True)
+    recipient_email = fields.Char(string="Recipient Email", readonly=True)
+    notification_type = fields.Selection(
+        NOTIFICATION_TYPE_SELECTION,
+        string="Notification Type",
+        readonly=True,
+    )
+    template_xmlid = fields.Char(string="Template XML ID", readonly=True)
+    state = fields.Selection(STATE_SELECTION, string="State", readonly=True)
+    message = fields.Text(string="Failure Message", readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute(
+            """
+            CREATE VIEW federation_report_notification_exception AS (
+                SELECT
+                    log.id AS id,
+                    log.id AS notification_log_id,
+                    log.create_date AS created_on,
+                    log.name,
+                    log.target_model,
+                    log.target_res_id,
+                    log.recipient_email,
+                    log.notification_type,
+                    log.template_xmlid,
+                    log.state,
+                    log.message
+                FROM federation_notification_log log
+                WHERE log.state = 'failed'
+            )
+            """
+        )
+
+
+class FederationReportFinanceException(models.Model):
+    _name = "federation.report.finance.exception"
+    _description = "Federation Finance Exception Report"
+    _auto = False
+    _order = "effective_date desc, sanction_id desc"
+
+    ISSUE_TYPE_SELECTION = [
+        ("missing_fine_event", "Missing Fine Event"),
+    ]
+
+    sanction_id = fields.Many2one("federation.sanction", string="Sanction", readonly=True)
+    case_id = fields.Many2one(
+        "federation.disciplinary.case",
+        string="Case",
+        readonly=True,
+    )
+    case_reference = fields.Char(string="Case Reference", readonly=True)
+    player_id = fields.Many2one("federation.player", string="Player", readonly=True)
+    club_id = fields.Many2one("federation.club", string="Club", readonly=True)
+    referee_id = fields.Many2one("federation.referee", string="Referee", readonly=True)
+    expected_fee_type_id = fields.Many2one(
+        "federation.fee.type",
+        string="Expected Fee Type",
+        readonly=True,
+    )
+    effective_date = fields.Date(string="Effective Date", readonly=True)
+    expected_amount = fields.Monetary(
+        string="Expected Amount",
+        currency_field="currency_id",
+        readonly=True,
+    )
+    currency_id = fields.Many2one("res.currency", string="Currency", readonly=True)
+    issue_type = fields.Selection(ISSUE_TYPE_SELECTION, string="Issue Type", readonly=True)
+    issue_note = fields.Text(string="Issue Note", readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute(
+            """
+            CREATE VIEW federation_report_finance_exception AS (
+                WITH discipline_fee AS (
+                    SELECT id, default_amount
+                    FROM federation_fee_type
+                    WHERE code = 'discipline_fine'
+                    LIMIT 1
+                )
+                SELECT
+                    row_number() OVER (
+                        ORDER BY COALESCE(s.effective_date, c.decided_on, c.opened_on) DESC, s.id DESC
+                    ) AS id,
+                    s.id AS sanction_id,
+                    s.case_id,
+                    c.reference AS case_reference,
+                    COALESCE(s.player_id, c.subject_player_id) AS player_id,
+                    COALESCE(s.club_id, c.subject_club_id) AS club_id,
+                    COALESCE(s.referee_id, c.subject_referee_id) AS referee_id,
+                    df.id AS expected_fee_type_id,
+                    COALESCE(s.effective_date, c.decided_on, c.opened_on) AS effective_date,
+                    CASE
+                        WHEN COALESCE(s.amount, 0) = 0 THEN COALESCE(df.default_amount, 0)
+                        ELSE s.amount
+                    END AS expected_amount,
+                    s.currency_id,
+                    'missing_fine_event' AS issue_type,
+                    'Fine sanction has no linked finance event.' AS issue_note
+                FROM federation_sanction s
+                JOIN federation_disciplinary_case c ON c.id = s.case_id
+                LEFT JOIN discipline_fee df ON TRUE
+                LEFT JOIN federation_finance_event fe
+                  ON fe.source_model = 'federation.sanction'
+                 AND fe.source_res_id = s.id
+                 AND (df.id IS NULL OR fe.fee_type_id = df.id)
+                WHERE s.sanction_type = 'fine'
+                  AND fe.id IS NULL
+            )
+            """
+        )
+
+
+class FederationReportWorkflowException(models.Model):
+    _name = "federation.report.workflow.exception"
+    _description = "Federation Workflow Exception Report"
+    _auto = False
+    _order = "age_days desc, raised_on asc"
+
+    EXCEPTION_TYPE_SELECTION = [
+        ("result_submission_stalled", "Result Verification Backlog"),
+        ("result_approval_stalled", "Result Approval Backlog"),
+        ("override_review_stalled", "Override Review Backlog"),
+        ("override_implementation_stalled", "Override Implementation Backlog"),
+    ]
+
+    season_id = fields.Many2one("federation.season", string="Season", readonly=True)
+    tournament_id = fields.Many2one("federation.tournament", string="Tournament", readonly=True)
+    match_id = fields.Many2one("federation.match", string="Match", readonly=True)
+    override_request_id = fields.Many2one(
+        "federation.override.request",
+        string="Override Request",
+        readonly=True,
+    )
+    source_model = fields.Char(string="Source Model", readonly=True)
+    source_res_id = fields.Integer(string="Source Record ID", readonly=True)
+    reference_name = fields.Char(string="Reference", readonly=True)
+    state = fields.Char(string="State", readonly=True)
+    responsible_user_id = fields.Many2one(
+        "res.users",
+        string="Responsible User",
+        readonly=True,
+    )
+    raised_on = fields.Datetime(string="Raised On", readonly=True)
+    age_days = fields.Integer(string="Age (Days)", readonly=True)
+    exception_type = fields.Selection(
+        EXCEPTION_TYPE_SELECTION,
+        string="Exception Type",
+        readonly=True,
+    )
+    exception_note = fields.Text(string="Exception Note", readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute(
+            """
+            CREATE VIEW federation_report_workflow_exception AS (
+                WITH queue AS (
+                    SELECT
+                        se.id AS season_id,
+                        t.id AS tournament_id,
+                        m.id AS match_id,
+                        NULL::integer AS override_request_id,
+                        'federation.match'::varchar AS source_model,
+                        m.id AS source_res_id,
+                        m.name AS reference_name,
+                        m.result_state::varchar AS state,
+                        m.result_submitted_by_id AS responsible_user_id,
+                        m.result_submitted_on AS raised_on,
+                        (CURRENT_DATE - m.result_submitted_on::date)::int AS age_days,
+                        'result_submission_stalled'::varchar AS exception_type,
+                        'Submitted result is still waiting for verification.'::text AS exception_note
+                    FROM federation_match m
+                    LEFT JOIN federation_tournament t ON t.id = m.tournament_id
+                    LEFT JOIN federation_season se ON se.id = t.season_id
+                    WHERE m.result_state = 'submitted'
+                      AND m.result_submitted_on IS NOT NULL
+                      AND m.result_submitted_on <= (NOW() - INTERVAL '2 day')
+
+                    UNION ALL
+
+                    SELECT
+                        se.id AS season_id,
+                        t.id AS tournament_id,
+                        m.id AS match_id,
+                        NULL::integer AS override_request_id,
+                        'federation.match'::varchar AS source_model,
+                        m.id AS source_res_id,
+                        m.name AS reference_name,
+                        m.result_state::varchar AS state,
+                        m.result_verified_by_id AS responsible_user_id,
+                        m.result_verified_on AS raised_on,
+                        (CURRENT_DATE - m.result_verified_on::date)::int AS age_days,
+                        'result_approval_stalled'::varchar AS exception_type,
+                        'Verified result is still waiting for approval.'::text AS exception_note
+                    FROM federation_match m
+                    LEFT JOIN federation_tournament t ON t.id = m.tournament_id
+                    LEFT JOIN federation_season se ON se.id = t.season_id
+                    WHERE m.result_state = 'verified'
+                      AND m.result_verified_on IS NOT NULL
+                      AND m.result_verified_on <= (NOW() - INTERVAL '2 day')
+
+                    UNION ALL
+
+                    SELECT
+                        NULL::integer AS season_id,
+                        NULL::integer AS tournament_id,
+                        NULL::integer AS match_id,
+                        req.id AS override_request_id,
+                        'federation.override.request'::varchar AS source_model,
+                        req.id AS source_res_id,
+                        req.name AS reference_name,
+                        req.state::varchar AS state,
+                        req.requested_by_id AS responsible_user_id,
+                        req.requested_on AS raised_on,
+                        (CURRENT_DATE - req.requested_on::date)::int AS age_days,
+                        'override_review_stalled'::varchar AS exception_type,
+                        'Submitted override request is still waiting for governance review.'::text AS exception_note
+                    FROM federation_override_request req
+                    WHERE req.state = 'submitted'
+                      AND req.requested_on <= (NOW() - INTERVAL '3 day')
+
+                    UNION ALL
+
+                    SELECT
+                        NULL::integer AS season_id,
+                        NULL::integer AS tournament_id,
+                        NULL::integer AS match_id,
+                        req.id AS override_request_id,
+                        'federation.override.request'::varchar AS source_model,
+                        req.id AS source_res_id,
+                        req.name AS reference_name,
+                        req.state::varchar AS state,
+                        req.requested_by_id AS responsible_user_id,
+                        req.requested_on AS raised_on,
+                        (CURRENT_DATE - req.requested_on::date)::int AS age_days,
+                        'override_implementation_stalled'::varchar AS exception_type,
+                        'Approved override request is still waiting to be implemented.'::text AS exception_note
+                    FROM federation_override_request req
+                    WHERE req.state = 'approved'
+                      AND req.requested_on <= (NOW() - INTERVAL '3 day')
+                )
+                SELECT
+                    row_number() OVER (
+                        ORDER BY age_days DESC, raised_on ASC, source_model ASC, source_res_id ASC
+                    ) AS id,
+                    queue.season_id,
+                    queue.tournament_id,
+                    queue.match_id,
+                    queue.override_request_id,
+                    queue.source_model,
+                    queue.source_res_id,
+                    queue.reference_name,
+                    queue.state,
+                    queue.responsible_user_id,
+                    queue.raised_on,
+                    queue.age_days,
+                    queue.exception_type,
+                    queue.exception_note
+                FROM queue
+            )
+            """
+        )
+
+
+class FederationReportSeasonChecklist(models.Model):
+    _name = "federation.report.season.checklist"
+    _description = "Federation Season Checklist Report"
+    _auto = False
+    _order = "season_id"
+
+    STATUS_SELECTION = FederationReportOperational.STATUS_SELECTION
+
+    season_id = fields.Many2one("federation.season", string="Season", readonly=True)
+    season_state = fields.Char(string="Season State", readonly=True)
+    draft_season_registration_count = fields.Integer(
+        string="Draft Season Registrations",
+        readonly=True,
+    )
+    submitted_season_registration_count = fields.Integer(
+        string="Submitted Season Registrations",
+        readonly=True,
+    )
+    draft_tournament_registration_count = fields.Integer(
+        string="Draft Tournament Registrations",
+        readonly=True,
+    )
+    submitted_tournament_registration_count = fields.Integer(
+        string="Submitted Tournament Registrations",
+        readonly=True,
+    )
+    live_tournament_count = fields.Integer(string="Live Tournaments", readonly=True)
+    published_tournament_count = fields.Integer(
+        string="Published Tournaments",
+        readonly=True,
+    )
+    unpublished_tournament_count = fields.Integer(
+        string="Unpublished Tournaments",
+        readonly=True,
+    )
+    workflow_exception_count = fields.Integer(
+        string="Workflow Exceptions",
+        readonly=True,
+    )
+    checklist_status = fields.Selection(
+        STATUS_SELECTION,
+        string="Checklist Status",
+        readonly=True,
+    )
+    checklist_note = fields.Text(string="Checklist Note", readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute(
+            """
+            CREATE VIEW federation_report_season_checklist AS (
+                WITH season_registration_stats AS (
+                    SELECT
+                        reg.season_id,
+                        COUNT(*) FILTER (WHERE reg.state = 'draft') AS draft_season_registration_count,
+                        COUNT(*) FILTER (WHERE reg.state = 'submitted') AS submitted_season_registration_count
+                    FROM federation_season_registration reg
+                    GROUP BY reg.season_id
+                ),
+                tournament_registration_stats AS (
+                    SELECT
+                        t.season_id,
+                        COUNT(*) FILTER (WHERE reg.state = 'draft') AS draft_tournament_registration_count,
+                        COUNT(*) FILTER (WHERE reg.state = 'submitted') AS submitted_tournament_registration_count
+                    FROM federation_tournament_registration reg
+                    JOIN federation_tournament t ON t.id = reg.tournament_id
+                    GROUP BY t.season_id
+                ),
+                tournament_stats AS (
+                    SELECT
+                        t.season_id,
+                        COUNT(*) FILTER (WHERE t.state IN ('open', 'in_progress')) AS live_tournament_count,
+                        COUNT(*) FILTER (WHERE COALESCE(t.website_published, FALSE)) AS published_tournament_count,
+                        COUNT(*) FILTER (WHERE NOT COALESCE(t.website_published, FALSE)) AS unpublished_tournament_count
+                    FROM federation_tournament t
+                    GROUP BY t.season_id
+                ),
+                workflow_stats AS (
+                    SELECT
+                        queue.season_id,
+                        COUNT(*) AS workflow_exception_count
+                    FROM (
+                        SELECT t.season_id
+                        FROM federation_match m
+                        JOIN federation_tournament t ON t.id = m.tournament_id
+                        WHERE (
+                            (m.result_state = 'submitted' AND m.result_submitted_on IS NOT NULL AND m.result_submitted_on <= (NOW() - INTERVAL '2 day'))
+                            OR (m.result_state = 'verified' AND m.result_verified_on IS NOT NULL AND m.result_verified_on <= (NOW() - INTERVAL '2 day'))
+                        )
+
+                        UNION ALL
+
+                        SELECT t.season_id
+                        FROM federation_override_request req
+                        JOIN federation_tournament t
+                          ON req.target_model = 'federation.tournament'
+                         AND req.target_res_id = t.id
+                        WHERE (
+                            (req.state = 'submitted' AND req.requested_on <= (NOW() - INTERVAL '3 day'))
+                            OR (req.state = 'approved' AND req.requested_on <= (NOW() - INTERVAL '3 day'))
+                        )
+                    ) queue
+                    GROUP BY queue.season_id
+                )
+                SELECT
+                    row_number() OVER (ORDER BY s.id) AS id,
+                    s.id AS season_id,
+                    s.state::varchar AS season_state,
+                    COALESCE(srs.draft_season_registration_count, 0) AS draft_season_registration_count,
+                    COALESCE(srs.submitted_season_registration_count, 0) AS submitted_season_registration_count,
+                    COALESCE(trs.draft_tournament_registration_count, 0) AS draft_tournament_registration_count,
+                    COALESCE(trs.submitted_tournament_registration_count, 0) AS submitted_tournament_registration_count,
+                    COALESCE(ts.live_tournament_count, 0) AS live_tournament_count,
+                    COALESCE(ts.published_tournament_count, 0) AS published_tournament_count,
+                    COALESCE(ts.unpublished_tournament_count, 0) AS unpublished_tournament_count,
+                    COALESCE(ws.workflow_exception_count, 0) AS workflow_exception_count,
+                    CASE
+                        WHEN COALESCE(srs.submitted_season_registration_count, 0) > 0
+                          OR COALESCE(trs.submitted_tournament_registration_count, 0) > 0
+                          OR COALESCE(ws.workflow_exception_count, 0) > 0
+                        THEN 'blocked'
+                        WHEN COALESCE(srs.draft_season_registration_count, 0) > 0
+                          OR COALESCE(trs.draft_tournament_registration_count, 0) > 0
+                          OR (
+                              COALESCE(ts.live_tournament_count, 0) > 0
+                              AND COALESCE(ts.unpublished_tournament_count, 0) > 0
+                          )
+                        THEN 'attention'
+                        ELSE 'healthy'
+                    END AS checklist_status,
+                    CASE
+                        WHEN COALESCE(srs.submitted_season_registration_count, 0) > 0 THEN 'Season registrations are waiting for staff review.'
+                        WHEN COALESCE(trs.submitted_tournament_registration_count, 0) > 0 THEN 'Tournament registrations are waiting for staff review.'
+                        WHEN COALESCE(ws.workflow_exception_count, 0) > 0 THEN 'Workflow exceptions must be cleared before seasonal operations are considered healthy.'
+                        WHEN COALESCE(srs.draft_season_registration_count, 0) > 0 THEN 'Draft season registrations still need operator follow-up.'
+                        WHEN COALESCE(trs.draft_tournament_registration_count, 0) > 0 THEN 'Draft tournament registrations still need operator follow-up.'
+                        WHEN COALESCE(ts.live_tournament_count, 0) > 0 AND COALESCE(ts.unpublished_tournament_count, 0) > 0 THEN 'Some live tournaments are not yet published on the public site.'
+                        ELSE 'Season operations checklist is currently clear.'
+                    END AS checklist_note
+                FROM federation_season s
+                LEFT JOIN season_registration_stats srs ON srs.season_id = s.id
+                LEFT JOIN tournament_registration_stats trs ON trs.season_id = s.id
+                LEFT JOIN tournament_stats ts ON ts.season_id = s.id
+                LEFT JOIN workflow_stats ws ON ws.season_id = s.id
+            )
+            """
+        )

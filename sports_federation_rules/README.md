@@ -117,5 +117,8 @@ Important context keys:
 5. **Context-aware license validation** — License rules can require the correct
    season, club, selected license, and active date window instead of checking
    only for any generic active license.
-6. **Readable failure reasons** — Eligibility checks return structured reasons so
+6. **Date-aware suspensions** — Suspension rules honor active
+   `federation.suspension` windows for the operational match or roster date,
+   instead of relying only on a player's static master-data state.
+7. **Readable failure reasons** — Eligibility checks return structured reasons so
    workflow layers can block actions with operator-friendly messages.

@@ -287,12 +287,31 @@ docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm \
   2>&1 | tee "$RAW_LOG" || EXIT_CODE=$?
 
 # ── Parse results ────────────────────────────────────────────────────
-grep -iE "(FAIL|ERROR|CRITICAL|Traceback|raise.*Error)" "$RAW_LOG" > "$ERRORS_LOG" 2>/dev/null || true
-ERROR_COUNT=$(wc -l < "$ERRORS_LOG")
+TEST_RESULT_LINE=$(grep -F "odoo.tests.result:" "$RAW_LOG" | tail -1 || true)
+TESTS_TOTAL="n/a"
+TESTS_PASSED="n/a"
+TESTS_FAILED="n/a"
+TESTS_ERRORS="n/a"
+DIAGNOSTIC_COUNT="n/a"
 
-# Check for test summary lines
-TESTS_PASSED=$(grep -c "^ok$\|: ok$\|PASS" "$RAW_LOG" 2>/dev/null || echo "0")
-TESTS_FAILED=$(grep -c "FAIL\|ERROR" "$ERRORS_LOG" 2>/dev/null || echo "0")
+if [[ -n "$TEST_RESULT_LINE" ]] && [[ "$TEST_RESULT_LINE" =~ :[[:space:]]*([0-9]+)[[:space:]]+failed,[[:space:]]*([0-9]+)[[:space:]]+error\(s\)[[:space:]]+of[[:space:]]+([0-9]+)[[:space:]]+tests ]]; then
+  TESTS_FAILED="${BASH_REMATCH[1]}"
+  TESTS_ERRORS="${BASH_REMATCH[2]}"
+  TESTS_TOTAL="${BASH_REMATCH[3]}"
+  TESTS_PASSED=$((TESTS_TOTAL - TESTS_FAILED - TESTS_ERRORS))
+fi
+
+: > "$ERRORS_LOG"
+if [[ "$TESTS_FAILED" != "0" || "$TESTS_ERRORS" != "0" || $EXIT_CODE -ne 0 ]]; then
+  grep -iE "(^FAIL:|^ERROR:|FAILED|CRITICAL|Traceback|AssertionError|raise .*Error)" "$RAW_LOG" > "$ERRORS_LOG" 2>/dev/null || true
+fi
+
+if [[ -s "$ERRORS_LOG" ]]; then
+  DIAGNOSTIC_COUNT=$(wc -l < "$ERRORS_LOG" | tr -d ' ')
+elif [[ "$TESTS_TOTAL" == "n/a" ]]; then
+  grep -iE "(FAIL|ERROR|CRITICAL|Traceback|raise .*Error)" "$RAW_LOG" > "$ERRORS_LOG" 2>/dev/null || true
+  DIAGNOSTIC_COUNT=$(wc -l < "$ERRORS_LOG" | tr -d ' ')
+fi
 
 {
   echo ""
@@ -300,9 +319,13 @@ TESTS_FAILED=$(grep -c "FAIL\|ERROR" "$ERRORS_LOG" 2>/dev/null || echo "0")
   echo "  RESULTS"
   echo "════════════════════════════════════════════"
   echo "  Exit code:     $EXIT_CODE"
-  echo "  Error lines:   $ERROR_COUNT"
-  echo "  Tests passed:  ~$TESTS_PASSED"
-  echo "  Tests failed:  ~$TESTS_FAILED"
+  echo "  Tests run:     $TESTS_TOTAL"
+  echo "  Tests passed:  $TESTS_PASSED"
+  echo "  Tests failed:  $TESTS_FAILED"
+  echo "  Test errors:   $TESTS_ERRORS"
+  if [[ "$DIAGNOSTIC_COUNT" != "n/a" ]]; then
+    echo "  Diagnostics:   $DIAGNOSTIC_COUNT"
+  fi
   echo "════════════════════════════════════════════"
 } | tee -a "$SUMMARY_LOG"
 

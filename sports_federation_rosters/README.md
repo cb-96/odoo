@@ -31,7 +31,7 @@ A pool of eligible players for a team within a season or competition scope.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | Char | Roster title |
+| `name` | Char | Generated roster label |
 | `team_id` | Many2one | Team |
 | `season_id` | Many2one | Season scope |
 | `season_registration_id` | Many2one | Linked registration |
@@ -129,14 +129,15 @@ Immutable operational log for roster and match-sheet activity.
 ### `federation.tournament.participant` (extension)
 
 This module extends tournament participants with team-linked roster readiness
-checks. Participants can be confirmed before a roster exists, but the team must
-have an active, ready roster by the roster deadline: one week before the first
-scheduled match, or one week before tournament start if no match has been
-scheduled yet.
+checks. Tournament registration auto-provisions a team roster for the relevant
+season and competition scope. Participants can still be confirmed and assigned
+without a ready roster, but scheduled matches remain protected by the roster
+deadline: one week before the first scheduled match, or one week before
+tournament start if no match has been scheduled yet.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `ready_for_confirmation` | Boolean (computed) | Whether participant confirmation currently satisfies the roster deadline rule |
+| `ready_for_confirmation` | Boolean (computed) | Whether the linked team currently satisfies the roster deadline rule |
 | `roster_deadline_date` | Date (computed) | Deadline for having an active ready roster |
 | `readiness_roster_id` | Many2one (computed) | Preferred team roster used for readiness checks |
 | `confirmation_feedback` | Text (computed) | Warning or blocking message about the roster deadline |
@@ -160,12 +161,15 @@ scheduled yet.
 7. **Participation audit trail** — Roster lifecycle changes, lineup changes,
    submissions, approvals, locks, and substitutions are captured in
    `federation.participation.audit`.
-8. **Participant roster deadline** — Tournament participants can be confirmed
-   before a roster exists, but the linked team must have an active ready roster
-   by one week before its first scheduled match or tournament start,
-   preferring competition-specific rosters when available.
-9. **Team-linked roster checks** — Team roster lookup and tournament deadline
+8. **Participant roster readiness** — Tournament registration creates or reuses
+   the relevant team roster automatically so roster maintenance stays attached
+   to the participating team instead of requiring a separately named setup step.
+9. **Operational roster deadline** — Tournament participants can still be
+   confirmed and grouped without a ready roster, but scheduled matches keep the
+   one-week roster deadline so operators cannot move into match-day workflows
+   without an active ready roster.
+10. **Team-linked roster checks** — Team roster lookup and tournament deadline
    assessment are owned by the team model so roster compliance follows the team
    rather than being treated as a separate participant-only concern.
-10. **State locking** — Approved match sheets can be locked once match-day
+11. **State locking** — Approved match sheets can be locked once match-day
    operations are complete.

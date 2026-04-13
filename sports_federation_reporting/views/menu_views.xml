@@ -71,11 +71,23 @@
               action="action_federation_report_workflow_exception"
               sequence="60"/>
 
+    <menuitem id="menu_federation_report_compliance_remediation"
+              name="Compliance Remediation"
+              parent="menu_federation_reporting"
+              action="action_federation_report_compliance_remediation"
+              sequence="62"/>
+
     <menuitem id="menu_federation_report_season_checklist"
               name="Season Checklists"
               parent="menu_federation_reporting"
               action="action_federation_report_season_checklist"
               sequence="65"/>
+
+    <menuitem id="menu_federation_report_snapshot"
+              name="Trend Snapshots"
+              parent="menu_federation_reporting"
+              action="action_federation_report_snapshot"
+              sequence="70"/>
 
     <menuitem id="menu_federation_report_schedule"
               name="Report Schedules"

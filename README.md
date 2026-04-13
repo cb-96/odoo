@@ -19,6 +19,7 @@ Table of contents
 Quick links
 - High-level context: `odoo/CONTEXT.md`
 - Technical notes: `odoo/TECHNICAL_NOTE.md`
+- Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
 - Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
 - Contributor guide: `CONTRIBUTING.md`
 

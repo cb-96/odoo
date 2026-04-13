@@ -1,4 +1,34 @@
-from odoo import fields, models
+import re
+import unicodedata
+from datetime import timedelta
+
+from odoo import api, fields, models
+
+
+_SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify_public_text(value):
+    normalized = unicodedata.normalize("NFKD", value or "")
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    slug = _SLUG_PATTERN.sub("-", ascii_value).strip("-")
+    return slug or "item"
+
+
+def _ics_escape(value):
+    if not value:
+        return ""
+    return (
+        str(value)
+        .replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\n", "\\n")
+    )
+
+
+def _ics_format_datetime(value):
+    return fields.Datetime.to_datetime(value).strftime("%Y%m%dT%H%M%S")
 
 
 class FederationTournament(models.Model):
@@ -28,10 +58,196 @@ class FederationTournament(models.Model):
         string="Show Public Standings",
         default=True,
     )
+    public_featured = fields.Boolean(
+        string="Featured on Tournament Hub",
+        default=False,
+    )
+    public_editorial_summary = fields.Text(
+        string="Editorial Summary",
+        help="Short front-page summary shown on public tournament cards and hero sections.",
+    )
+    public_pinned_announcement = fields.Text(
+        string="Pinned Announcement",
+        help="Short notice displayed prominently on the public tournament page.",
+    )
+    public_hero_image = fields.Binary(
+        string="Public Hero Image",
+    )
+
+    def _normalize_public_slug_vals(self, vals):
+        normalized = dict(vals)
+        if "public_slug" in normalized:
+            normalized["public_slug"] = _slugify_public_text(normalized["public_slug"]) if normalized.get("public_slug") else False
+        return normalized
+
+    def _get_public_slug_seed(self):
+        self.ensure_one()
+        return self.public_slug or self.name or self.code or "tournament"
+
+    def get_public_slug_value(self):
+        self.ensure_one()
+        if self.public_slug:
+            return self.public_slug
+        return f"{_slugify_public_text(self._get_public_slug_seed())}-{self.id}"
+
+    @api.model
+    def resolve_public_slug(self, slug_value):
+        if not slug_value:
+            return self.browse([])
+
+        explicit = self.sudo().search([("public_slug", "=", slug_value)], limit=1)
+        if explicit:
+            return explicit
+
+        tail = slug_value.rsplit("-", 1)[-1]
+        if not tail.isdigit():
+            return self.browse([])
+
+        record = self.sudo().browse(int(tail))
+        if record.exists() and record.get_public_slug_value() == slug_value:
+            return record
+        return self.browse([])
+
+    def get_public_path(self):
+        self.ensure_one()
+        return f"/tournaments/{self.get_public_slug_value()}"
+
+    def get_public_register_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/register"
+
+    def get_public_teams_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/teams"
+
+    def get_public_schedule_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/schedule"
+
+    def get_public_results_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/results"
+
+    def get_public_standings_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/standings"
+
+    def get_public_bracket_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/bracket"
+
+    def get_public_feed_path(self):
+        self.ensure_one()
+        return f"/api/v1/tournaments/{self.get_public_slug_value()}/feed"
+
+    def get_public_schedule_ics_path(self):
+        self.ensure_one()
+        return f"{self.get_public_path()}/schedule.ics"
+
+    @api.model
+    def _get_public_site_search_domain(self, search=None):
+        if not search:
+            return []
+
+        search_terms = [("name", "ilike", search)]
+        if "code" in self._fields:
+            search_terms.append(("code", "ilike", search))
+        if "location" in self._fields:
+            search_terms.append(("location", "ilike", search))
+        if "venue_id" in self._fields:
+            search_terms.append(("venue_id.name", "ilike", search))
+        if "public_editorial_summary" in self._fields:
+            search_terms.append(("public_editorial_summary", "ilike", search))
+
+        if len(search_terms) == 1:
+            return [search_terms[0]]
+        return ["|"] * (len(search_terms) - 1) + search_terms
+
+    @api.model
+    def get_public_published_tournaments(self, search=None, limit=None, extra_domain=None):
+        tournaments = self.sudo().search(
+            [("website_published", "=", True)] + self._get_public_site_search_domain(search) + list(extra_domain or []),
+            order="date_start asc, id asc",
+        )
+        return tournaments[:limit] if limit else tournaments
+
+    @api.model
+    def get_public_featured_tournaments(self, search=None, limit=None, extra_domain=None):
+        domain = [
+            ("website_published", "=", True),
+            ("state", "in", ("open", "in_progress")),
+        ] + self._get_public_site_search_domain(search) + list(extra_domain or [])
+        tournaments = self.sudo().search(domain, order="date_start asc, id asc")
+        featured = tournaments.filtered("public_featured")
+        ordered = featured + (tournaments - featured)
+        return ordered[:limit] if limit else ordered
+
+    @api.model
+    def get_public_archived_tournaments(self, search=None, limit=None, extra_domain=None):
+        domain = [
+            ("website_published", "=", True),
+            ("state", "in", ("closed", "cancelled")),
+        ] + self._get_public_site_search_domain(search) + list(extra_domain or [])
+        tournaments = self.sudo().search(domain, order="date_start desc, id desc")
+        return tournaments[:limit] if limit else tournaments
+
+    @api.model
+    def get_public_live_tournaments(self, limit=None, extra_domain=None):
+        domain = [
+            ("website_published", "=", True),
+            ("state", "=", "in_progress"),
+        ] + list(extra_domain or [])
+        tournaments = self.sudo().search(domain, order="date_start desc, id desc")
+        featured = tournaments.filtered("public_featured")
+        ordered = featured + (tournaments - featured)
+        return ordered[:limit] if limit else ordered
+
+    @api.model
+    def get_public_recent_result_tournaments(self, limit=None, extra_domain=None):
+        tournaments = self.sudo().search(
+            [
+                ("website_published", "=", True),
+                ("state", "in", ("open", "in_progress", "closed")),
+            ] + list(extra_domain or []),
+            order="write_date desc, id desc",
+        )
+        ranked = []
+        Match = self.env["federation.match"].sudo()
+        for tournament in tournaments:
+            latest_match = Match.search(
+                [
+                    ("tournament_id", "=", tournament.id),
+                    ("result_state", "=", "approved"),
+                ],
+                order="date_scheduled desc, write_date desc, id desc",
+                limit=1,
+            )
+            if not latest_match:
+                continue
+            activity_dt = latest_match.date_scheduled or latest_match.write_date or tournament.write_date
+            ranked.append((activity_dt, tournament.id))
+        ranked.sort(reverse=True)
+        result_ids = [tournament_id for _, tournament_id in ranked[:limit]] if limit else [tournament_id for _, tournament_id in ranked]
+        return self.browse(result_ids)
 
     def can_access_public_detail(self):
         self.ensure_one()
         return bool(self.website_published)
+
+    def get_public_standings(self):
+        self.ensure_one()
+        return self.env["federation.standing"].sudo().search([
+            ("tournament_id", "=", self.id),
+            ("website_published", "=", True),
+        ], order="stage_id asc, group_id asc, id asc")
+
+    def get_public_participants(self, limit=None):
+        self.ensure_one()
+        participants = self.env["federation.tournament.participant"].sudo().search([
+            ("tournament_id", "=", self.id),
+            ("state", "!=", "withdrawn"),
+        ], order="state asc, team_id asc, id asc")
+        return participants[:limit] if limit else participants
 
     def get_public_result_matches(self):
         self.ensure_one()
@@ -40,12 +256,37 @@ class FederationTournament(models.Model):
             ("result_state", "=", "approved"),
         ], order="scheduled_date asc, date_scheduled asc, id asc")
 
+    def get_public_recent_result_matches(self, limit=None):
+        self.ensure_one()
+        matches = self.env["federation.match"].sudo().search([
+            ("tournament_id", "=", self.id),
+            ("result_state", "=", "approved"),
+        ], order="date_scheduled desc, scheduled_date desc, id desc")
+        return matches[:limit] if limit else matches
+
     def get_public_schedule_matches(self):
         self.ensure_one()
         return self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
             ("state", "in", ("draft", "scheduled", "in_progress")),
         ], order="scheduled_date asc, date_scheduled asc, round_number asc, id asc")
+
+    def get_public_live_matches(self, limit=None):
+        self.ensure_one()
+        matches = self.env["federation.match"].sudo().search([
+            ("tournament_id", "=", self.id),
+            ("state", "=", "in_progress"),
+        ], order="date_scheduled asc, id asc")
+        return matches[:limit] if limit else matches
+
+    def get_public_upcoming_matches(self, limit=None):
+        self.ensure_one()
+        matches = self.env["federation.match"].sudo().search([
+            ("tournament_id", "=", self.id),
+            ("state", "in", ("draft", "scheduled", "in_progress")),
+        ], order="date_scheduled asc, scheduled_date asc, id asc")
+        matches = matches.filtered(lambda record: record.date_scheduled or record.scheduled_date)
+        return matches[:limit] if limit else matches
 
     def get_public_schedule_sections(self):
         self.ensure_one()
@@ -139,7 +380,9 @@ class FederationTournament(models.Model):
             "scheduled_date": fields.Date.to_string(match.scheduled_date) if match.scheduled_date else None,
             "kickoff": fields.Datetime.to_string(match.date_scheduled) if match.date_scheduled else None,
             "home_team": match.home_team_id.name if match.home_team_id else None,
+            "home_team_url": match.home_team_id.get_public_path() if match.home_team_id else None,
             "away_team": match.away_team_id.name if match.away_team_id else None,
+            "away_team_url": match.away_team_id.get_public_path() if match.away_team_id else None,
             "home_score": match.home_score,
             "away_score": match.away_score,
             "venue": match.venue_id.name if "venue_id" in match._fields and match.venue_id else None,
@@ -148,34 +391,83 @@ class FederationTournament(models.Model):
             "source_match_2": match.source_match_2_id.name if match.source_match_2_id else None,
         }
 
+    def get_public_schedule_ics(self):
+        self.ensure_one()
+        events = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Sports Federation//Tournament Schedule//EN",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            f"X-WR-CALNAME:{_ics_escape(self.name)}",
+        ]
+        for match in self.get_public_schedule_matches().filtered("date_scheduled"):
+            start_dt = fields.Datetime.to_datetime(match.date_scheduled)
+            end_dt = start_dt + timedelta(hours=1)
+            summary = f"{match.home_team_id.name if match.home_team_id else 'TBD'} vs {match.away_team_id.name if match.away_team_id else 'TBD'}"
+            location_parts = []
+            if "venue_id" in match._fields and match.venue_id:
+                location_parts.append(match.venue_id.name)
+            if "playing_area_id" in match._fields and match.playing_area_id:
+                location_parts.append(match.playing_area_id.name)
+
+            description_parts = [self.name]
+            if match.round_id:
+                description_parts.append(match.round_id.name)
+            if match.stage_id:
+                description_parts.append(match.stage_id.name)
+
+            events.extend([
+                "BEGIN:VEVENT",
+                f"UID:tournament-{self.id}-match-{match.id}@sportsfederation",
+                f"DTSTAMP:{_ics_format_datetime(fields.Datetime.now())}",
+                f"DTSTART:{_ics_format_datetime(start_dt)}",
+                f"DTEND:{_ics_format_datetime(end_dt)}",
+                f"SUMMARY:{_ics_escape(summary)}",
+                f"DESCRIPTION:{_ics_escape(' | '.join(description_parts))}",
+                f"LOCATION:{_ics_escape(', '.join(location_parts))}",
+                f"URL:{_ics_escape(self.get_public_schedule_path())}",
+                "END:VEVENT",
+            ])
+        events.append("END:VCALENDAR")
+        return "\r\n".join(events) + "\r\n"
+
     def get_public_feed_payload(self):
         self.ensure_one()
-        participants = self.env["federation.tournament.participant"].sudo().search([
-            ("tournament_id", "=", self.id),
-            ("state", "!=", "withdrawn"),
-        ], order="state asc, team_id asc")
-        standings = self.env["federation.standing"].sudo().search([
-            ("tournament_id", "=", self.id),
-            ("website_published", "=", True),
-        ], order="stage_id asc, group_id asc, id asc")
+        participants = self.get_public_participants()
+        standings = self.get_public_standings()
 
         return {
             "api_version": "v1",
             "tournament": {
                 "id": self.id,
                 "name": self.name,
+                "slug": self.get_public_slug_value(),
                 "code": self.code,
                 "state": self.state,
                 "date_start": fields.Date.to_string(self.date_start) if self.date_start else None,
                 "date_end": fields.Date.to_string(self.date_end) if self.date_end else None,
                 "public_slug": self.public_slug or None,
+                "public_url": self.get_public_path(),
+                "register_url": self.get_public_register_path(),
+                "teams_url": self.get_public_teams_path(),
+                "schedule_url": self.get_public_schedule_path(),
+                "results_url": self.get_public_results_path(),
+                "standings_url": self.get_public_standings_path(),
+                "bracket_url": self.get_public_bracket_path(),
+                "feed_url": self.get_public_feed_path(),
+                "schedule_ics_url": self.get_public_schedule_ics_path(),
                 "show_public_results": self.show_public_results,
                 "show_public_standings": self.show_public_standings,
+                "featured": self.public_featured,
+                "editorial_summary": self.public_editorial_summary or None,
+                "pinned_announcement": self.public_pinned_announcement or None,
             },
             "participants": [
                 {
                     "id": participant.id,
                     "team": participant.team_id.name if participant.team_id else None,
+                    "team_url": participant.team_id.get_public_path() if participant.team_id else None,
                     "club": participant.club_id.name if participant.club_id else None,
                     "state": participant.state,
                 }
@@ -207,6 +499,7 @@ class FederationTournament(models.Model):
                         {
                             "rank": line.rank,
                             "team": line.team_id.name if line.team_id else None,
+                            "team_url": line.team_id.get_public_path() if line.team_id else None,
                             "played": line.played,
                             "won": line.won,
                             "drawn": line.drawn,
@@ -223,7 +516,12 @@ class FederationTournament(models.Model):
             ],
         }
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        return super().create([self._normalize_public_slug_vals(vals) for vals in vals_list])
+
     def write(self, vals):
+        vals = self._normalize_public_slug_vals(vals)
         to_publish = self.env["federation.tournament"].browse([])
         if vals.get("website_published"):
             to_publish = self.filtered(lambda record: not record.website_published)
@@ -257,3 +555,142 @@ class FederationStanding(models.Model):
     public_title = fields.Char(
         string="Public Title",
     )
+
+
+class FederationTeam(models.Model):
+    _inherit = "federation.team"
+
+    _public_slug_unique = models.Constraint(
+        "UNIQUE(public_slug)",
+        "Public team slug must be unique.",
+    )
+
+    public_slug = fields.Char(
+        string="Public Slug",
+        help="Optional readable slug seed for public team pages.",
+    )
+
+    def _normalize_public_slug_vals(self, vals):
+        normalized = dict(vals)
+        if "public_slug" in normalized:
+            normalized["public_slug"] = _slugify_public_text(normalized["public_slug"]) if normalized.get("public_slug") else False
+        return normalized
+
+    def _get_public_slug_seed(self):
+        self.ensure_one()
+        if self.public_slug:
+            return self.public_slug
+        club_name = self.club_id.name if self.club_id else False
+        return "-".join(filter(None, [self.name, club_name])) or self.code or "team"
+
+    def get_public_slug_value(self):
+        self.ensure_one()
+        if self.public_slug:
+            return self.public_slug
+        return f"{_slugify_public_text(self._get_public_slug_seed())}-{self.id}"
+
+    @api.model
+    def resolve_public_slug(self, slug_value):
+        if not slug_value:
+            return self.browse([])
+
+        explicit = self.sudo().search([("public_slug", "=", slug_value)], limit=1)
+        if explicit:
+            return explicit
+
+        tail = slug_value.rsplit("-", 1)[-1]
+        if not tail.isdigit():
+            return self.browse([])
+
+        record = self.sudo().browse(int(tail))
+        if record.exists() and record.get_public_slug_value() == slug_value:
+            return record
+        return self.browse([])
+
+    def get_public_path(self):
+        self.ensure_one()
+        return f"/teams/{self.get_public_slug_value()}"
+
+    def can_access_public_profile(self):
+        self.ensure_one()
+        Participant = self.env["federation.tournament.participant"].sudo()
+        if Participant.search_count(
+            [
+                ("team_id", "=", self.id),
+                ("state", "!=", "withdrawn"),
+                ("tournament_id.website_published", "=", True),
+            ],
+            limit=1,
+        ):
+            return True
+
+        Match = self.env["federation.match"].sudo()
+        return bool(
+            Match.search_count(
+                [
+                    ("tournament_id.website_published", "=", True),
+                    "|",
+                    ("home_team_id", "=", self.id),
+                    ("away_team_id", "=", self.id),
+                ],
+                limit=1,
+            )
+        )
+
+    def get_public_tournaments(self, limit=None):
+        self.ensure_one()
+        tournaments = self.env["federation.tournament"].sudo().search(
+            [
+                ("website_published", "=", True),
+                ("participant_ids.team_id", "=", self.id),
+            ],
+            order="date_start desc, id desc",
+        )
+        return tournaments[:limit] if limit else tournaments
+
+    def get_public_recent_result_matches(self, limit=None):
+        self.ensure_one()
+        matches = self.env["federation.match"].sudo().search(
+            [
+                ("tournament_id.website_published", "=", True),
+                ("result_state", "=", "approved"),
+                "|",
+                ("home_team_id", "=", self.id),
+                ("away_team_id", "=", self.id),
+            ],
+            order="date_scheduled desc, scheduled_date desc, id desc",
+        )
+        return matches[:limit] if limit else matches
+
+    def get_public_upcoming_matches(self, limit=None):
+        self.ensure_one()
+        matches = self.env["federation.match"].sudo().search(
+            [
+                ("tournament_id.website_published", "=", True),
+                ("state", "in", ("draft", "scheduled", "in_progress")),
+                "|",
+                ("home_team_id", "=", self.id),
+                ("away_team_id", "=", self.id),
+            ],
+            order="date_scheduled asc, scheduled_date asc, id asc",
+        )
+        matches = matches.filtered(lambda record: record.date_scheduled or record.scheduled_date)
+        return matches[:limit] if limit else matches
+
+    def get_public_standing_lines(self, limit=None):
+        self.ensure_one()
+        lines = self.env["federation.standing.line"].sudo().search(
+            [
+                ("team_id", "=", self.id),
+                ("standing_id.website_published", "=", True),
+            ],
+            order="id desc",
+        )
+        return lines[:limit] if limit else lines
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        return super().create([self._normalize_public_slug_vals(vals) for vals in vals_list])
+
+    def write(self, vals):
+        return super().write(self._normalize_public_slug_vals(vals))

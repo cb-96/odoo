@@ -7,4 +7,10 @@
         <field name="comment">Portal users in this group can view their club data and submit season and tournament registrations.</field>
     </record>
 
+    <record id="group_federation_portal_official" model="res.groups">
+        <field name="name">Portal Match Official</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="comment">Portal users in this group can review and respond to their own officiating assignments.</field>
+    </record>
+
 </odoo>

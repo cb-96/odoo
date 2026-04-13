@@ -134,11 +134,14 @@
                 <field name="fee_type_id"/>
                 <field name="follow_up_status"/>
                 <field name="counterparty_display"/>
+                <field name="sla_status"/>
                 <filter name="needs_follow_up" string="Needs Follow-up" domain="[('needs_follow_up', '=', True)]"/>
                 <filter name="awaiting_reference" string="Awaiting Reference" domain="[('follow_up_status', '=', 'awaiting_reference')]"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
                 <group>
                     <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
                     <filter name="group_follow_up" string="Follow-up Status" context="{'group_by': 'follow_up_status'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                 </group>
             </search>
@@ -160,6 +163,9 @@
                 <field name="amount"/>
                 <field name="external_ref"/>
                 <field name="invoice_ref"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
                 <field name="age_days"/>
                 <field name="needs_follow_up"/>
             </list>
@@ -196,9 +202,12 @@
                 <field name="recipient_email"/>
                 <field name="template_xmlid"/>
                 <field name="notification_type"/>
+                <field name="sla_status"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
                 <group>
                     <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
                     <filter name="group_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
                 </group>
             </search>
         </field>
@@ -216,6 +225,10 @@
                 <field name="target_res_id"/>
                 <field name="recipient_email"/>
                 <field name="template_xmlid"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
                 <field name="message"/>
             </list>
         </field>
@@ -280,11 +293,14 @@
                 <field name="tournament_id"/>
                 <field name="exception_type"/>
                 <field name="state"/>
+                <field name="sla_status"/>
                 <filter name="result_queue" string="Result Queue" domain="[('source_model', '=', 'federation.match')]"/>
                 <filter name="override_queue" string="Override Queue" domain="[('source_model', '=', 'federation.override.request')]"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
                 <group>
                     <filter name="group_type" string="Exception Type" context="{'group_by': 'exception_type'}"/>
                     <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                 </group>
             </search>
@@ -302,6 +318,9 @@
                 <field name="reference_name"/>
                 <field name="state"/>
                 <field name="exception_type"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
                 <field name="age_days"/>
                 <field name="responsible_user_id"/>
                 <field name="exception_note"/>
@@ -314,6 +333,53 @@
         <field name="res_model">federation.report.workflow.exception</field>
         <field name="view_mode">list</field>
         <field name="search_view_id" ref="view_federation_report_workflow_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_compliance_remediation_search" model="ir.ui.view">
+        <field name="name">federation.report.compliance.remediation.search</field>
+        <field name="model">federation.report.compliance.remediation</field>
+        <field name="arch" type="xml">
+            <search string="Compliance Remediation">
+                <field name="requirement_id"/>
+                <field name="target_model"/>
+                <field name="status"/>
+                <field name="sla_status"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
+                <group>
+                    <filter name="group_status" string="Submission Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
+                    <filter name="group_target" string="Target Model" context="{'group_by': 'target_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_compliance_remediation_list" model="ir.ui.view">
+        <field name="name">federation.report.compliance.remediation.list</field>
+        <field name="model">federation.report.compliance.remediation</field>
+        <field name="arch" type="xml">
+            <list string="Compliance Remediation" create="0" edit="0" delete="0">
+                <field name="submission_id"/>
+                <field name="requirement_id"/>
+                <field name="target_model"/>
+                <field name="target_display"/>
+                <field name="status"/>
+                <field name="queue_owner_display"/>
+                <field name="created_on"/>
+                <field name="reviewed_on"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
+                <field name="remediation_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_compliance_remediation" model="ir.actions.act_window">
+        <field name="name">Compliance Remediation</field>
+        <field name="res_model">federation.report.compliance.remediation</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_compliance_remediation_search"/>
     </record>
 
     <record id="view_federation_report_season_checklist_search" model="ir.ui.view">

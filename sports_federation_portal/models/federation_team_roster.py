@@ -6,6 +6,20 @@ class FederationTeamRoster(models.Model):
     _inherit = "federation.team.roster"
 
     @api.model
+    def _portal_get_scope_domain(self, user=None):
+        user = user or self.env.user
+        club_scope = user.portal_club_scope_ids
+        team_scope = user.portal_team_scope_ids
+        if team_scope and club_scope:
+            return ["|", ("team_id", "in", team_scope.ids), ("club_id", "in", club_scope.ids)]
+        if team_scope:
+            return [("team_id", "in", team_scope.ids)]
+        represented_clubs = user.represented_club_ids
+        if represented_clubs:
+            return [("club_id", "in", represented_clubs.ids)]
+        return [("id", "=", False)]
+
+    @api.model
     def _portal_get_represented_clubs(self, user=None):
         user = user or self.env.user
         return (
@@ -18,18 +32,15 @@ class FederationTeamRoster(models.Model):
     @api.model
     def _portal_get_confirmed_registrations(self, user=None):
         user = user or self.env.user
-        clubs = self._portal_get_represented_clubs(user=user)
-        if not clubs:
+        scope_domain = self._portal_get_scope_domain(user=user)
+        if scope_domain == [("id", "=", False)]:
             return self.env["federation.season.registration"]
         return (
             self.env["federation.season.registration"]
             .with_user(user)
             .sudo()
             .search(
-                [
-                    ("club_id", "in", clubs.ids),
-                    ("state", "=", "confirmed"),
-                ],
+                scope_domain + [("state", "=", "confirmed")],
                 order="season_id desc, team_id, id desc",
             )
         )
@@ -54,15 +65,57 @@ class FederationTeamRoster(models.Model):
             )
         )
 
+    @api.model
+    def _portal_get_preferred_roster_for_tournament(self, tournament, team, user=None):
+        user = user or self.env.user
+        tournament.ensure_one()
+        team.ensure_one()
+
+        scope_domain = self._portal_get_scope_domain(user=user)
+        if scope_domain == [("id", "=", False)]:
+            return self.browse([])
+
+        domain = scope_domain + [("team_id", "=", team.id)]
+        if tournament.season_id:
+            domain.append(("season_id", "=", tournament.season_id.id))
+
+        rosters = self.with_user(user).sudo().search(domain, order="id desc")
+        if not rosters:
+            return rosters
+
+        def _pick(records):
+            active_records = records.filtered(lambda roster: roster.status == "active")
+            return active_records[:1] or records[:1]
+
+        if tournament.competition_id:
+            competition_rosters = rosters.filtered(
+                lambda roster: roster.competition_id == tournament.competition_id
+            )
+            picked = _pick(competition_rosters)
+            if picked:
+                return picked
+
+        generic_rosters = rosters.filtered(lambda roster: not roster.competition_id)
+        picked = _pick(generic_rosters)
+        return picked or _pick(rosters)
+
     def _portal_assert_manage_access(self, user=None):
         user = user or self.env.user
-        clubs = self._portal_get_represented_clubs(user=user)
-        if not clubs:
+        club_scope = user.portal_club_scope_ids
+        team_scope = user.portal_team_scope_ids
+        represented_clubs = user.represented_club_ids
+        if not represented_clubs and not team_scope:
             raise AccessError(
                 _("You are not assigned as a club representative.")
             )
         for record in self:
-            if record.club_id not in clubs:
+            if record.team_id in team_scope:
+                continue
+            if club_scope and record.club_id in club_scope:
+                continue
+            if not team_scope and record.club_id in represented_clubs:
+                continue
+            if record.club_id not in represented_clubs:
                 raise AccessError(
                     _("You can only manage rosters for your own club.")
                 )
@@ -193,12 +246,18 @@ class FederationTeamRosterLine(models.Model):
     def _portal_get_available_players(self, roster, user=None):
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
-        domain = [
-            "|",
-            ("club_id", "=", roster.club_id.id),
-            ("team_ids", "in", roster.team_id.ids),
-            ("active", "=", True),
-        ]
+        if roster.team_id in user.portal_team_scope_ids and roster.club_id not in user.portal_club_scope_ids:
+            domain = [
+                ("team_ids", "in", roster.team_id.ids),
+                ("active", "=", True),
+            ]
+        else:
+            domain = [
+                "|",
+                ("club_id", "=", roster.club_id.id),
+                ("team_ids", "in", roster.team_id.ids),
+                ("active", "=", True),
+            ]
         if roster.team_id.gender in ("male", "female"):
             domain.append(("gender", "=", roster.team_id.gender))
         return (
@@ -249,10 +308,16 @@ class FederationTeamRosterLine(models.Model):
         if not player.exists():
             raise ValidationError(_("Select a valid player."))
 
-        if selected_player and player.club_id != roster.club_id and roster.team_id not in player.team_ids:
-            raise ValidationError(
-                _("You can only roster players who belong to your club.")
-            )
+        if selected_player:
+            if roster.team_id in user.portal_team_scope_ids and roster.club_id not in user.portal_club_scope_ids:
+                if roster.team_id not in player.team_ids:
+                    raise ValidationError(
+                        _("You can only roster players already assigned to the selected team.")
+                    )
+            elif player.club_id != roster.club_id and roster.team_id not in player.team_ids:
+                raise ValidationError(
+                    _("You can only roster players who belong to your club.")
+                )
 
         license_id = values.get("license_id")
         license_record = self.env["federation.player.license"]

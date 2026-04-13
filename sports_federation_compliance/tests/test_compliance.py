@@ -1,5 +1,5 @@
 from odoo.tests import TransactionCase
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import mute_logger
 from datetime import date, timedelta
 
@@ -10,6 +10,16 @@ class TestCompliance(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        cls.portal_club_group = cls.env.ref(
+            "sports_federation_portal.group_federation_portal_club"
+        )
+        cls.portal_official_group = cls.env.ref(
+            "sports_federation_portal.group_federation_portal_official"
+        )
+        cls.portal_role_type = cls.env.ref(
+            "sports_federation_portal.role_type_competition_contact"
+        )
 
         # Create test club
         cls.club = cls.env["federation.club"].create({
@@ -36,6 +46,26 @@ class TestCompliance(TransactionCase):
             "city": "Test City",
         })
 
+        cls.club_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Compliance Club User",
+            "login": "compliance.club@example.com",
+            "email": "compliance.club@example.com",
+            "group_ids": [(6, 0, [cls.portal_club_group.id])],
+        })
+        cls.referee_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Compliance Referee User",
+            "login": "compliance.referee@example.com",
+            "email": "compliance.referee@example.com",
+            "group_ids": [(6, 0, [cls.portal_official_group.id])],
+        })
+        cls.club_representative = cls.env["federation.club.representative"].create({
+            "club_id": cls.club.id,
+            "partner_id": cls.club_user.partner_id.id,
+            "user_id": cls.club_user.id,
+            "role_type_id": cls.portal_role_type.id,
+        })
+        cls.referee.user_id = cls.referee_user
+
         # Create test requirement
         cls.requirement = cls.env["federation.document.requirement"].create({
             "name": "Club Registration",
@@ -51,6 +81,12 @@ class TestCompliance(TransactionCase):
             "code": "CLUB_INFO",
             "target_model": "federation.club",
             "requires_expiry_date": False,
+        })
+        cls.referee_requirement = cls.env["federation.document.requirement"].create({
+            "name": "Referee License",
+            "code": "REF_LIC",
+            "target_model": "federation.referee",
+            "requires_expiry_date": True,
         })
 
     def test_create_requirement(self):
@@ -251,3 +287,58 @@ class TestCompliance(TransactionCase):
             "club_id": self.club.id,
         })
         self.assertFalse(submission3.is_expired)
+
+    def test_portal_workspace_entries_follow_club_and_referee_scope(self):
+        Requirement = self.env["federation.document.requirement"]
+
+        club_entries = Requirement._portal_get_workspace_entries(user=self.club_user)
+        referee_entries = Requirement._portal_get_workspace_entries(user=self.referee_user)
+
+        self.assertTrue(any(
+            entry["requirement"] == self.requirement and entry["target"] == self.club
+            for entry in club_entries
+        ))
+        self.assertTrue(any(
+            entry["requirement"] == self.referee_requirement and entry["target"] == self.referee
+            for entry in referee_entries
+        ))
+        self.assertFalse(any(
+            entry["requirement"] == self.referee_requirement
+            for entry in club_entries
+        ))
+
+    def test_portal_prepare_submission_uses_requesting_user(self):
+        submission = self.env["federation.document.submission"]._portal_prepare_submission(
+            self.requirement,
+            self.club,
+            values={
+                "issue_date": date.today(),
+                "expiry_date": date.today() + timedelta(days=365),
+                "notes": "Uploaded from portal helper.",
+            },
+            user=self.club_user,
+        )
+
+        self.assertEqual(submission.status, "draft")
+        self.assertEqual(submission.club_id, self.club)
+        self.assertEqual(submission.create_uid, self.club_user)
+        self.assertEqual(submission.notes, "Uploaded from portal helper.")
+
+        submission.with_user(self.club_user).sudo().action_submit()
+        self.assertEqual(submission.status, "submitted")
+
+    def test_portal_prepare_submission_blocks_unowned_targets(self):
+        other_club = self.env["federation.club"].create({
+            "name": "Other Club",
+            "code": "OC001",
+        })
+
+        with self.assertRaises(AccessError):
+            self.env["federation.document.submission"]._portal_prepare_submission(
+                self.requirement,
+                other_club,
+                values={
+                    "expiry_date": date.today() + timedelta(days=365),
+                },
+                user=self.club_user,
+            )

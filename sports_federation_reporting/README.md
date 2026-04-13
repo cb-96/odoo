@@ -193,6 +193,7 @@ Persistent schedule for recurring application-layer report generation.
 5. **Reconciliation-first reporting** — Standings coverage, finance follow-up, failed-notification queues, missing discipline-finance events, and stalled workflow queues expose the specific gaps operators must resolve before relying on downstream outputs.
 6. **Season operations checklist** — The reporting layer now includes a season-level checklist that surfaces review queues, publication gaps, and unresolved workflow exceptions in one place.
 7. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
+8. **Contract-tagged exports** — Authenticated CSV responses now include explicit contract and version headers for downstream consumers.
 
 ## CSV exports
 
@@ -202,6 +203,11 @@ reporting controllers:
 - `/reporting/export/standings/<tournament_id>` — standings lines with tie-break notes
 - `/reporting/export/participation/<season_id>` — season participation roster
 - `/reporting/export/finance` — finance summary grouped by fee type and state
+- `/reporting/export/finance/events` — detailed finance-event handoff export with reconciliation references and closure timestamps
+
+Each export now exposes `X-Federation-Contract` and
+`X-Federation-Contract-Version` headers. The detailed finance-event handoff
+export uses the `finance_event_v1` contract.
 
 For recurring in-application reporting, create records under **Federation → Reporting → Report Schedules**.
 Each schedule stores the last generated CSV snapshot directly on the schedule record.

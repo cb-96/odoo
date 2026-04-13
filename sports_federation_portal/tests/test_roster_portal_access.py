@@ -12,6 +12,9 @@ class TestRosterPortalAccess(TransactionCase):
         cls.role_type = cls.env.ref(
             "sports_federation_portal.role_type_competition_contact"
         )
+        cls.coach_role_type = cls.env.ref(
+            "sports_federation_portal.role_type_coach"
+        )
         cls.season = cls.env["federation.season"].create({
             "name": "Portal Roster Season",
             "code": "PRS2",
@@ -48,6 +51,12 @@ class TestRosterPortalAccess(TransactionCase):
             "email": "portal.roster.b@example.com",
             "group_ids": [(6, 0, [cls.portal_group.id])],
         })
+        cls.coach_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Portal Coach User",
+            "login": "portal.coach@example.com",
+            "email": "portal.coach@example.com",
+            "group_ids": [(6, 0, [cls.portal_group.id])],
+        })
         cls.env["federation.club.representative"].create({
             "club_id": cls.club_a.id,
             "partner_id": cls.user_a.partner_id.id,
@@ -59,6 +68,13 @@ class TestRosterPortalAccess(TransactionCase):
             "partner_id": cls.user_b.partner_id.id,
             "user_id": cls.user_b.id,
             "role_type_id": cls.role_type.id,
+        })
+        cls.env["federation.club.representative"].create({
+            "club_id": cls.club_a.id,
+            "team_id": cls.team_a.id,
+            "partner_id": cls.coach_user.partner_id.id,
+            "user_id": cls.coach_user.id,
+            "role_type_id": cls.coach_role_type.id,
         })
 
         cls.player_a = cls.env["federation.player"].create({
@@ -149,6 +165,44 @@ class TestRosterPortalAccess(TransactionCase):
         visible_audits = self.env["federation.participation.audit"].with_user(self.user_a).search([])
         self.assertTrue(visible_audits)
         self.assertTrue(all(event.team_id.club_id == self.club_a for event in visible_audits))
+
+    def test_team_scoped_coach_only_sees_assigned_team_records(self):
+        self.assertEqual(self.coach_user.portal_team_scope_ids, self.team_a)
+        self.assertFalse(self.coach_user.portal_club_scope_ids)
+
+        visible_rosters = self.env["federation.team.roster"].with_user(self.coach_user).search([])
+        self.assertIn(self.roster_a, visible_rosters)
+        self.assertNotIn(self.roster_b, visible_rosters)
+
+        visible_sheets = self.env["federation.match.sheet"].with_user(self.coach_user).search([])
+        self.assertIn(self.sheet_a, visible_sheets)
+        self.assertNotIn(self.sheet_b, visible_sheets)
+
+    def test_team_scoped_coach_can_prepare_and_submit_assigned_sheet(self):
+        self.sheet_a._portal_update_preparation(
+            user=self.coach_user,
+            values={
+                "coach_name": "Coach Portal",
+                "manager_name": "Manager Portal",
+                "notes": "Ready for kickoff.",
+            },
+        )
+        self.sheet_a.invalidate_recordset()
+        self.assertEqual(self.sheet_a.coach_name, "Coach Portal")
+        self.assertEqual(self.sheet_a.manager_name, "Manager Portal")
+        self.assertEqual(self.sheet_a.notes, "Ready for kickoff.")
+
+        self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": self.sheet_a.id,
+            "player_id": self.player_a.id,
+            "roster_line_id": self.roster_a.line_ids[:1].id,
+            "is_starter": True,
+        })
+        self.assertTrue(self.sheet_a.ready_for_submission)
+
+        self.sheet_a._portal_action_submit(user=self.coach_user)
+        self.sheet_a.invalidate_recordset()
+        self.assertEqual(self.sheet_a.state, "submitted")
 
     def test_portal_user_cannot_modify_roster_records(self):
         with self.assertRaises(AccessError):

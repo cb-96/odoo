@@ -7,6 +7,9 @@ class FederationImportTeamsWizard(models.TransientModel):
     _description = "Import Teams Wizard"
     _inherit = "federation.import.wizard.mixin"
 
+    def _get_import_target_model(self):
+        return "federation.team"
+
     def _get_mapping_guide(self):
         return (
             "Required columns: team_name (or name) and club_code (preferred) or club_name.\n"
@@ -16,6 +19,7 @@ class FederationImportTeamsWizard(models.TransientModel):
 
     def action_parse_and_import(self):
         self.ensure_one()
+        baseline_count = self._prepare_import_execution()
         reader = self._get_csv_reader()
         if not any(column in reader.fieldnames for column in ("club_code", "club_name")):
             raise ValidationError("Missing required columns: club_code or club_name")
@@ -115,23 +119,11 @@ class FederationImportTeamsWizard(models.TransientModel):
             else:
                 success_count += 1
 
-        self.write({
-            "line_count": line_count,
-            "success_count": success_count,
-            "error_count": error_count,
-            "result_message": self._build_result_message(
-                line_count,
-                success_count,
-                error_count,
-                errors,
-                error_categories=error_categories,
-            ),
-        })
-
-        return {
-            "type": "ir.actions.act_window",
-            "res_model": "federation.import.teams.wizard",
-            "res_id": self.id,
-            "view_mode": "form",
-            "target": "new",
-        }
+        return self._finalize_import_result(
+            line_count,
+            success_count,
+            error_count,
+            errors,
+            error_categories=error_categories,
+            baseline_count=baseline_count,
+        )

@@ -12,6 +12,14 @@ class FederationReportOperational(models.Model):
         ("attention", "Attention"),
         ("blocked", "Blocked"),
     ]
+    SLA_STATUS_SELECTION = [
+        ("within_sla", "Within SLA"),
+        ("due_today", "Due Today"),
+        ("overdue", "Overdue"),
+        ("escalated", "Escalated"),
+        ("complete", "Complete"),
+        ("cancelled", "Cancelled"),
+    ]
 
     TOURNAMENT_STATE_SELECTION = [
         ("draft", "Draft"),
@@ -277,6 +285,13 @@ class FederationReportFinanceReconciliation(models.Model):
     invoice_ref = fields.Char(string="Invoice Ref", readonly=True)
     external_ref = fields.Char(string="External Ref", readonly=True)
     age_days = fields.Integer(string="Age (Days)", readonly=True)
+    queue_owner_display = fields.Char(string="Queue Owner", readonly=True)
+    sla_due_on = fields.Datetime(string="SLA Due On", readonly=True)
+    sla_status = fields.Selection(
+        FederationReportOperational.SLA_STATUS_SELECTION,
+        string="SLA Status",
+        readonly=True,
+    )
     follow_up_status = fields.Selection(FOLLOW_UP_SELECTION, string="Follow-up Status", readonly=True)
     needs_follow_up = fields.Boolean(string="Needs Follow-up", readonly=True)
 
@@ -304,6 +319,17 @@ class FederationReportFinanceReconciliation(models.Model):
                     fe.invoice_ref,
                     fe.external_ref,
                     (CURRENT_DATE - COALESCE(fe.create_date::date, CURRENT_DATE))::int AS age_days,
+                                        'Federation Managers'::varchar AS queue_owner_display,
+                                        (COALESCE(fe.create_date, NOW()) + INTERVAL '2 day') AS sla_due_on,
+                                        CASE
+                                                WHEN fe.state = 'cancelled' THEN 'cancelled'
+                                                WHEN fe.state = 'settled'
+                                                    AND COALESCE(NULLIF(fe.invoice_ref, ''), NULLIF(fe.external_ref, '')) IS NOT NULL THEN 'complete'
+                                                WHEN CURRENT_TIMESTAMP < (COALESCE(fe.create_date, NOW()) + INTERVAL '2 day') THEN 'within_sla'
+                                                WHEN CURRENT_DATE = (COALESCE(fe.create_date, NOW()) + INTERVAL '2 day')::date THEN 'due_today'
+                                                WHEN CURRENT_TIMESTAMP < (COALESCE(fe.create_date, NOW()) + INTERVAL '5 day') THEN 'overdue'
+                                                ELSE 'escalated'
+                                        END AS sla_status,
                     CASE
                         WHEN fe.state = 'cancelled' THEN 'cancelled'
                         WHEN fe.state = 'settled'
@@ -364,6 +390,14 @@ class FederationReportNotificationException(models.Model):
     template_xmlid = fields.Char(string="Template XML ID", readonly=True)
     state = fields.Selection(STATE_SELECTION, string="State", readonly=True)
     message = fields.Text(string="Failure Message", readonly=True)
+    age_days = fields.Integer(string="Age (Days)", readonly=True)
+    queue_owner_display = fields.Char(string="Queue Owner", readonly=True)
+    sla_due_on = fields.Datetime(string="SLA Due On", readonly=True)
+    sla_status = fields.Selection(
+        FederationReportOperational.SLA_STATUS_SELECTION,
+        string="SLA Status",
+        readonly=True,
+    )
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -381,7 +415,16 @@ class FederationReportNotificationException(models.Model):
                     log.notification_type,
                     log.template_xmlid,
                     log.state,
-                    log.message
+                    log.message,
+                    (CURRENT_DATE - COALESCE(log.create_date::date, CURRENT_DATE))::int AS age_days,
+                    'Federation Managers'::varchar AS queue_owner_display,
+                    (COALESCE(log.create_date, NOW()) + INTERVAL '1 day') AS sla_due_on,
+                    CASE
+                        WHEN CURRENT_TIMESTAMP < (COALESCE(log.create_date, NOW()) + INTERVAL '1 day') THEN 'within_sla'
+                        WHEN CURRENT_DATE = (COALESCE(log.create_date, NOW()) + INTERVAL '1 day')::date THEN 'due_today'
+                        WHEN CURRENT_TIMESTAMP < (COALESCE(log.create_date, NOW()) + INTERVAL '3 day') THEN 'overdue'
+                        ELSE 'escalated'
+                    END AS sla_status
                 FROM federation_notification_log log
                 WHERE log.state = 'failed'
             )
@@ -500,6 +543,13 @@ class FederationReportWorkflowException(models.Model):
     )
     raised_on = fields.Datetime(string="Raised On", readonly=True)
     age_days = fields.Integer(string="Age (Days)", readonly=True)
+    queue_owner_display = fields.Char(string="Queue Owner", readonly=True)
+    sla_due_on = fields.Datetime(string="SLA Due On", readonly=True)
+    sla_status = fields.Selection(
+        FederationReportOperational.SLA_STATUS_SELECTION,
+        string="SLA Status",
+        readonly=True,
+    )
     exception_type = fields.Selection(
         EXCEPTION_TYPE_SELECTION,
         string="Exception Type",
@@ -524,6 +574,7 @@ class FederationReportWorkflowException(models.Model):
                         m.result_state::varchar AS state,
                         m.result_submitted_by_id AS responsible_user_id,
                         m.result_submitted_on AS raised_on,
+                        (m.result_submitted_on + INTERVAL '2 day') AS sla_due_on,
                         (CURRENT_DATE - m.result_submitted_on::date)::int AS age_days,
                         'result_submission_stalled'::varchar AS exception_type,
                         'Submitted result is still waiting for verification.'::text AS exception_note
@@ -547,6 +598,7 @@ class FederationReportWorkflowException(models.Model):
                         m.result_state::varchar AS state,
                         m.result_verified_by_id AS responsible_user_id,
                         m.result_verified_on AS raised_on,
+                        (m.result_verified_on + INTERVAL '2 day') AS sla_due_on,
                         (CURRENT_DATE - m.result_verified_on::date)::int AS age_days,
                         'result_approval_stalled'::varchar AS exception_type,
                         'Verified result is still waiting for approval.'::text AS exception_note
@@ -570,6 +622,7 @@ class FederationReportWorkflowException(models.Model):
                         req.state::varchar AS state,
                         req.requested_by_id AS responsible_user_id,
                         req.requested_on AS raised_on,
+                        (req.requested_on + INTERVAL '3 day') AS sla_due_on,
                         (CURRENT_DATE - req.requested_on::date)::int AS age_days,
                         'override_review_stalled'::varchar AS exception_type,
                         'Submitted override request is still waiting for governance review.'::text AS exception_note
@@ -590,6 +643,7 @@ class FederationReportWorkflowException(models.Model):
                         req.state::varchar AS state,
                         req.requested_by_id AS responsible_user_id,
                         req.requested_on AS raised_on,
+                        (req.requested_on + INTERVAL '3 day') AS sla_due_on,
                         (CURRENT_DATE - req.requested_on::date)::int AS age_days,
                         'override_implementation_stalled'::varchar AS exception_type,
                         'Approved override request is still waiting to be implemented.'::text AS exception_note
@@ -611,10 +665,148 @@ class FederationReportWorkflowException(models.Model):
                     queue.state,
                     queue.responsible_user_id,
                     queue.raised_on,
+                    COALESCE(rp.name, 'Federation Managers') AS queue_owner_display,
+                    queue.sla_due_on,
+                    CASE
+                        WHEN CURRENT_TIMESTAMP < queue.sla_due_on THEN 'within_sla'
+                        WHEN CURRENT_DATE = queue.sla_due_on::date THEN 'due_today'
+                        WHEN CURRENT_TIMESTAMP < (queue.sla_due_on + INTERVAL '2 day') THEN 'overdue'
+                        ELSE 'escalated'
+                    END AS sla_status,
                     queue.age_days,
                     queue.exception_type,
                     queue.exception_note
                 FROM queue
+                LEFT JOIN res_users ru ON ru.id = queue.responsible_user_id
+                LEFT JOIN res_partner rp ON rp.id = ru.partner_id
+            )
+            """
+        )
+
+
+class FederationReportComplianceRemediation(models.Model):
+    _name = "federation.report.compliance.remediation"
+    _description = "Federation Compliance Remediation Report"
+    _auto = False
+    _order = "sla_status desc, age_days desc, created_on asc"
+
+    STATUS_SELECTION = [
+        ("submitted", "Submitted"),
+        ("rejected", "Rejected"),
+        ("replacement_requested", "Replacement Requested"),
+        ("expired", "Expired"),
+    ]
+
+    submission_id = fields.Many2one("federation.document.submission", string="Submission", readonly=True)
+    requirement_id = fields.Many2one("federation.document.requirement", string="Requirement", readonly=True)
+    target_model = fields.Char(string="Target Model", readonly=True)
+    target_display = fields.Char(string="Target", readonly=True)
+    status = fields.Selection(STATUS_SELECTION, string="Status", readonly=True)
+    reviewer_id = fields.Many2one("res.users", string="Reviewer", readonly=True)
+    queue_owner_display = fields.Char(string="Queue Owner", readonly=True)
+    created_on = fields.Datetime(string="Created On", readonly=True)
+    reviewed_on = fields.Datetime(string="Reviewed On", readonly=True)
+    age_days = fields.Integer(string="Age (Days)", readonly=True)
+    sla_due_on = fields.Datetime(string="SLA Due On", readonly=True)
+    sla_status = fields.Selection(
+        FederationReportOperational.SLA_STATUS_SELECTION,
+        string="SLA Status",
+        readonly=True,
+    )
+    remediation_note = fields.Text(string="Remediation Note", readonly=True)
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute(
+            """
+            CREATE VIEW federation_report_compliance_remediation AS (
+                WITH queue AS (
+                    SELECT
+                        sub.id AS submission_id,
+                        sub.requirement_id,
+                        sub.target_model,
+                        sub.target_display,
+                        CASE
+                            WHEN sub.status = 'approved'
+                              AND sub.expiry_date IS NOT NULL
+                              AND sub.expiry_date < CURRENT_DATE THEN 'expired'
+                            ELSE sub.status
+                        END AS status,
+                        sub.reviewer_id,
+                        sub.create_date AS created_on,
+                        sub.reviewed_on,
+                        COALESCE(sub.reviewed_on, sub.create_date, NOW()) AS reference_dt,
+                        CASE
+                            WHEN (
+                                CASE
+                                    WHEN sub.status = 'approved'
+                                      AND sub.expiry_date IS NOT NULL
+                                      AND sub.expiry_date < CURRENT_DATE THEN 'expired'
+                                    ELSE sub.status
+                                END
+                            ) IN ('rejected', 'expired') THEN COALESCE(sub.reviewed_on, sub.create_date, NOW()) + INTERVAL '1 day'
+                            ELSE COALESCE(sub.create_date, NOW()) + INTERVAL '3 day'
+                        END AS sla_due_on,
+                        CASE
+                            WHEN (
+                                CASE
+                                    WHEN sub.status = 'approved'
+                                      AND sub.expiry_date IS NOT NULL
+                                      AND sub.expiry_date < CURRENT_DATE THEN 'expired'
+                                    ELSE sub.status
+                                END
+                            ) = 'submitted' THEN 'Submission is waiting for compliance review.'
+                            WHEN (
+                                CASE
+                                    WHEN sub.status = 'approved'
+                                      AND sub.expiry_date IS NOT NULL
+                                      AND sub.expiry_date < CURRENT_DATE THEN 'expired'
+                                    ELSE sub.status
+                                END
+                            ) = 'replacement_requested' THEN 'Replacement documentation is still outstanding.'
+                            WHEN (
+                                CASE
+                                    WHEN sub.status = 'approved'
+                                      AND sub.expiry_date IS NOT NULL
+                                      AND sub.expiry_date < CURRENT_DATE THEN 'expired'
+                                    ELSE sub.status
+                                END
+                            ) = 'rejected' THEN 'Rejected documentation still needs remediation.'
+                            ELSE 'Approved documentation has expired and needs renewal.'
+                        END AS remediation_note
+                    FROM federation_document_submission sub
+                    WHERE sub.status IN ('submitted', 'replacement_requested', 'rejected', 'expired')
+                       OR (
+                            sub.status = 'approved'
+                            AND sub.expiry_date IS NOT NULL
+                            AND sub.expiry_date < CURRENT_DATE
+                        )
+                )
+                SELECT
+                    row_number() OVER (
+                        ORDER BY queue.sla_due_on ASC, queue.reference_dt ASC, queue.submission_id ASC
+                    ) AS id,
+                    queue.submission_id,
+                    queue.requirement_id,
+                    queue.target_model,
+                    queue.target_display,
+                    queue.status,
+                    queue.reviewer_id,
+                    COALESCE(rp.name, 'Compliance Review Queue') AS queue_owner_display,
+                    queue.created_on,
+                    queue.reviewed_on,
+                    (CURRENT_DATE - COALESCE(queue.reference_dt::date, CURRENT_DATE))::int AS age_days,
+                    queue.sla_due_on,
+                    CASE
+                        WHEN CURRENT_TIMESTAMP < queue.sla_due_on THEN 'within_sla'
+                        WHEN CURRENT_DATE = queue.sla_due_on::date THEN 'due_today'
+                        WHEN CURRENT_TIMESTAMP < (queue.sla_due_on + INTERVAL '2 day') THEN 'overdue'
+                        ELSE 'escalated'
+                    END AS sla_status,
+                    queue.remediation_note
+                FROM queue
+                LEFT JOIN res_users ru ON ru.id = queue.reviewer_id
+                LEFT JOIN res_partner rp ON rp.id = ru.partner_id
             )
             """
         )

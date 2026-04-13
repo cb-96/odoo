@@ -7,6 +7,9 @@ class FederationImportClubsWizard(models.TransientModel):
     _description = "Import Clubs Wizard"
     _inherit = "federation.import.wizard.mixin"
 
+    def _get_import_target_model(self):
+        return "federation.club"
+
     def _get_mapping_guide(self):
         return (
             "Required columns: name.\n"
@@ -16,6 +19,7 @@ class FederationImportClubsWizard(models.TransientModel):
 
     def action_parse_and_import(self):
         self.ensure_one()
+        baseline_count = self._prepare_import_execution()
         reader = self._get_csv_reader()
         self._require_columns(reader.fieldnames, ["name"])
 
@@ -77,23 +81,11 @@ class FederationImportClubsWizard(models.TransientModel):
             else:
                 success_count += 1
 
-        self.write({
-            "line_count": line_count,
-            "success_count": success_count,
-            "error_count": error_count,
-            "result_message": self._build_result_message(
-                line_count,
-                success_count,
-                error_count,
-                errors,
-                error_categories=error_categories,
-            ),
-        })
-
-        return {
-            "type": "ir.actions.act_window",
-            "res_model": "federation.import.clubs.wizard",
-            "res_id": self.id,
-            "view_mode": "form",
-            "target": "new",
-        }
+        return self._finalize_import_result(
+            line_count,
+            success_count,
+            error_count,
+            errors,
+            error_categories=error_categories,
+            baseline_count=baseline_count,
+        )

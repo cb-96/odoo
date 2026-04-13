@@ -24,6 +24,20 @@ class FederationMatchSheet(models.Model):
         ondelete="cascade",
         index=True,
     )
+    match_kickoff = fields.Datetime(
+        related="match_id.date_scheduled",
+        string="Match Kickoff",
+        store=True,
+        index=True,
+        readonly=True,
+    )
+    match_scheduled_date = fields.Date(
+        related="match_id.scheduled_date",
+        string="Match Date",
+        store=True,
+        index=True,
+        readonly=True,
+    )
     team_id = fields.Many2one(
         "federation.team",
         string="Team",

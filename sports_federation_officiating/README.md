@@ -26,6 +26,7 @@ Master record for each registered official.
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | Char | Full name |
+| `user_id` | Many2one | Optional linked portal user for self-service assignment response |
 | `email` / `phone` / `mobile` | Char | Contact channels |
 | `certification_level` | Selection | national / regional / local / trainee |
 | `active` | Boolean | Active in the registry |
@@ -64,6 +65,7 @@ Links a referee to a match in a specific role.
 | `is_confirmation_overdue` | Boolean | Draft assignments that missed the deadline |
 | `assignment_ready` | Boolean | Whether the assigned official can be confirmed |
 | `readiness_feedback` | Text | Operator-readable explanation for readiness gaps |
+| `response_note` | Text | Optional note supplied by the official when confirming or declining |
 | `notes` | Text | Assignment notes |
 
 - **SQL constraint**: unique (match_id, referee_id, role) — prevents duplicate
@@ -100,3 +102,4 @@ before the match goes live.
    filtering and reporting.
 7. **Finance bridge integration** — When `sports_federation_finance_bridge` is installed,
    assignments that reach `done` automatically create reusable reimbursement events.
+8. **Portal self-service** — When `sports_federation_portal` is installed, linked officials can review, confirm, or decline their own draft assignments through the portal.

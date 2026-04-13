@@ -143,9 +143,87 @@ class TestFinanceBridge(TransactionCase):
         event.action_settle()
         self.assertEqual(event.state, "settled")
 
+        event.accounting_batch_ref = "ACC-BATCH-1"
+        event.action_mark_exported()
+        self.assertEqual(event.handoff_state, "exported")
+        self.assertTrue(event.exported_on)
+        self.assertTrue(event.exported_by_id)
+
+        event.reconciliation_ref = "RECON-1"
+        event.action_mark_reconciled()
+        self.assertEqual(event.handoff_state, "reconciled")
+        self.assertTrue(event.reconciled_on)
+        self.assertTrue(event.reconciled_by_id)
+
+        event.action_close_handoff()
+        self.assertEqual(event.handoff_state, "closed")
+        self.assertTrue(event.closed_on)
+        self.assertTrue(event.closed_by_id)
+
         # Cannot cancel settled
         with self.assertRaises(ValidationError):
             event.action_cancel()
+
+    def test_reconciliation_requires_export_and_settlement(self):
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Handoff Fee",
+            "code": "HANDOFF",
+            "category": "registration",
+            "default_amount": 125.00,
+        })
+        event = self.env["federation.finance.event"].create({
+            "name": "Handoff Event",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 125.00,
+            "source_model": "federation.club",
+            "source_res_id": self.club.id,
+            "club_id": self.club.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            event.action_mark_exported()
+
+        event.action_confirm()
+        event.action_mark_exported()
+
+        with self.assertRaises(ValidationError):
+            event.action_mark_reconciled()
+
+        event.action_settle()
+        event.action_mark_reconciled()
+        self.assertEqual(event.handoff_state, "reconciled")
+
+    def test_handoff_export_row_includes_contract_fields(self):
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Export Fee",
+            "code": "EXPFEE",
+            "category": "other",
+            "default_amount": 60.00,
+        })
+        event = self.env["federation.finance.event"].create({
+            "name": "Exportable Event",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 60.00,
+            "source_model": "federation.club",
+            "source_res_id": self.club.id,
+            "club_id": self.club.id,
+            "accounting_batch_ref": "ACC-2026-001",
+            "reconciliation_ref": "REC-2026-001",
+            "invoice_ref": "INV-2026-001",
+            "external_ref": "EXT-2026-001",
+        })
+
+        headers = self.env["federation.finance.event"].get_handoff_export_headers()
+        row = event.get_handoff_export_row()
+
+        self.assertEqual(row[0], self.env["federation.finance.event"].EXPORT_SCHEMA_VERSION)
+        self.assertEqual(len(row), len(headers))
+        self.assertIn("Accounting Batch Ref", headers)
+        self.assertIn("Reconciliation Ref", headers)
+        self.assertIn("ACC-2026-001", row)
+        self.assertIn("REC-2026-001", row)
 
     def test_cancel_from_draft(self):
         """Test cancelling from draft."""

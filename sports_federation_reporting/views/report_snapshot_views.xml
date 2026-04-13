@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_report_snapshot_search" model="ir.ui.view">
+        <field name="name">federation.report.snapshot.search</field>
+        <field name="model">federation.report.snapshot</field>
+        <field name="arch" type="xml">
+            <search string="Report Snapshots">
+                <field name="snapshot_type"/>
+                <field name="snapshot_on"/>
+                <field name="status"/>
+                <filter name="blocked" string="Blocked" domain="[('status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_type" string="Snapshot Type" context="{'group_by': 'snapshot_type'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'snapshot_on'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_snapshot_list" model="ir.ui.view">
+        <field name="name">federation.report.snapshot.list</field>
+        <field name="model">federation.report.snapshot</field>
+        <field name="arch" type="xml">
+            <list string="Report Snapshots" create="0" edit="0" delete="0">
+                <field name="snapshot_on"/>
+                <field name="snapshot_type"/>
+                <field name="current_value"/>
+                <field name="previous_value"/>
+                <field name="delta_value"/>
+                <field name="status"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_snapshot_pivot" model="ir.ui.view">
+        <field name="name">federation.report.snapshot.pivot</field>
+        <field name="model">federation.report.snapshot</field>
+        <field name="arch" type="xml">
+            <pivot string="Report Snapshots">
+                <field name="snapshot_on" type="row"/>
+                <field name="snapshot_type" type="col"/>
+                <field name="current_value" type="measure"/>
+                <field name="delta_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_snapshot" model="ir.actions.act_window">
+        <field name="name">Trend Snapshots</field>
+        <field name="res_model">federation.report.snapshot</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_snapshot_search"/>
+    </record>
+
+</odoo>

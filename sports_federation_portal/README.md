@@ -3,7 +3,7 @@
 ## Solution Design
 
 ### Overview
-The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons, and to review operational rosters and match sheets with their audit history. It sits on top of `sports_federation_base`, `sports_federation_tournament`, `sports_federation_rosters`, and `sports_federation_result_control`, using `website` and `portal` from Odoo core.
+The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons, to work from a unified active-tournament workspace, to review operational rosters and match sheets with their audit history, and for linked match officials to respond to their own officiating assignments. It sits on top of `sports_federation_base`, `sports_federation_tournament`, `sports_federation_officiating`, `sports_federation_rosters`, and `sports_federation_result_control`, using `website` and `portal` from Odoo core.
 
 ### Key Design Decisions
 
@@ -49,7 +49,34 @@ Federation staff review the same record in the backend, where they can submit, c
 | Registration form (`/tournament/<id>/register`) | `auth="user"` | Logged-in users only. Ownership verified server-side. |
 | Portal (`/my/*`) | `auth="user"` | Only records belonging to user's club. Record rules enforce this. |
 
-#### 5. Record Rule Strategy
+#### 5. Match-Official Self-Service
+
+Referee assignments now support a second portal ownership path alongside club representation.
+
+- `federation.referee.user_id` links an official profile to a portal user.
+- officials in `group_federation_portal_official` can see only their own referee profile and assignment records.
+- the portal exposes `/my/referee-assignments` and assignment-detail response pages.
+- officials can confirm or decline draft assignments from the portal while reusing the existing officiating readiness checks.
+
+**Why keep this separate from club representative ownership?**
+- officials are not club-owned records and often work across unrelated clubs and tournaments.
+- a dedicated official access path avoids leaking club data just to allow assignment confirmation.
+- the self-service flow reuses the same `federation.match.referee` lifecycle rather than inventing a parallel response model.
+
+#### 6. Active Tournament Workspace
+
+Club and team-scoped portal users now get a tournament-first workspace for active obligations.
+
+- `/my/tournament-workspaces` groups visible teams by active tournament (`open` or `in_progress`).
+- each entry summarizes registration state, the preferred roster checkpoint, upcoming match-day sheet work, and done matches whose results still need follow-up.
+- `/my/tournament-workspaces/<tournament>/<team>` expands that entry into operational detail with direct links to the roster, match-day queue, and team match sheets.
+
+**Why add a separate workspace instead of more dashboard counters?**
+- recurring club operations are tournament-scoped, not model-scoped.
+- operators need to answer “what still needs attention for this team in this tournament?” without jumping across registration, roster, and result pages.
+- the workspace reuses existing portal security and underlying record pages rather than duplicating those workflows.
+
+#### 7. Record Rule Strategy
 
 Portal users (`group_federation_portal_club`) get these record rules:
 
@@ -70,6 +97,8 @@ Portal users (`group_federation_portal_club`) get these record rules:
 | `federation.match.result.audit` | home/away team club ownership | See only own result dispute and approval history |
 
 Additionally, controllers validate ownership on every write operation as defense-in-depth.
+Official portal users also receive own-record rules for `federation.referee` and
+`federation.match.referee`.
 For season and tournament registrations, the models also enforce that `user_id` can only submit teams for represented clubs.
 
 ## Module Tree
@@ -98,6 +127,7 @@ sports_federation_portal/
         federation_club_representative_views.xml
         federation_tournament_registration_views.xml
         portal_templates.xml
+        portal_tournament_workspace_templates.xml
         portal_roster_templates.xml
         website_menus.xml
         website_tournament_templates.xml
@@ -107,6 +137,7 @@ sports_federation_portal/
 
 ### Groups
 - **`group_federation_portal_club`**: Portal Club Representative. Implies `base.group_portal`. Users in this group get ACL and record rules that restrict them to their club's data.
+- **`group_federation_portal_official`**: Portal Match Official. Implies `base.group_portal`. Users in this group get ACL and record rules that restrict them to their own referee profile and officiating assignments.
 
 ### ACL (Access Control List)
 Portal group gets:
@@ -114,6 +145,10 @@ Portal group gets:
 - **Read/Create/Write** on season registrations and tournament registrations (to submit and cancel).
 - **Read-only** on club representatives (to resolve ownership).
 - **No unlink** on anything (portal users cannot delete records).
+
+Official portal group gets:
+- **Read-only** on referee profiles and match-referee assignments.
+- portal-driven confirm and decline actions execute through controller helpers with explicit ownership checks and `sudo()`.
 
 Manager group gets full CRUD on all new models.
 
@@ -159,6 +194,11 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Cancel registration** sets state to `cancelled`.
 - [ ] **Confirm registration** in backend creates `federation.tournament.participant`.
 - [ ] **Portal dashboard** shows federation cards for club representatives.
+- [ ] **Tournament workspace** (`/my/tournament-workspaces`) groups active tournament obligations by visible team.
+- [ ] **Tournament workspace detail** shows registration checkpoint, roster checkpoint, upcoming match-day sheets, and result follow-up links.
+- [ ] **Portal dashboard** shows officiating cards for linked match officials.
+- [ ] **Match official portal** (`/my/referee-assignments`) shows only the current official's assignments.
+- [ ] **Match official response** can confirm or decline draft assignments with an optional or required response note respectively.
 - [ ] **Breadcrumb navigation** works on all pages.
 
 ### Backend Flows

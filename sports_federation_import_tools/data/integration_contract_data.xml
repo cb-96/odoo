@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="federation_integration_contract_tournament_feed" model="federation.integration.contract">
+        <field name="name">Tournament Feed</field>
+        <field name="code">tournament_feed</field>
+        <field name="version">v1</field>
+        <field name="direction">outbound</field>
+        <field name="transport">json</field>
+        <field name="route_hint">/api/v1/tournaments/&lt;slug&gt;/feed</field>
+        <field name="description">Published tournament feed for partner consumption with stable contract headers.</field>
+        <field name="required_module">sports_federation_public_site</field>
+    </record>
+
+    <record id="federation_integration_contract_team_feed" model="federation.integration.contract">
+        <field name="name">Team Feed</field>
+        <field name="code">team_feed</field>
+        <field name="version">v1</field>
+        <field name="direction">outbound</field>
+        <field name="transport">json</field>
+        <field name="route_hint">/api/v1/teams/&lt;slug&gt;/feed</field>
+        <field name="description">Published team follow feed for partner and subscription-style consumers.</field>
+        <field name="required_module">sports_federation_public_site</field>
+    </record>
+
+    <record id="federation_integration_contract_finance_event" model="federation.integration.contract">
+        <field name="name">Finance Event Handoff</field>
+        <field name="code">finance_event_v1</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">outbound</field>
+        <field name="transport">csv</field>
+        <field name="route_hint">/integration/v1/outbound/finance/events</field>
+        <field name="description">Token-authenticated finance-event handoff export for managed downstream accounting integrations.</field>
+        <field name="required_module">sports_federation_finance_bridge</field>
+    </record>
+
+    <record id="federation_integration_contract_clubs_csv" model="federation.integration.contract">
+        <field name="name">Clubs CSV Inbound</field>
+        <field name="code">clubs_csv</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">inbound</field>
+        <field name="transport">file</field>
+        <field name="route_hint">/integration/v1/inbound/clubs_csv/deliveries</field>
+        <field name="description">Partner delivery contract for club master-data onboarding.</field>
+        <field name="required_module">sports_federation_import_tools</field>
+        <field name="import_template_id" ref="sports_federation_import_tools.federation_import_template_clubs"/>
+    </record>
+
+    <record id="federation_integration_contract_players_csv" model="federation.integration.contract">
+        <field name="name">Players CSV Inbound</field>
+        <field name="code">players_csv</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">inbound</field>
+        <field name="transport">file</field>
+        <field name="route_hint">/integration/v1/inbound/players_csv/deliveries</field>
+        <field name="description">Partner delivery contract for player roster onboarding.</field>
+        <field name="required_module">sports_federation_import_tools</field>
+        <field name="import_template_id" ref="sports_federation_import_tools.federation_import_template_players"/>
+    </record>
+
+    <record id="federation_integration_contract_seasons_csv" model="federation.integration.contract">
+        <field name="name">Seasons CSV Inbound</field>
+        <field name="code">seasons_csv</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">inbound</field>
+        <field name="transport">file</field>
+        <field name="route_hint">/integration/v1/inbound/seasons_csv/deliveries</field>
+        <field name="description">Partner delivery contract for season setup rollover.</field>
+        <field name="required_module">sports_federation_import_tools</field>
+        <field name="import_template_id" ref="sports_federation_import_tools.federation_import_template_seasons"/>
+    </record>
+
+    <record id="federation_integration_contract_teams_csv" model="federation.integration.contract">
+        <field name="name">Teams CSV Inbound</field>
+        <field name="code">teams_csv</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">inbound</field>
+        <field name="transport">file</field>
+        <field name="route_hint">/integration/v1/inbound/teams_csv/deliveries</field>
+        <field name="description">Partner delivery contract for team setup rollover.</field>
+        <field name="required_module">sports_federation_import_tools</field>
+        <field name="import_template_id" ref="sports_federation_import_tools.federation_import_template_teams"/>
+    </record>
+
+    <record id="federation_integration_contract_tournament_participants_csv" model="federation.integration.contract">
+        <field name="name">Tournament Participants CSV Inbound</field>
+        <field name="code">tournament_participants_csv</field>
+        <field name="version">csv_v1</field>
+        <field name="direction">inbound</field>
+        <field name="transport">file</field>
+        <field name="route_hint">/integration/v1/inbound/tournament_participants_csv/deliveries</field>
+        <field name="description">Partner delivery contract for staged tournament participant onboarding.</field>
+        <field name="required_module">sports_federation_import_tools</field>
+        <field name="import_template_id" ref="sports_federation_import_tools.federation_import_template_tournament_participants"/>
+    </record>
+
+</odoo>

@@ -1,6 +1,6 @@
 from urllib.parse import quote_plus
 
-from odoo import http
+from odoo import fields, http
 from odoo.addons.portal.controllers.portal import pager as portal_pager
 from odoo.exceptions import AccessError, ValidationError
 from odoo.http import request
@@ -10,14 +10,16 @@ from .main import FederationPortal
 
 class FederationRosterPortal(FederationPortal):
     def _get_portal_roster(self, roster_id):
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
+        Roster = request.env["federation.team.roster"]
         roster = (
-            request.env["federation.team.roster"]
+            Roster
             .with_user(request.env.user)
             .sudo()
             .browse(roster_id)
         )
-        if not roster.exists() or roster.club_id not in clubs:
+        if not roster.exists() or not Roster.with_user(request.env.user).sudo().search_count(
+            Roster._portal_get_scope_domain(user=request.env.user) + [("id", "=", roster.id)]
+        ):
             raise AccessError("Roster not found")
         return roster
 
@@ -47,12 +49,11 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_rosters(self, page=1, **kw):
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
-        if not clubs:
+        Roster = request.env["federation.team.roster"].with_user(request.env.user).sudo()
+        domain = Roster._portal_get_scope_domain(user=request.env.user)
+        if domain == [("id", "=", False)]:
             return request.redirect("/my/club")
 
-        domain = [("club_id", "in", clubs.ids)]
-        Roster = request.env["federation.team.roster"].with_user(request.env.user).sudo()
         total = Roster.search_count(domain)
         pager = portal_pager(
             url="/my/rosters",
@@ -421,12 +422,11 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheets(self, page=1, **kw):
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
-        if not clubs:
+        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
+        domain = MatchSheet._portal_get_domain(user=request.env.user)
+        if domain == [("id", "=", False)]:
             return request.redirect("/my/club")
 
-        domain = [("team_id.club_id", "in", clubs.ids)]
-        MatchSheet = request.env["federation.match.sheet"].sudo()
         total = MatchSheet.search_count(domain)
         pager = portal_pager(
             url="/my/match-sheets",
@@ -457,16 +457,100 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheet_detail(self, sheet_id, **kw):
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
         sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
-        if not sheet.exists() or sheet.team_id.club_id not in clubs:
+        if not sheet.exists():
+            return request.not_found()
+        try:
+            sheet._portal_assert_review_access(user=request.env.user)
+        except AccessError:
             return request.not_found()
 
         values = {
             "sheet": sheet,
             "page_name": "my_match_sheets",
+            "success": kw.get("success"),
+            "error": kw.get("error"),
+            "can_prepare_sheet": sheet.state != "locked",
         }
         return request.render(
             "sports_federation_portal.portal_my_match_sheet_detail",
+            values,
+        )
+
+    @http.route(
+        ["/my/match-sheets/<int:sheet_id>/prep"],
+        type="http",
+        auth="user",
+        website=True,
+        methods=["POST"],
+        csrf=True,
+    )
+    def portal_my_match_sheet_prepare(self, sheet_id, **kw):
+        sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
+        if not sheet.exists():
+            return request.not_found()
+        try:
+            sheet._portal_update_preparation(
+                user=request.env.user,
+                values={
+                    "coach_name": kw.get("coach_name"),
+                    "manager_name": kw.get("manager_name"),
+                    "notes": kw.get("notes"),
+                },
+            )
+            if kw.get("submit_sheet"):
+                sheet._portal_action_submit(user=request.env.user)
+        except AccessError:
+            return request.not_found()
+        except ValidationError as exc:
+            return request.redirect(
+                "/my/match-sheets/%s?error=%s"
+                % (sheet_id, quote_plus(str(exc)))
+            )
+        return request.redirect(
+            "/my/match-sheets/%s?success=%s"
+            % (
+                sheet_id,
+                quote_plus(
+                    "Match-day preparation saved and sheet submitted."
+                    if kw.get("submit_sheet")
+                    else "Match-day preparation saved."
+                ),
+            )
+        )
+
+    @http.route(
+        ["/my/match-day", "/my/match-day/page/<int:page>"],
+        type="http",
+        auth="user",
+        website=True,
+    )
+    def portal_my_match_day(self, page=1, **kw):
+        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
+        domain = MatchSheet._portal_get_domain(user=request.env.user)
+        if domain == [("id", "=", False)]:
+            return request.redirect("/my/club")
+        domain += [("match_kickoff", "!=", False)]
+        total = MatchSheet.search_count(domain)
+        pager = portal_pager(
+            url="/my/match-day",
+            total=total,
+            page=page,
+            step=20,
+        )
+        match_day_sheets = MatchSheet.search(
+            domain,
+            limit=20,
+            offset=pager["offset"],
+            order="match_kickoff asc, id asc",
+        )
+        values = {
+            "match_day_sheets": match_day_sheets,
+            "pager": pager,
+            "page_name": "my_match_day",
+            "today": fields.Date.context_today(request.env["federation.match.sheet"]),
+        }
+        return request.render(
+            "sports_federation_portal.portal_my_match_day",
             values,
         )

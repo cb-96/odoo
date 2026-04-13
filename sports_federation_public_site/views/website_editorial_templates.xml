@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="public_editorial_card" name="Public Editorial Card">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-uppercase small text-muted mb-2" t-esc="dict(item._fields['content_type'].selection).get(item.content_type)"/>
+                <h3 class="h5 mb-2" t-esc="item.name"/>
+                <p class="small text-muted mb-3" t-if="item.kicker" t-esc="item.kicker"/>
+                <p class="mb-3" t-esc="item.summary"/>
+                <a t-if="item.get_public_target_url()" t-att-href="item.get_public_target_url()" class="btn btn-sm btn-outline-secondary">Open Related Coverage</a>
+            </div>
+        </div>
+    </template>
+
+    <template id="public_team_subnav" name="Public Team Sub Navigation">
+        <div class="position-sticky top-0 bg-white border rounded-3 shadow-sm px-3 py-2 mb-4" style="z-index: 10;">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a t-att-href="team.get_public_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'public_team_profile' else 'btn-outline-secondary' }}">
+                    Overview
+                </a>
+                <a t-if="team.get_public_schedule_sections()"
+                   t-att-href="team.get_public_schedule_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'public_team_schedule' else 'btn-outline-secondary' }}">
+                    Schedule
+                </a>
+                <a t-if="team.get_public_result_sections()"
+                   t-att-href="team.get_public_results_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'public_team_results' else 'btn-outline-secondary' }}">
+                    Results
+                </a>
+                <span class="vr d-none d-md-inline-block"/>
+                <a t-att-href="team.get_public_schedule_ics_path()" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-calendar-plus-o me-1"/> Subscribe
+                </a>
+                <a t-att-href="team.get_public_feed_path()" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-rss me-1"/> Feed
+                </a>
+            </div>
+        </div>
+    </template>
+
+    <template id="page_public_seasons" name="Public Seasons">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <section class="rounded-4 p-4 p-lg-5 mb-5 text-white" style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 45%, #95d5b2 100%);">
+                    <div class="row align-items-end g-4">
+                        <div class="col-lg-8">
+                            <p class="text-uppercase small mb-2 opacity-75">Season Discovery</p>
+                            <h1 class="display-6 mb-3">Season-wide landing pages for planned public coverage</h1>
+                            <p class="mb-0 opacity-75">Browse published seasons, their featured tournaments, and the scheduled editorial items that frame public communication.</p>
+                        </div>
+                        <div class="col-lg-4 text-center text-lg-end">
+                            <div class="display-6" t-esc="len(seasons)"/>
+                            <div class="small opacity-75">Published seasons</div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="row g-4">
+                    <t t-foreach="seasons" t-as="season">
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <a t-att-href="season.get_public_path()" class="h4 text-decoration-none mb-2" t-esc="season.name"/>
+                                    <p class="small text-muted mb-3">
+                                        <t t-if="season.date_start" t-esc="season.date_start" t-options='{"widget": "date"}'/>
+                                        <t t-if="season.date_end"> - <t t-esc="season.date_end" t-options='{"widget": "date"}'/></t>
+                                    </p>
+                                    <p class="flex-grow-1" t-esc="season.public_summary or season.notes or 'Published season coverage and related tournaments live here.'"/>
+                                    <a t-att-href="season.get_public_path()" class="btn btn-primary btn-sm mt-auto">Open Season</a>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="not seasons" class="alert alert-info">No seasons are currently published for public discovery.</div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_public_season_detail" name="Public Season Detail">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/seasons">Seasons</a></li>
+                        <li class="breadcrumb-item active" t-esc="season.name"/>
+                    </ol>
+                </nav>
+
+                <section class="rounded-4 p-4 p-lg-5 mb-4 text-white" style="background: linear-gradient(135deg, #16324f 0%, #235789 45%, #f1c40f 100%);">
+                    <div class="row g-4 align-items-end">
+                        <div class="col-lg-8">
+                            <p class="text-uppercase small mb-2 opacity-75">Season Landing Page</p>
+                            <h1 class="display-6 mb-3" t-esc="season.name"/>
+                            <p class="lead mb-0" t-esc="season.public_summary or 'Season-wide public discovery, editorial highlights, and tournament coverage.'"/>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <div class="small opacity-75">Coverage Window</div>
+                            <strong>
+                                <t t-if="season.date_start" t-esc="season.date_start" t-options='{"widget": "date"}'/>
+                                <t t-if="season.date_end"> - <t t-esc="season.date_end" t-options='{"widget": "date"}'/></t>
+                            </strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-4" t-if="editorial_items">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Scheduled Editorial Highlights</h2>
+                        <span class="text-muted small">Items currently live under operator-controlled publication states</span>
+                    </div>
+                    <div class="row g-3">
+                        <t t-foreach="editorial_items" t-as="item">
+                            <div class="col-lg-4">
+                                <t t-call="sports_federation_public_site.public_editorial_card"/>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section class="mb-4" t-if="featured_tournaments">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Featured Tournaments</h2>
+                        <span class="text-muted small">Published tournament coverage in this season</span>
+                    </div>
+                    <div class="row g-3">
+                        <t t-foreach="featured_tournaments" t-as="tournament">
+                            <div class="col-lg-4 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body d-flex flex-column">
+                                        <a t-att-href="tournament.get_public_path()" class="h5 text-decoration-none mb-2" t-esc="tournament.name"/>
+                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Published tournament coverage available.'"/>
+                                        <div class="d-flex gap-2 flex-wrap mt-auto">
+                                            <a t-att-href="tournament.get_public_path()" class="btn btn-sm btn-primary">Overview</a>
+                                            <a t-if="tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-secondary">Results</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section t-if="season.public_description">
+                    <h2 class="h4 mb-3">Season Story</h2>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div t-field="season.public_description"/>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_public_team_schedule" name="Public Team Schedule">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="team.get_public_path()" t-esc="team.name"/></li>
+                        <li class="breadcrumb-item active">Schedule</li>
+                    </ol>
+                </nav>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <h1 class="mb-0"><t t-esc="team.name"/> - Schedule</h1>
+                    <a t-att-href="team.get_public_schedule_ics_path()" class="btn btn-outline-secondary">
+                        <i class="fa fa-calendar-plus-o me-1"/> Download ICS
+                    </a>
+                </div>
+                <t t-call="sports_federation_public_site.public_team_subnav"/>
+                <t t-foreach="schedule_sections" t-as="section">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h2 class="h4 mb-0" t-esc="section['title']"/>
+                            <small class="text-muted" t-if="section['subtitle']" t-esc="section['subtitle']"/>
+                        </div>
+                        <div class="row g-3">
+                            <t t-foreach="section['matches']" t-as="match">
+                                <div class="col-lg-6">
+                                    <t t-call="sports_federation_public_site.public_match_card"/>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+                <div t-if="not schedule_sections" class="alert alert-info">No published fixtures are currently available for this team.</div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_public_team_results" name="Public Team Results">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="team.get_public_path()" t-esc="team.name"/></li>
+                        <li class="breadcrumb-item active">Results</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4"><t t-esc="team.name"/> - Results</h1>
+                <t t-call="sports_federation_public_site.public_team_subnav"/>
+                <t t-foreach="result_sections" t-as="section">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h2 class="h4 mb-0" t-esc="section['title']"/>
+                            <small class="text-muted" t-if="section['subtitle']" t-esc="section['subtitle']"/>
+                        </div>
+                        <div class="row g-3">
+                            <t t-foreach="section['matches']" t-as="match">
+                                <div class="col-lg-6">
+                                    <t t-call="sports_federation_public_site.public_match_card"/>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+                <div t-if="not result_sections" class="alert alert-info">No approved public results are currently available for this team.</div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_tournaments_hub_discovery_sections"
+              inherit_id="sports_federation_public_site.page_tournaments_hub"
+              priority="40">
+        <xpath expr="//form[@action='/tournaments']" position="after">
+            <t t-set="public_seasons" t-value="request.env['federation.season'].get_public_published_seasons(limit=4)"/>
+            <t t-set="editorial_items" t-value="request.env['federation.public.editorial.item'].get_live_items(limit=3)"/>
+
+            <section class="mb-5" t-if="public_seasons">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Season Spotlights</h2>
+                    <a href="/seasons" class="small text-decoration-none">View All Seasons</a>
+                </div>
+                <div class="row g-3">
+                    <t t-foreach="public_seasons" t-as="season">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card h-100 border-0 shadow-sm bg-light">
+                                <div class="card-body d-flex flex-column">
+                                    <a t-att-href="season.get_public_path()" class="h5 text-decoration-none mb-2" t-esc="season.name"/>
+                                    <p class="small text-muted flex-grow-1" t-esc="season.public_summary or 'Season-wide published discovery and tournament highlights.'"/>
+                                    <a t-att-href="season.get_public_path()" class="btn btn-sm btn-outline-secondary mt-auto">Open Season</a>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </section>
+
+            <section class="mb-5" t-if="editorial_items">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Planned Public Highlights</h2>
+                    <span class="text-muted small">Scheduled editorial items currently live</span>
+                </div>
+                <div class="row g-3">
+                    <t t-foreach="editorial_items" t-as="item">
+                        <div class="col-lg-4">
+                            <t t-call="sports_federation_public_site.public_editorial_card"/>
+                        </div>
+                    </t>
+                </div>
+            </section>
+        </xpath>
+    </template>
+
+    <template id="page_public_team_profile_subnav"
+              inherit_id="sports_federation_public_site.page_public_team_profile"
+              priority="40">
+        <xpath expr="//section[hasclass('card')][1]" position="after">
+            <t t-call="sports_federation_public_site.public_team_subnav"/>
+        </xpath>
+    </template>
+
+</odoo>

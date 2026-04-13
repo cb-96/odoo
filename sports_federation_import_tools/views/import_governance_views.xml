@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_import_template_list" model="ir.ui.view">
+        <field name="name">federation.import.template.list</field>
+        <field name="model">federation.import.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="wizard_model"/>
+                <field name="target_model"/>
+                <field name="contract_version"/>
+                <field name="approval_required"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_import_template_form" model="ir.ui.view">
+        <field name="name">federation.import.template.form</field>
+        <field name="model">federation.import.template</field>
+        <field name="arch" type="xml">
+            <form string="Import Template">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="wizard_model"/>
+                            <field name="target_model"/>
+                            <field name="contract_version"/>
+                        </group>
+                        <group>
+                            <field name="approval_required"/>
+                            <field name="active"/>
+                            <field name="sample_header"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="required_columns_text"/>
+                        <field name="optional_columns_text"/>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_import_job_list" model="ir.ui.view">
+        <field name="name">federation.import.job.list</field>
+        <field name="model">federation.import.job</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="template_id"/>
+                <field name="integration_delivery_id" optional="show"/>
+                <field name="state"/>
+                <field name="upload_filename"/>
+                <field name="line_count"/>
+                <field name="success_count"/>
+                <field name="error_count"/>
+                <field name="requested_by_id"/>
+                <field name="approved_by_id" optional="hide"/>
+                <field name="executed_by_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_import_job_form" model="ir.ui.view">
+        <field name="name">federation.import.job.form</field>
+        <field name="model">federation.import.job</field>
+        <field name="arch" type="xml">
+            <form string="Import Governance Job">
+                <header>
+                    <button name="action_submit_for_approval" string="Submit" type="object" class="btn-primary"
+                            invisible="state not in ('draft', 'rejected')"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary"
+                            invisible="state != 'awaiting_approval'"
+                            groups="sports_federation_base.group_federation_manager"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn-secondary"
+                            invisible="state not in ('awaiting_approval', 'approved')"
+                            groups="sports_federation_base.group_federation_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,awaiting_approval,approved,completed,completed_with_errors,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="template_id"/>
+                            <field name="integration_delivery_id" readonly="1"/>
+                            <field name="wizard_model"/>
+                            <field name="target_model"/>
+                            <field name="contract_name"/>
+                            <field name="schema_version"/>
+                        </group>
+                        <group>
+                            <field name="upload_filename"/>
+                            <field name="file_checksum" readonly="1"/>
+                            <field name="requested_by_id" readonly="1"/>
+                            <field name="requested_on" readonly="1"/>
+                            <field name="approved_by_id" readonly="1"/>
+                            <field name="approved_on" readonly="1"/>
+                            <field name="executed_by_id" readonly="1"/>
+                            <field name="executed_on" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="line_count" readonly="1"/>
+                            <field name="success_count" readonly="1"/>
+                            <field name="error_count" readonly="1"/>
+                            <field name="pre_import_record_count" readonly="1"/>
+                            <field name="post_import_record_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="column_names" readonly="1" widget="text"/>
+                            <field name="rejection_reason" placeholder="Reason for rejection or remediation guidance..."/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="preview_result_message" readonly="1" widget="text"/>
+                        <field name="execution_result_message" readonly="1" widget="text"/>
+                        <field name="verification_summary" readonly="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_import_job_search" model="ir.ui.view">
+        <field name="name">federation.import.job.search</field>
+        <field name="model">federation.import.job</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="template_id"/>
+                <field name="state"/>
+                <filter name="awaiting_approval" string="Awaiting Approval" domain="[('state', '=', 'awaiting_approval')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="completed_with_errors" string="Completed With Errors" domain="[('state', '=', 'completed_with_errors')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <group>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_template" string="Template" context="{'group_by': 'template_id'}"/>
+                    <filter name="group_requester" string="Requested By" context="{'group_by': 'requested_by_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_federation_import_jobs" model="ir.actions.act_window">
+        <field name="name">Import Governance Jobs</field>
+        <field name="res_model">federation.import.job</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_import_job_search"/>
+    </record>
+
+    <record id="action_federation_import_templates" model="ir.actions.act_window">
+        <field name="name">Import Templates</field>
+        <field name="res_model">federation.import.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

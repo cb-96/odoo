@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_referee_form_portal_link" model="ir.ui.view">
+        <field name="name">federation.referee.form.portal.link</field>
+        <field name="model">federation.referee</field>
+        <field name="inherit_id" ref="sports_federation_officiating.view_federation_referee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="user_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_federation_match_referee_form_portal_response" model="ir.ui.view">
+        <field name="name">federation.match.referee.form.portal.response</field>
+        <field name="model">federation.match.referee</field>
+        <field name="inherit_id" ref="sports_federation_officiating.view_federation_match_referee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='notes']" position="after">
+                <field name="response_note"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_federation_match_referee_list_portal_response" model="ir.ui.view">
+        <field name="name">federation.match.referee.list.portal.response</field>
+        <field name="model">federation.match.referee</field>
+        <field name="inherit_id" ref="sports_federation_officiating.view_federation_match_referee_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="match_kickoff" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="response_note" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

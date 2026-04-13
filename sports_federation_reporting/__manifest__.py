@@ -24,11 +24,13 @@
     "data": [
         "security/ir.model.access.csv",
         "data/report_schedule_cron.xml",
+        "data/report_snapshot_cron.xml",
         "views/report_participation_views.xml",
         "views/report_officiating_views.xml",
         "views/report_compliance_views.xml",
         "views/report_finance_views.xml",
         "views/report_operational_views.xml",
+        "views/report_snapshot_views.xml",
         "views/report_schedule_views.xml",
         "views/menu_views.xml",
     ],

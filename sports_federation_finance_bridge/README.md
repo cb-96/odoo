@@ -53,9 +53,12 @@ An individual financial occurrence.
 | `partner_id` | Many2one | Related partner |
 | `club_id` / `player_id` / `referee_id` | Many2one | Federation entity |
 | `invoice_ref` / `external_ref` | Char | External references |
+| `handoff_state` | Selection | pending_export / exported / reconciled / closed |
+| `accounting_batch_ref` / `reconciliation_ref` | Char | Accounting handoff references |
 | `notes` | Text | Details |
 
 - **State machine**: draft → confirmed → settled / cancelled.
+- **Handoff state machine**: pending_export → exported → reconciled → closed.
 
 ## Key Behaviours
 
@@ -68,6 +71,23 @@ An individual financial occurrence.
 4. **Idempotent automation** — source-driven helpers reuse or reactivate matching
   draft finance events instead of duplicating them on workflow re-entry.
 5. **Multi-entity** — Covers clubs, players, and referees.
+6. **Accounting handoff governance** — finance events now track export,
+   reconciliation, and closure checkpoints for downstream accounting workflows.
+
+## Accounting Handoff Contract
+
+The finance bridge now supports an explicit accounting handoff workflow:
+
+- `action_mark_exported()` marks confirmed or settled events as exported
+- `action_mark_reconciled()` requires settlement and an exported handoff state
+- `action_close_handoff()` closes only reconciled, settled events
+
+Detailed handoff CSV contract:
+
+- route: `/reporting/export/finance/events`
+- contract id: `finance_event_v1`
+- includes schema version, handoff state, accounting batch reference,
+  reconciliation reference, source traceability, and execution timestamps
 
 ## Season Registration Finance Hooks
 
@@ -128,3 +148,9 @@ match_result_hooks.py extends `federation.match` with:
 The finance bridge now depends on `sports_federation_venues` and adds automatic
 hooks for discipline fines, completed referee assignments, and scheduled venue
 bookings. Run `-u sports_federation_finance_bridge` after upgrade.
+
+### Migration note (v19.0.1.3.0)
+
+Finance events now include accounting handoff states and references used by the
+reporting export contract. Run `-u sports_federation_finance_bridge` after
+upgrade to create the new fields and updated views.

@@ -14,6 +14,10 @@
     ],
     "data": [
         "security/ir.model.access.csv",
+        "data/import_template_data.xml",
+        "data/integration_contract_data.xml",
+        "views/import_governance_views.xml",
+        "views/integration_partner_views.xml",
         "views/import_wizard_views.xml",
         "views/menu_views.xml",
     ],

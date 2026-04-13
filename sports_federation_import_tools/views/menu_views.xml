@@ -42,4 +42,38 @@
               action="action_federation_import_tournament_participants_wizard"
               sequence="50"/>
 
+    <menuitem id="menu_federation_import_jobs"
+              name="Import Governance Jobs"
+              parent="menu_federation_imports"
+              action="action_federation_import_jobs"
+              sequence="60"/>
+
+    <menuitem id="menu_federation_import_templates"
+              name="Import Templates"
+              parent="menu_federation_imports"
+              action="action_federation_import_templates"
+              sequence="70"
+              groups="sports_federation_base.group_federation_manager"/>
+
+    <menuitem id="menu_federation_integration_contracts"
+              name="Integration Contracts"
+              parent="menu_federation_imports"
+              action="action_federation_integration_contracts"
+              sequence="80"
+              groups="sports_federation_base.group_federation_manager"/>
+
+    <menuitem id="menu_federation_integration_partners"
+              name="Integration Partners"
+              parent="menu_federation_imports"
+              action="action_federation_integration_partners"
+              sequence="90"
+              groups="sports_federation_base.group_federation_manager"/>
+
+    <menuitem id="menu_federation_integration_deliveries"
+              name="Inbound Deliveries"
+              parent="menu_federation_imports"
+              action="action_federation_integration_deliveries"
+              sequence="100"
+              groups="sports_federation_base.group_federation_manager"/>
+
 </odoo>

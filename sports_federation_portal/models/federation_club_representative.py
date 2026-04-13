@@ -45,6 +45,14 @@ class FederationClubRepresentative(models.Model):
         ondelete="restrict",
         index=True,
     )
+    team_id = fields.Many2one(
+        "federation.team",
+        string="Assigned Team",
+        ondelete="set null",
+        index=True,
+        domain="[('club_id', '=', club_id)]",
+        help="Optional team scope for coach or manager roles.",
+    )
     is_primary = fields.Boolean(
         string="Primary Contact",
         default=False,
@@ -85,16 +93,7 @@ class FederationClubRepresentative(models.Model):
         help="True if the representative's tenure is currently active.",
     )
 
-    _partner_club_role_unique = models.Constraint(
-        'UNIQUE(partner_id, club_id, role_type_id)',
-        'A partner can only have one representative record per club and role type.',
-    )
-    _user_club_role_unique = models.Constraint(
-        'UNIQUE(user_id, club_id, role_type_id)',
-        'A user can only have one representative record per club and role type.',
-    )
-
-    @api.depends("partner_id", "club_id", "role_type_id", "is_primary")
+    @api.depends("partner_id", "club_id", "team_id", "role_type_id", "is_primary")
     def _compute_display_name(self):
         for rec in self:
             parts = []
@@ -102,6 +101,8 @@ class FederationClubRepresentative(models.Model):
                 parts.append(rec.partner_id.name)
             if rec.club_id:
                 parts.append(rec.club_id.name)
+            if rec.team_id:
+                parts.append(rec.team_id.name)
             if rec.role_type_id:
                 parts.append(rec.role_type_id.name)
             if rec.is_primary:
@@ -127,6 +128,60 @@ class FederationClubRepresentative(models.Model):
             if rec.date_start and rec.date_end and rec.date_start > rec.date_end:
                 raise ValidationError(
                     "Start date cannot be after end date."
+                )
+
+    @api.constrains("club_id", "team_id", "role_type_id")
+    def _check_team_scope(self):
+        for rec in self:
+            if rec.team_id and rec.team_id.club_id != rec.club_id:
+                raise ValidationError(
+                    "Assigned team must belong to the same club as the representative record."
+                )
+            if rec.role_type_id.team_scoped and not rec.team_id:
+                raise ValidationError(
+                    "Team-scoped role types require an assigned team."
+                )
+            if rec.team_id and rec.role_type_id and not rec.role_type_id.team_scoped:
+                raise ValidationError(
+                    "Only team-scoped role types can be assigned to a specific team."
+                )
+
+    @api.constrains("partner_id", "club_id", "role_type_id", "team_id")
+    def _check_partner_scope_uniqueness(self):
+        for rec in self:
+            domain = [
+                ("id", "!=", rec.id),
+                ("partner_id", "=", rec.partner_id.id),
+                ("club_id", "=", rec.club_id.id),
+                ("role_type_id", "=", rec.role_type_id.id),
+            ]
+            if rec.team_id:
+                domain.append(("team_id", "=", rec.team_id.id))
+            else:
+                domain.append(("team_id", "=", False))
+            duplicate = self.with_context(active_test=False).search(domain, limit=1)
+            if duplicate:
+                raise ValidationError(
+                    "A partner can only have one representative record per club, role type, and team scope."
+                )
+
+    @api.constrains("user_id", "club_id", "role_type_id", "team_id")
+    def _check_user_scope_uniqueness(self):
+        for rec in self.filtered("user_id"):
+            domain = [
+                ("id", "!=", rec.id),
+                ("user_id", "=", rec.user_id.id),
+                ("club_id", "=", rec.club_id.id),
+                ("role_type_id", "=", rec.role_type_id.id),
+            ]
+            if rec.team_id:
+                domain.append(("team_id", "=", rec.team_id.id))
+            else:
+                domain.append(("team_id", "=", False))
+            duplicate = self.with_context(active_test=False).search(domain, limit=1)
+            if duplicate:
+                raise ValidationError(
+                    "A user can only have one representative record per club, role type, and team scope."
                 )
 
     @api.constrains("is_primary", "club_id", "role_type_id")
@@ -194,6 +249,28 @@ class FederationClubRepresentative(models.Model):
             ("is_current", "=", True),
         ])
         return reps.mapped("club_id")
+
+    @api.model
+    def _get_club_scope_for_user(self, user=None):
+        """Return clubs for whole-club portal roles only."""
+        user = user or self.env.user
+        reps = self.search([
+            ("user_id", "=", user.id),
+            ("is_current", "=", True),
+            ("team_id", "=", False),
+        ])
+        return reps.mapped("club_id")
+
+    @api.model
+    def _get_teams_for_user(self, user=None):
+        """Return teams explicitly assigned to the given user's portal roles."""
+        user = user or self.env.user
+        reps = self.search([
+            ("user_id", "=", user.id),
+            ("is_current", "=", True),
+            ("team_id", "!=", False),
+        ])
+        return reps.mapped("team_id")
 
     @api.model
     def _get_primary_contact(self, club, role_type_code=None):

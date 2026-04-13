@@ -20,6 +20,9 @@ class FederationReportSchedule(models.Model):
         ("workflow_exceptions", "Workflow Exceptions"),
         ("season_checklist", "Season Checklist"),
         ("compliance_summary", "Compliance Summary"),
+        ("compliance_remediation", "Compliance Remediation"),
+        ("board_pack", "Board Pack"),
+        ("audit_pack", "Audit Pack"),
     ]
     PERIOD_TYPE_SELECTION = [
         ("weekly", "Weekly"),
@@ -284,6 +287,144 @@ class FederationReportSchedule(models.Model):
         ]
         return headers, data, f"compliance_summary_{self.period_type}"
 
+    def _build_compliance_remediation_rows(self):
+        rows = self.env["federation.report.compliance.remediation"].search(
+            [],
+            order="sla_status desc, age_days desc, created_on asc",
+        )
+        headers = [
+            "Submission",
+            "Requirement",
+            "Target Model",
+            "Target",
+            "Status",
+            "Queue Owner",
+            "Created On",
+            "Reviewed On",
+            "Age (Days)",
+            "SLA Due On",
+            "SLA Status",
+            "Remediation Note",
+        ]
+        data = [
+            [
+                row.submission_id.name if row.submission_id else "",
+                row.requirement_id.name if row.requirement_id else "",
+                row.target_model or "",
+                row.target_display or "",
+                row.status or "",
+                row.queue_owner_display or "",
+                row.created_on or "",
+                row.reviewed_on or "",
+                row.age_days,
+                row.sla_due_on or "",
+                row.sla_status or "",
+                row.remediation_note or "",
+            ]
+            for row in rows
+        ]
+        return headers, data, f"compliance_remediation_{self.period_type}"
+
+    def _build_board_pack_rows(self):
+        snapshot_model = self.env["federation.report.snapshot"]
+        snapshot_model.capture_snapshot()
+        snapshots = snapshot_model.search([], order="snapshot_on desc, snapshot_type asc")
+        latest_by_type = {}
+        for snapshot in snapshots:
+            latest_by_type.setdefault(snapshot.snapshot_type, snapshot)
+        ordered = [
+            latest_by_type[snapshot_type]
+            for snapshot_type, _label in snapshot_model._fields["snapshot_type"].selection
+            if snapshot_type in latest_by_type
+        ]
+        headers = [
+            "Snapshot Type",
+            "Snapshot Date",
+            "Current Value",
+            "Previous Value",
+            "Delta",
+            "Status",
+            "Summary",
+        ]
+        data = [
+            [
+                dict(snapshot_model._fields["snapshot_type"].selection).get(row.snapshot_type, row.snapshot_type),
+                row.snapshot_on,
+                row.current_value,
+                row.previous_value,
+                row.delta_value,
+                row.status or "",
+                row.note or "",
+            ]
+            for row in ordered
+        ]
+        return headers, data, f"board_pack_{self.period_type}"
+
+    def _build_audit_pack_rows(self):
+        workflow_rows = self.env["federation.report.workflow.exception"].search([])
+        finance_rows = self.env["federation.report.finance.reconciliation"].search([
+            ("needs_follow_up", "=", True),
+        ])
+        notification_rows = self.env["federation.report.notification.exception"].search([])
+        compliance_rows = self.env["federation.report.compliance.remediation"].search([])
+        finance_exception_rows = self.env["federation.report.finance.exception"].search([])
+        season_rows = self.env["federation.report.season.checklist"].search([])
+
+        def _escalated_count(records):
+            return len(records.filtered(lambda row: getattr(row, "sla_status", False) == "escalated"))
+
+        def _oldest_age(records):
+            ages = [getattr(row, "age_days", 0) or 0 for row in records]
+            return max(ages) if ages else 0
+
+        blocked_seasons = season_rows.filtered(lambda row: row.checklist_status == "blocked")
+        data = [
+            [
+                "Workflow Exceptions",
+                len(workflow_rows),
+                _escalated_count(workflow_rows),
+                _oldest_age(workflow_rows),
+                "Result approval and governance override backlog.",
+            ],
+            [
+                "Compliance Remediation",
+                len(compliance_rows),
+                _escalated_count(compliance_rows),
+                _oldest_age(compliance_rows),
+                "Document submissions waiting for review, replacement, or renewal.",
+            ],
+            [
+                "Finance Follow-up",
+                len(finance_rows),
+                _escalated_count(finance_rows),
+                _oldest_age(finance_rows),
+                "Finance events waiting for settlement or reconciliation references.",
+            ],
+            [
+                "Notification Exceptions",
+                len(notification_rows),
+                _escalated_count(notification_rows),
+                _oldest_age(notification_rows),
+                "Failed outbound notifications that still need operator follow-up.",
+            ],
+            [
+                "Sanction Finance Gaps",
+                len(finance_exception_rows),
+                0,
+                0,
+                "Disciplinary fines without linked finance events.",
+            ],
+            [
+                "Season Readiness",
+                len(blocked_seasons),
+                len(blocked_seasons),
+                0,
+                "Blocked season checklists needing operational intervention.",
+            ],
+        ]
+        headers = ["Queue", "Open Items", "Escalated Items", "Oldest Age (Days)", "Summary"]
+        return headers, data, f"audit_pack_{self.period_type}"
+
     def _build_report_payload(self):
         self.ensure_one()
         builders = {
@@ -293,6 +434,9 @@ class FederationReportSchedule(models.Model):
             "workflow_exceptions": self._build_workflow_exception_rows,
             "season_checklist": self._build_season_checklist_rows,
             "compliance_summary": self._build_compliance_summary_rows,
+            "compliance_remediation": self._build_compliance_remediation_rows,
+            "board_pack": self._build_board_pack_rows,
+            "audit_pack": self._build_audit_pack_rows,
         }
         headers, rows, slug = builders[self.report_type]()
 
@@ -338,6 +482,9 @@ class FederationReportSchedule(models.Model):
             "workflow_exceptions": "sports_federation_reporting.action_federation_report_workflow_exception",
             "season_checklist": "sports_federation_reporting.action_federation_report_season_checklist",
             "compliance_summary": "sports_federation_reporting.action_federation_report_compliance",
+            "compliance_remediation": "sports_federation_reporting.action_federation_report_compliance_remediation",
+            "board_pack": "sports_federation_reporting.action_federation_report_snapshot",
+            "audit_pack": "sports_federation_reporting.action_federation_report_snapshot",
         }[self.report_type]
 
         action = self.env["ir.actions.act_window"]._for_xml_id(action_xmlid)

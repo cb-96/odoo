@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_integration_contract_search" model="ir.ui.view">
+        <field name="name">federation.integration.contract.search</field>
+        <field name="model">federation.integration.contract</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="direction"/>
+                <field name="transport"/>
+                <field name="deprecation_stage"/>
+                <group>
+                    <filter name="group_direction" string="Direction" context="{'group_by': 'direction'}"/>
+                    <filter name="group_transport" string="Transport" context="{'group_by': 'transport'}"/>
+                    <filter name="group_stage" string="Deprecation Stage" context="{'group_by': 'deprecation_stage'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_contract_list" model="ir.ui.view">
+        <field name="name">federation.integration.contract.list</field>
+        <field name="model">federation.integration.contract</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="version"/>
+                <field name="direction"/>
+                <field name="transport"/>
+                <field name="deprecation_stage"/>
+                <field name="route_hint" optional="show"/>
+                <field name="required_module" optional="hide"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_contract_form" model="ir.ui.view">
+        <field name="name">federation.integration.contract.form</field>
+        <field name="model">federation.integration.contract</field>
+        <field name="arch" type="xml">
+            <form string="Integration Contract">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="version"/>
+                            <field name="direction"/>
+                            <field name="transport"/>
+                        </group>
+                        <group>
+                            <field name="route_hint"/>
+                            <field name="required_module"/>
+                            <field name="import_template_id" invisible="direction != 'inbound'"/>
+                            <field name="deprecation_stage"/>
+                            <field name="replacement_contract_id"/>
+                            <field name="sunset_on"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_integration_contracts" model="ir.actions.act_window">
+        <field name="name">Integration Contracts</field>
+        <field name="res_model">federation.integration.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_integration_contract_search"/>
+    </record>
+
+    <record id="view_federation_integration_partner_search" model="ir.ui.view">
+        <field name="name">federation.integration.partner.search</field>
+        <field name="model">federation.integration.partner</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_partner_list" model="ir.ui.view">
+        <field name="name">federation.integration.partner.list</field>
+        <field name="model">federation.integration.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="contact_partner_id" optional="show"/>
+                <field name="token_last_rotated_on" optional="show"/>
+                <field name="last_request_on" optional="show"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_partner_form" model="ir.ui.view">
+        <field name="name">federation.integration.partner.form</field>
+        <field name="model">federation.integration.partner</field>
+        <field name="arch" type="xml">
+            <form string="Integration Partner">
+                <header>
+                    <button name="action_rotate_token" string="Rotate Token" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="contact_partner_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="auth_token" readonly="1" password="True"/>
+                            <field name="token_last_rotated_on" readonly="1"/>
+                            <field name="last_request_on" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Contracts">
+                            <field name="subscription_ids">
+                                <list editable="bottom">
+                                    <field name="contract_id"/>
+                                    <field name="direction" readonly="1"/>
+                                    <field name="version" readonly="1"/>
+                                    <field name="state"/>
+                                    <field name="route_hint" readonly="1" optional="show"/>
+                                    <field name="last_used_on" readonly="1" optional="show"/>
+                                    <field name="notes" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Inbound Deliveries">
+                            <field name="delivery_ids" readonly="1">
+                                <list>
+                                    <field name="received_on"/>
+                                    <field name="contract_id"/>
+                                    <field name="filename"/>
+                                    <field name="state"/>
+                                    <field name="governance_job_id" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group>
+                        <field name="notes" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_integration_partners" model="ir.actions.act_window">
+        <field name="name">Integration Partners</field>
+        <field name="res_model">federation.integration.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_integration_partner_search"/>
+    </record>
+
+    <record id="view_federation_integration_delivery_search" model="ir.ui.view">
+        <field name="name">federation.integration.delivery.search</field>
+        <field name="model">federation.integration.delivery</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="contract_id"/>
+                <field name="state"/>
+                <filter name="queue" string="Needs Attention" domain="[('state', 'in', ('staged', 'previewed', 'awaiting_approval', 'failed'))]"/>
+                <filter name="processed" string="Processed" domain="[('state', 'in', ('processed', 'processed_with_errors'))]"/>
+                <group>
+                    <filter name="group_partner" string="Partner" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_contract" string="Contract" context="{'group_by': 'contract_id'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_delivery_list" model="ir.ui.view">
+        <field name="name">federation.integration.delivery.list</field>
+        <field name="model">federation.integration.delivery</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="received_on"/>
+                <field name="partner_id"/>
+                <field name="contract_id"/>
+                <field name="filename"/>
+                <field name="state"/>
+                <field name="governance_job_id" optional="show"/>
+                <field name="line_count" optional="show"/>
+                <field name="error_count" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_delivery_form" model="ir.ui.view">
+        <field name="name">federation.integration.delivery.form</field>
+        <field name="model">federation.integration.delivery</field>
+        <field name="arch" type="xml">
+            <form string="Inbound Delivery">
+                <header>
+                    <button name="action_open_import_wizard" string="Open Import Preview" type="object" class="btn-primary"
+                            invisible="state in ('cancelled', 'processed', 'processed_with_errors')"/>
+                    <button name="action_cancel" string="Cancel Delivery" type="object" class="btn-secondary"
+                            invisible="state in ('cancelled', 'processed', 'processed_with_errors')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="staged,previewed,awaiting_approval,approved,processed,processed_with_errors,failed,cancelled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="import_template_id" readonly="1"/>
+                            <field name="source_reference"/>
+                        </group>
+                        <group>
+                            <field name="filename" readonly="1"/>
+                            <field name="payload_checksum" readonly="1"/>
+                            <field name="received_via" readonly="1"/>
+                            <field name="received_on" readonly="1"/>
+                            <field name="governance_job_id" readonly="1"/>
+                            <field name="attachment_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="line_count" readonly="1"/>
+                            <field name="success_count" readonly="1"/>
+                            <field name="error_count" readonly="1"/>
+                            <field name="previewed_on" readonly="1"/>
+                            <field name="approved_on" readonly="1"/>
+                            <field name="processed_on" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="notes" widget="text"/>
+                            <field name="result_message" widget="text" readonly="1"/>
+                            <field name="verification_summary" widget="text" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_integration_deliveries" model="ir.actions.act_window">
+        <field name="name">Inbound Deliveries</field>
+        <field name="res_model">federation.integration.delivery</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_integration_delivery_search"/>
+    </record>
+
+</odoo>

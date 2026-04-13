@@ -20,6 +20,7 @@
         "views/document_requirement_views.xml",
         "views/document_submission_views.xml",
         "views/compliance_check_views.xml",
+        "views/portal_compliance_templates.xml",
         "views/menu_views.xml",
     ],
     "demo": [],

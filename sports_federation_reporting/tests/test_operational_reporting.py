@@ -212,6 +212,8 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.follow_up_status, "draft")
         self.assertTrue(row.needs_follow_up)
         self.assertEqual(row.counterparty_display, self.club.name)
+        self.assertEqual(row.queue_owner_display, "Federation Managers")
+        self.assertIn(row.sla_status, ("overdue", "escalated", "due_today", "within_sla"))
 
     def test_notification_exception_report_shows_failed_logs(self):
         row = self.env["federation.report.notification.exception"].search([
@@ -222,6 +224,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.notification_type, "email")
         self.assertEqual(row.recipient_email, "ops.alerts@example.com")
         self.assertIn("Template lookup failed", row.message)
+        self.assertIn(row.sla_status, ("overdue", "escalated", "due_today", "within_sla"))
 
     def test_finance_exception_report_shows_missing_sanction_event(self):
         row = self.env["federation.report.finance.exception"].search([
@@ -249,6 +252,44 @@ class TestOperationalReporting(TransactionCase):
         self.assertTrue(override_row)
         self.assertEqual(override_row.exception_type, "override_implementation_stalled")
         self.assertGreaterEqual(override_row.age_days, 3)
+        self.assertIn(override_row.sla_status, ("overdue", "escalated"))
+
+    def test_compliance_remediation_queue_surfaces_pending_submissions(self):
+        submission = self.env["federation.document.submission"].create({
+            "name": "Ops Insurance Submission",
+            "requirement_id": self.requirement.id,
+            "club_id": self.club.id,
+        })
+        submission.action_submit()
+
+        row = self.env["federation.report.compliance.remediation"].search([
+            ("submission_id", "=", submission.id),
+        ], limit=1)
+
+        self.assertTrue(row)
+        self.assertEqual(row.status, "submitted")
+        self.assertEqual(row.target_display, self.club.name)
+        self.assertEqual(row.queue_owner_display, "Compliance Review Queue")
+        self.assertIn(row.sla_status, ("within_sla", "due_today", "overdue", "escalated"))
+
+    def test_compliance_remediation_queue_surfaces_expired_approved_submissions(self):
+        submission = self.env["federation.document.submission"].create({
+            "name": "Ops Expired Submission",
+            "requirement_id": self.requirement.id,
+            "club_id": self.club.id,
+            "issue_date": fields.Date.today() - timedelta(days=365),
+            "expiry_date": fields.Date.today() - timedelta(days=1),
+        })
+        submission.action_submit()
+        submission.action_approve()
+
+        row = self.env["federation.report.compliance.remediation"].search([
+            ("submission_id", "=", submission.id),
+        ], limit=1)
+
+        self.assertTrue(row)
+        self.assertEqual(row.status, "expired")
+        self.assertIn("renewal", row.remediation_note.lower())
 
     def test_season_checklist_flags_open_work_for_season(self):
         row = self.env["federation.report.season.checklist"].search([
@@ -294,3 +335,36 @@ class TestOperationalReporting(TransactionCase):
         csv_payload = base64.b64decode(schedule.generated_file).decode()
         self.assertIn("Operational Summary", csv_payload)
         self.assertIn(self.tournament.name, csv_payload)
+
+    def test_snapshot_capture_and_board_pack_generation(self):
+        snapshots = self.env["federation.report.snapshot"].capture_snapshot()
+
+        self.assertTrue(snapshots)
+        self.assertEqual(len(snapshots), 5)
+
+        board_pack = self.env["federation.report.schedule"].create({
+            "name": "Board Pack",
+            "report_type": "board_pack",
+            "period_type": "weekly",
+        })
+        board_pack.action_generate_now()
+
+        self.assertTrue(board_pack.generated_file)
+        board_payload = base64.b64decode(board_pack.generated_file).decode()
+        self.assertIn("Board Pack", board_payload)
+        self.assertIn("Override Backlog", board_payload)
+
+    def test_audit_pack_includes_operational_queues(self):
+        schedule = self.env["federation.report.schedule"].create({
+            "name": "Audit Pack",
+            "report_type": "audit_pack",
+            "period_type": "weekly",
+        })
+
+        schedule.action_generate_now()
+
+        self.assertTrue(schedule.generated_file)
+        audit_payload = base64.b64decode(schedule.generated_file).decode()
+        self.assertIn("Audit Pack", audit_payload)
+        self.assertIn("Workflow Exceptions", audit_payload)
+        self.assertIn("Finance Follow-up", audit_payload)

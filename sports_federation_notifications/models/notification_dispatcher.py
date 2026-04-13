@@ -237,6 +237,33 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     # ------------------------------------------------------------------
+    # Compliance events
+    # ------------------------------------------------------------------
+
+    def send_compliance_submission_received(self, submission):
+        return self._create_group_activities(
+            submission,
+            "sports_federation_base.group_federation_manager",
+            f"Review compliance submission: {submission.name}",
+            note=(
+                f"Requirement: {submission.requirement_id.name}<br/>"
+                f"Target: {submission.target_display or 'Unknown'}"
+            ),
+        )
+
+    def send_compliance_remediation_requested(self, submission):
+        return self._create_group_activities(
+            submission,
+            "sports_federation_base.group_federation_manager",
+            f"Compliance remediation follow-up: {submission.name}",
+            note=(
+                f"Requirement: {submission.requirement_id.name}<br/>"
+                f"Target: {submission.target_display or 'Unknown'}<br/>"
+                f"Status: {submission.status}"
+            ),
+        )
+
+    # ------------------------------------------------------------------
     # Officiating events
     # ------------------------------------------------------------------
 

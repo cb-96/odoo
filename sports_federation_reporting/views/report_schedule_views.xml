@@ -47,7 +47,7 @@
                             <field name="name"/>
                             <field name="report_type"/>
                             <field name="period_type"/>
-                            <field name="season_id" invisible="report_type in ('finance_reconciliation', 'compliance_summary')"/>
+                            <field name="season_id" invisible="report_type in ('finance_reconciliation', 'compliance_summary', 'compliance_remediation', 'board_pack', 'audit_pack')"/>
                             <field name="active"/>
                         </group>
                         <group>

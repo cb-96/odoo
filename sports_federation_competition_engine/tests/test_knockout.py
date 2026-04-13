@@ -1,4 +1,3 @@
-from unittest import SkipTest
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import UserError
 
@@ -75,8 +74,7 @@ class TestKnockout(TransactionCase):
         self.assertEqual(len(matches), 7)
 
     def test_six_teams_power_of_two(self):
-        """6 teams, power of 2 bracket (8): known bug with bye logic."""
-        raise SkipTest("Knockout bye logic IndexError — needs engine fix")
+        """6 teams, power-of-two bracket builds the full seeded bracket."""
         six_participants = self.participants[:6]
         options = {
             "seeding": "seed",
@@ -90,12 +88,18 @@ class TestKnockout(TransactionCase):
         matches = engine.generate_knockout_bracket(
             self.tournament, self.stage, six_participants, options
         )
-        # 6 teams, bracket 8 -> 2 byes -> 4 teams play -> 2 matches
-        self.assertEqual(len(matches), 2)
+        self.assertEqual(len(matches), 5)
+
+        first_round = [m for m in matches if m.round_number == 1]
+        second_round = [m for m in matches if m.round_number == 2]
+        final_round = [m for m in matches if m.round_number == 3]
+
+        self.assertEqual(len(first_round), 2)
+        self.assertEqual(len(second_round), 2)
+        self.assertEqual(len(final_round), 1)
 
     def test_three_teams_power_of_two(self):
-        """3 teams, power of 2 bracket (4): known bug with bye logic."""
-        raise SkipTest("Knockout bye logic IndexError — needs engine fix")
+        """3 teams, power-of-two bracket creates a play-in plus final."""
         three_participants = self.participants[:3]
         options = {
             "seeding": "seed",
@@ -109,8 +113,13 @@ class TestKnockout(TransactionCase):
         matches = engine.generate_knockout_bracket(
             self.tournament, self.stage, three_participants, options
         )
-        # 3 teams, bracket 4 -> 1 bye (seed 1), 2 teams play -> 1 match
-        self.assertEqual(len(matches), 1)
+        self.assertEqual(len(matches), 2)
+
+        first_round = [m for m in matches if m.round_number == 1]
+        final_round = [m for m in matches if m.round_number == 2]
+
+        self.assertEqual(len(first_round), 1)
+        self.assertEqual(len(final_round), 1)
 
     def test_seeding_correctness(self):
         """Top seed should play bottom seed in first round."""
@@ -169,8 +178,7 @@ class TestKnockout(TransactionCase):
             )
 
     def test_bye_seeding_top_seeds(self):
-        """With byes, top seeds should advance: known bug with bye logic."""
-        raise SkipTest("Knockout bye logic IndexError — needs engine fix")
+        """With byes, top seeds skip the play-in round."""
         six_participants = self.participants[:6]
         options = {
             "seeding": "seed",
@@ -184,15 +192,76 @@ class TestKnockout(TransactionCase):
         matches = engine.generate_knockout_bracket(
             self.tournament, self.stage, six_participants, options
         )
-        # With 6 teams, bracket 8: top 2 seeds get byes
-        # Seeds 3,4,5,6 play: 3 vs 6, 4 vs 5
+        first_round = [m for m in matches if m.round_number == 1]
         playing_teams = set()
-        for m in matches:
+        for m in first_round:
             playing_teams.add(m.home_team_id.id)
             playing_teams.add(m.away_team_id.id)
-        # Team 1 (seed 1) and Team 2 (seed 2) should NOT be in first round
-        self.assertNotIn(self.teams[0].id, playing_teams)  # Seed 1
-        self.assertNotIn(self.teams[1].id, playing_teams)  # Seed 2
+        self.assertNotIn(self.teams[0].id, playing_teams)
+        self.assertNotIn(self.teams[1].id, playing_teams)
+
+    def test_bye_sources_fill_second_round_placeholders(self):
+        """Top seeds should be wired directly into the second round."""
+        six_participants = self.participants[:6]
+        options = {
+            "seeding": "seed",
+            "bracket_size": "power_of_two",
+            "start_datetime": False,
+            "interval_hours": 0,
+            "venue": "",
+            "overwrite": False,
+        }
+        engine = self.env["federation.competition.engine.service"]
+        matches = engine.generate_knockout_bracket(
+            self.tournament, self.stage, six_participants, options
+        )
+
+        first_round = sorted(
+            [m for m in matches if m.round_number == 1],
+            key=lambda match: match.bracket_position,
+        )
+        second_round = sorted(
+            [m for m in matches if m.round_number == 2],
+            key=lambda match: match.bracket_position,
+        )
+
+        self.assertEqual(second_round[0].home_team_id, self.teams[0])
+        self.assertEqual(second_round[0].source_match_2_id, first_round[0])
+        self.assertEqual(second_round[1].home_team_id, self.teams[1])
+        self.assertEqual(second_round[1].source_match_2_id, first_round[1])
+
+    def test_play_in_winners_auto_advance_into_seeded_slots(self):
+        """Completing play-in matches should populate the seeded semifinal slots."""
+        six_participants = self.participants[:6]
+        options = {
+            "seeding": "seed",
+            "bracket_size": "power_of_two",
+            "start_datetime": False,
+            "interval_hours": 0,
+            "venue": "",
+            "overwrite": False,
+        }
+        engine = self.env["federation.competition.engine.service"]
+        matches = engine.generate_knockout_bracket(
+            self.tournament, self.stage, six_participants, options
+        )
+
+        first_round = sorted(
+            [m for m in matches if m.round_number == 1],
+            key=lambda match: match.bracket_position,
+        )
+        second_round = sorted(
+            [m for m in matches if m.round_number == 2],
+            key=lambda match: match.bracket_position,
+        )
+
+        first_round[0].write({"home_score": 2, "away_score": 1})
+        first_round[0].action_done()
+        first_round[1].write({"home_score": 0, "away_score": 3})
+        first_round[1].action_done()
+
+        self.assertEqual(second_round[0].away_team_id, self.teams[2])
+        self.assertEqual(second_round[1].away_team_id, self.teams[4])
 
     def test_manual_seeding_order(self):
         """Manual seeding should preserve participant order."""

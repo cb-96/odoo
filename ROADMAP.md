@@ -155,9 +155,9 @@ Done when: federation operators can detect broken processes before end users rep
 
 ### Priority 3 — Strategic Stretch Work If Capacity Remains
 
-1. Done (2026-04-12): Deepen public competition storytelling and discoverability.
+1. Done (2026-04-12): Deepen public tournament storytelling and discoverability.
 Modules: `sports_federation_public_site`, `sports_federation_reporting`, `sports_federation_standings`, `sports_federation_tournament`.
-Work already landed: published competition list, archive, detail, teams, standings, results, grouped schedule sections, bracket views, public JSON listing, versioned competition feed payloads, and publication guards.
+Work already landed: tournament-first website navigation, slug-first public tournament and team routes, featured/live/archive hub sections, editorial summaries and pinned announcements, team profile pages, grouped schedule sections, bracket views, ICS calendar export, public JSON listing, versioned tournament feed payloads, publication guards, and automatic cleanup of stale legacy `/competitions` website menus during install and upgrade.
 Done when: public pages reduce ad hoc communication load on federation staff.
 
 2. Done (2026-04-12): Add federation-admin productivity tooling.
@@ -167,7 +167,7 @@ Done when: recurring seasonal administration takes fewer manual steps and fewer 
 
 3. Done (2026-04-12): Prototype outward-facing integration contracts.
 Modules: `sports_federation_reporting`, `sports_federation_finance_bridge`, `sports_federation_notifications`, `sports_federation_import_tools`.
-Work already landed: authenticated CSV export endpoints for standings, participation, and finance summaries, repeatable import contracts for onboarding and seasonal rollover, and a stable versioned public competition feed.
+Work already landed: authenticated CSV export endpoints for standings, participation, and finance summaries, repeatable import contracts for onboarding and seasonal rollover, and a stable versioned public tournament feed.
 Done when: external integrations can be introduced without bypassing the module architecture.
 
 ## Year 1 Sequencing Guidance
@@ -175,10 +175,10 @@ Done when: external integrations can be introduced without bypassing the module 
 Priority 0 through Priority 3 are now complete for the Year 1 scope.
 Priority 2 closed with live workflow-exception queues and season checklist
 reporting on top of the earlier standings, finance, notification-failure, and
-missing-finance-event visibility. Priority 3 also closed: public competition
-surfaces now include grouped schedule and bracket presentation, and external
-consumers have a stable versioned competition feed alongside the existing CSV
-contracts.
+missing-finance-event visibility. Priority 3 also closed: public tournament
+surfaces now include a tournament-first website hub, slug-first public routes,
+team profiles, grouped schedule and bracket presentation, ICS export, and a
+stable versioned tournament feed alongside the existing CSV contracts.
 
 Year 1 is therefore complete as a release-readiness phase. Remaining follow-up
 work should be treated as Year 2+ optimization, scale, and operational depth,
@@ -189,36 +189,161 @@ Current Year 1 execution batch completed in this pass:
 1. Done (2026-04-12): Wire active discipline suspensions into shared eligibility checks used by roster and match workflows.
 2. Done (2026-04-12): Add operator-facing exception reports for failed notifications and missing disciplinary fine finance events.
 3. Done (2026-04-12): Add workflow exception queues and season checklist reporting for federation operators.
-4. Done (2026-04-12): Ship grouped public schedule and bracket pages for published competitions.
-5. Done (2026-04-12): Publish a stable v1 public competition feed for external consumers.
+4. Done (2026-04-12): Ship grouped public schedule, bracket, team profile, and calendar export pages for published tournaments.
+5. Done (2026-04-12): Publish a stable v1 public tournament feed and slug-first public routes for external consumers.
+6. Done (2026-04-12): Normalize stale legacy website competition menus automatically on install and upgrade.
+
+## Current Baseline Entering Year 2
+
+The repository is now beyond a generic “core federation MVP” baseline. The
+implemented platform already includes a deeper operational foundation that
+should be treated as Year 2 input, not as future aspiration.
+
+Core competition and scheduling baseline already present:
+
+- Tournament templates can scaffold repeatable event structures instead of relying on manual stage-by-stage setup.
+- Stage progression rules, seeded advancement, persistent tournament rounds, and bracket-linked knockout flows are modeled explicitly in the ORM.
+- Schedule generation is preview-first, deterministic, and guarded by overwrite warnings rather than destructive defaults.
+- Result approval is separation-of-duties aware and feeds approved-only standings updates.
+
+Eligibility, roster, and match-day baseline already present:
+
+- A shared eligibility service evaluates season, club, license, and date-scoped suspension rules in one place.
+- Team rosters are activation-gated, surface readable readiness feedback, and become structurally locked once live match-sheet activity references them.
+- Match sheets support starter/substitute structure, substitution timing, approval, locking, and a participation audit trail.
+- Tournament participants reuse team-linked roster readiness checks and enforce an operational roster deadline ahead of match-day workflows.
+
+Officiating, finance, and oversight baseline already present:
+
+- Referee assignments enforce 48-hour confirmation deadlines, certification-window validation, shortage visibility, and match-level officiating readiness aggregation.
+- Finance events are auto-created and kept idempotent for season registration, approved-result charges, discipline fines, referee reimbursements, and venue bookings.
+- Discipline, compliance, and governance modules already feed eligibility, workflow exceptions, and audit-facing reporting rather than acting as isolated back-office records.
+
+Delivery surface and reporting baseline already present:
+
+- The public site now runs as a tournament-first hub with slug-first routes, team profiles, grouped schedules, bracket pages, editorial controls, ICS export, and a stable versioned feed.
+- Portal workflows already cover season and tournament registration review plus roster and match-sheet visibility with ownership controls.
+- Reporting already includes operational KPI views, standings reconciliation, finance reconciliation, failed-notification exceptions, missing-finance exceptions, workflow exception queues, and season checklists.
+- Import tooling already supports rehearsal-first onboarding and rollover imports for clubs, seasons, teams, players, and tournament participants.
 
 ## Year 2 Overview — Operational Depth and Federation Control
 
-Year 2 should build on modules that are already present rather than treating
-discipline, compliance, governance, and reporting as net-new work. The focus
-should move to queue management, SLA-style escalation, board and audit pack
-reporting, cross-module exception closure, and stronger finance and policy
-reconciliation workflows.
+Year 2 should build on the implemented queues, reports, portal flows, and
+public surfaces rather than treating discipline, compliance, governance,
+reporting, and publication as net-new work. The next phase should focus on
+hardening operational ownership, explicit external contracts, audit-friendly
+reporting, and deeper self-service on top of the current baseline.
 
 Target outcome: federation staff can run policy-heavy operations from explicit
 queues and audit views inside the platform rather than through email,
 spreadsheets, and ad hoc follow-up.
 
+Year 2 completion status:
+
+1. Done (2026-04-12): Run a coverage and regression audit on the highest-risk orchestration paths.
+Work already landed: knockout auto-advance and bye wiring regression coverage, portal team-scope access regression coverage, finance handoff workflow tests, reporting regression expansion, and install/upgrade-safe website menu cleanup validation.
+
+2. Done (2026-04-12): Add SLA-style queue ownership and escalation rules across workflow exceptions, compliance remediation, governance review, failed notifications, and finance follow-up.
+Work already landed: SLA fields and queue ownership surfaces in the reporting layer for finance reconciliation, notification exceptions, workflow exceptions, and compliance remediation.
+
+3. Done (2026-04-12): Turn the reporting layer into board and audit packs with historical trend views.
+Work already landed: recurring board packs, audit packs, trend snapshots, compliance remediation queues, and season-readiness reporting.
+
+4. Done (2026-04-12): Define the accounting-system handoff for `federation.finance.event`.
+Work already landed: export, reconciliation, and closure workflow states; accounting-batch and reconciliation references; a detailed finance-event handoff CSV contract; and focused workflow tests.
+
+5. Done (2026-04-12): Expand self-service roles in the portal toward coach and manager operations.
+Work already landed: team-scoped coach and team-manager representative roles, scoped portal access, match-day preparation pages, match-sheet preparation helpers, and focused portal regression coverage.
+
+6. Done (2026-04-12): Harden partner-facing integration contracts with documented versioning and deprecation policy.
+Work already landed: explicit contract headers for authenticated CSV exports, public feed and ICS contract headers, documented versioning and deprecation policy in `INTEGRATION_CONTRACTS.md`, and canonical slug-first public routes retained alongside compatibility aliases.
+
+7. Done (2026-04-12): Add import governance for high-impact seasonal rollover work.
+Work already landed: reusable import templates, checksum-bound approval jobs, preview-first approval checkpoints, and post-import verification summaries with before/after record counts.
+
+Year 2 is now complete as an operational-depth phase. The codebase has moved
+from release-readiness into governed federation operations with explicit audit,
+handoff, and partner-contract surfaces.
+
 ## Year 3 Overview — Self-Service and Ecosystem Expansion
 
 Year 3 should deepen the self-service and integration layers that now exist in
 baseline form. The portal should become the preferred interface for more club
-operations, the public site should present richer competition narratives and
-fixtures safely, and export contracts should mature from internal CSV endpoints
-into stable partner-facing feeds.
+operations, the public site should deepen tournament storytelling and fan-safe
+publication workflows, and the existing export contracts should mature from
+internal CSV and public-feed endpoints into stable partner-facing interfaces.
 
 Target outcome: fewer manual interventions by federation staff and cleaner data
 exchange with external systems and stakeholders.
 
+## Year 3 Detailed Breakdown By Priority
+
+### Priority 0 — Highest-Leverage Self-Service Workflows
+
+1. Done (2026-04-12): Add referee self-service assignment response in the portal.
+Modules: `sports_federation_portal`, `sports_federation_officiating`.
+Work already landed: portal-linked referee profiles, official-only assignment access, upcoming-assignment pages, confirm and decline actions with response notes, backend linkage fields, and focused regression coverage.
+Done when: assigned officials can review only their own matches and respond without federation staff manually relaying confirmations.
+
+2. Done (2026-04-12): Expand club portal operations from registration into recurring tournament administration.
+Modules: `sports_federation_portal`, `sports_federation_rosters`, `sports_federation_result_control`, `sports_federation_tournament`.
+Work already landed: a unified active-tournament portal workspace with per-team entries, registration checkpoints, preferred-roster and roster-freeze visibility, match-day submission tracking, result follow-up summaries, direct links into roster and match-sheet pages, and focused regression coverage for club- and team-scoped users.
+Done when: club staff can manage their recurring tournament obligations from one portal workspace instead of navigating multiple isolated pages.
+
+3. Done (2026-04-12): Add self-service compliance submission and renewal workflows.
+Modules: `sports_federation_portal`, `sports_federation_compliance`, `sports_federation_reporting`, `sports_federation_notifications`.
+Work already landed: portal compliance workspace and detail pages, club- and referee-scoped requirement entries, attachment-backed portal submissions and renewals, renewal due-soon indicators, remediation-note visibility from reporting, notification hook reuse, and focused regression coverage.
+Done when: federation staff no longer have to collect routine compliance renewals over email.
+
+### Priority 1 — Public Experience and Publication Workflows
+
+1. Done (2026-04-12): Deepen public tournament storytelling with editorial scheduling and season-wide discovery.
+Modules: `sports_federation_public_site`, `sports_federation_reporting`, `sports_federation_notifications`.
+Work already landed: public season slugs and landing pages, featured and recent tournament discovery by season, editorial items with draft and scheduled publication windows, season-, tournament-, and team-anchored highlights, pinned tournament announcements, and operator-safe publication controls.
+Done when: federation staff can plan public communications inside the platform instead of publishing ad hoc updates manually.
+
+2. Done (2026-04-12): Expose safer public follow experiences for teams, calendars, and results.
+Modules: `sports_federation_public_site`, `sports_federation_portal`, `sports_federation_standings`.
+Work already landed: slug-first team profile pages, grouped team schedule and result surfaces, season discovery links into published coverage, team schedule ICS export, stable team feed payloads, and publication-guarded follow helpers that preserve existing visibility controls.
+Done when: recurring supporter and club communication needs are served by stable public pages and feeds.
+
+### Priority 2 — Partner Integrations and Ecosystem Interfaces
+
+1. Done (2026-04-12): Move from internal export contracts toward managed partner integrations.
+Modules: `sports_federation_reporting`, `sports_federation_finance_bridge`, `sports_federation_public_site`, `sports_federation_import_tools`.
+Work already landed: integration contract registry records, partner tokens with per-contract subscriptions, partner manifest discovery, token-authenticated finance-event handoff delivery, explicit route hints and deprecation metadata, and operator-visible backend management views.
+Done when: downstream systems can integrate through explicit partner interfaces rather than shared backend sessions or ad hoc CSV pulls.
+
+2. Done (2026-04-12): Add inbound integration orchestration beyond manual CSV onboarding.
+Modules: `sports_federation_import_tools`, `sports_federation_notifications`, `sports_federation_reporting`.
+Work already landed: staged inbound delivery records, checksum-based duplicate reuse, partner API delivery endpoints, direct handoff into preview wizards, governance-job linkage, synchronized preview/approval/process/failure states, and focused regression coverage.
+Done when: repeated third-party data exchange can be operated through the same governed import pipeline already used for rollover work.
+
+## Year 3 Sequencing Guidance
+
+Recommended execution order:
+
+1. Referee self-service assignment response.
+2. Unified club operations workspace for active tournaments.
+3. Self-service compliance renewal and remediation submission.
+4. Editorial publication scheduling and season-wide public discovery.
+5. Managed partner-authenticated integrations and staged inbound deliveries.
+
+Priority 0 through Priority 2 are now complete for the Year 3 scope.
+
+Current Year 3 execution batch completed in this pass:
+
+1. Done (2026-04-12): Ship referee self-service assignment response in the portal with focused portal regression coverage.
+2. Done (2026-04-12): Ship the unified club tournament workspace for active tournaments with registration, roster, match-day, and result follow-up visibility.
+3. Done (2026-04-12): Ship self-service compliance submission and renewal workflows with portal-scoped remediation visibility.
+4. Done (2026-04-12): Ship season discovery, editorial scheduling, and safer public team follow surfaces.
+5. Done (2026-04-12): Ship managed partner integrations and staged inbound deliveries on top of the governed import pipeline.
+
 ## Year 4 Overview — Intelligence, Planning, and Scale
 
-Year 4 should focus on federation-wide planning and operational intelligence.
-Reporting should evolve from exports and exception queues into decision support,
+Year 4 should focus on federation-wide planning and operational intelligence on
+top of the reporting, exception, and reconciliation surfaces already present.
+Reporting should evolve from exports and queues into decision support,
 compliance and governance should produce audit-grade traces with historical
 trend analysis, and cross-season analysis should support strategic planning,
 budgeting, and performance monitoring.

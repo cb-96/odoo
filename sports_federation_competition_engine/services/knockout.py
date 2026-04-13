@@ -99,6 +99,40 @@ class KnockoutService(models.AbstractModel):
 
         return pairs
 
+    def _build_round_sources(self, teams, bracket_size, round_1_matches):
+        """Build ordered sources for the next round after round 1.
+
+        When the bracket uses power-of-two expansion, top seeds receive byes and
+        should be paired against play-in winners in bracket order. Interleave the
+        bye entrants with the created round-1 matches so later rounds can be
+        wired without indexing past the available play-in matches.
+        """
+        bye_count = bracket_size - len(teams)
+        if bye_count <= 0:
+            return [
+                {"type": "match", "match": match, "result": "winner"}
+                for match in round_1_matches
+            ]
+
+        bye_sources = [
+            {"type": "bye", "team": team}
+            for team in teams[:bye_count]
+        ]
+        match_sources = [
+            {"type": "match", "match": match, "result": "winner"}
+            for match in round_1_matches
+        ]
+
+        round_sources = []
+        max_sources = max(len(bye_sources), len(match_sources))
+        for idx in range(max_sources):
+            if idx < len(bye_sources):
+                round_sources.append(bye_sources[idx])
+            if idx < len(match_sources):
+                round_sources.append(match_sources[idx])
+
+        return round_sources
+
     def _create_full_bracket(self, tournament, stage, teams, bracket_size, first_round_pairs, options, bracket_type):
         """Build the entire bracket: round 1 matches + placeholder matches for subsequent rounds."""
         Match = self.env["federation.match"]
@@ -112,9 +146,6 @@ class KnockoutService(models.AbstractModel):
             venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
         total_rounds = math.ceil(math.log2(bracket_size)) if bracket_size > 1 else 1
-        n_actual = len(teams)
-        bye_count = bracket_size - n_actual
-        bye_teams = teams[:bye_count] if bye_count > 0 else []
 
         round_names = self._get_round_names(total_rounds)
 
@@ -148,41 +179,7 @@ class KnockoutService(models.AbstractModel):
             round_1_matches.append(Match.create(vals))
 
         all_matches = list(round_1_matches)
-
-        # Build the feed list for round 2.
-        # Each slot in feed_sources will later become one side of a round-2 match.
-        # For byes, the team auto-advances (no match); for played matches, the winner advances.
-        # The bracket layout is: top seeds get byes, remaining play first round.
-        # Reconstruct the bracket order to properly wire sources.
-        feed_sources = []
-        bye_idx = 0
-        match_idx = 0
-        slots_in_r2 = bracket_size // 2
-
-        for slot in range(slots_in_r2):
-            # Standard bracket pairing: seed (slot+1) vs seed (bracket_size - slot)
-            top_seed_pos = slot          # 0-indexed
-            bot_seed_pos = bracket_size - 1 - slot
-
-            top_is_bye = top_seed_pos < bye_count
-            bot_is_bye = bot_seed_pos < bye_count
-
-            if top_is_bye and bot_is_bye:
-                # Both byes — shouldn't happen with a valid bracket but handle gracefully
-                feed_sources.append({"type": "bye", "team": teams[top_seed_pos]})
-                feed_sources.append({"type": "bye", "team": teams[bot_seed_pos]})
-            elif top_is_bye:
-                # Top seed has a bye, bottom seed's match result feeds in
-                feed_sources.append({"type": "bye", "team": teams[top_seed_pos]})
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
-            elif bot_is_bye:
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
-                feed_sources.append({"type": "bye", "team": teams[bot_seed_pos]})
-            else:
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
+        feed_sources = self._build_round_sources(teams, bracket_size, round_1_matches)
 
         # --- Rounds 2..N: placeholder matches ---
         prev_round_sources = feed_sources

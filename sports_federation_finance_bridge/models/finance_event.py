@@ -7,6 +7,14 @@ class FederationFinanceEvent(models.Model):
     _description = "Federation Finance Event"
     _order = "create_date desc"
 
+    HANDOFF_STATE_SELECTION = [
+        ("pending_export", "Pending Export"),
+        ("exported", "Exported"),
+        ("reconciled", "Reconciled"),
+        ("closed", "Closed"),
+    ]
+    EXPORT_SCHEMA_VERSION = "finance_event_v1"
+
     name = fields.Char(required=True)
     fee_type_id = fields.Many2one(
         "federation.fee.type",
@@ -61,6 +69,25 @@ class FederationFinanceEvent(models.Model):
     invoice_ref = fields.Char()
     external_ref = fields.Char()
     notes = fields.Text()
+    handoff_state = fields.Selection(
+        HANDOFF_STATE_SELECTION,
+        default="pending_export",
+        required=True,
+    )
+    export_schema_version = fields.Char(
+        default=EXPORT_SCHEMA_VERSION,
+        required=True,
+        readonly=True,
+    )
+    accounting_batch_ref = fields.Char()
+    reconciliation_ref = fields.Char()
+    closure_note = fields.Text()
+    exported_on = fields.Datetime(readonly=True)
+    exported_by_id = fields.Many2one("res.users", readonly=True)
+    reconciled_on = fields.Datetime(readonly=True)
+    reconciled_by_id = fields.Many2one("res.users", readonly=True)
+    closed_on = fields.Datetime(readonly=True)
+    closed_by_id = fields.Many2one("res.users", readonly=True)
 
     _fee_source_unique = models.Constraint('unique (fee_type_id, source_model, source_res_id)', 'A finance event already exists for this fee type and source record.')
 
@@ -86,7 +113,8 @@ class FederationFinanceEvent(models.Model):
         for record in self:
             if record.state != "draft":
                 raise ValidationError("Only draft events can be confirmed.")
-            record.state = "confirmed"
+            record.write({"state": "confirmed"})
+            record.flush_recordset()
             Dispatcher = record.env.get("federation.notification.dispatcher")
             if Dispatcher is not None:
                 Dispatcher.send_finance_event_confirmed(record)
@@ -95,13 +123,77 @@ class FederationFinanceEvent(models.Model):
         for record in self:
             if record.state != "confirmed":
                 raise ValidationError("Only confirmed events can be settled.")
-            record.state = "settled"
+            record.write({"state": "settled"})
+            record.flush_recordset()
 
     def action_cancel(self):
         for record in self:
             if record.state == "settled":
                 raise ValidationError("Settled events cannot be cancelled.")
-            record.state = "cancelled"
+            record.write(
+                {
+                    "state": "cancelled",
+                    "handoff_state": "closed",
+                    "closed_on": fields.Datetime.now(),
+                    "closed_by_id": self.env.user.id,
+                }
+            )
+            record.flush_recordset()
+
+    def action_mark_exported(self):
+        for record in self:
+            if record.state not in ("confirmed", "settled"):
+                raise ValidationError(
+                    "Only confirmed or settled finance events can be exported."
+                )
+            if record.handoff_state == "closed":
+                raise ValidationError("Closed handoff records cannot be exported again.")
+            record.write(
+                {
+                    "handoff_state": "exported",
+                    "exported_on": fields.Datetime.now(),
+                    "exported_by_id": self.env.user.id,
+                }
+            )
+            record.flush_recordset()
+
+    def action_mark_reconciled(self):
+        for record in self:
+            if record.state != "settled":
+                raise ValidationError(
+                    "Only settled finance events can be marked as reconciled."
+                )
+            if record.handoff_state not in ("exported", "reconciled"):
+                raise ValidationError(
+                    "Mark the event as exported before reconciling it with the accounting system."
+                )
+            record.write(
+                {
+                    "handoff_state": "reconciled",
+                    "reconciled_on": fields.Datetime.now(),
+                    "reconciled_by_id": self.env.user.id,
+                }
+            )
+            record.flush_recordset()
+
+    def action_close_handoff(self):
+        for record in self:
+            if record.state != "settled":
+                raise ValidationError(
+                    "Only settled finance events can close the accounting handoff."
+                )
+            if record.handoff_state != "reconciled":
+                raise ValidationError(
+                    "Reconcile the event before closing the accounting handoff."
+                )
+            record.write(
+                {
+                    "handoff_state": "closed",
+                    "closed_on": fields.Datetime.now(),
+                    "closed_by_id": self.env.user.id,
+                }
+            )
+            record.flush_recordset()
 
     @api.model
     def _build_external_ref(self, source_record, fee_type):
@@ -133,6 +225,7 @@ class FederationFinanceEvent(models.Model):
             "source_res_id": source_record.id,
             "partner_id": partner.id if partner else False,
             "external_ref": self._build_external_ref(source_record, fee_type),
+            "export_schema_version": self.EXPORT_SCHEMA_VERSION,
             "notes": note,
         }
 
@@ -208,7 +301,14 @@ class FederationFinanceEvent(models.Model):
                     if value not in (False, None, "") and existing_value != value:
                         update_vals[field_name] = value
                 if existing.state == "cancelled":
-                    update_vals["state"] = "draft"
+                    update_vals.update(
+                        {
+                            "state": "draft",
+                            "handoff_state": "pending_export",
+                            "closed_on": False,
+                            "closed_by_id": False,
+                        }
+                    )
                 if update_vals:
                     existing.write(update_vals)
             elif not existing.external_ref and vals.get("external_ref"):
@@ -216,6 +316,62 @@ class FederationFinanceEvent(models.Model):
             return existing
 
         return self.create(vals)
+
+    @api.model
+    def get_handoff_export_headers(self):
+        return [
+            "Schema Version",
+            "Event ID",
+            "Name",
+            "State",
+            "Handoff State",
+            "Event Type",
+            "Amount",
+            "Currency",
+            "Fee Type",
+            "Accounting Batch Ref",
+            "Reconciliation Ref",
+            "Invoice Ref",
+            "External Ref",
+            "Source Model",
+            "Source Record ID",
+            "Partner",
+            "Club",
+            "Player",
+            "Referee",
+            "Exported On",
+            "Reconciled On",
+            "Closed On",
+            "Closure Note",
+        ]
+
+    def get_handoff_export_row(self):
+        self.ensure_one()
+        return [
+            self.export_schema_version,
+            self.id,
+            self.name,
+            self.state,
+            self.handoff_state,
+            self.event_type,
+            self.amount,
+            self.currency_id.name if self.currency_id else "",
+            self.fee_type_id.code if self.fee_type_id else "",
+            self.accounting_batch_ref or "",
+            self.reconciliation_ref or "",
+            self.invoice_ref or "",
+            self.external_ref or "",
+            self.source_model,
+            self.source_res_id,
+            self.partner_id.display_name if self.partner_id else "",
+            self.club_id.name if self.club_id else "",
+            self.player_id.display_name if self.player_id else "",
+            self.referee_id.display_name if self.referee_id else "",
+            fields.Datetime.to_string(self.exported_on) if self.exported_on else "",
+            fields.Datetime.to_string(self.reconciled_on) if self.reconciled_on else "",
+            fields.Datetime.to_string(self.closed_on) if self.closed_on else "",
+            self.closure_note or "",
+        ]
 
     @api.model
     def create_from_source(

@@ -1,0 +1,825 @@
+ Container sf_ci-ci-db-1  Running
+Running as user 'root' is a security risk.
+2026-04-10 19:18:10,737 1 WARNING ? odoo.tools.config: missing --http-interface/http_interface, using 0.0.0.0 by default, will change to 127.0.0.1 in 20.0 
+2026-04-10 19:18:10,738 1 INFO ? odoo: Odoo version 19.0-20260324 
+2026-04-10 19:18:10,738 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2026-04-10 19:18:10,738 1 INFO ? odoo: addons paths: _NamespacePath(['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/19.0', '/mnt/extra-addons', '/usr/lib/python3/dist-packages/addons']) 
+2026-04-10 19:18:10,738 1 INFO ? odoo: database: odoo@ci-db:5432 
+2026-04-10 19:18:11,014 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on b7cfffcbae7f:8069 
+2026-04-10 19:18:11,032 1 INFO odoo_ci_test odoo.tests.common: Importing test framework 
+2026-04-10 19:18:11,060 1 INFO odoo_ci_test odoo.modules.loading: Initializing database odoo_ci_test 
+2026-04-10 19:18:12,129 1 INFO odoo_ci_test odoo.modules.loading: loading 1 modules... 
+2026-04-10 19:18:12,129 1 INFO odoo_ci_test odoo.modules.loading: Loading module base (1/1) 
+2026-04-10 19:18:12,157 1 INFO odoo_ci_test odoo.registry: module base: creating or updating database tables 
+2026-04-10 19:18:12,394 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.module.module.menus_by_module 
+2026-04-10 19:18:12,394 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.module.module.reports_by_module 
+2026-04-10 19:18:12,394 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.module.module.views_by_module 
+2026-04-10 19:18:12,469 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.user_id 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.commercial_partner_id 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.complete_name 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.lang 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.company_registry 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.commercial_company_name 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.properties 
+2026-04-10 19:18:12,470 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.partner_share 
+2026-04-10 19:18:12,494 1 INFO odoo_ci_test odoo.models: Prepare computation of res.currency.decimal_places 
+2026-04-10 19:18:12,512 1 INFO odoo_ci_test odoo.models: Prepare computation of res.company.uses_default_logo 
+2026-04-10 19:18:12,512 1 INFO odoo_ci_test odoo.models: Prepare computation of res.company.logo_web 
+2026-04-10 19:18:12,514 1 INFO odoo_ci_test odoo.models: Computing parent_path for table res_company... 
+2026-04-10 19:18:12,535 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.signature 
+2026-04-10 19:18:12,535 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.share 
+2026-04-10 19:18:13,804 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_bank.xml 
+2026-04-10 19:18:13,808 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res.lang.csv 
+2026-04-10 19:18:13,847 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_lang_data.xml 
+2026-04-10 19:18:13,878 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_partner_data.xml 
+2026-04-10 19:18:13,926 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_currency_data.xml 
+2026-04-10 19:18:14,360 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_company_data.xml 
+2026-04-10 19:18:14,367 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_users_data.xml 
+2026-04-10 19:18:15,374 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/report_paperformat_data.xml 
+2026-04-10 19:18:15,381 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res_country_data.xml 
+2026-04-10 19:18:15,905 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_data.xml 
+2026-04-10 19:18:15,917 1 INFO odoo_ci_test odoo.modules.loading: loading base/security/base_groups.xml 
+2026-04-10 19:18:16,101 1 INFO odoo_ci_test odoo.modules.loading: loading base/security/base_security.xml 
+2026-04-10 19:18:16,267 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/wizard_ir_model_menu_create_views.xml 
+2026-04-10 19:18:16,280 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/base_menus.xml 
+2026-04-10 19:18:16,334 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/decimal_precision_views.xml 
+2026-04-10 19:18:16,352 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_config_views.xml 
+2026-04-10 19:18:16,360 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/res.country.state.csv 
+2026-04-10 19:18:16,674 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_actions_views.xml 
+2026-04-10 19:18:16,811 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_asset_views.xml 
+2026-04-10 19:18:16,828 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_config_parameter_views.xml 
+2026-04-10 19:18:16,844 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_cron_views.xml 
+2026-04-10 19:18:16,871 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_cron_trigger_views.xml 
+2026-04-10 19:18:16,887 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_filters_views.xml 
+2026-04-10 19:18:16,910 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_mail_server_views.xml 
+2026-04-10 19:18:16,930 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_model_views.xml 
+2026-04-10 19:18:17,061 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_attachment_views.xml 
+2026-04-10 19:18:17,082 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_rule_views.xml 
+2026-04-10 19:18:17,102 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_sequence_views.xml 
+2026-04-10 19:18:17,123 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_ui_menu_views.xml 
+2026-04-10 19:18:17,143 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_ui_view_views.xml 
+2026-04-10 19:18:17,190 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_default_views.xml 
+2026-04-10 19:18:17,210 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_config_parameter_data.xml 
+2026-04-10 19:18:17,213 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_cron_data.xml 
+2026-04-10 19:18:17,225 1 INFO odoo_ci_test odoo.modules.loading: loading base/report/ir_model_report.xml 
+2026-04-10 19:18:17,229 1 INFO odoo_ci_test odoo.modules.loading: loading base/report/ir_model_templates.xml 
+2026-04-10 19:18:17,238 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_logging_views.xml 
+2026-04-10 19:18:17,257 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_qweb_widget_templates.xml 
+2026-04-10 19:18:17,270 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_module_views.xml 
+2026-04-10 19:18:17,321 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_module_category_data.xml 
+2026-04-10 19:18:17,357 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_module_module.xml 
+2026-04-10 19:18:17,413 1 INFO odoo_ci_test odoo.modules.loading: loading base/report/ir_module_reports.xml 
+2026-04-10 19:18:17,417 1 INFO odoo_ci_test odoo.modules.loading: loading base/report/ir_module_report_templates.xml 
+2026-04-10 19:18:17,423 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_module_update_views.xml 
+2026-04-10 19:18:17,436 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_language_install_views.xml 
+2026-04-10 19:18:17,451 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_import_language_views.xml 
+2026-04-10 19:18:17,461 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_module_upgrade_views.xml 
+2026-04-10 19:18:17,477 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_module_uninstall_views.xml 
+2026-04-10 19:18:17,485 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_export_language_views.xml 
+2026-04-10 19:18:17,497 1 INFO odoo_ci_test odoo.modules.loading: loading base/wizard/base_partner_merge_views.xml 
+2026-04-10 19:18:17,510 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+2026-04-10 19:18:17,525 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/ir_profile_views.xml 
+2026-04-10 19:18:17,547 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_company_views.xml 
+2026-04-10 19:18:17,566 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_lang_views.xml 
+2026-04-10 19:18:17,585 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_partner_views.xml 
+2026-04-10 19:18:17,666 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_bank_views.xml 
+2026-04-10 19:18:17,698 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_country_views.xml 
+2026-04-10 19:18:17,741 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_currency_views.xml 
+2026-04-10 19:18:17,780 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_groups_views.xml 
+2026-04-10 19:18:17,824 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_users_views.xml 
+2026-04-10 19:18:17,917 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_users_apikeys_views.xml 
+2026-04-10 19:18:17,923 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_device_views.xml 
+2026-04-10 19:18:17,945 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_users_identitycheck_views.xml 
+2026-04-10 19:18:17,953 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/res_config_settings_views.xml 
+2026-04-10 19:18:17,962 1 INFO odoo_ci_test odoo.modules.loading: loading base/views/report_paperformat_views.xml 
+2026-04-10 19:18:17,988 1 INFO odoo_ci_test odoo.modules.loading: loading base/security/ir.model.access.csv 
+2026-04-10 19:18:18,305 1 INFO odoo_ci_test odoo.modules.loading: Module base loaded in 6.18s, 8397 queries (+8397 other) 
+2026-04-10 19:18:18,305 1 INFO odoo_ci_test odoo.modules.loading: 1 modules loaded in 6.18s, 8397 queries (+8397 extra) 
+2026-04-10 19:18:18,308 1 INFO odoo_ci_test odoo.modules.loading: updating modules list 
+2026-04-10 19:18:18,309 1 INFO odoo_ci_test odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-04-10 19:18:19,132 1 INFO odoo_ci_test odoo.addons.base.models.ir_module: ALLOW access to module.button_install on ['Sports Federation Club Roles & Portal'] to user __system__ #1 via n/a 
+2026-04-10 19:18:19,242 1 INFO odoo_ci_test odoo.modules.loading: loading 48 modules... 
+2026-04-10 19:18:19,243 1 INFO odoo_ci_test odoo.modules.loading: Loading module rpc (2/48) 
+2026-04-10 19:18:19,260 1 INFO odoo_ci_test odoo.modules.loading: Module rpc loaded in 0.02s, 9 queries (+9 other) 
+2026-04-10 19:18:19,261 1 INFO odoo_ci_test odoo.modules.loading: Loading module social_media (3/48) 
+2026-04-10 19:18:19,268 1 INFO odoo_ci_test odoo.registry: module social_media: creating or updating database tables 
+2026-04-10 19:18:19,304 1 INFO odoo_ci_test odoo.modules.loading: loading social_media/views/res_company_views.xml 
+2026-04-10 19:18:19,323 1 INFO odoo_ci_test odoo.modules.loading: Module social_media loaded in 0.06s, 75 queries (+75 other) 
+2026-04-10 19:18:19,323 1 INFO odoo_ci_test odoo.modules.loading: Loading module web (4/48) 
+2026-04-10 19:18:19,355 1 INFO odoo_ci_test odoo.registry: module web: creating or updating database tables 
+2026-04-10 19:18:19,775 1 INFO odoo_ci_test odoo.modules.loading: loading web/security/ir.model.access.csv 
+2026-04-10 19:18:19,782 1 INFO odoo_ci_test odoo.modules.loading: loading web/security/web_security.xml 
+2026-04-10 19:18:19,793 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/webclient_templates.xml 
+2026-04-10 19:18:19,840 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/report_templates.xml 
+2026-04-10 19:18:19,924 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/base_document_layout_views.xml 
+2026-04-10 19:18:19,940 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/partner_view.xml 
+2026-04-10 19:18:19,948 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/speedscope_template.xml 
+2026-04-10 19:18:19,953 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/memory_template.xml 
+2026-04-10 19:18:19,960 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/speedscope_config_wizard.xml 
+2026-04-10 19:18:19,967 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/neutralize_views.xml 
+2026-04-10 19:18:19,975 1 INFO odoo_ci_test odoo.modules.loading: loading web/views/ir_ui_view_views.xml 
+2026-04-10 19:18:19,988 1 INFO odoo_ci_test odoo.modules.loading: loading web/data/ir_attachment.xml 
+2026-04-10 19:18:19,994 1 INFO odoo_ci_test odoo.modules.loading: loading web/data/report_layout.xml 
+2026-04-10 19:18:20,049 1 INFO odoo_ci_test odoo.modules.loading: Module web loaded in 0.73s, 1229 queries (+1229 other) 
+2026-04-10 19:18:20,050 1 INFO odoo_ci_test odoo.modules.loading: Loading module api_doc (5/48) 
+2026-04-10 19:18:20,056 1 INFO odoo_ci_test odoo.registry: module api_doc: creating or updating database tables 
+2026-04-10 19:18:20,072 1 INFO odoo_ci_test odoo.modules.loading: loading api_doc/security/res_groups.xml 
+2026-04-10 19:18:20,092 1 INFO odoo_ci_test odoo.modules.loading: loading api_doc/views/docclient.xml 
+2026-04-10 19:18:20,110 1 INFO odoo_ci_test odoo.modules.loading: Module api_doc loaded in 0.06s, 63 queries (+63 other) 
+2026-04-10 19:18:20,110 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_totp (6/48) 
+2026-04-10 19:18:20,126 1 INFO odoo_ci_test odoo.registry: module auth_totp: creating or updating database tables 
+2026-04-10 19:18:20,189 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/security/security.xml 
+2026-04-10 19:18:20,208 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/security/ir.model.access.csv 
+2026-04-10 19:18:20,214 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/data/ir_action_data.xml 
+2026-04-10 19:18:20,220 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/views/res_users_views.xml 
+2026-04-10 19:18:20,246 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/views/templates.xml 
+2026-04-10 19:18:20,251 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp/wizard/auth_totp_wizard_views.xml 
+2026-04-10 19:18:20,270 1 INFO odoo_ci_test odoo.modules.loading: Module auth_totp loaded in 0.16s, 218 queries (+218 other) 
+2026-04-10 19:18:20,271 1 INFO odoo_ci_test odoo.modules.loading: Loading module base_import (7/48) 
+2026-04-10 19:18:20,305 1 INFO odoo_ci_test odoo.registry: module base_import: creating or updating database tables 
+2026-04-10 19:18:20,731 1 INFO odoo_ci_test odoo.modules.loading: loading base_import/security/ir.model.access.csv 
+2026-04-10 19:18:20,744 1 INFO odoo_ci_test odoo.modules.loading: Module base_import loaded in 0.47s, 956 queries (+956 other) 
+2026-04-10 19:18:20,744 1 INFO odoo_ci_test odoo.modules.loading: Loading module base_import_module (8/48) 
+2026-04-10 19:18:20,751 1 INFO odoo_ci_test odoo.registry: module base_import_module: creating or updating database tables 
+2026-04-10 19:18:20,805 1 INFO odoo_ci_test odoo.modules.loading: loading base_import_module/security/ir.model.access.csv 
+2026-04-10 19:18:20,811 1 INFO odoo_ci_test odoo.modules.loading: loading base_import_module/views/base_import_module_view.xml 
+2026-04-10 19:18:20,829 1 INFO odoo_ci_test odoo.modules.loading: loading base_import_module/views/ir_module_views.xml 
+2026-04-10 19:18:20,869 1 INFO odoo_ci_test odoo.modules.loading: Module base_import_module loaded in 0.13s, 172 queries (+172 other) 
+2026-04-10 19:18:20,869 1 INFO odoo_ci_test odoo.modules.loading: Loading module base_setup (9/48) 
+2026-04-10 19:18:20,877 1 INFO odoo_ci_test odoo.registry: module base_setup: creating or updating database tables 
+2026-04-10 19:18:20,917 1 INFO odoo_ci_test odoo.modules.loading: loading base_setup/data/base_setup_data.xml 
+2026-04-10 19:18:20,921 1 INFO odoo_ci_test odoo.modules.loading: loading base_setup/views/res_config_settings_views.xml 
+2026-04-10 19:18:20,949 1 INFO odoo_ci_test odoo.modules.loading: loading base_setup/views/res_partner_views.xml 
+2026-04-10 19:18:20,966 1 INFO odoo_ci_test odoo.modules.loading: Module base_setup loaded in 0.10s, 152 queries (+152 other) 
+2026-04-10 19:18:20,966 1 INFO odoo_ci_test odoo.modules.loading: Loading module bus (10/48) 
+2026-04-10 19:18:20,983 1 INFO odoo_ci_test odoo.registry: module bus: creating or updating database tables 
+2026-04-10 19:18:21,064 1 INFO odoo_ci_test odoo.modules.loading: loading bus/security/ir.model.access.csv 
+2026-04-10 19:18:21,078 1 INFO odoo_ci_test odoo.modules.loading: Module bus loaded in 0.11s, 152 queries (+152 other) 
+2026-04-10 19:18:21,078 1 INFO odoo_ci_test odoo.modules.loading: Loading module http_routing (11/48) 
+2026-04-10 19:18:21,081 1 INFO odoo_ci_test odoo.registry: module http_routing: creating or updating database tables 
+2026-04-10 19:18:21,099 1 INFO odoo_ci_test odoo.modules.loading: loading http_routing/views/http_routing_template.xml 
+2026-04-10 19:18:21,136 1 INFO odoo_ci_test odoo.modules.loading: loading http_routing/views/res_lang_views.xml 
+2026-04-10 19:18:21,159 1 INFO odoo_ci_test odoo.modules.loading: Module http_routing loaded in 0.08s, 114 queries (+114 other) 
+2026-04-10 19:18:21,159 1 INFO odoo_ci_test odoo.modules.loading: Loading module resource (12/48) 
+2026-04-10 19:18:21,171 1 INFO odoo_ci_test odoo.registry: module resource: creating or updating database tables 
+2026-04-10 19:18:21,281 1 INFO odoo_ci_test odoo.modules.loading: loading resource/data/resource_data.xml 
+2026-04-10 19:18:21,298 1 INFO odoo_ci_test odoo.modules.loading: loading resource/security/ir.model.access.csv 
+2026-04-10 19:18:21,308 1 INFO odoo_ci_test odoo.modules.loading: loading resource/security/resource_security.xml 
+2026-04-10 19:18:21,329 1 INFO odoo_ci_test odoo.modules.loading: loading resource/views/resource_resource_views.xml 
+2026-04-10 19:18:21,352 1 INFO odoo_ci_test odoo.modules.loading: loading resource/views/resource_calendar_leaves_views.xml 
+2026-04-10 19:18:21,377 1 INFO odoo_ci_test odoo.modules.loading: loading resource/views/resource_calendar_attendance_views.xml 
+2026-04-10 19:18:21,388 1 INFO odoo_ci_test odoo.modules.loading: loading resource/views/resource_calendar_views.xml 
+2026-04-10 19:18:21,410 1 INFO odoo_ci_test odoo.modules.loading: loading resource/views/menuitems.xml 
+2026-04-10 19:18:21,432 1 INFO odoo_ci_test odoo.modules.loading: Module resource loaded in 0.27s, 414 queries (+414 other) 
+2026-04-10 19:18:21,432 1 INFO odoo_ci_test odoo.modules.loading: Loading module utm (13/48) 
+2026-04-10 19:18:21,439 1 INFO odoo_ci_test odoo.registry: module utm: creating or updating database tables 
+2026-04-10 19:18:21,526 1 INFO odoo_ci_test odoo.modules.loading: loading utm/data/utm_medium_data.xml 
+2026-04-10 19:18:21,544 1 INFO odoo_ci_test odoo.modules.loading: loading utm/data/utm_source_data.xml 
+2026-04-10 19:18:21,560 1 INFO odoo_ci_test odoo.modules.loading: loading utm/data/utm_stage_data.xml 
+2026-04-10 19:18:21,564 1 INFO odoo_ci_test odoo.modules.loading: loading utm/data/utm_tag_data.xml 
+2026-04-10 19:18:21,567 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_campaign_views.xml 
+2026-04-10 19:18:21,593 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_medium_views.xml 
+2026-04-10 19:18:21,607 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_source_views.xml 
+2026-04-10 19:18:21,618 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_stage_views.xml 
+2026-04-10 19:18:21,633 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_tag_views.xml 
+2026-04-10 19:18:21,641 1 INFO odoo_ci_test odoo.modules.loading: loading utm/views/utm_menus.xml 
+2026-04-10 19:18:21,660 1 INFO odoo_ci_test odoo.modules.loading: loading utm/security/ir.model.access.csv 
+2026-04-10 19:18:21,681 1 INFO odoo_ci_test odoo.modules.loading: Module utm loaded in 0.25s, 410 queries (+410 other) 
+2026-04-10 19:18:21,681 1 INFO odoo_ci_test odoo.modules.loading: Loading module web_tour (14/48) 
+2026-04-10 19:18:21,689 1 INFO odoo_ci_test odoo.registry: module web_tour: creating or updating database tables 
+2026-04-10 19:18:21,693 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.tour_enabled 
+2026-04-10 19:18:21,757 1 INFO odoo_ci_test odoo.modules.loading: loading web_tour/security/ir.model.access.csv 
+2026-04-10 19:18:21,764 1 INFO odoo_ci_test odoo.modules.loading: loading web_tour/views/tour_views.xml 
+2026-04-10 19:18:21,802 1 INFO odoo_ci_test odoo.modules.loading: Module web_tour loaded in 0.12s, 180 queries (+180 other) 
+2026-04-10 19:18:21,802 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_passkey (15/48) 
+2026-04-10 19:18:21,835 1 INFO odoo_ci_test odoo.registry: module auth_passkey: creating or updating database tables 
+2026-04-10 19:18:21,890 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/views/auth_passkey_key_views.xml 
+2026-04-10 19:18:21,910 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/views/auth_passkey_login_templates.xml 
+2026-04-10 19:18:21,921 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/views/res_users_identitycheck_views.xml 
+2026-04-10 19:18:21,930 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/views/res_users_views.xml 
+2026-04-10 19:18:21,948 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/security/ir.model.access.csv 
+2026-04-10 19:18:21,955 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey/security/security.xml 
+2026-04-10 19:18:21,978 1 INFO odoo_ci_test odoo.modules.loading: Module auth_passkey loaded in 0.18s, 218 queries (+218 other) 
+2026-04-10 19:18:21,978 1 INFO odoo_ci_test odoo.modules.loading: Loading module google_recaptcha (16/48) 
+2026-04-10 19:18:21,982 1 INFO odoo_ci_test odoo.registry: module google_recaptcha: creating or updating database tables 
+2026-04-10 19:18:22,002 1 INFO odoo_ci_test odoo.modules.loading: loading google_recaptcha/views/res_config_settings_view.xml 
+2026-04-10 19:18:22,028 1 INFO odoo_ci_test odoo.modules.loading: Module google_recaptcha loaded in 0.05s, 64 queries (+64 other) 
+2026-04-10 19:18:22,028 1 INFO odoo_ci_test odoo.modules.loading: Loading module html_editor (17/48) 
+2026-04-10 19:18:22,186 1 INFO odoo_ci_test odoo.registry: module html_editor: creating or updating database tables 
+2026-04-10 19:18:22,678 1 INFO odoo_ci_test odoo.modules.loading: loading html_editor/security/ir.model.access.csv 
+2026-04-10 19:18:22,694 1 INFO odoo_ci_test odoo.modules.loading: Module html_editor loaded in 0.67s, 1110 queries (+1110 other) 
+2026-04-10 19:18:22,694 1 INFO odoo_ci_test odoo.modules.loading: Loading module iap (18/48) 
+2026-04-10 19:18:22,698 1 INFO odoo_ci_test odoo.registry: module iap: creating or updating database tables 
+2026-04-10 19:18:22,754 1 INFO odoo_ci_test odoo.modules.loading: loading iap/data/services.xml 
+2026-04-10 19:18:22,758 1 INFO odoo_ci_test odoo.modules.loading: loading iap/security/ir.model.access.csv 
+2026-04-10 19:18:22,765 1 INFO odoo_ci_test odoo.modules.loading: loading iap/security/ir_rule.xml 
+2026-04-10 19:18:22,771 1 INFO odoo_ci_test odoo.modules.loading: loading iap/views/iap_views.xml 
+2026-04-10 19:18:22,794 1 INFO odoo_ci_test odoo.modules.loading: loading iap/views/res_config_settings.xml 
+2026-04-10 19:18:22,816 1 INFO odoo_ci_test odoo.modules.loading: Module iap loaded in 0.12s, 184 queries (+184 other) 
+2026-04-10 19:18:22,816 1 INFO odoo_ci_test odoo.modules.loading: Loading module mail (19/48) 
+2026-04-10 19:18:22,884 1 INFO odoo_ci_test odoo.registry: module mail: creating or updating database tables 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.partner_ids 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_user_id 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_type_id 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.template_id 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_date_deadline_range 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_summary 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.followers_type 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.followers_partner_field_name 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.mail_post_method 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_date_deadline_range_type 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_user_type 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_user_field_name 
+2026-04-10 19:18:23,050 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.activity_note 
+2026-04-10 19:18:23,051 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.mail_post_autofollow 
+2026-04-10 19:18:23,108 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.notification_type 
+2026-04-10 19:18:23,158 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.email_normalized 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:43: (WARNING/2) Block quote ends without a blank line; unexpected unindent.
+2026-04-10 19:18:24,466 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_groups.xml 
+2026-04-10 19:18:24,487 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_activity_schedule_views.xml 
+2026-04-10 19:18:24,499 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_blacklist_remove_views.xml 
+2026-04-10 19:18:24,505 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_compose_message_views.xml 
+2026-04-10 19:18:24,522 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_template_preview_views.xml 
+2026-04-10 19:18:24,531 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_followers_edit_views.xml 
+2026-04-10 19:18:24,542 1 INFO odoo_ci_test odoo.modules.loading: loading mail/wizard/mail_template_reset_views.xml 
+2026-04-10 19:18:24,551 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/fetchmail_views.xml 
+2026-04-10 19:18:24,568 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/ir_cron_views.xml 
+2026-04-10 19:18:24,579 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/ir_filters_views.xml 
+2026-04-10 19:18:24,597 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/ir_mail_server_views.xml 
+2026-04-10 19:18:24,606 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_message_subtype_views.xml 
+2026-04-10 19:18:24,621 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_tracking_value_views.xml 
+2026-04-10 19:18:24,633 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_notification_views.xml 
+2026-04-10 19:18:24,644 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_message_views.xml 
+2026-04-10 19:18:24,671 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_message_schedule_views.xml 
+2026-04-10 19:18:24,686 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_mail_views.xml 
+2026-04-10 19:18:24,709 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_followers_views.xml 
+2026-04-10 19:18:24,724 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_ice_server_views.xml 
+2026-04-10 19:18:24,744 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss_channel_member_views.xml 
+2026-04-10 19:18:24,756 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss_channel_rtc_session_views.xml 
+2026-04-10 19:18:24,772 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_link_preview_views.xml 
+2026-04-10 19:18:24,789 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss/discuss_gif_favorite_views.xml 
+2026-04-10 19:18:24,801 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss_channel_views.xml 
+2026-04-10 19:18:24,832 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_canned_response_views.xml 
+2026-04-10 19:18:24,855 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_role_views.xml 
+2026-04-10 19:18:24,870 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_activity_views.xml 
+2026-04-10 19:18:24,961 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_activity_plan_views.xml 
+2026-04-10 19:18:24,998 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_activity_plan_template_views.xml 
+2026-04-10 19:18:25,008 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_config_settings_views.xml 
+2026-04-10 19:18:25,031 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/ir_config_parameter_data.xml 
+2026-04-10 19:18:25,036 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/res_partner_data.xml 
+2026-04-10 19:18:25,097 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_message_subtype_data.xml 
+2026-04-10 19:18:25,104 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_templates_chatter.xml 
+2026-04-10 19:18:25,121 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_templates_email_layouts.xml 
+2026-04-10 19:18:25,139 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_templates_mailgateway.xml 
+2026-04-10 19:18:25,155 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/discuss_channel_data.xml 
+2026-04-10 19:18:25,189 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_activity_type_data.xml 
+2026-04-10 19:18:25,200 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/security_notifications_templates.xml 
+2026-04-10 19:18:25,205 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/ir_cron_data.xml 
+2026-04-10 19:18:25,300 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/ir_actions_client.xml 
+2026-04-10 19:18:25,305 1 INFO odoo_ci_test odoo.modules.loading: loading mail/security/mail_security.xml 
+2026-04-10 19:18:25,442 1 INFO odoo_ci_test odoo.modules.loading: loading mail/security/ir.model.access.csv 
+2026-04-10 19:18:25,483 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss_public_templates.xml 
+2026-04-10 19:18:25,488 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_alias_domain_views.xml 
+2026-04-10 19:18:25,505 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_alias_views.xml 
+2026-04-10 19:18:25,523 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_gateway_allowed_views.xml 
+2026-04-10 19:18:25,535 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_guest_views.xml 
+2026-04-10 19:18:25,547 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_message_reaction_views.xml 
+2026-04-10 19:18:25,559 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_templates_public.xml 
+2026-04-10 19:18:25,567 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_users_views.xml 
+2026-04-10 19:18:25,592 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_users_settings_views.xml 
+2026-04-10 19:18:25,607 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_template_views.xml 
+2026-04-10 19:18:25,628 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/ir_actions_server_views.xml 
+2026-04-10 19:18:25,645 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/ir_model_views.xml 
+2026-04-10 19:18:25,676 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_partner_views.xml 
+2026-04-10 19:18:25,718 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_blacklist_views.xml 
+2026-04-10 19:18:25,734 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_menus.xml 
+2026-04-10 19:18:25,850 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss/discuss_menus.xml 
+2026-04-10 19:18:25,854 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/discuss/discuss_call_history_views.xml 
+2026-04-10 19:18:25,869 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/res_company_views.xml 
+2026-04-10 19:18:25,880 1 INFO odoo_ci_test odoo.modules.loading: loading mail/views/mail_scheduled_message_views.xml 
+2026-04-10 19:18:25,888 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_canned_response_data.xml 
+2026-04-10 19:18:25,896 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/mail_templates_invite.xml 
+2026-04-10 19:18:25,908 1 INFO odoo_ci_test odoo.modules.loading: loading mail/data/web_tour_tour.xml 
+2026-04-10 19:18:25,983 1 INFO odoo_ci_test odoo.modules.loading: Module mail loaded in 3.17s, 5056 queries (+5057 other) 
+2026-04-10 19:18:25,983 1 INFO odoo_ci_test odoo.modules.loading: Loading module web_unsplash (20/48) 
+2026-04-10 19:18:25,995 1 INFO odoo_ci_test odoo.registry: module web_unsplash: creating or updating database tables 
+2026-04-10 19:18:26,042 1 INFO odoo_ci_test odoo.modules.loading: loading web_unsplash/views/res_config_settings_view.xml 
+2026-04-10 19:18:26,075 1 INFO odoo_ci_test odoo.modules.loading: Module web_unsplash loaded in 0.09s, 112 queries (+112 other) 
+2026-04-10 19:18:26,075 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_signup (21/48) 
+2026-04-10 19:18:26,089 1 INFO odoo_ci_test odoo.registry: module auth_signup: creating or updating database tables 
+2026-04-10 19:18:26,150 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/data/ir_config_parameter_data.xml 
+2026-04-10 19:18:26,155 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/data/ir_cron_data.xml 
+2026-04-10 19:18:26,176 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/data/mail_template_data.xml 
+2026-04-10 19:18:26,252 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/views/res_config_settings_views.xml 
+2026-04-10 19:18:26,266 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/views/res_users_views.xml 
+2026-04-10 19:18:26,291 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/views/auth_signup_login_templates.xml 
+2026-04-10 19:18:26,310 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/views/auth_signup_templates_email.xml 
+2026-04-10 19:18:26,316 1 INFO odoo_ci_test odoo.modules.loading: loading auth_signup/views/webclient_templates.xml 
+2026-04-10 19:18:26,363 1 INFO odoo_ci_test odoo.modules.loading: Module auth_signup loaded in 0.29s, 255 queries (+255 other) 
+2026-04-10 19:18:26,363 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_totp_mail (22/48) 
+2026-04-10 19:18:26,374 1 INFO odoo_ci_test odoo.registry: module auth_totp_mail: creating or updating database tables 
+2026-04-10 19:18:26,412 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/data/ir_action_data.xml 
+2026-04-10 19:18:26,435 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/data/mail_template_data.xml 
+2026-04-10 19:18:26,470 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/data/security_notifications_template.xml 
+2026-04-10 19:18:26,477 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/views/res_config_settings_views.xml 
+2026-04-10 19:18:26,493 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/views/res_users_views.xml 
+2026-04-10 19:18:26,512 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_mail/views/templates.xml 
+2026-04-10 19:18:26,536 1 INFO odoo_ci_test odoo.modules.loading: Module auth_totp_mail loaded in 0.17s, 189 queries (+189 other) 
+2026-04-10 19:18:26,536 1 INFO odoo_ci_test odoo.modules.loading: Loading module base_install_request (23/48) 
+2026-04-10 19:18:26,542 1 INFO odoo_ci_test odoo.registry: module base_install_request: creating or updating database tables 
+2026-04-10 19:18:26,594 1 INFO odoo_ci_test odoo.modules.loading: loading base_install_request/security/ir.model.access.csv 
+2026-04-10 19:18:26,603 1 INFO odoo_ci_test odoo.modules.loading: loading base_install_request/wizard/base_module_install_request_views.xml 
+2026-04-10 19:18:26,620 1 INFO odoo_ci_test odoo.modules.loading: loading base_install_request/data/mail_template_data.xml 
+2026-04-10 19:18:26,626 1 INFO odoo_ci_test odoo.modules.loading: loading base_install_request/data/mail_templates_module_install.xml 
+2026-04-10 19:18:26,631 1 INFO odoo_ci_test odoo.modules.loading: loading base_install_request/views/ir_module_module_views.xml 
+2026-04-10 19:18:26,653 1 INFO odoo_ci_test odoo.modules.loading: Module base_install_request loaded in 0.12s, 154 queries (+154 other) 
+2026-04-10 19:18:26,653 1 INFO odoo_ci_test odoo.modules.loading: Loading module google_gmail (24/48) 
+2026-04-10 19:18:26,666 1 INFO odoo_ci_test odoo.registry: module google_gmail: creating or updating database tables 
+2026-04-10 19:18:26,719 1 INFO odoo_ci_test odoo.modules.loading: loading google_gmail/views/fetchmail_server_views.xml 
+2026-04-10 19:18:26,734 1 INFO odoo_ci_test odoo.modules.loading: loading google_gmail/views/ir_mail_server_views.xml 
+2026-04-10 19:18:26,745 1 INFO odoo_ci_test odoo.modules.loading: loading google_gmail/views/res_config_settings_views.xml 
+2026-04-10 19:18:26,765 1 INFO odoo_ci_test odoo.modules.loading: loading google_gmail/views/templates.xml 
+2026-04-10 19:18:26,777 1 INFO odoo_ci_test odoo.modules.loading: Module google_gmail loaded in 0.12s, 155 queries (+155 other) 
+2026-04-10 19:18:26,777 1 INFO odoo_ci_test odoo.modules.loading: Loading module html_builder (25/48) 
+2026-04-10 19:18:26,799 1 INFO odoo_ci_test odoo.modules.loading: Module html_builder loaded in 0.02s, 10 queries (+10 other) 
+2026-04-10 19:18:26,799 1 INFO odoo_ci_test odoo.modules.loading: Loading module iap_mail (26/48) 
+2026-04-10 19:18:26,803 1 INFO odoo_ci_test odoo.registry: module iap_mail: creating or updating database tables 
+2026-04-10 19:18:26,830 1 INFO odoo_ci_test odoo.modules.loading: loading iap_mail/data/mail_templates.xml 
+2026-04-10 19:18:26,844 1 INFO odoo_ci_test odoo.modules.loading: loading iap_mail/views/iap_views.xml 
+2026-04-10 19:18:26,864 1 INFO odoo_ci_test odoo.modules.loading: Module iap_mail loaded in 0.07s, 70 queries (+70 other) 
+2026-04-10 19:18:26,864 1 INFO odoo_ci_test odoo.modules.loading: Loading module mail_bot (27/48) 
+2026-04-10 19:18:26,874 1 INFO odoo_ci_test odoo.registry: module mail_bot: creating or updating database tables 
+2026-04-10 19:18:26,915 1 INFO odoo_ci_test odoo.modules.loading: loading mail_bot/views/res_users_views.xml 
+2026-04-10 19:18:26,932 1 INFO odoo_ci_test odoo.modules.loading: loading mail_bot/data/mailbot_data.xml 
+2026-04-10 19:18:26,943 1 INFO odoo_ci_test odoo.modules.loading: Module mail_bot loaded in 0.08s, 109 queries (+109 other) 
+2026-04-10 19:18:26,943 1 INFO odoo_ci_test odoo.modules.loading: Loading module microsoft_outlook (28/48) 
+2026-04-10 19:18:26,956 1 INFO odoo_ci_test odoo.registry: module microsoft_outlook: creating or updating database tables 
+2026-04-10 19:18:27,012 1 INFO odoo_ci_test odoo.modules.loading: loading microsoft_outlook/views/fetchmail_server_views.xml 
+2026-04-10 19:18:27,028 1 INFO odoo_ci_test odoo.modules.loading: loading microsoft_outlook/views/ir_mail_server_views.xml 
+2026-04-10 19:18:27,039 1 INFO odoo_ci_test odoo.modules.loading: loading microsoft_outlook/views/res_config_settings_views.xml 
+2026-04-10 19:18:27,059 1 INFO odoo_ci_test odoo.modules.loading: loading microsoft_outlook/views/templates.xml 
+2026-04-10 19:18:27,071 1 INFO odoo_ci_test odoo.modules.loading: Module microsoft_outlook loaded in 0.13s, 158 queries (+158 other) 
+2026-04-10 19:18:27,071 1 INFO odoo_ci_test odoo.modules.loading: Loading module phone_validation (29/48) 
+2026-04-10 19:18:27,162 1 INFO odoo_ci_test odoo.registry: module phone_validation: creating or updating database tables 
+2026-04-10 19:18:27,173 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.phone_sanitized 
+2026-04-10 19:18:27,943 1 INFO odoo_ci_test odoo.modules.loading: loading phone_validation/security/ir.model.access.csv 
+2026-04-10 19:18:27,953 1 INFO odoo_ci_test odoo.modules.loading: loading phone_validation/views/phone_blacklist_views.xml 
+2026-04-10 19:18:27,983 1 INFO odoo_ci_test odoo.modules.loading: loading phone_validation/views/res_partner_views.xml 
+2026-04-10 19:18:27,995 1 INFO odoo_ci_test odoo.modules.loading: loading phone_validation/wizard/phone_blacklist_remove_view.xml 
+2026-04-10 19:18:28,014 1 INFO odoo_ci_test odoo.modules.loading: Module phone_validation loaded in 0.94s, 1703 queries (+1703 other) 
+2026-04-10 19:18:28,014 1 INFO odoo_ci_test odoo.modules.loading: Loading module privacy_lookup (30/48) 
+2026-04-10 19:18:28,030 1 INFO odoo_ci_test odoo.registry: module privacy_lookup: creating or updating database tables 
+2026-04-10 19:18:28,128 1 INFO odoo_ci_test odoo.modules.loading: loading privacy_lookup/wizard/privacy_lookup_wizard_views.xml 
+2026-04-10 19:18:28,177 1 INFO odoo_ci_test odoo.modules.loading: loading privacy_lookup/views/privacy_log_views.xml 
+2026-04-10 19:18:28,196 1 INFO odoo_ci_test odoo.modules.loading: loading privacy_lookup/security/ir.model.access.csv 
+2026-04-10 19:18:28,211 1 INFO odoo_ci_test odoo.modules.loading: loading privacy_lookup/data/ir_actions_server_data.xml 
+2026-04-10 19:18:28,249 1 INFO odoo_ci_test odoo.modules.loading: Module privacy_lookup loaded in 0.23s, 293 queries (+293 other) 
+2026-04-10 19:18:28,249 1 INFO odoo_ci_test odoo.modules.loading: Loading module resource_mail (31/48) 
+2026-04-10 19:18:28,255 1 INFO odoo_ci_test odoo.registry: module resource_mail: creating or updating database tables 
+2026-04-10 19:18:28,287 1 INFO odoo_ci_test odoo.modules.loading: Module resource_mail loaded in 0.04s, 36 queries (+36 other) 
+2026-04-10 19:18:28,287 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_base (32/48) 
+2026-04-10 19:18:28,296 1 INFO odoo_ci_test odoo.registry: module sports_federation_base: creating or updating database tables 
+<string>:26: (WARNING/2) Line block ends without a blank line.
+<string>:44: (WARNING/2) Line block ends without a blank line.
+<string>:58: (WARNING/2) Line block ends without a blank line.
+<string>:73: (WARNING/2) Line block ends without a blank line.
+<string>:93: (WARNING/2) Line block ends without a blank line.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+2026-04-10 19:18:28,413 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/security/res_groups.xml 
+2026-04-10 19:18:28,439 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/security/ir.model.access.csv 
+2026-04-10 19:18:28,456 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/data/ir_sequence.xml 
+2026-04-10 19:18:28,460 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/views/federation_season_registration_views.xml 
+2026-04-10 19:18:28,477 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/views/federation_season_views.xml 
+2026-04-10 19:18:28,494 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/views/federation_team_views.xml 
+2026-04-10 19:18:28,511 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/views/federation_club_views.xml 
+2026-04-10 19:18:28,529 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_base/views/menu_items.xml 
+2026-04-10 19:18:28,559 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_base loaded in 0.27s, 334 queries (+334 other) 
+2026-04-10 19:18:28,559 1 INFO odoo_ci_test odoo.modules.loading: Loading module partner_autocomplete (33/48) 
+2026-04-10 19:18:28,580 1 INFO odoo_ci_test odoo.registry: module partner_autocomplete: creating or updating database tables 
+2026-04-10 19:18:28,655 1 INFO odoo_ci_test odoo.modules.loading: loading partner_autocomplete/views/res_company_views.xml 
+2026-04-10 19:18:28,670 1 INFO odoo_ci_test odoo.modules.loading: loading partner_autocomplete/views/res_config_settings_views.xml 
+2026-04-10 19:18:28,685 1 INFO odoo_ci_test odoo.modules.loading: loading partner_autocomplete/data/iap_service_data.xml 
+2026-04-10 19:18:28,698 1 INFO odoo_ci_test odoo.modules.loading: Module partner_autocomplete loaded in 0.14s, 141 queries (+141 other) 
+2026-04-10 19:18:28,698 1 INFO odoo_ci_test odoo.modules.loading: Loading module portal (34/48) 
+2026-04-10 19:18:28,732 1 INFO odoo_ci_test odoo.registry: module portal: creating or updating database tables 
+2026-04-10 19:18:28,923 1 INFO odoo_ci_test odoo.modules.loading: loading portal/security/ir.model.access.csv 
+2026-04-10 19:18:28,930 1 INFO odoo_ci_test odoo.modules.loading: loading portal/data/mail_templates.xml 
+2026-04-10 19:18:28,936 1 INFO odoo_ci_test odoo.modules.loading: loading portal/views/address_templates.xml 
+2026-04-10 19:18:28,966 1 INFO odoo_ci_test odoo.modules.loading: loading portal/views/mail_templates_public.xml 
+2026-04-10 19:18:28,973 1 INFO odoo_ci_test odoo.modules.loading: loading portal/views/portal_templates.xml 
+2026-04-10 19:18:29,073 1 INFO odoo_ci_test odoo.modules.loading: loading portal/views/res_config_settings_views.xml 
+2026-04-10 19:18:29,094 1 INFO odoo_ci_test odoo.modules.loading: loading portal/wizard/portal_share_views.xml 
+2026-04-10 19:18:29,103 1 INFO odoo_ci_test odoo.modules.loading: loading portal/wizard/portal_wizard_views.xml 
+2026-04-10 19:18:29,149 1 INFO odoo_ci_test odoo.modules.loading: Module portal loaded in 0.45s, 583 queries (+583 other) 
+2026-04-10 19:18:29,149 1 INFO odoo_ci_test odoo.modules.loading: Loading module sms (35/48) 
+2026-04-10 19:18:29,237 1 INFO odoo_ci_test odoo.registry: module sms: creating or updating database tables 
+2026-04-10 19:18:29,246 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.sms_template_id 
+2026-04-10 19:18:29,246 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.actions.server.sms_method 
+2026-04-10 19:18:30,127 1 INFO odoo_ci_test odoo.modules.loading: loading sms/data/iap_service_data.xml 
+2026-04-10 19:18:30,131 1 INFO odoo_ci_test odoo.modules.loading: loading sms/data/ir_cron_data.xml 
+2026-04-10 19:18:30,153 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_account_code_views.xml 
+2026-04-10 19:18:30,164 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_account_phone_views.xml 
+2026-04-10 19:18:30,169 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_account_sender_views.xml 
+2026-04-10 19:18:30,175 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_composer_views.xml 
+2026-04-10 19:18:30,186 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_template_preview_views.xml 
+2026-04-10 19:18:30,195 1 INFO odoo_ci_test odoo.modules.loading: loading sms/wizard/sms_template_reset_views.xml 
+2026-04-10 19:18:30,203 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/ir_actions_server_views.xml 
+2026-04-10 19:18:30,219 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/mail_notification_views.xml 
+2026-04-10 19:18:30,233 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/res_config_settings_views.xml 
+2026-04-10 19:18:30,248 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/res_partner_views.xml 
+2026-04-10 19:18:30,264 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/iap_account_views.xml 
+2026-04-10 19:18:30,275 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/sms_sms_views.xml 
+2026-04-10 19:18:30,301 1 INFO odoo_ci_test odoo.modules.loading: loading sms/views/sms_template_views.xml 
+2026-04-10 19:18:30,321 1 INFO odoo_ci_test odoo.modules.loading: loading sms/security/ir.model.access.csv 
+2026-04-10 19:18:30,342 1 INFO odoo_ci_test odoo.modules.loading: loading sms/security/sms_security.xml 
+2026-04-10 19:18:30,365 1 INFO odoo_ci_test odoo.modules.loading: Module sms loaded in 1.22s, 2173 queries (+2173 other) 
+2026-04-10 19:18:30,365 1 INFO odoo_ci_test odoo.modules.loading: Loading module snailmail (36/48) 
+2026-04-10 19:18:30,471 1 INFO odoo_ci_test odoo.registry: module snailmail: creating or updating database tables 
+2026-04-10 19:18:30,667 1 INFO odoo_ci_test odoo.modules.loading: loading snailmail/data/iap_service_data.xml 
+2026-04-10 19:18:30,671 1 INFO odoo_ci_test odoo.modules.loading: loading snailmail/data/snailmail_data.xml 
+2026-04-10 19:18:30,694 1 INFO odoo_ci_test odoo.modules.loading: loading snailmail/views/report_assets.xml 
+2026-04-10 19:18:30,706 1 INFO odoo_ci_test odoo.modules.loading: loading snailmail/views/snailmail_views.xml 
+2026-04-10 19:18:30,725 1 INFO odoo_ci_test odoo.modules.loading: loading snailmail/security/ir.model.access.csv 
+2026-04-10 19:18:30,749 1 INFO odoo_ci_test odoo.modules.loading: Module snailmail loaded in 0.38s, 449 queries (+449 other) 
+2026-04-10 19:18:30,749 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_people (37/48) 
+2026-04-10 19:18:30,756 1 INFO odoo_ci_test odoo.registry: module sports_federation_people: creating or updating database tables 
+<string>:16: (WARNING/2) Line block ends without a blank line.
+<string>:27: (WARNING/2) Line block ends without a blank line.
+<string>:51: (WARNING/2) Line block ends without a blank line.
+<string>:67: (WARNING/2) Line block ends without a blank line.
+<string>:16: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:67: (ERROR/3) Undefined substitution referenced: "------".
+2026-04-10 19:18:30,843 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_people/security/ir.model.access.csv 
+2026-04-10 19:18:30,850 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_people/data/ir_sequence.xml 
+2026-04-10 19:18:30,854 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_people/views/federation_player_views.xml 
+2026-04-10 19:18:30,875 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_people/views/federation_player_license_views.xml 
+2026-04-10 19:18:30,892 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_people/views/menu_items.xml 
+2026-04-10 19:18:30,914 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_people loaded in 0.17s, 208 queries (+208 other) 
+2026-04-10 19:18:30,914 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_rules (38/48) 
+2026-04-10 19:18:30,923 1 INFO odoo_ci_test odoo.registry: module sports_federation_rules: creating or updating database tables 
+<string>:17: (WARNING/2) Line block ends without a blank line.
+<string>:28: (WARNING/2) Line block ends without a blank line.
+<string>:45: (WARNING/2) Line block ends without a blank line.
+<string>:57: (WARNING/2) Line block ends without a blank line.
+<string>:69: (WARNING/2) Line block ends without a blank line.
+<string>:83: (WARNING/2) Line block ends without a blank line.
+<string>:98: (WARNING/2) Line block ends without a blank line.
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+2026-04-10 19:18:31,043 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/security/ir.model.access.csv 
+2026-04-10 19:18:31,052 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/federation_rule_set_views.xml 
+2026-04-10 19:18:31,079 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/federation_points_rule_views.xml 
+2026-04-10 19:18:31,089 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/federation_tie_break_rule_views.xml 
+2026-04-10 19:18:31,099 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/federation_eligibility_rule_views.xml 
+2026-04-10 19:18:31,110 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/federation_qualification_rule_views.xml 
+2026-04-10 19:18:31,120 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rules/views/menu_items.xml 
+2026-04-10 19:18:31,151 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_rules loaded in 0.24s, 302 queries (+302 other) 
+2026-04-10 19:18:31,151 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_passkey_portal (39/48) 
+2026-04-10 19:18:31,161 1 INFO odoo_ci_test odoo.modules.loading: loading auth_passkey_portal/views/templates.xml 
+2026-04-10 19:18:31,184 1 INFO odoo_ci_test odoo.modules.loading: Module auth_passkey_portal loaded in 0.03s, 22 queries (+22 other) 
+2026-04-10 19:18:31,184 1 INFO odoo_ci_test odoo.modules.loading: Loading module auth_totp_portal (40/48) 
+2026-04-10 19:18:31,193 1 INFO odoo_ci_test odoo.registry: module auth_totp_portal: creating or updating database tables 
+2026-04-10 19:18:31,217 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_portal/security/security.xml 
+2026-04-10 19:18:31,228 1 INFO odoo_ci_test odoo.modules.loading: loading auth_totp_portal/views/templates.xml 
+2026-04-10 19:18:31,245 1 INFO odoo_ci_test odoo.modules.loading: Module auth_totp_portal loaded in 0.06s, 70 queries (+70 other) 
+2026-04-10 19:18:31,245 1 INFO odoo_ci_test odoo.modules.loading: Loading module digest (41/48) 
+2026-04-10 19:18:31,258 1 INFO odoo_ci_test odoo.registry: module digest: creating or updating database tables 
+2026-04-10 19:18:31,346 1 INFO odoo_ci_test odoo.modules.loading: loading digest/security/ir.model.access.csv 
+2026-04-10 19:18:31,353 1 INFO odoo_ci_test odoo.modules.loading: loading digest/data/digest_data.xml 
+2026-04-10 19:18:31,373 1 INFO odoo_ci_test odoo.modules.loading: loading digest/data/digest_tips_data.xml 
+2026-04-10 19:18:31,387 1 INFO odoo_ci_test odoo.modules.loading: loading digest/data/ir_cron_data.xml 
+2026-04-10 19:18:31,408 1 INFO odoo_ci_test odoo.modules.loading: loading digest/data/res_config_settings_data.xml 
+2026-04-10 19:18:31,413 1 INFO odoo_ci_test odoo.modules.loading: loading digest/views/digest_views.xml 
+2026-04-10 19:18:31,457 1 INFO odoo_ci_test odoo.modules.loading: loading digest/views/digest_templates.xml 
+2026-04-10 19:18:31,462 1 INFO odoo_ci_test odoo.modules.loading: loading digest/views/res_config_settings_views.xml 
+2026-04-10 19:18:31,499 1 INFO odoo_ci_test odoo.modules.loading: Module digest loaded in 0.25s, 326 queries (+326 other) 
+2026-04-10 19:18:31,499 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_tournament (42/48) 
+2026-04-10 19:18:31,513 1 INFO odoo_ci_test odoo.registry: module sports_federation_tournament: creating or updating database tables 
+2026-04-10 19:18:31,736 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/security/ir.model.access.csv 
+2026-04-10 19:18:31,748 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_tournament_participant_views.xml 
+2026-04-10 19:18:31,770 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_match_views.xml 
+2026-04-10 19:18:31,792 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_tournament_round_views.xml 
+2026-04-10 19:18:31,804 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_tournament_group_views.xml 
+2026-04-10 19:18:31,820 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_tournament_stage_views.xml 
+2026-04-10 19:18:31,836 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_tournament_views.xml 
+2026-04-10 19:18:31,854 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_competition_edition_views.xml 
+2026-04-10 19:18:31,872 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_competition_views.xml 
+2026-04-10 19:18:31,889 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/federation_season_registration_views_inherit.xml 
+2026-04-10 19:18:31,909 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_tournament/views/menu_items.xml 
+2026-04-10 19:18:31,952 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_tournament loaded in 0.45s, 597 queries (+597 other) 
+2026-04-10 19:18:31,952 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_result_control (43/48) 
+2026-04-10 19:18:31,960 1 INFO odoo_ci_test odoo.registry: module sports_federation_result_control: creating or updating database tables 
+2026-04-10 19:18:32,023 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_result_control/security/result_control_security.xml 
+2026-04-10 19:18:32,038 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_result_control/security/ir.model.access.csv 
+2026-04-10 19:18:32,045 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_result_control/views/match_views_inherit.xml 
+2026-04-10 19:18:32,085 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_result_control loaded in 0.13s, 168 queries (+168 other) 
+2026-04-10 19:18:32,085 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_rosters (44/48) 
+2026-04-10 19:18:32,098 1 INFO odoo_ci_test odoo.registry: module sports_federation_rosters: creating or updating database tables 
+2026-04-10 19:18:32,299 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/security/ir.model.access.csv 
+2026-04-10 19:18:32,308 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/team_roster_views.xml 
+2026-04-10 19:18:32,330 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/match_sheet_views.xml 
+2026-04-10 19:18:32,345 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/tournament_participant_views_inherit.xml 
+2026-04-10 19:18:32,354 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/team_views_inherit.xml 
+2026-04-10 19:18:32,367 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/player_views_inherit.xml 
+2026-04-10 19:18:32,377 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/match_views_inherit.xml 
+2026-04-10 19:18:32,389 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_rosters/views/menu_views.xml 
+2026-04-10 19:18:32,411 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_rosters loaded in 0.33s, 474 queries (+474 other) 
+2026-04-10 19:18:32,411 1 INFO odoo_ci_test odoo.modules.loading: Loading module website (45/48) 
+2026-04-10 19:18:32,545 1 INFO odoo_ci_test odoo.registry: module website: creating or updating database tables 
+2026-04-10 19:18:32,615 1 INFO odoo_ci_test odoo.models: Prepare computation of ir.ui.view.is_seo_optimized 
+2026-04-10 19:18:32,622 1 INFO odoo_ci_test odoo.models: Prepare computation of res.company.website_id 
+2026-04-10 19:18:34,020 1 INFO odoo_ci_test odoo.modules.loading: loading website/security/website_security.xml 
+2026-04-10 19:18:34,120 1 INFO odoo_ci_test odoo.modules.loading: loading website/security/ir.model.access.csv 
+2026-04-10 19:18:34,142 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/image_library.xml 
+2026-04-10 19:18:34,448 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/ir_asset.xml 
+2026-04-10 19:18:34,456 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/ir_cron_data.xml 
+2026-04-10 19:18:34,484 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/mail_mail_data.xml 
+2026-04-10 19:18:34,490 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/website_data.xml 
+2026-04-10 19:18:34,614 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/website_visitor_cron.xml 
+2026-04-10 19:18:34,630 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/digest_data.xml 
+2026-04-10 19:18:34,640 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_technical_views.xml 
+2026-04-10 19:18:34,651 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_templates.xml 
+2026-04-10 19:18:35,630 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/snippets.xml 
+2026-04-10 19:18:35,657 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_announcement_scroll.xml 
+2026-04-10 19:18:35,664 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_framed_intro.xml 
+2026-04-10 19:18:35,670 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_title.xml 
+2026-04-10 19:18:35,678 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cover.xml 
+2026-04-10 19:18:35,684 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_text_cover.xml 
+2026-04-10 19:18:35,691 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_text_box.xml 
+2026-04-10 19:18:35,698 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_striped_top.xml 
+2026-04-10 19:18:35,704 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_text_image.xml 
+2026-04-10 19:18:35,710 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_text.xml 
+2026-04-10 19:18:35,716 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mockup_image.xml 
+2026-04-10 19:18:35,722 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_instagram_page.xml 
+2026-04-10 19:18:35,729 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_text_overlap.xml 
+2026-04-10 19:18:35,735 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_banner.xml 
+2026-04-10 19:18:35,742 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_bento_block.xml 
+2026-04-10 19:18:35,748 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_snippet_group.xml 
+2026-04-10 19:18:35,754 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_text_block.xml 
+2026-04-10 19:18:35,760 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_features.xml 
+2026-04-10 19:18:35,768 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_features_wall.xml 
+2026-04-10 19:18:35,774 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_three_columns.xml 
+2026-04-10 19:18:35,782 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_key_benefits.xml 
+2026-04-10 19:18:35,789 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_picture.xml 
+2026-04-10 19:18:35,795 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_punchy.xml 
+2026-04-10 19:18:35,801 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_bento_grid.xml 
+2026-04-10 19:18:35,809 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_carousel.xml 
+2026-04-10 19:18:35,820 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_carousel_intro.xml 
+2026-04-10 19:18:35,829 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_carousel_cards.xml 
+2026-04-10 19:18:35,838 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_alert.xml 
+2026-04-10 19:18:35,848 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_motto.xml 
+2026-04-10 19:18:35,853 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_card.xml 
+2026-04-10 19:18:35,861 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cards_grid.xml 
+2026-04-10 19:18:35,867 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cards_soft.xml 
+2026-04-10 19:18:35,874 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_share.xml 
+2026-04-10 19:18:35,882 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_social_media.xml 
+2026-04-10 19:18:35,890 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_rating.xml 
+2026-04-10 19:18:35,899 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_hr.xml 
+2026-04-10 19:18:35,906 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_closer_look.xml 
+2026-04-10 19:18:35,913 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_facebook_page.xml 
+2026-04-10 19:18:35,918 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_gallery.xml 
+2026-04-10 19:18:35,938 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_countdown.xml 
+2026-04-10 19:18:35,947 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_product_catalog.xml 
+2026-04-10 19:18:35,961 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_comparisons.xml 
+2026-04-10 19:18:35,971 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_comparisons_horizontal.xml 
+2026-04-10 19:18:35,978 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team.xml 
+2026-04-10 19:18:35,988 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_basic.xml 
+2026-04-10 19:18:35,995 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_shapes.xml 
+2026-04-10 19:18:36,001 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_detail.xml 
+2026-04-10 19:18:36,012 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_spotlight.xml 
+2026-04-10 19:18:36,019 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_grid.xml 
+2026-04-10 19:18:36,026 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_company_team_card.xml 
+2026-04-10 19:18:36,034 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_call_to_action.xml 
+2026-04-10 19:18:36,040 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_references.xml 
+2026-04-10 19:18:36,048 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_references_social.xml 
+2026-04-10 19:18:36,057 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_references_grid.xml 
+2026-04-10 19:18:36,064 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_popup.xml 
+2026-04-10 19:18:36,073 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_faq_list.xml 
+2026-04-10 19:18:36,080 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_faq_collapse.xml 
+2026-04-10 19:18:36,088 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_features_grid.xml 
+2026-04-10 19:18:36,099 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_features_wave.xml 
+2026-04-10 19:18:36,107 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_tabs.xml 
+2026-04-10 19:18:36,119 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_tabs_images.xml 
+2026-04-10 19:18:36,128 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_table_of_content.xml 
+2026-04-10 19:18:36,137 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_images_constellation.xml 
+2026-04-10 19:18:36,144 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_chart.xml 
+2026-04-10 19:18:36,151 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_parallax.xml 
+2026-04-10 19:18:36,157 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_quotes_carousel.xml 
+2026-04-10 19:18:36,170 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_grid.xml 
+2026-04-10 19:18:36,177 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_quotes_carousel_minimal.xml 
+2026-04-10 19:18:36,185 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_quotes_carousel_compact.xml 
+2026-04-10 19:18:36,194 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers.xml 
+2026-04-10 19:18:36,201 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_contact_info.xml 
+2026-04-10 19:18:36,231 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_boxed.xml 
+2026-04-10 19:18:36,237 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cta_box.xml 
+2026-04-10 19:18:36,242 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_framed.xml 
+2026-04-10 19:18:36,248 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_masonry_block.xml 
+2026-04-10 19:18:36,283 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_sidegrid.xml 
+2026-04-10 19:18:36,289 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_media_list.xml 
+2026-04-10 19:18:36,298 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_showcase.xml 
+2026-04-10 19:18:36,310 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_faq_horizontal.xml 
+2026-04-10 19:18:36,317 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_floating_blocks.xml 
+2026-04-10 19:18:36,325 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_opening_hours.xml 
+2026-04-10 19:18:36,331 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_timeline.xml 
+2026-04-10 19:18:36,342 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_timeline_images.xml 
+2026-04-10 19:18:36,349 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_timeline_list.xml 
+2026-04-10 19:18:36,357 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_process_steps.xml 
+2026-04-10 19:18:36,367 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_accordion.xml 
+2026-04-10 19:18:36,376 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_website_form_info.xml 
+2026-04-10 19:18:36,381 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_showcase.xml 
+2026-04-10 19:18:36,388 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_charts.xml 
+2026-04-10 19:18:36,395 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_accordion_image.xml 
+2026-04-10 19:18:36,401 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_pricelist_boxed.xml 
+2026-04-10 19:18:36,411 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_adventure.xml 
+2026-04-10 19:18:36,417 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_title.xml 
+2026-04-10 19:18:36,422 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_key_images.xml 
+2026-04-10 19:18:36,428 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_kickoff.xml 
+2026-04-10 19:18:36,434 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_discovery.xml 
+2026-04-10 19:18:36,440 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_bento_banner.xml 
+2026-04-10 19:18:36,446 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_striped.xml 
+2026-04-10 19:18:36,452 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_intro_pill.xml 
+2026-04-10 19:18:36,458 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_big_number.xml 
+2026-04-10 19:18:36,463 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_wavy_grid.xml 
+2026-04-10 19:18:36,470 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_images_mosaic.xml 
+2026-04-10 19:18:36,476 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_shape_image.xml 
+2026-04-10 19:18:36,482 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_empowerment.xml 
+2026-04-10 19:18:36,488 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_split_intro.xml 
+2026-04-10 19:18:36,494 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_text_highlight.xml 
+2026-04-10 19:18:36,501 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_pricelist_cafe.xml 
+2026-04-10 19:18:36,513 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_progress_bar.xml 
+2026-04-10 19:18:36,520 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_blockquote.xml 
+2026-04-10 19:18:36,529 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_badge.xml 
+2026-04-10 19:18:36,538 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_color_blocks_2.xml 
+2026-04-10 19:18:36,545 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_attributes_horizontal.xml 
+2026-04-10 19:18:36,553 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_attributes_vertical.xml 
+2026-04-10 19:18:36,561 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_product_list.xml 
+2026-04-10 19:18:36,572 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_multi_menus.xml 
+2026-04-10 19:18:36,578 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_menu_image_menu.xml 
+2026-04-10 19:18:36,586 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_thumbnails.xml 
+2026-04-10 19:18:36,598 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_little_icons.xml 
+2026-04-10 19:18:36,608 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_images_subtitles.xml 
+2026-04-10 19:18:36,621 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_menus_logos.xml 
+2026-04-10 19:18:36,631 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_odoo_menu.xml 
+2026-04-10 19:18:36,641 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_big_icons_subtitles.xml 
+2026-04-10 19:18:36,654 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_mega_menu_cards.xml 
+2026-04-10 19:18:36,667 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_google_map.xml 
+2026-04-10 19:18:36,674 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cta_mockups.xml 
+2026-04-10 19:18:36,680 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_map.xml 
+2026-04-10 19:18:36,688 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_dynamic_snippet.xml 
+2026-04-10 19:18:36,701 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_dynamic_snippet_carousel.xml 
+2026-04-10 19:18:36,710 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_banner_product.xml 
+2026-04-10 19:18:36,716 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_embed_code.xml 
+2026-04-10 19:18:36,724 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_website_form.xml 
+2026-04-10 19:18:36,736 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_website_form_overlay.xml 
+2026-04-10 19:18:36,742 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_title_form.xml 
+2026-04-10 19:18:36,748 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_searchbar.xml 
+2026-04-10 19:18:36,760 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_inline_text.xml 
+2026-04-10 19:18:36,766 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_button.xml 
+2026-04-10 19:18:36,772 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_freegrid.xml 
+2026-04-10 19:18:36,778 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_card_offset.xml 
+2026-04-10 19:18:36,784 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image.xml 
+2026-04-10 19:18:36,791 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_video.xml 
+2026-04-10 19:18:36,797 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cta_badge.xml 
+2026-04-10 19:18:36,803 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_unveil.xml 
+2026-04-10 19:18:36,809 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_hexagonal.xml 
+2026-04-10 19:18:36,816 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_striped_center_top.xml 
+2026-04-10 19:18:36,823 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_numbers_list.xml 
+2026-04-10 19:18:36,830 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_quadrant.xml 
+2026-04-10 19:18:36,838 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cta_card.xml 
+2026-04-10 19:18:36,845 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_image_frame.xml 
+2026-04-10 19:18:36,851 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_cta_mobile.xml 
+2026-04-10 19:18:36,857 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_reviews_wall.xml 
+2026-04-10 19:18:36,870 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_website_form_cover.xml 
+2026-04-10 19:18:36,878 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_form_aside.xml 
+2026-04-10 19:18:36,884 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_banner_connected.xml 
+2026-04-10 19:18:36,890 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_ecomm_categories_showcase.xml 
+2026-04-10 19:18:36,899 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/snippets/s_banner_categories.xml 
+2026-04-10 19:18:36,908 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/new_page_template_templates.xml 
+2026-04-10 19:18:38,117 1 INFO odoo_ci_test odoo.addons.website.models.ir_module_module: Generated 227 primary snippet templates for 'website' 
+2026-04-10 19:18:38,180 1 INFO odoo_ci_test odoo.addons.website.models.ir_module_module: Generated 39 primary page templates for 'website' 
+2026-04-10 19:18:38,180 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_views.xml 
+2026-04-10 19:18:38,328 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_pages_views.xml 
+2026-04-10 19:18:38,390 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_controller_pages_views.xml 
+2026-04-10 19:18:38,417 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_visitor_views.xml 
+2026-04-10 19:18:38,492 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/res_config_settings_views.xml 
+2026-04-10 19:18:38,551 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_rewrite.xml 
+2026-04-10 19:18:38,576 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/ir_actions_server_views.xml 
+2026-04-10 19:18:38,600 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/ir_asset_views.xml 
+2026-04-10 19:18:38,617 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/ir_attachment_views.xml 
+2026-04-10 19:18:38,634 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/ir_model_views.xml 
+2026-04-10 19:18:38,664 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/res_partner_views.xml 
+2026-04-10 19:18:38,677 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/neutralize_views.xml 
+2026-04-10 19:18:38,689 1 INFO odoo_ci_test odoo.modules.loading: loading website/wizard/base_language_install_views.xml 
+2026-04-10 19:18:38,699 1 INFO odoo_ci_test odoo.modules.loading: loading website/wizard/blocked_third_party_domains.xml 
+2026-04-10 19:18:38,709 1 INFO odoo_ci_test odoo.modules.loading: loading website/wizard/website_robots.xml 
+2026-04-10 19:18:38,719 1 INFO odoo_ci_test odoo.modules.loading: loading website/data/update_theme_images.xml 
+2026-04-10 19:18:38,770 1 INFO odoo_ci_test odoo.modules.loading: loading website/views/website_templates_svg.xml 
+2026-04-10 19:18:38,874 1 INFO odoo_ci_test odoo.modules.loading: Module website loaded in 6.46s, 7876 queries (+7876 other) 
+2026-04-10 19:18:38,874 1 INFO odoo_ci_test odoo.modules.loading: Loading module sports_federation_portal (46/48) 
+2026-04-10 19:18:38,905 1 INFO odoo_ci_test odoo.registry: module sports_federation_portal: creating or updating database tables 
+2026-04-10 19:18:38,932 1 INFO odoo_ci_test odoo.models: Prepare computation of res.partner.federation_representative_count 
+2026-04-10 19:18:38,939 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.represented_club_ids 
+2026-04-10 19:18:38,939 1 INFO odoo_ci_test odoo.models: Prepare computation of res.users.representative_count 
+2026-04-10 19:18:39,119 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/security/res_groups.xml 
+2026-04-10 19:18:39,132 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/security/ir.model.access.csv 
+2026-04-10 19:18:39,148 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/security/ir_rule.xml 
+2026-04-10 19:18:39,211 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/data/federation_club_role_type.xml 
+2026-04-10 19:18:39,223 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/data/ir_sequence.xml 
+2026-04-10 19:18:39,227 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_club_role_type_views.xml 
+2026-04-10 19:18:39,252 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_club_representative_views.xml 
+2026-04-10 19:18:39,272 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_club_views.xml 
+2026-04-10 19:18:39,284 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/res_partner_views.xml 
+2026-04-10 19:18:39,297 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/res_users_views.xml 
+2026-04-10 19:18:39,311 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_season_registration_views.xml 
+2026-04-10 19:18:39,337 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_tournament_registration_views.xml 
+2026-04-10 19:18:39,357 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_tournament_views.xml 
+2026-04-10 19:18:39,368 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/federation_club_representative_portal_views.xml 
+2026-04-10 19:18:39,382 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/website_tournament_templates.xml 
+2026-04-10 19:18:39,402 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/portal_templates.xml 
+2026-04-10 19:18:39,452 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/portal_roster_templates.xml 
+2026-04-10 19:18:39,498 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/menu_items.xml 
+2026-04-10 19:18:39,514 1 INFO odoo_ci_test odoo.modules.loading: loading sports_federation_portal/views/website_menus.xml 
+2026-04-10 19:18:39,703 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_create_multiple_representatives ... 
+2026-04-10 19:18:39,730 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_date_validation ... 
+2026-04-10 19:18:39,737 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_get_club_for_user ... 
+2026-04-10 19:18:39,744 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_get_clubs_for_user ... 
+2026-04-10 19:18:39,760 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_get_primary_contact ... 
+2026-04-10 19:18:39,770 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_is_current_computation ... 
+2026-04-10 19:18:39,774 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_multiple_primaries_different_roles ... 
+2026-04-10 19:18:39,780 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_partner_club_role_uniqueness ... 
+2026-04-10 19:18:39,791 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club_representative" ("active", "club_id", "create_date", "create_uid", "is_primary", "partner_id", "role", "role_type_id", "write_date", "write_uid") VALUES (true, 1, \'2026-04-10T19:18:39.572366\'::timestamp, 1, false, 7, \'primary\', 1, \'2026-04-10T19:18:39.572366\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_representative_partner_club_role_unique"
+DETAIL:  Key (partner_id, club_id, role_type_id)=(7, 1, 1) already exists.
+ 
+2026-04-10 19:18:39,792 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_partner_representative_count ... 
+2026-04-10 19:18:39,806 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_primary_contact_uniqueness ... 
+2026-04-10 19:18:39,819 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_role_type_get_by_code ... 
+2026-04-10 19:18:39,821 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_role_type_linkage ... 
+2026-04-10 19:18:39,824 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_club_representative: Starting TestClubRepresentative.test_user_represented_clubs ... 
+2026-04-10 19:18:39,910 1 INFO odoo_ci_test odoo.addons.base.models.ir_attachment: filestore gc 19 checked, 1 removed 
+2026-04-10 19:18:40,143 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_player_picker_filters_by_team_gender ... 
+2026-04-10 19:18:40,184 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_user_can_create_roster_for_confirmed_registration ... 
+2026-04-10 19:18:40,214 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_user_can_manage_owned_roster_with_portal_helpers ... 
+2026-04-10 19:18:40,251 1 INFO odoo_ci_test odoo.models.unlink: User #6 deleted federation.team.roster.line records with IDs: [3] 
+2026-04-10 19:18:40,254 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_user_cannot_create_roster_without_confirmation_or_for_other_club ... 
+2026-04-10 19:18:40,281 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_user_cannot_modify_roster_records ... 
+2026-04-10 19:18:40,295 1 INFO odoo_ci_test odoo.addons.base.models.ir_model: Access Denied by ACLs for operation: write, uid: 6, model: federation.team.roster 
+2026-04-10 19:18:40,304 1 INFO odoo_ci_test odoo.addons.base.models.ir_model: Access Denied by ACLs for operation: write, uid: 6, model: federation.match.sheet 
+2026-04-10 19:18:40,305 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: Starting TestRosterPortalAccess.test_portal_user_only_sees_own_rosters_match_sheets_and_audit ... 
+2026-04-10 19:18:40,399 1 INFO odoo_ci_test odoo.addons.base.models.ir_attachment: filestore gc 0 checked, 0 removed 
+2026-04-10 19:18:40,515 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_season_registration: Starting TestSeasonRegistrationOwnership.test_portal_user_can_create_owned_season_registration ... 
+2026-04-10 19:18:40,539 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_season_registration: Starting TestSeasonRegistrationOwnership.test_portal_user_cannot_create_other_club_registration ... 
+2026-04-10 19:18:40,553 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_season_registration: Starting TestSeasonRegistrationOwnership.test_submitted_registration_can_be_confirmed_by_staff ... 
+2026-04-10 19:18:40,657 1 INFO odoo_ci_test odoo.addons.base.models.ir_attachment: filestore gc 0 checked, 0 removed 
+2026-04-10 19:18:40,852 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_portal_user_only_sees_own_tournament_registrations ... 
+2026-04-10 19:18:40,893 1 INFO odoo_ci_test odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [2], uid: 9, model: federation.tournament.registration 
+2026-04-10 19:18:40,901 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_registration_accepts_eligible_team ... 
+2026-04-10 19:18:40,922 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_registration_backend_domain_uses_eligible_teams ... 
+2026-04-10 19:18:40,929 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_registration_backend_feedback_explains_duplicate_team ... 
+2026-04-10 19:18:40,953 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_registration_rejects_ineligible_team ... 
+2026-04-10 19:18:40,969 1 INFO odoo_ci_test odoo.addons.sports_federation_portal.tests.test_tournament_registration: Starting TestTournamentRegistration.test_tournament_action_view_registration_requests ... 
+2026-04-10 19:18:41,082 1 INFO odoo_ci_test odoo.addons.base.models.ir_attachment: filestore gc 0 checked, 0 removed 
+2026-04-10 19:18:41,082 1 INFO odoo_ci_test odoo.modules.loading: Module sports_federation_portal loaded in 2.21s (incl. 1.52s test), 837 queries (+1492 test, +837 other) 
+2026-04-10 19:18:41,083 1 INFO odoo_ci_test odoo.modules.loading: Loading module website_mail (47/48) 
+2026-04-10 19:18:41,088 1 INFO odoo_ci_test odoo.registry: module website_mail: creating or updating database tables 
+2026-04-10 19:18:41,098 1 INFO odoo_ci_test odoo.modules.loading: loading website_mail/views/website_mail_templates.xml 
+2026-04-10 19:18:41,126 1 INFO odoo_ci_test odoo.modules.loading: Module website_mail loaded in 0.04s, 31 queries (+31 other) 
+2026-04-10 19:18:41,127 1 INFO odoo_ci_test odoo.modules.loading: Loading module website_sms (48/48) 
+2026-04-10 19:18:41,132 1 INFO odoo_ci_test odoo.registry: module website_sms: creating or updating database tables 
+2026-04-10 19:18:41,148 1 INFO odoo_ci_test odoo.modules.loading: loading website_sms/views/website_visitor_views.xml 
+2026-04-10 19:18:41,194 1 INFO odoo_ci_test odoo.modules.loading: Module website_sms loaded in 0.07s, 68 queries (+68 other) 
+2026-04-10 19:18:41,194 1 INFO odoo_ci_test odoo.modules.loading: 48 modules loaded in 21.95s, 28679 queries (+30172 extra) 
+2026-04-10 19:18:41,684 1 INFO odoo_ci_test odoo.modules.loading: Modules loaded. 
+2026-04-10 19:18:41,693 1 INFO odoo_ci_test odoo.registry: Registry changed, signaling through the database 
+2026-04-10 19:18:41,694 1 INFO odoo_ci_test odoo.registry: Registry loaded in 30.679s 
+2026-04-10 19:18:41,694 1 INFO odoo_ci_test odoo.service.server: Starting post tests 
+2026-04-10 19:18:41,720 1 INFO odoo_ci_test odoo.service.server: 0 post-tests in 0.03s, 0 queries 
+2026-04-10 19:18:41,720 1 INFO odoo_ci_test odoo.tests.stats: sports_federation_portal: 36 tests 1.52s 1492 queries 
+2026-04-10 19:18:41,721 1 INFO odoo_ci_test odoo.tests.result: 0 failed, 0 error(s) of 28 tests when loading database 'odoo_ci_test' 
+2026-04-10 19:18:41,721 1 INFO odoo_ci_test odoo.service.server: Initiating shutdown 
+2026-04-10 19:18:41,721 1 INFO odoo_ci_test odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-10 19:18:42,071 1 INFO odoo_ci_test odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  

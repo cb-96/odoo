@@ -1,0 +1,14 @@
+=== SF CI Run – 20260408_132234 ===
+Modules: sports_federation_base,sports_federation_rules,sports_federation_people,sports_federation_tournament,sports_federation_standings,sports_federation_venues,sports_federation_result_control,sports_federation_portal,sports_federation_rosters,sports_federation_competition_engine,sports_federation_officiating,sports_federation_discipline,sports_federation_governance,sports_federation_notifications,sports_federation_import_tools,sports_federation_finance_bridge,sports_federation_compliance,sports_federation_public_site,sports_federation_reporting
+Logs:    /home/cedric/odoo/addons/ci/logs/20260408_132234
+────────────────────────────────────────────
+
+════════════════════════════════════════════
+  RESULTS
+════════════════════════════════════════════
+  Exit code:     0
+  Error lines:   142
+  Tests passed:  ~0
+0
+  Tests failed:  ~135
+════════════════════════════════════════════

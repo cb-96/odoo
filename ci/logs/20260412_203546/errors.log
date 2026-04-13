@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+    raise AccessError("The requested contract is not available in this database.")
+2026-04-12 20:36:22,617 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-12 20:36:22,648 1 ERROR odoo_ci_test odoo.tests.result: 0 failed, 1 error(s) of 11 tests when loading database 'odoo_ci_test' 

@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+AssertionError: Exception not raised
+2026-04-12 18:22:01,774 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-12 18:22:01,821 1 ERROR odoo_ci_test odoo.tests.result: 1 failed, 0 error(s) of 30 tests when loading database 'odoo_ci_test' 

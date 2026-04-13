@@ -1,0 +1,27 @@
+2026-04-11 06:52:03,027 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+2026-04-11 06:52:16,068 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_playing_area" ("active", "create_date", "create_uid", "name", "surface_type", "venue_id", "write_date", "write_uid") VALUES (true, \'2026-04-11T06:52:16.022387\'::timestamp, 1, \'Main Field\', \'indoor\', 3, \'2026-04-11T06:52:16.022387\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_playing_area_unique_venue_name"
+2026-04-11 06:52:16,542 1 INFO odoo_ci_test odoo.tests.result: 0 failed, 0 error(s) of 21 tests when loading database 'odoo_ci_test' 

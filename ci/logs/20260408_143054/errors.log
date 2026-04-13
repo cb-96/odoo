@@ -1,0 +1,31 @@
+2026-04-08 14:31:11,638 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:72: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:72: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:85: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:85: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+2026-04-08 14:31:23,680 1 ERROR odoo_ci_test odoo.registry: Failed to load registry 
+2026-04-08 14:31:23,680 1 CRITICAL odoo_ci_test odoo.service.server: Failed to initialize database `odoo_ci_test`. 
+Traceback (most recent call last):
+    raise ValueError('External ID not found in the system: %s' % xmlid)
+ValueError: External ID not found in the system: sports_federation_rules.menu_federation_competitions
+Traceback (most recent call last):
+    raise ParseError('while parsing %s:%s, somewhere inside\n%s' % (
+odoo.tools.convert.ParseError: while parsing /mnt/extra-addons/sports_federation_rules/views/menu_items.xml:8, somewhere inside

@@ -1,0 +1,22 @@
+2026-04-08 14:28:35,613 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:72: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:72: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:85: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:85: (ERROR/3) Undefined substitution referenced: "-------------".
+2026-04-08 14:28:45,702 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club" ("active", "code", "create_date", "create_uid", "name", "write_date", "write_uid") VALUES (true, \'TC01\', \'2026-04-08T14:28:45.687476\'::timestamp, 1, \'Duplicate Code Club\', \'2026-04-08T14:28:45.687476\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_code_unique"
+2026-04-08 14:28:45,806 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_team" ("active", "category", "club_id", "code", "create_date", "create_uid", "gender", "name", "write_date", "write_uid") VALUES (true, \'senior\', 3, \'SS01\', \'2026-04-08T14:28:45.775051\'::timestamp, 1, \'male\', \'Other Team\', \'2026-04-08T14:28:45.775051\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_team_code_unique"
+2026-04-08 14:28:46,006 1 ERROR odoo_ci_test odoo.addons.sports_federation_base.tests.test_base: FAIL: TestFederationSeasonRegistration.test_duplicate_registration_rejected
+Traceback (most recent call last):
+AssertionError: Exception not raised
+2026-04-08 14:28:46,069 1 ERROR odoo_ci_test odoo.modules.loading: Module sports_federation_base: 1 failures, 0 errors of 15 tests 
+2026-04-08 14:28:48,107 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-08 14:28:48,135 1 ERROR odoo_ci_test odoo.tests.result: 1 failed, 0 error(s) of 15 tests when loading database 'odoo_ci_test' 

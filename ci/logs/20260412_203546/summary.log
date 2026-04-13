@@ -1,0 +1,16 @@
+=== SF CI Run – 20260412_203546 ===
+Modules: sports_federation_import_tools
+Config:  /home/cedric/odoo/addons/ci/.env.example
+Logs:    /home/cedric/odoo/addons/ci/logs/20260412_203546
+────────────────────────────────────────────
+
+════════════════════════════════════════════
+  RESULTS
+════════════════════════════════════════════
+  Exit code:     1
+  Tests run:     11
+  Tests passed:  10
+  Tests failed:  0
+  Test errors:   1
+  Diagnostics:   4
+════════════════════════════════════════════

@@ -1,0 +1,14 @@
+=== SF CI Run – 20260408_140224 ===
+Modules: sports_federation_compliance
+Logs:    /home/cedric/odoo/addons/ci/logs/20260408_140224
+────────────────────────────────────────────
+
+════════════════════════════════════════════
+  RESULTS
+════════════════════════════════════════════
+  Exit code:     0
+  Error lines:   63
+  Tests passed:  ~0
+0
+  Tests failed:  ~61
+════════════════════════════════════════════

@@ -1,0 +1,56 @@
+2026-04-11 06:52:44,488 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+View error context:
+View error context:
+2026-04-11 06:52:57,353 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_bye_seeding_top_seeds : Knockout bye logic IndexError — needs engine fix 
+2026-04-11 06:52:57,571 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_six_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-11 06:52:57,572 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_three_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-11 06:52:57,707 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_deterministic_ordering
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,710 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_double_round
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,713 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_each_team_plays_all_others_once
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,716 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_even_participant_count
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,724 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_no_self_pairings
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,726 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_odd_participant_count
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,729 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_overwrite_allowed
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:57,731 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_overwrite_protection
+Traceback (most recent call last):
+KeyError: 'federation.venue'
+2026-04-11 06:52:58,062 1 ERROR odoo_ci_test odoo.modules.loading: Module sports_federation_competition_engine: 0 failures, 8 errors of 29 tests 
+2026-04-11 06:52:58,450 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-11 06:52:58,480 1 ERROR odoo_ci_test odoo.tests.result: 0 failed, 8 error(s) of 29 tests when loading database 'odoo_ci_test' 

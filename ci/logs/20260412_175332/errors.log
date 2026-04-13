@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+AssertionError: federation.report.compliance.remediation() is not true
+2026-04-12 17:54:19,707 1 INFO odoo_ci_test odoo.addons.sports_federation_reporting.tests.test_operational_reporting: Starting TestOperationalReporting.test_notification_exception_report_shows_failed_logs ... 
+2026-04-12 17:54:20,540 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-12 17:54:20,580 1 ERROR odoo_ci_test odoo.tests.result: 1 failed, 0 error(s) of 29 tests when loading database 'odoo_ci_test' 

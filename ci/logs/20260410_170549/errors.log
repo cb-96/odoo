@@ -1,0 +1,74 @@
+2026-04-10 17:06:12,471 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+2026-04-10 17:06:23,436 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club" ("active", "code", "create_date", "create_uid", "name", "write_date", "write_uid") VALUES (true, \'TC01\', \'2026-04-10T17:06:23.406079\'::timestamp, 1, \'Duplicate Code Club\', \'2026-04-10T17:06:23.406079\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_code_unique"
+2026-04-10 17:06:23,565 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_team" ("active", "category", "club_id", "code", "create_date", "create_uid", "gender", "name", "write_date", "write_uid") VALUES (true, \'senior\', 3, \'SS01\', \'2026-04-10T17:06:23.508497\'::timestamp, 1, \'male\', \'Other Team\', \'2026-04-10T17:06:23.508497\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_team_code_unique"
+2026-04-10 17:06:23,786 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_season_registration" ("create_date", "create_uid", "name", "registration_date", "season_id", "state", "team_id", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:23.728949\'::timestamp, 1, \'REG/2026/00004\', \'2026-04-10\'::date, 5, \'draft\', 5, \'2026-04-10T17:06:23.728949\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_season_registration_team_season_unique"
+<string>:16: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:67: (ERROR/3) Undefined substitution referenced: "------".
+2026-04-10 17:06:26,356 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_player_license" ("club_id", "create_date", "create_uid", "expiry_date", "issue_date", "name", "player_id", "season_id", "state", "write_date", "write_uid") VALUES (6, \'2026-04-10T17:06:26.316677\'::timestamp, 1, \'2024-12-31\'::date, \'2024-02-01\'::date, \'LIC-004\', 3, 6, \'draft\', \'2026-04-10T17:06:26.316677\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_player_license_player_season_unique"
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+2026-04-10 17:06:27,737 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_competition" ("active", "code", "competition_type", "create_date", "create_uid", "name", "sequence", "state", "write_date", "write_uid") VALUES (true, \'UNIQUE\', \'league\', \'2026-04-10T17:06:27.712786\'::timestamp, 1, \'Comp 2\', 10, \'draft\', \'2026-04-10T17:06:27.712786\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_competition_code_unique"
+2026-04-10 17:06:28,598 1 INFO odoo_ci_test odoo.addons.sports_federation_import_tools.tests.test_import_tools: Starting TestImportTools.test_import_seasons_reports_format_errors_by_category ... 
+2026-04-10 17:06:28,893 1 WARNING odoo_ci_test odoo.addons.base.models.ir_ui_view: Error-prone use of @class in view federation.match.form.inherit.officiating.readiness (): use the hasclass(*classes) function to filter elements by their classes 
+2026-04-10 17:06:29,082 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_referee_certification" ("active", "create_date", "create_uid", "issue_date", "level", "name", "referee_id", "write_date", "write_uid") VALUES (true, \'2026-04-10T17:06:29.048332\'::timestamp, 1, \'2024-05-01\'::date, \'national\', \'CERT-003-DUP\', 2, \'2026-04-10T17:06:29.048332\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_referee_certification_referee_level_date_unique"
+2026-04-10 17:06:29,259 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_match_referee" ("assigned_on", "create_date", "create_uid", "match_id", "referee_id", "role", "state", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:29\'::timestamp, \'2026-04-10T17:06:29.153270\'::timestamp, 1, 1, 3, \'head\', \'draft\', \'2026-04-10T17:06:29.153270\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_match_referee_match_referee_role_unique"
+2026-04-10 17:06:30,631 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_match_sheet_line" ("create_date", "create_uid", "is_captain", "is_starter", "is_substitute", "match_sheet_id", "player_id", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:30.484898\'::timestamp, 1, false, false, false, 5, 5, \'2026-04-10T17:06:30.484898\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_match_sheet_line_unique_match_sheet_player"
+2026-04-10 17:06:30,733 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_match_sheet" ("create_date", "create_uid", "match_id", "name", "side", "state", "team_id", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:30.484898\'::timestamp, 1, 3, \'Duplicate Home Sheet\', \'home\', \'draft\', 21, \'2026-04-10T17:06:30.484898\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_match_sheet_unique_match_team_side"
+2026-04-10 17:06:30,888 1 ERROR odoo_ci_test odoo.addons.sports_federation_rosters.tests.test_participant_readiness: ERROR: TestParticipantReadiness.test_participant_confirm_succeeds_with_ready_roster
+Traceback (most recent call last):
+    raise ValidationError(
+odoo.exceptions.ValidationError: Player 'Eligible Player' is not eligible for this roster: Selected license 'LIC-PARTICIPANT-1' expired before 2026-04-10.
+2026-04-10 17:06:31,170 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_team_roster_line" ("create_date", "create_uid", "date_from", "is_captain", "is_vice_captain", "player_id", "roster_id", "status", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:30.956995\'::timestamp, 1, \'2024-01-01\'::date, false, false, 8, 12, \'active\', \'2026-04-10T17:06:30.956995\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_team_roster_line_unique_roster_player_date_from"
+2026-04-10 17:06:31,291 1 ERROR odoo_ci_test odoo.modules.loading: Module sports_federation_rosters: 0 failures, 1 errors of 21 tests 
+2026-04-10 17:06:31,634 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_standing_line" ("create_date", "create_uid", "drawn", "eliminated", "lost", "participant_id", "played", "points", "qualified", "score_against", "score_for", "standing_id", "won", "write_date", "write_uid") VALUES (\'2026-04-10T17:06:31.463526\'::timestamp, 1, 0, false, 0, 9, 0, 0, false, 0, 0, 7, 0, \'2026-04-10T17:06:31.463526\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_standing_line_unique_standing_participant"
+2026-04-10 17:06:32,781 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_playing_area" ("active", "create_date", "create_uid", "name", "surface_type", "venue_id", "write_date", "write_uid") VALUES (true, \'2026-04-10T17:06:32.731264\'::timestamp, 1, \'Main Field\', \'indoor\', 3, \'2026-04-10T17:06:32.731264\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_playing_area_unique_venue_name"
+View error context:
+View error context:
+2026-04-10 17:06:39,940 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_bye_seeding_top_seeds : Knockout bye logic IndexError — needs engine fix 
+2026-04-10 17:06:40,185 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_six_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-10 17:06:40,185 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_three_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-10 17:06:42,682 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club_representative" ("active", "club_id", "create_date", "create_uid", "is_primary", "partner_id", "role", "role_type_id", "write_date", "write_uid") VALUES (true, 26, \'2026-04-10T17:06:42.486561\'::timestamp, 1, false, 10, \'primary\', 1, \'2026-04-10T17:06:42.486561\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_representative_partner_club_role_unique"
+2026-04-10 17:06:44,187 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_tournament" ("active", "code", "create_date", "create_uid", "date_end", "date_start", "name", "public_slug", "show_public_results", "show_public_standings", "state", "tournament_type", "website_published", "write_date", "write_uid") VALUES (true, \'OTHER-TT\', \'2026-04-10T17:06:44.129394\'::timestamp, 1, \'2024-02-28\'::date, \'2024-02-01\'::date, \'Other Tournament\', \'shared-slug\', true, true, \'draft\', \'single_day\', false, \'2026-04-10T17:06:44.129394\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_tournament_public_slug_unique"
+2026-04-10 17:06:45,679 1 INFO odoo_ci_test odoo.addons.sports_federation_finance_bridge.tests.test_finance_hooks: Starting TestFinanceHooks.test_venue_finance_event_fails_without_venue ... 
+2026-04-10 17:06:47,284 1 INFO odoo_ci_test odoo.addons.sports_federation_notifications.tests.test_notifications: Starting TestNotifications.test_cron_method_runs_without_error ... 
+2026-04-10 17:06:49,219 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-10 17:06:49,263 1 ERROR odoo_ci_test odoo.tests.result: 0 failed, 1 error(s) of 306 tests when loading database 'odoo_ci_test' 

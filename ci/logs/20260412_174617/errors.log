@@ -1,0 +1,4 @@
+ERROR: column ru.name does not exist
+2026-04-12 17:47:03,740 1 ERROR odoo_ci_test odoo.registry: Failed to load registry 
+2026-04-12 17:47:03,740 1 CRITICAL odoo_ci_test odoo.service.server: Failed to initialize database `odoo_ci_test`. 
+Traceback (most recent call last):

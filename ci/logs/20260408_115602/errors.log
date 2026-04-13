@@ -1,0 +1,1 @@
+odoo [--addons-path=PATH,...] server: error: unrecognized parameters: --database=odoo_ci_test -i sports_federation_base

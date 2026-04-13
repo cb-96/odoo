@@ -1,0 +1,16 @@
+=== SF CI Run – 20260412_181955 ===
+Modules: sports_federation_portal
+Config:  /home/cedric/odoo/addons/ci/.env.example
+Logs:    /home/cedric/odoo/addons/ci/logs/20260412_181955
+────────────────────────────────────────────
+
+════════════════════════════════════════════
+  RESULTS
+════════════════════════════════════════════
+  Exit code:     255
+  Tests run:     n/a
+  Tests passed:  n/a
+  Tests failed:  n/a
+  Test errors:   n/a
+  Diagnostics:   4
+════════════════════════════════════════════

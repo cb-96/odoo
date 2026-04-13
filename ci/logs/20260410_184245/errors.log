@@ -1,0 +1,45 @@
+2026-04-10 18:43:09,791 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+2026-04-10 18:43:20,932 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club" ("active", "code", "create_date", "create_uid", "name", "write_date", "write_uid") VALUES (true, \'TC01\', \'2026-04-10T18:43:20.902335\'::timestamp, 1, \'Duplicate Code Club\', \'2026-04-10T18:43:20.902335\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_code_unique"
+2026-04-10 18:43:21,058 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_team" ("active", "category", "club_id", "code", "create_date", "create_uid", "gender", "name", "write_date", "write_uid") VALUES (true, \'senior\', 3, \'SS01\', \'2026-04-10T18:43:21.005195\'::timestamp, 1, \'male\', \'Other Team\', \'2026-04-10T18:43:21.005195\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_team_code_unique"
+2026-04-10 18:43:21,274 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_season_registration" ("create_date", "create_uid", "name", "registration_date", "season_id", "state", "team_id", "write_date", "write_uid") VALUES (\'2026-04-10T18:43:21.221703\'::timestamp, 1, \'REG/2026/00004\', \'2026-04-10\'::date, 5, \'draft\', 5, \'2026-04-10T18:43:21.221703\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_season_registration_team_season_unique"
+<string>:16: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:27: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:51: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:67: (ERROR/3) Undefined substitution referenced: "------".
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+2026-04-10 18:43:32,643 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_club_representative" ("active", "club_id", "create_date", "create_uid", "is_primary", "partner_id", "role", "role_type_id", "write_date", "write_uid") VALUES (true, 5, \'2026-04-10T18:43:32.441692\'::timestamp, 1, false, 7, \'primary\', 1, \'2026-04-10T18:43:32.441692\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_club_representative_partner_club_role_unique"
+2026-04-10 18:43:33,061 1 ERROR odoo_ci_test odoo.addons.sports_federation_portal.tests.test_roster_portal_access: ERROR: TestRosterPortalAccess.test_portal_user_can_manage_owned_roster_with_portal_helpers
+Traceback (most recent call last):
+    raise ValidationError(
+odoo.exceptions.ValidationError: Player 'Portal Roster C' is not eligible for this roster: Roster line is not active.
+2026-04-10 18:43:33,896 1 ERROR odoo_ci_test odoo.modules.loading: Module sports_federation_portal: 0 failures, 1 errors of 27 tests 
+2026-04-10 18:43:34,494 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-10 18:43:34,531 1 ERROR odoo_ci_test odoo.tests.result: 0 failed, 1 error(s) of 46 tests when loading database 'odoo_ci_test' 

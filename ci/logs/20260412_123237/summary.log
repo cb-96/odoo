@@ -1,0 +1,15 @@
+=== SF CI Run – 20260412_123237 ===
+Modules: sports_federation_tournament,sports_federation_venues,sports_federation_competition_engine
+Config:  /home/cedric/odoo/addons/ci/.env.example
+Logs:    /home/cedric/odoo/addons/ci/logs/20260412_123237
+────────────────────────────────────────────
+
+════════════════════════════════════════════
+  RESULTS
+════════════════════════════════════════════
+  Exit code:     1
+  Error lines:   46
+  Tests passed:  ~0
+0
+  Tests failed:  ~33
+════════════════════════════════════════════

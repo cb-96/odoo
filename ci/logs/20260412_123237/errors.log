@@ -1,0 +1,46 @@
+2026-04-12 12:33:02,116 1 INFO odoo_ci_test odoo.modules.loading: loading base/data/ir_demo_failure_data.xml 
+<string>:38: (ERROR/3) Unexpected indentation.
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:26: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:44: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:58: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:73: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:93: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:17: (ERROR/3) Undefined substitution referenced: "--------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:28: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:45: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:57: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:69: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------".
+<string>:83: (ERROR/3) Undefined substitution referenced: "-------------".
+<string>:98: (ERROR/3) Undefined substitution referenced: "-------".
+2026-04-12 12:33:15,444 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_competition" ("active", "code", "competition_type", "create_date", "create_uid", "name", "sequence", "state", "write_date", "write_uid") VALUES (true, \'UNIQUE\', \'league\', \'2026-04-12T12:33:15.422633\'::timestamp, 1, \'Comp 2\', 10, \'draft\', \'2026-04-12T12:33:15.422633\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_competition_code_unique"
+2026-04-12 12:33:16,333 1 ERROR odoo_ci_test odoo.sql_db: bad query: b'INSERT INTO "federation_playing_area" ("active", "create_date", "create_uid", "name", "surface_type", "venue_id", "write_date", "write_uid") VALUES (true, \'2026-04-12T12:33:16.284856\'::timestamp, 1, \'Main Field\', \'indoor\', 3, \'2026-04-12T12:33:16.284856\'::timestamp, 1) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "federation_playing_area_unique_venue_name"
+View error context:
+2026-04-12 12:33:16,717 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_bye_seeding_top_seeds : Knockout bye logic IndexError — needs engine fix 
+2026-04-12 12:33:17,000 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: ERROR: TestKnockout.test_overwrite_allowed
+Traceback (most recent call last):
+    raise ValidationError(
+odoo.exceptions.ValidationError: Teams in the same category cannot play the same opponent more than once in the same round.
+2026-04-12 12:33:17,095 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_six_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-12 12:33:17,095 1 INFO odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_knockout: skipped TestKnockout.test_three_teams_power_of_two : Knockout bye logic IndexError — needs engine fix 
+2026-04-12 12:33:17,948 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: ERROR: TestRoundRobin.test_overwrite_allowed
+Traceback (most recent call last):
+    raise ValidationError(
+odoo.exceptions.ValidationError: Teams in the same category cannot play the same opponent more than once in the same round.
+2026-04-12 12:33:18,102 1 ERROR odoo_ci_test odoo.addons.sports_federation_competition_engine.tests.test_round_robin: FAIL: TestRoundRobin.test_round_numbers_follow_generated_rounds
+Traceback (most recent call last):
+AssertionError: Lists differ: [1, 2, 3, 4, 5] != [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]
+2026-04-12 12:33:18,445 1 ERROR odoo_ci_test odoo.modules.loading: Module sports_federation_competition_engine: 1 failures, 2 errors of 30 tests 
+2026-04-12 12:33:18,838 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
+2026-04-12 12:33:18,869 1 ERROR odoo_ci_test odoo.tests.result: 1 failed, 2 error(s) of 56 tests when loading database 'odoo_ci_test' 

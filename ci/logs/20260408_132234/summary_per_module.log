@@ -1,0 +1,133 @@
+=== SF CI Run – 20260408_132234 — Per-Module Results ===
+Logs: /home/cedric/odoo/addons/ci/logs/20260408_132234
+────────────────────────────────────────────────────────
+
+module: sports_federation_base
+  tests_started: 15
+  failures: 0
+  skipped: 0
+  passed: 15
+
+module: sports_federation_rules
+  tests_started: 10
+  failures: 0
+  skipped: 0
+  passed: 10
+
+module: sports_federation_people
+  tests_started: 11
+  failures: 0
+  skipped: 0
+  passed: 11
+
+module: sports_federation_tournament
+  tests_started: 5
+  failures: 0
+  skipped: 0
+  passed: 5
+
+module: sports_federation_standings
+  tests_started: 19
+  failures: 0
+  skipped: 0
+  passed: 19
+
+module: sports_federation_venues
+  tests_started: 17
+  failures: 0
+  skipped: 1
+  passed: 16
+  note: 1 skipped test (competition_engine not installed for that test)
+
+module: sports_federation_result_control
+  tests_started: 9
+  failures: 0
+  skipped: 0
+  passed: 9
+
+module: sports_federation_portal
+  tests_started: 13
+  failures: 0
+  skipped: 0
+  passed: 13
+
+module: sports_federation_rosters
+  tests_started: 10
+  failures: 0
+  skipped: 0
+  passed: 10
+
+module: sports_federation_competition_engine
+  tests_started: 22
+  failures: 0
+  skipped: 3
+  passed: 19
+  note: 3 skipped knockout bye tests (pre-existing engine bug)
+
+module: sports_federation_officiating
+  tests_started: 10
+  failures: 0
+  skipped: 0
+  passed: 10
+
+module: sports_federation_discipline
+  tests_started: 7
+  failures: 0
+  skipped: 0
+  passed: 7
+
+module: sports_federation_governance
+  tests_started: 7
+  failures: 0
+  skipped: 0
+  passed: 7
+
+module: sports_federation_notifications
+  tests_started: 4
+  failures: 0
+  skipped: 0
+  passed: 4
+
+module: sports_federation_import_tools
+  tests_started: 5
+  failures: 0
+  skipped: 0
+  passed: 5
+
+module: sports_federation_finance_bridge
+  tests_started: 14
+  failures: 0
+  skipped: 0
+  passed: 14
+
+module: sports_federation_compliance
+  tests_started: 13
+  failures: 0
+  skipped: 0
+  passed: 13
+
+module: sports_federation_public_site
+  tests_started: 16
+  failures: 0
+  skipped: 0
+  passed: 16
+
+module: sports_federation_reporting
+  tests_started: 14
+  failures: 0
+  skipped: 0
+  passed: 14
+
+────────────────────────────────────────────────────────
+Totals:
+  tests_started: 221
+  failures: 0
+  skipped: 4
+  passed: 217
+
+Notes:
+- "tests_started" is derived from the number of test-start log entries in raw.log.
+- Skipped tests are reported where the test runner logged "skipped" for a test.
+- For failing tests you can inspect errors.log or raw.log for per-failure tracebacks.
+
+File generated: ci/logs/20260408_132234/summary_per_module.log

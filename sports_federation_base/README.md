@@ -59,10 +59,15 @@ A time-bounded period during which competitions take place.
 | `name` / `code` | Char | Season label and unique code |
 | `date_start` / `date_end` | Date | Season boundaries (end ≥ start) |
 | `state` | Selection | draft → open → closed / cancelled |
+| `target_club_count` / `target_team_count` | Integer | Planned federation participation baseline |
+| `target_tournament_count` / `target_participant_count` | Integer | Planned delivery targets for the season |
 
 **Workflow:** active `draft` seasons can be opened, `open` seasons can be closed,
 `draft` or `open` seasons can be cancelled, and only `cancelled` seasons can be
 reset to `draft`.
+
+Planning target values are validated as zero-or-greater so downstream reporting
+and budgeting can safely compare actual activity against the season plan.
 
 ### `federation.season.registration`
 

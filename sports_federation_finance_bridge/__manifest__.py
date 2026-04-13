@@ -20,6 +20,7 @@
         "security/ir.model.access.csv",
         "views/fee_type_views.xml",
         "views/finance_event_views.xml",
+        "views/season_budget_views.xml",
         "views/menu_views.xml",
     ],
     "demo": [],

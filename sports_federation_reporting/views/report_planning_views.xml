@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_report_season_portfolio_search" model="ir.ui.view">
+        <field name="name">federation.report.season.portfolio.search</field>
+        <field name="model">federation.report.season.portfolio</field>
+        <field name="arch" type="xml">
+            <search string="Season Portfolio">
+                <field name="season_id"/>
+                <field name="season_state"/>
+                <field name="planning_status"/>
+                <filter name="blocked" string="Blocked" domain="[('planning_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('planning_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'season_state'}"/>
+                    <filter name="group_status" string="Planning Status" context="{'group_by': 'planning_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_season_portfolio_list" model="ir.ui.view">
+        <field name="name">federation.report.season.portfolio.list</field>
+        <field name="model">federation.report.season.portfolio</field>
+        <field name="arch" type="xml">
+            <list string="Season Portfolio" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="season_state"/>
+                <field name="target_club_count" optional="show"/>
+                <field name="actual_club_count" optional="show"/>
+                <field name="target_team_count"/>
+                <field name="actual_team_count"/>
+                <field name="target_tournament_count" optional="show"/>
+                <field name="actual_tournament_count" optional="show"/>
+                <field name="target_participant_count"/>
+                <field name="actual_participant_count"/>
+                <field name="budget_amount"/>
+                <field name="actual_finance_amount"/>
+                <field name="budget_variance_amount"/>
+                <field name="open_compliance_item_count"/>
+                <field name="planning_status"/>
+                <field name="planning_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_season_portfolio_pivot" model="ir.ui.view">
+        <field name="name">federation.report.season.portfolio.pivot</field>
+        <field name="model">federation.report.season.portfolio</field>
+        <field name="arch" type="xml">
+            <pivot string="Season Portfolio">
+                <field name="season_id" type="row"/>
+                <field name="planning_status" type="col"/>
+                <field name="actual_club_count" type="measure"/>
+                <field name="actual_team_count" type="measure"/>
+                <field name="actual_tournament_count" type="measure"/>
+                <field name="actual_participant_count" type="measure"/>
+                <field name="budget_amount" type="measure"/>
+                <field name="actual_finance_amount" type="measure"/>
+                <field name="budget_variance_amount" type="measure"/>
+                <field name="open_compliance_item_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_season_portfolio" model="ir.actions.act_window">
+        <field name="name">Season Portfolio</field>
+        <field name="res_model">federation.report.season.portfolio</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_season_portfolio_search"/>
+    </record>
+
+    <record id="view_federation_report_club_performance_search" model="ir.ui.view">
+        <field name="name">federation.report.club.performance.search</field>
+        <field name="model">federation.report.club.performance</field>
+        <field name="arch" type="xml">
+            <search string="Club Performance">
+                <field name="season_id"/>
+                <field name="club_id"/>
+                <field name="performance_status"/>
+                <filter name="blocked" string="Blocked" domain="[('performance_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('performance_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'performance_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_club_performance_list" model="ir.ui.view">
+        <field name="name">federation.report.club.performance.list</field>
+        <field name="model">federation.report.club.performance</field>
+        <field name="arch" type="xml">
+            <list string="Club Performance" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="club_id"/>
+                <field name="confirmed_team_count"/>
+                <field name="confirmed_tournament_entry_count"/>
+                <field name="completed_match_count"/>
+                <field name="win_count"/>
+                <field name="draw_count" optional="hide"/>
+                <field name="loss_count" optional="hide"/>
+                <field name="goals_for" optional="hide"/>
+                <field name="goals_against" optional="hide"/>
+                <field name="goal_difference"/>
+                <field name="win_rate"/>
+                <field name="pending_finance_event_count"/>
+                <field name="open_compliance_item_count"/>
+                <field name="performance_status"/>
+                <field name="performance_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_club_performance_pivot" model="ir.ui.view">
+        <field name="name">federation.report.club.performance.pivot</field>
+        <field name="model">federation.report.club.performance</field>
+        <field name="arch" type="xml">
+            <pivot string="Club Performance">
+                <field name="season_id" type="row"/>
+                <field name="club_id" type="row"/>
+                <field name="performance_status" type="col"/>
+                <field name="confirmed_tournament_entry_count" type="measure"/>
+                <field name="completed_match_count" type="measure"/>
+                <field name="win_count" type="measure"/>
+                <field name="goal_difference" type="measure"/>
+                <field name="pending_finance_event_count" type="measure"/>
+                <field name="open_compliance_item_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_club_performance" model="ir.actions.act_window">
+        <field name="name">Club Performance</field>
+        <field name="res_model">federation.report.club.performance</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_club_performance_search"/>
+    </record>
+
+</odoo>

@@ -32,9 +32,9 @@
         <field name="target_model">federation.season</field>
         <field name="contract_version">csv_v1</field>
         <field name="required_columns_text">name, code, date_start, date_end</field>
-        <field name="optional_columns_text">state, notes</field>
-        <field name="sample_header">name,code,date_start,date_end,state,notes</field>
-        <field name="notes">Dates must use YYYY-MM-DD and state must be one of draft, open, closed, or cancelled.</field>
+        <field name="optional_columns_text">state, notes, target_club_count, target_team_count, target_tournament_count, target_participant_count</field>
+        <field name="sample_header">name,code,date_start,date_end,state,target_club_count,target_team_count,target_tournament_count,target_participant_count,notes</field>
+        <field name="notes">Dates must use YYYY-MM-DD, state must be one of draft, open, closed, or cancelled, and planning target values must be whole numbers greater than or equal to zero.</field>
     </record>
 
     <record id="federation_import_template_teams" model="federation.import.template">

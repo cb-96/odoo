@@ -171,13 +171,41 @@ Season-by-season readiness checklist for high-volume federation administration.
 | `checklist_status` | Selection | `healthy`, `attention`, or `blocked` |
 | `checklist_note` | Text | Summary of the main operational blocker |
 
+### `federation.report.season.portfolio`
+
+Season-level planning portfolio that compares the Year 4 planning baseline with
+current delivery, finance, and compliance position.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` / `season_state` | Many2one / Selection | Planned season in scope |
+| `target_*` / `actual_*` / `*_delta` | Integer | Planned vs actual clubs, teams, tournaments, and participants |
+| `budget_amount` / `actual_finance_amount` / `budget_variance_amount` | Float | Planned vs actual finance position |
+| `open_compliance_item_count` | Integer | Outstanding compliance load for confirmed clubs |
+| `planning_status` / `planning_note` | Selection / Text | Operator-readable planning health |
+
+### `federation.report.club.performance`
+
+Club-by-club seasonal performance roll-up for tournament activity, results,
+finance queue load, and compliance attention.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` / `club_id` | Many2one | Club performance scope |
+| `confirmed_team_count` / `confirmed_tournament_entry_count` | Integer | Seasonal participation footprint |
+| `completed_match_count`, `win_count`, `draw_count`, `loss_count` | Integer | Competitive activity and outcomes |
+| `goals_for`, `goals_against`, `goal_difference`, `win_rate` | Integer / Float | Performance detail |
+| `pending_finance_event_count` | Integer | Open finance queue items for the club |
+| `open_compliance_item_count` | Integer | Open club compliance items |
+| `performance_status` / `performance_note` | Selection / Text | Operator-readable club status |
+
 ### `federation.report.schedule`
 
 Persistent schedule for recurring application-layer report generation.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `report_type` | Selection | Operational, standings reconciliation, finance reconciliation, compliance summary |
+| `report_type` | Selection | Operational, reconciliation, compliance, board/audit packs, season portfolio, or club performance |
 | `period_type` | Selection | Weekly or monthly cadence |
 | `season_id` | Many2one | Optional season scope for season-based reports |
 | `next_run_on` / `last_run_on` | Datetime | Scheduling metadata |
@@ -192,8 +220,9 @@ Persistent schedule for recurring application-layer report generation.
 4. **Recurring snapshots** — `federation.report.schedule` can generate weekly or monthly CSV snapshots and a daily cron refreshes active schedules.
 5. **Reconciliation-first reporting** — Standings coverage, finance follow-up, failed-notification queues, missing discipline-finance events, and stalled workflow queues expose the specific gaps operators must resolve before relying on downstream outputs.
 6. **Season operations checklist** — The reporting layer now includes a season-level checklist that surfaces review queues, publication gaps, and unresolved workflow exceptions in one place.
-7. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
-8. **Contract-tagged exports** — Authenticated CSV responses now include explicit contract and version headers for downstream consumers.
+7. **Planning decision support** — Season portfolio and club performance views turn the reporting layer into a planning and delivery-monitoring surface instead of a pure export utility.
+8. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
+9. **Contract-tagged exports** — Authenticated CSV responses now include explicit contract and version headers for downstream consumers.
 
 ## CSV exports
 

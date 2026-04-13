@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_season_budget_search" model="ir.ui.view">
+        <field name="name">federation.season.budget.search</field>
+        <field name="model">federation.season.budget</field>
+        <field name="arch" type="xml">
+            <search string="Season Budgets">
+                <field name="season_id"/>
+                <field name="fee_type_id"/>
+                <group>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_season_budget_list" model="ir.ui.view">
+        <field name="name">federation.season.budget.list</field>
+        <field name="model">federation.season.budget</field>
+        <field name="arch" type="xml">
+            <list string="Season Budgets">
+                <field name="season_id"/>
+                <field name="fee_type_id"/>
+                <field name="budget_amount"/>
+                <field name="actual_amount"/>
+                <field name="variance_amount"/>
+                <field name="variance_pct"/>
+                <field name="actual_event_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_season_budget_pivot" model="ir.ui.view">
+        <field name="name">federation.season.budget.pivot</field>
+        <field name="model">federation.season.budget</field>
+        <field name="arch" type="xml">
+            <pivot string="Season Budgets">
+                <field name="season_id" type="row"/>
+                <field name="fee_type_id" type="row"/>
+                <field name="budget_amount" type="measure"/>
+                <field name="actual_amount" type="measure"/>
+                <field name="variance_amount" type="measure"/>
+                <field name="actual_event_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_federation_season_budget_form" model="ir.ui.view">
+        <field name="name">federation.season.budget.form</field>
+        <field name="model">federation.season.budget</field>
+        <field name="arch" type="xml">
+            <form string="Season Budget">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_finance_events"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-money">
+                            <field name="actual_event_count" widget="statinfo" string="Actual Events"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="season_id"/>
+                            <field name="fee_type_id"/>
+                            <field name="currency_id" readonly="1"/>
+                            <field name="budget_amount"/>
+                        </group>
+                        <group string="Actuals" readonly="1">
+                            <field name="actual_amount"/>
+                            <field name="variance_amount"/>
+                            <field name="variance_pct"/>
+                            <field name="actual_event_count"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_season_budget" model="ir.actions.act_window">
+        <field name="name">Season Budgets</field>
+        <field name="res_model">federation.season.budget</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="search_view_id" ref="view_federation_season_budget_search"/>
+    </record>
+
+</odoo>

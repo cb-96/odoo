@@ -32,4 +32,10 @@
               action="action_federation_compliance_check"
               sequence="30"/>
 
+    <menuitem id="menu_federation_compliance_archive"
+              name="History"
+              parent="menu_federation_compliance"
+              action="action_federation_compliance_check_archive"
+              sequence="40"/>
+
 </odoo>

@@ -14,11 +14,23 @@
               action="action_federation_report_operational"
               sequence="5"/>
 
+    <menuitem id="menu_federation_report_season_portfolio"
+              name="Season Portfolio"
+              parent="menu_federation_reporting"
+              action="action_federation_report_season_portfolio"
+              sequence="7"/>
+
     <menuitem id="menu_federation_report_participation"
               name="Participation"
               parent="menu_federation_reporting"
               action="action_federation_report_participation"
               sequence="10"/>
+
+    <menuitem id="menu_federation_report_club_performance"
+              name="Club Performance"
+              parent="menu_federation_reporting"
+              action="action_federation_report_club_performance"
+              sequence="12"/>
 
     <menuitem id="menu_federation_report_standing_reconciliation"
               name="Standings Reconciliation"

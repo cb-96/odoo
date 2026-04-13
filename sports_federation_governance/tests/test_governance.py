@@ -79,6 +79,28 @@ class TestGovernance(TransactionCase):
         request.action_approve()
         request.action_mark_implemented()
         self.assertEqual(request.state, "implemented")
+        self.assertTrue(request.outcome_ids)
+        self.assertEqual(request.outcome_ids[0].outcome, "implemented")
+
+    def test_override_outcome_records_request_snapshot(self):
+        request = self.env["federation.override.request"].create({
+            "name": "Tracked Request",
+            "request_type": "standing_adjustment",
+            "target_model": "federation.tournament",
+            "target_res_id": 4,
+            "reason": "Track Year 4 outcome logging.",
+        })
+
+        outcome = self.env["federation.override.outcome"].create({
+            "request_id": request.id,
+            "outcome": "effective",
+            "note": "The override achieved the intended effect.",
+        })
+
+        self.assertEqual(outcome.request_type, "standing_adjustment")
+        self.assertEqual(outcome.target_model, "federation.tournament")
+        self.assertEqual(outcome.target_res_id, 4)
+        self.assertEqual(outcome.request_state, "draft")
 
     def test_target_validation(self):
         """Test target validation constraints."""

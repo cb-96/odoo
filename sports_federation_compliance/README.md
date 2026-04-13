@@ -77,6 +77,20 @@ A check result linking a requirement to an entity's submission status.
 | `note` | Char | Result note |
 | `target_display` | Char (computed) | Readable target name |
 
+### `federation.compliance.check.archive`
+
+Immutable history row capturing how a compliance check looked at a point in
+time.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `compliance_check_id` | Many2one | Source compliance check |
+| `archived_on` / `checked_on` | Datetime | Archive timestamp and source check timestamp |
+| `target_model` / `target_res_id` | Char / Integer | Archived target reference |
+| `requirement_id` / `submission_id` | Many2one | Requirement and linked submission snapshot |
+| `status` | Selection | Archived compliance status |
+| `note` | Char | Archived operator note |
+
 ## Key Behaviours
 
 1. **Requirement definition** — Federation defines which documents each entity type
@@ -94,6 +108,9 @@ A check result linking a requirement to an entity's submission status.
 7. **Portal submission flow** — Club representatives and referees can upload
     replacement documents and submit renewals directly from the portal detail page
     without backend access.
+8. **Historical evidence** — compliance checks now append archive rows on create
+   and on tracked status changes so operators can review how a target moved from
+   missing to compliant over time.
 
 ## Portal Self-Service
 

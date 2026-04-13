@@ -65,6 +65,11 @@ class FederationOverrideRequest(models.Model):
         "request_id",
         string="Audit Notes",
     )
+    outcome_ids = fields.One2many(
+        "federation.override.outcome",
+        "request_id",
+        string="Outcome Log",
+    )
 
     @api.constrains("target_model")
     def _check_target_model(self):
@@ -121,6 +126,11 @@ class FederationOverrideRequest(models.Model):
             if record.state != "approved":
                 raise ValidationError("Only approved requests can be marked as implemented.")
             record.state = "implemented"
+            self.env["federation.override.outcome"].create({
+                "request_id": record.id,
+                "outcome": "implemented",
+                "note": record.implementation_note or "Override marked as implemented.",
+            })
 
     def action_close(self):
         """Close the request."""

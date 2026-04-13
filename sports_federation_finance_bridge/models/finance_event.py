@@ -50,6 +50,11 @@ class FederationFinanceEvent(models.Model):
     )
     source_model = fields.Char(required=True)
     source_res_id = fields.Integer(required=True)
+    season_id = fields.Many2one(
+        "federation.season",
+        ondelete="set null",
+        index=True,
+    )
     partner_id = fields.Many2one(
         "res.partner",
         ondelete="set null",
@@ -90,6 +95,62 @@ class FederationFinanceEvent(models.Model):
     closed_by_id = fields.Many2one("res.users", readonly=True)
 
     _fee_source_unique = models.Constraint('unique (fee_type_id, source_model, source_res_id)', 'A finance event already exists for this fee type and source record.')
+
+    @api.model
+    def _resolve_source_record(self, source_model, source_res_id):
+        if not source_model or not source_res_id:
+            return self.env[source_model].browse() if source_model else self.env["federation.season"].browse()
+        model = self.env.get(source_model)
+        if model is None:
+            return self.env["federation.season"].browse()
+        return model.browse(source_res_id).exists()
+
+    @api.model
+    def _resolve_path_value(self, record, path):
+        value = record
+        for attribute in path.split("."):
+            value = getattr(value, attribute, False)
+            if not value:
+                return False
+        return value
+
+    @api.model
+    def _infer_season_from_source(self, source_record):
+        if not source_record:
+            return self.env["federation.season"].browse()
+
+        for path in (
+            "season_id",
+            "tournament_id.season_id",
+            "match_id.tournament_id.season_id",
+            "participant_id.tournament_id.season_id",
+            "registration_id.season_id",
+            "round_id.tournament_id.season_id",
+            "case_id.match_id.tournament_id.season_id",
+        ):
+            season = self._resolve_path_value(source_record, path)
+            if season and getattr(season, "_name", False) == "federation.season":
+                return season
+        return self.env["federation.season"].browse()
+
+    @api.model
+    def _infer_season_from_vals(self, vals):
+        source_model = vals.get("source_model")
+        source_res_id = vals.get("source_res_id")
+        source_record = self._resolve_source_record(source_model, source_res_id)
+        return self._infer_season_from_source(source_record)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        prepared_vals_list = []
+        for vals in vals_list:
+            prepared_vals = dict(vals)
+            if not prepared_vals.get("season_id"):
+                season = self._infer_season_from_vals(prepared_vals)
+                if season:
+                    prepared_vals["season_id"] = season.id
+            prepared_vals_list.append(prepared_vals)
+        return super().create(prepared_vals_list)
 
     @api.constrains("amount")
     def _check_amount(self):
@@ -223,6 +284,7 @@ class FederationFinanceEvent(models.Model):
             "currency_id": fee_type.currency_id.id or self.env.company.currency_id.id,
             "source_model": source_record._name,
             "source_res_id": source_record.id,
+            "season_id": self._infer_season_from_source(source_record).id or False,
             "partner_id": partner.id if partner else False,
             "external_ref": self._build_external_ref(source_record, fee_type),
             "export_schema_version": self.EXPORT_SCHEMA_VERSION,

@@ -351,6 +351,18 @@ budgeting, and performance monitoring.
 Target outcome: the platform becomes not just a workflow system, but a planning
 and insight system for the federation.
 
+Current Year 4 execution batch completed in this pass:
+
+1. Done (2026-04-13): Added season planning targets to the core season model and extended the governed season CSV import contract to carry planning baselines safely.
+2. Done (2026-04-13): Added season-scoped finance actuals and season budgets so planned vs actual spend can be monitored from the federation workflow layer.
+3. Done (2026-04-13): Added immutable compliance history archives so requirement status changes can be audited over time.
+4. Done (2026-04-13): Added governance override outcome logging so implemented decisions now carry post-decision evidence.
+5. Done (2026-04-13): Added season portfolio and club performance reporting, including scheduled CSV generation through the existing reporting scheduler.
+
+Current Year 4 verification status:
+
+1. Done (2026-04-13): Focused CI verification passed for `sports_federation_base`, `sports_federation_import_tools`, `sports_federation_finance_bridge`, `sports_federation_compliance`, `sports_federation_governance`, and `sports_federation_reporting`.
+
 ## Ongoing Quality Gates For Every Year
 
 1. Every workflow change must come with tests.

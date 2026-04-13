@@ -13,6 +13,17 @@ class TestFinanceBridge(TransactionCase):
             "name": "Test Club",
             "code": "TC001",
         })
+        cls.season = cls.env["federation.season"].create({
+            "name": "Finance Season",
+            "code": "FIN2026",
+            "date_start": "2026-01-01",
+            "date_end": "2026-12-31",
+        })
+        cls.team = cls.env["federation.team"].create({
+            "name": "Finance Team",
+            "club_id": cls.club.id,
+            "code": "FINTEAM",
+        })
 
     def test_create_fee_type(self):
         """Test creating a fee type."""
@@ -224,6 +235,68 @@ class TestFinanceBridge(TransactionCase):
         self.assertIn("Reconciliation Ref", headers)
         self.assertIn("ACC-2026-001", row)
         self.assertIn("REC-2026-001", row)
+
+    def test_finance_event_infers_season_from_source_record(self):
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Season Fee",
+            "code": "SEASONFEE",
+            "category": "registration",
+            "default_amount": 80.00,
+        })
+        registration = self.env["federation.season.registration"].create({
+            "season_id": self.season.id,
+            "team_id": self.team.id,
+        })
+
+        event = self.env["federation.finance.event"].create_from_source(
+            source_record=registration,
+            fee_type=fee_type,
+        )
+
+        self.assertEqual(event.season_id, self.season)
+
+    def test_season_budget_tracks_actuals_and_variance(self):
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Budget Fee",
+            "code": "BUDGETFEE",
+            "category": "registration",
+            "default_amount": 120.00,
+        })
+        budget = self.env["federation.season.budget"].create({
+            "season_id": self.season.id,
+            "fee_type_id": fee_type.id,
+            "budget_amount": 300.00,
+        })
+        confirmed_event = self.env["federation.finance.event"].create({
+            "name": "Budget Confirmed",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 125.00,
+            "season_id": self.season.id,
+            "source_model": "federation.season",
+            "source_res_id": self.season.id,
+        })
+        confirmed_event.action_confirm()
+        draft_event = self.env["federation.finance.event"].create({
+            "name": "Budget Draft",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 75.00,
+            "season_id": self.season.id,
+            "source_model": "federation.team",
+            "source_res_id": self.team.id,
+        })
+
+        budget.invalidate_recordset()
+        self.assertEqual(budget.actual_amount, 125.00)
+        self.assertEqual(budget.actual_event_count, 1)
+        self.assertEqual(budget.variance_amount, -175.00)
+
+        draft_event.action_confirm()
+        budget.invalidate_recordset()
+        self.assertEqual(budget.actual_amount, 200.00)
+        self.assertEqual(budget.actual_event_count, 2)
+        self.assertEqual(budget.variance_amount, -100.00)
 
     def test_cancel_from_draft(self):
         """Test cancelling from draft."""

@@ -1,5 +1,6 @@
 from . import fee_type
 from . import finance_event
+from . import season_budget
 from . import match_result_hooks
 from . import referee_reimbursement_hooks
 from . import sanction_finance_hooks

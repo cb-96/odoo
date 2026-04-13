@@ -32,13 +32,14 @@ A formal request to override a standard process.
 | `target_model` / `target_res_id` | Char / Integer | Linked record |
 | `requested_by_id` | Many2one | Requester (user) |
 | `requested_on` | Datetime | Request timestamp |
-| `state` | Selection | draft / submitted / under_review / approved / rejected / implemented |
+| `state` | Selection | draft / submitted / approved / rejected / implemented / closed |
 | `reason` | Text | Justification |
 | `implementation_note` | Text | How it was applied |
 | `decision_ids` | One2many | Review decisions |
 | `audit_note_ids` | One2many | Audit trail entries |
+| `outcome_ids` | One2many | Post-decision outcome log |
 
-- **State machine**: draft → submitted → under_review → approved / rejected → implemented.
+- **State machine**: draft → submitted → approved / rejected → implemented → closed.
 
 ### `federation.override.decision`
 
@@ -63,6 +64,22 @@ Free-form audit notes attached to an override request.
 | `author_id` | Many2one | Author |
 | `created_on` | Datetime | Timestamp |
 
+### `federation.override.outcome`
+
+Outcome tracking row attached to an override request after implementation or
+follow-up review.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `request_id` | Many2one | Source override request |
+| `outcome` | Selection | implemented / effective / partial / ineffective / reversed |
+| `outcome_on` | Datetime | When the outcome was recorded |
+| `recorded_by_id` | Many2one | Operator recording the outcome |
+| `request_type` | Selection | Snapshot of the originating request type |
+| `target_model` / `target_res_id` | Char / Integer | Snapshot of the overridden record |
+| `request_state` | Selection | Request state at the time of logging |
+| `note` | Text | Outcome commentary |
+
 ## Security Groups
 
 | Group | Purpose |
@@ -77,3 +94,5 @@ Free-form audit notes attached to an override request.
    single request.
 3. **Audit trail** — All decisions and notes are timestamped and attributed.
 4. **Generic target** — Requests can link to any record type via model/res_id.
+5. **Outcome evidence** — implemented requests now create outcome-log rows so
+   governance review can extend beyond the approval moment.

@@ -14,4 +14,10 @@
               action="action_federation_override_request"
               sequence="10"/>
 
+    <menuitem id="menu_federation_override_outcome"
+              name="Override Outcomes"
+              parent="menu_federation_governance"
+              action="action_federation_override_outcome"
+              sequence="20"/>
+
 </odoo>

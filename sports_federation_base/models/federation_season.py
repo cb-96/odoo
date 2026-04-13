@@ -25,6 +25,10 @@ class FederationSeason(models.Model):
         tracking=True,
         required=True,
     )
+    target_club_count = fields.Integer(string="Target Clubs", default=0)
+    target_team_count = fields.Integer(string="Target Teams", default=0)
+    target_tournament_count = fields.Integer(string="Target Tournaments", default=0)
+    target_participant_count = fields.Integer(string="Target Tournament Participants", default=0)
     notes = fields.Text(string="Notes")
 
     registration_ids = fields.One2many(
@@ -52,6 +56,23 @@ class FederationSeason(models.Model):
         for rec in self:
             if rec.date_start and rec.date_end and rec.date_start >= rec.date_end:
                 raise ValidationError("End date must be after start date.")
+
+    @api.constrains(
+        "target_club_count",
+        "target_team_count",
+        "target_tournament_count",
+        "target_participant_count",
+    )
+    def _check_planning_targets(self):
+        for rec in self:
+            target_values = [
+                rec.target_club_count,
+                rec.target_team_count,
+                rec.target_tournament_count,
+                rec.target_participant_count,
+            ]
+            if any(value < 0 for value in target_values):
+                raise ValidationError(_("Planning target values must be zero or greater."))
 
     def action_open(self):
         invalid_seasons = self.filtered(lambda rec: rec.state != "draft" or not rec.active)

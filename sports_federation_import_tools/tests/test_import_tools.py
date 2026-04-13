@@ -278,6 +278,26 @@ class TestImportTools(TransactionCase):
         self.assertIn("format_error", wizard.result_message)
         self.assertTrue(self.env["federation.season"].search([("code", "=", "S2026")], limit=1))
 
+    def test_import_seasons_supports_planning_targets(self):
+        csv_content = (
+            "name,code,date_start,date_end,state,target_club_count,target_team_count,target_tournament_count,target_participant_count\n"
+            "Planning Season,SPLAN,2026-01-01,2026-12-31,draft,8,18,4,32"
+        )
+        wizard = self.env["federation.import.seasons.wizard"].create({
+            "upload_file": self._create_csv_file(csv_content),
+            "dry_run": False,
+        })
+
+        self._approve_wizard_import(wizard)
+        wizard.action_parse_and_import()
+
+        season = self.env["federation.season"].search([("code", "=", "SPLAN")], limit=1)
+        self.assertTrue(season)
+        self.assertEqual(season.target_club_count, 8)
+        self.assertEqual(season.target_team_count, 18)
+        self.assertEqual(season.target_tournament_count, 4)
+        self.assertEqual(season.target_participant_count, 32)
+
     def test_import_tournament_participants_duplicate_skip(self):
         """Tournament participant import should block duplicate rows using the shared backend reason."""
         self.env["federation.tournament.participant"].create({

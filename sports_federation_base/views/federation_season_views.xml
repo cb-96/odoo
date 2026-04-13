@@ -46,6 +46,12 @@
                             <field name="date_start"/>
                             <field name="date_end"/>
                         </group>
+                        <group string="Planning Targets">
+                            <field name="target_club_count"/>
+                            <field name="target_team_count"/>
+                            <field name="target_tournament_count"/>
+                            <field name="target_participant_count"/>
+                        </group>
                     </group>
                     <separator string="Notes"/>
                     <field name="notes"/>
@@ -65,6 +71,9 @@
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="state"/>
+                <field name="target_team_count" optional="hide"/>
+                <field name="target_tournament_count" optional="hide"/>
+                <field name="target_participant_count" optional="hide"/>
                 <field name="registration_count"/>
             </list>
         </field>

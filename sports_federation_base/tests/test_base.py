@@ -178,6 +178,22 @@ class TestFederationSeason(TransactionCase):
                 "date_end": "2025-01-01",
             })
 
+    def test_season_planning_targets_are_stored_and_non_negative(self):
+        self.season.write({
+            "target_club_count": 6,
+            "target_team_count": 14,
+            "target_tournament_count": 3,
+            "target_participant_count": 24,
+        })
+
+        self.assertEqual(self.season.target_club_count, 6)
+        self.assertEqual(self.season.target_team_count, 14)
+        self.assertEqual(self.season.target_tournament_count, 3)
+        self.assertEqual(self.season.target_participant_count, 24)
+
+        with self.assertRaises(ValidationError):
+            self.season.write({"target_team_count": -1})
+
 
 class TestFederationSeasonRegistration(TransactionCase):
 

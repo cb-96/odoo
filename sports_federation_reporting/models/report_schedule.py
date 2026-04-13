@@ -19,6 +19,8 @@ class FederationReportSchedule(models.Model):
         ("finance_reconciliation", "Finance Reconciliation"),
         ("workflow_exceptions", "Workflow Exceptions"),
         ("season_checklist", "Season Checklist"),
+        ("season_portfolio", "Season Portfolio"),
+        ("club_performance", "Club Performance"),
         ("compliance_summary", "Compliance Summary"),
         ("compliance_remediation", "Compliance Remediation"),
         ("board_pack", "Board Pack"),
@@ -264,6 +266,111 @@ class FederationReportSchedule(models.Model):
         season_code = season.code if season else "all_seasons"
         return headers, data, f"season_checklist_{self.period_type}_{season_code}"
 
+    def _build_season_portfolio_rows(self):
+        season = self._get_effective_season()
+        domain = [("season_id", "=", season.id)] if season else []
+        rows = self.env["federation.report.season.portfolio"].search(domain, order="date_start desc, season_id asc")
+        headers = [
+            "Season",
+            "Season State",
+            "Target Clubs",
+            "Actual Clubs",
+            "Club Delta",
+            "Target Teams",
+            "Actual Teams",
+            "Team Delta",
+            "Target Tournaments",
+            "Actual Tournaments",
+            "Tournament Delta",
+            "Target Participants",
+            "Actual Participants",
+            "Participant Delta",
+            "Budget",
+            "Actual Finance",
+            "Budget Variance",
+            "Open Compliance Items",
+            "Planning Status",
+            "Planning Note",
+        ]
+        data = [
+            [
+                row.season_id.name if row.season_id else "",
+                row.season_state or "",
+                row.target_club_count,
+                row.actual_club_count,
+                row.club_delta,
+                row.target_team_count,
+                row.actual_team_count,
+                row.team_delta,
+                row.target_tournament_count,
+                row.actual_tournament_count,
+                row.tournament_delta,
+                row.target_participant_count,
+                row.actual_participant_count,
+                row.participant_delta,
+                row.budget_amount,
+                row.actual_finance_amount,
+                row.budget_variance_amount,
+                row.open_compliance_item_count,
+                row.planning_status or "",
+                row.planning_note or "",
+            ]
+            for row in rows
+        ]
+        season_code = season.code if season else "all_seasons"
+        return headers, data, f"season_portfolio_{self.period_type}_{season_code}"
+
+    def _build_club_performance_rows(self):
+        season = self._get_effective_season()
+        domain = [("season_id", "=", season.id)] if season else []
+        rows = self.env["federation.report.club.performance"].search(
+            domain,
+            order="season_id desc, club_id asc",
+        )
+        headers = [
+            "Season",
+            "Club",
+            "Confirmed Teams",
+            "Tournament Entries",
+            "Confirmed Entries",
+            "Completed Matches",
+            "Wins",
+            "Draws",
+            "Losses",
+            "Goals For",
+            "Goals Against",
+            "Goal Difference",
+            "Win Rate %",
+            "Pending Finance Events",
+            "Open Compliance Items",
+            "Performance Status",
+            "Performance Note",
+        ]
+        data = [
+            [
+                row.season_id.name if row.season_id else "",
+                row.club_id.name if row.club_id else "",
+                row.confirmed_team_count,
+                row.tournament_entry_count,
+                row.confirmed_tournament_entry_count,
+                row.completed_match_count,
+                row.win_count,
+                row.draw_count,
+                row.loss_count,
+                row.goals_for,
+                row.goals_against,
+                row.goal_difference,
+                row.win_rate,
+                row.pending_finance_event_count,
+                row.open_compliance_item_count,
+                row.performance_status or "",
+                row.performance_note or "",
+            ]
+            for row in rows
+        ]
+        season_code = season.code if season else "all_seasons"
+        return headers, data, f"club_performance_{self.period_type}_{season_code}"
+
     def _build_compliance_summary_rows(self):
         rows = self.env["federation.report.compliance"].search([], order="target_model asc")
         headers = [
@@ -433,6 +540,8 @@ class FederationReportSchedule(models.Model):
             "finance_reconciliation": self._build_finance_reconciliation_rows,
             "workflow_exceptions": self._build_workflow_exception_rows,
             "season_checklist": self._build_season_checklist_rows,
+            "season_portfolio": self._build_season_portfolio_rows,
+            "club_performance": self._build_club_performance_rows,
             "compliance_summary": self._build_compliance_summary_rows,
             "compliance_remediation": self._build_compliance_remediation_rows,
             "board_pack": self._build_board_pack_rows,
@@ -481,6 +590,8 @@ class FederationReportSchedule(models.Model):
             "finance_reconciliation": "sports_federation_reporting.action_federation_report_finance_reconciliation",
             "workflow_exceptions": "sports_federation_reporting.action_federation_report_workflow_exception",
             "season_checklist": "sports_federation_reporting.action_federation_report_season_checklist",
+            "season_portfolio": "sports_federation_reporting.action_federation_report_season_portfolio",
+            "club_performance": "sports_federation_reporting.action_federation_report_club_performance",
             "compliance_summary": "sports_federation_reporting.action_federation_report_compliance",
             "compliance_remediation": "sports_federation_reporting.action_federation_report_compliance_remediation",
             "board_pack": "sports_federation_reporting.action_federation_report_snapshot",
@@ -493,6 +604,8 @@ class FederationReportSchedule(models.Model):
             "standing_reconciliation",
             "workflow_exceptions",
             "season_checklist",
+            "season_portfolio",
+            "club_performance",
         ) and self.season_id:
             action["domain"] = [("season_id", "=", self.season_id.id)]
         if self.report_type == "finance_reconciliation":

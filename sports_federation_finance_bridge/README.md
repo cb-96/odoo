@@ -50,6 +50,7 @@ An individual financial occurrence.
 | `amount` / `currency_id` | Monetary | Actual amount |
 | `state` | Selection | draft / confirmed / settled / cancelled |
 | `source_model` / `source_res_id` | Char / Integer | Origin record |
+| `season_id` | Many2one | Resolved season scope for planning and reporting |
 | `partner_id` | Many2one | Related partner |
 | `club_id` / `player_id` / `referee_id` | Many2one | Federation entity |
 | `invoice_ref` / `external_ref` | Char | External references |
@@ -73,6 +74,25 @@ An individual financial occurrence.
 5. **Multi-entity** — Covers clubs, players, and referees.
 6. **Accounting handoff governance** — finance events now track export,
    reconciliation, and closure checkpoints for downstream accounting workflows.
+7. **Season intelligence support** — finance events infer a season scope from
+  their source record whenever possible so reporting and budget views can roll
+  up actuals without duplicate data entry.
+
+### `federation.season.budget`
+
+Planning baseline per season and fee type.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `season_id` / `fee_type_id` | Many2one | Budget scope |
+| `budget_amount` | Monetary | Planned amount |
+| `actual_amount` | Monetary | Confirmed and settled actuals for the same scope |
+| `actual_event_count` | Integer | Count of matching actual finance events |
+| `variance_amount` / `variance_pct` | Monetary / Float | Planned vs actual variance |
+| `notes` | Text | Budget commentary |
+
+The backend exposes season budgets under Federation > Finance and provides a
+stat button that opens the scoped finance events behind the variance figures.
 
 ## Accounting Handoff Contract
 
@@ -154,3 +174,9 @@ bookings. Run `-u sports_federation_finance_bridge` after upgrade.
 Finance events now include accounting handoff states and references used by the
 reporting export contract. Run `-u sports_federation_finance_bridge` after
 upgrade to create the new fields and updated views.
+
+### Migration note (v19.0.1.4.0)
+
+Finance events now store an inferred `season_id`, and the module adds the new
+`federation.season.budget` planning model and views. Run
+`-u sports_federation_finance_bridge` after upgrade.

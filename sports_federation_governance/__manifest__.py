@@ -18,6 +18,7 @@
         "security/ir.model.access.csv",
         "views/override_request_views.xml",
         "views/override_decision_views.xml",
+        "views/override_outcome_views.xml",
         "views/audit_note_views.xml",
         "views/menu_views.xml",
     ],

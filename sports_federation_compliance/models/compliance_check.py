@@ -89,6 +89,63 @@ class FederationComplianceCheck(models.Model):
         store=True,
     )
 
+    def _get_target_res_id(self):
+        self.ensure_one()
+        target_fields_map = {
+            "federation.club": self.club_id,
+            "federation.player": self.player_id,
+            "federation.referee": self.referee_id,
+            "federation.venue": self.venue_id,
+            "federation.club.representative": self.club_representative_id,
+        }
+        target_record = target_fields_map.get(self.target_model)
+        return target_record.id if target_record else 0
+
+    def _archive_current_state(self):
+        Archive = self.env["federation.compliance.check.archive"].with_user(self.env.user).sudo()
+        for rec in self:
+            if not rec.target_model or not rec.requirement_id or not rec._get_target_res_id():
+                continue
+            Archive.create(
+                {
+                    "compliance_check_id": rec.id,
+                    "archived_on": fields.Datetime.now(),
+                    "checked_on": rec.checked_on,
+                    "target_model": rec.target_model,
+                    "target_res_id": rec._get_target_res_id(),
+                    "target_display": rec.target_display or "Unknown",
+                    "requirement_id": rec.requirement_id.id,
+                    "submission_id": rec.submission_id.id if rec.submission_id else False,
+                    "status": rec.status,
+                    "note": rec.note,
+                }
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._archive_current_state()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        tracked_fields = {
+            "status",
+            "submission_id",
+            "note",
+            "checked_on",
+            "target_model",
+            "requirement_id",
+            "club_id",
+            "player_id",
+            "referee_id",
+            "venue_id",
+            "club_representative_id",
+        }
+        if tracked_fields.intersection(vals):
+            self._archive_current_state()
+        return result
+
     @api.depends(
         "club_id",
         "player_id",

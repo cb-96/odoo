@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_override_outcome_search" model="ir.ui.view">
+        <field name="name">federation.override.outcome.search</field>
+        <field name="model">federation.override.outcome</field>
+        <field name="arch" type="xml">
+            <search string="Override Outcomes">
+                <field name="request_id"/>
+                <field name="request_type"/>
+                <field name="outcome"/>
+                <field name="recorded_by_id"/>
+                <group>
+                    <filter name="group_outcome" string="Outcome" context="{'group_by': 'outcome'}"/>
+                    <filter name="group_request_type" string="Request Type" context="{'group_by': 'request_type'}"/>
+                    <filter name="group_recorded_by" string="Recorded By" context="{'group_by': 'recorded_by_id'}"/>
+                    <filter name="group_outcome_on" string="Outcome Date" context="{'group_by': 'outcome_on'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_override_outcome_list" model="ir.ui.view">
+        <field name="name">federation.override.outcome.list</field>
+        <field name="model">federation.override.outcome</field>
+        <field name="arch" type="xml">
+            <list string="Override Outcomes">
+                <field name="outcome_on"/>
+                <field name="request_id"/>
+                <field name="request_type"/>
+                <field name="outcome"/>
+                <field name="request_state"/>
+                <field name="recorded_by_id"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_override_outcome_pivot" model="ir.ui.view">
+        <field name="name">federation.override.outcome.pivot</field>
+        <field name="model">federation.override.outcome</field>
+        <field name="arch" type="xml">
+            <pivot string="Override Outcomes">
+                <field name="outcome_on" type="row"/>
+                <field name="request_type" type="row"/>
+                <field name="outcome" type="col"/>
+                <field name="id" type="measure" string="Outcome Rows"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_federation_override_outcome_form" model="ir.ui.view">
+        <field name="name">federation.override.outcome.form</field>
+        <field name="model">federation.override.outcome</field>
+        <field name="arch" type="xml">
+            <form string="Override Outcome">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="request_id"/>
+                            <field name="request_type" readonly="1"/>
+                            <field name="outcome"/>
+                            <field name="outcome_on"/>
+                        </group>
+                        <group>
+                            <field name="request_state" readonly="1"/>
+                            <field name="target_model" readonly="1"/>
+                            <field name="target_res_id" readonly="1"/>
+                            <field name="recorded_by_id"/>
+                        </group>
+                    </group>
+                    <group string="Outcome Note">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_override_outcome" model="ir.actions.act_window">
+        <field name="name">Override Outcomes</field>
+        <field name="res_model">federation.override.outcome</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="search_view_id" ref="view_federation_override_outcome_search"/>
+    </record>
+
+</odoo>

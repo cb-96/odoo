@@ -8,14 +8,22 @@ class FederationImportSeasonsWizard(models.TransientModel):
     _description = "Import Seasons Wizard"
     _inherit = "federation.import.wizard.mixin"
 
+    PLANNING_TARGET_COLUMNS = (
+        "target_club_count",
+        "target_team_count",
+        "target_tournament_count",
+        "target_participant_count",
+    )
+
     def _get_import_target_model(self):
         return "federation.season"
 
     def _get_mapping_guide(self):
         return (
             "Required columns: name, code, date_start, date_end.\n"
-            "Optional columns: state, notes.\n"
-            "Duplicate detection prefers season code and falls back to exact season name. Dates must use YYYY-MM-DD."
+            "Optional columns: state, notes, target_club_count, target_team_count, "
+            "target_tournament_count, target_participant_count.\n"
+            "Duplicate detection prefers season code and falls back to exact season name. Dates must use YYYY-MM-DD and planning targets must be whole numbers >= 0."
         )
 
     def action_parse_and_import(self):
@@ -52,6 +60,41 @@ class FederationImportSeasonsWizard(models.TransientModel):
                 error_count += 1
                 continue
 
+            planning_target_values = {}
+            planning_error = False
+            for column_name in self.PLANNING_TARGET_COLUMNS:
+                raw_value = self._get_row_value(row, column_name)
+                if not raw_value:
+                    continue
+                try:
+                    parsed_value = int(raw_value)
+                except ValueError:
+                    self._record_error(
+                        errors,
+                        error_categories,
+                        row_num,
+                        "format_error",
+                        f"{column_name} must be a whole number.",
+                    )
+                    error_count += 1
+                    planning_error = True
+                    break
+                if parsed_value < 0:
+                    self._record_error(
+                        errors,
+                        error_categories,
+                        row_num,
+                        "format_error",
+                        f"{column_name} must be zero or greater.",
+                    )
+                    error_count += 1
+                    planning_error = True
+                    break
+                planning_target_values[column_name] = parsed_value
+
+            if planning_error:
+                continue
+
             if state not in {"draft", "open", "closed", "cancelled"}:
                 self._record_error(errors, error_categories, row_num, "format_error", f"Invalid season state '{state}'.")
                 error_count += 1
@@ -75,6 +118,7 @@ class FederationImportSeasonsWizard(models.TransientModel):
                         "date_end": date_end,
                         "state": state,
                         "notes": self._get_row_value(row, "notes") or False,
+                        **planning_target_values,
                     })
                     success_count += 1
                 except Exception as error:

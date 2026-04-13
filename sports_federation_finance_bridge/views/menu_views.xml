@@ -21,4 +21,10 @@
               action="action_federation_finance_event"
               sequence="20"/>
 
+    <menuitem id="menu_federation_season_budget"
+              name="Season Budgets"
+              parent="menu_federation_finance"
+              action="action_federation_season_budget"
+              sequence="30"/>
+
 </odoo>

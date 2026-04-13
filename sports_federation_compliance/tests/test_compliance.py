@@ -253,6 +253,42 @@ class TestCompliance(TransactionCase):
         self.assertTrue(expired_checks)
         self.assertEqual(expired_checks[0].note, "Document has expired")
 
+    def test_compliance_check_history_archives_status_changes(self):
+        checks = self.env["federation.compliance.check"].recompute_checks_for_target(
+            self.club, "federation.club"
+        )
+        check = next(
+            candidate for candidate in checks if candidate.requirement_id == self.requirement
+        )
+        initial_archive_count = self.env["federation.compliance.check.archive"].search_count([
+            ("compliance_check_id", "=", check.id),
+        ])
+
+        submission = self.env["federation.document.submission"].create({
+            "name": "Archived Submission",
+            "requirement_id": self.requirement.id,
+            "club_id": self.club.id,
+            "issue_date": date.today(),
+            "expiry_date": date.today() + timedelta(days=365),
+        })
+        submission.action_submit()
+        submission.action_approve()
+
+        refreshed_checks = self.env["federation.compliance.check"].recompute_checks_for_target(
+            self.club, "federation.club"
+        )
+        check = next(
+            candidate for candidate in refreshed_checks if candidate.requirement_id == self.requirement
+        )
+
+        archives = self.env["federation.compliance.check.archive"].search([
+            ("compliance_check_id", "=", check.id),
+        ], order="archived_on asc, id asc")
+
+        self.assertGreater(len(archives), initial_archive_count)
+        self.assertEqual(archives[0].status, "missing")
+        self.assertEqual(archives[-1].status, "compliant")
+
     def test_check_single_target(self):
         """Test that compliance check requires exactly one target."""
         with self.assertRaises(ValidationError):

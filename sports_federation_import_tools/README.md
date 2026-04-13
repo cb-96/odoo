@@ -97,12 +97,14 @@ Required columns:
 
 Optional columns:
 
-- `state`, `notes`
+- `state`, `notes`, `target_club_count`, `target_team_count`,
+  `target_tournament_count`, `target_participant_count`
 
 Validation notes:
 
 - dates must use `YYYY-MM-DD`
 - state must be one of `draft`, `open`, `closed`, `cancelled`
+- planning target columns must be whole numbers greater than or equal to zero
 
 ### `federation.import.teams.wizard`
 

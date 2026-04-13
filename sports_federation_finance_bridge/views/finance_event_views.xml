@@ -34,6 +34,7 @@
                         <group string="Source">
                             <field name="source_model"/>
                             <field name="source_res_id"/>
+                            <field name="season_id"/>
                             <field name="invoice_ref"/>
                             <field name="external_ref"/>
                             <field name="export_schema_version" readonly="1"/>
@@ -79,6 +80,7 @@
                 <field name="event_type"/>
                 <field name="amount"/>
                 <field name="currency_id"/>
+                <field name="season_id" optional="show"/>
                 <field name="club_id" optional="show"/>
                 <field name="referee_id" optional="hide"/>
                 <field name="external_ref" optional="show"/>
@@ -101,6 +103,7 @@
             <search string="Search Finance Events">
                 <field name="name"/>
                 <field name="fee_type_id"/>
+                <field name="season_id"/>
                 <field name="club_id"/>
                 <field name="player_id"/>
                 <field name="referee_id"/>
@@ -128,6 +131,7 @@
                     <filter name="group_handoff_state" string="Handoff State" context="{'group_by': 'handoff_state'}"/>
                     <filter name="group_event_type" string="Event Type" context="{'group_by': 'event_type'}"/>
                     <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
                     <filter name="group_club" string="Club" context="{'group_by': 'club_id'}"/>
                 </group>
             </search>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_compliance_check_archive_search" model="ir.ui.view">
+        <field name="name">federation.compliance.check.archive.search</field>
+        <field name="model">federation.compliance.check.archive</field>
+        <field name="arch" type="xml">
+            <search string="Compliance History">
+                <field name="target_model"/>
+                <field name="target_display"/>
+                <field name="requirement_id"/>
+                <field name="status"/>
+                <group>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_requirement" string="Requirement" context="{'group_by': 'requirement_id'}"/>
+                    <filter name="group_archived_on" string="Archived On" context="{'group_by': 'archived_on'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_compliance_check_archive_list" model="ir.ui.view">
+        <field name="name">federation.compliance.check.archive.list</field>
+        <field name="model">federation.compliance.check.archive</field>
+        <field name="arch" type="xml">
+            <list string="Compliance History" create="0" edit="0" delete="0">
+                <field name="archived_on"/>
+                <field name="target_model"/>
+                <field name="target_display"/>
+                <field name="requirement_id"/>
+                <field name="status"/>
+                <field name="submission_id" optional="show"/>
+                <field name="checked_on" optional="show"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_compliance_check_archive_pivot" model="ir.ui.view">
+        <field name="name">federation.compliance.check.archive.pivot</field>
+        <field name="model">federation.compliance.check.archive</field>
+        <field name="arch" type="xml">
+            <pivot string="Compliance History">
+                <field name="archived_on" type="row"/>
+                <field name="target_model" type="row"/>
+                <field name="status" type="col"/>
+                <field name="id" type="measure" string="Archive Rows"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_federation_compliance_check_archive_form" model="ir.ui.view">
+        <field name="name">federation.compliance.check.archive.form</field>
+        <field name="model">federation.compliance.check.archive</field>
+        <field name="arch" type="xml">
+            <form string="Compliance History" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="archived_on"/>
+                            <field name="checked_on"/>
+                            <field name="status"/>
+                            <field name="requirement_id"/>
+                        </group>
+                        <group>
+                            <field name="target_model"/>
+                            <field name="target_res_id"/>
+                            <field name="target_display"/>
+                            <field name="submission_id"/>
+                        </group>
+                    </group>
+                    <group string="Note">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_federation_compliance_check_archive" model="ir.actions.act_window">
+        <field name="name">Compliance History</field>
+        <field name="res_model">federation.compliance.check.archive</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="search_view_id" ref="view_federation_compliance_check_archive_search"/>
+    </record>
+
+</odoo>

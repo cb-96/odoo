@@ -17,6 +17,7 @@ data-entry errors and disputed scores from corrupting competition tables.
 | `sports_federation_tournament` | Match model (base for result fields) |
 | `sports_federation_standings` | Standings computation using approved results |
 | `sports_federation_governance` | Override requests for disputed results |
+| `sports_federation_notifications` | Validator activities and club / manager notifications |
 | `sports_federation_public_site` | Publishing approved results publicly |
 | `mail` | Chatter audit trail on matches |
 
@@ -29,7 +30,7 @@ data-entry errors and disputed scores from corrupting competition tables.
 
 1. Open the match record after the game concludes.
 2. Enter `home_score` and `away_score`.
-3. Set match state to `completed`.
+3. Set match state to `done`.
 
 At this point the result is entered but **not yet official**.
 
@@ -39,9 +40,10 @@ At this point the result is entered but **not yet official**.
 **Module**: `sports_federation_result_control`
 
 1. Click **Submit Result** on the match form.
-2. `result_state` transitions from `not_submitted` → `submitted`.
+2. `result_state` transitions from `draft` → `submitted`.
 3. `result_submitted_by_id` and `result_submitted_on` are recorded automatically.
 4. The result is now in the verification queue.
+5. A todo activity is created for each user in the Result Verifier group.
 
 ### 3. Result Verification
 
@@ -53,6 +55,7 @@ At this point the result is entered but **not yet official**.
 3. Click **Verify Result**.
 4. `result_state` transitions from `submitted` → `verified`.
 5. `result_verified_by_id` and `result_verified_on` are recorded.
+6. The verifier cannot verify their own submission.
 
 ### 4. Result Approval
 
@@ -64,6 +67,10 @@ At this point the result is entered but **not yet official**.
 3. `result_state` transitions from `verified` → `approved`.
 4. `result_approved_by_id` and `result_approved_on` are recorded.
 5. `include_in_official_standings` is set to `True`.
+6. Any non-frozen standings linked to the same tournament, stage, or group are recomputed automatically.
+7. The approver must be different from both the submitter and the verifier for the same result.
+8. Approved scores are treated as immutable until the result leaves the approved state.
+9. Home and away team / club contacts receive an approval email with the official scoreline.
 
 The result is now **official** and eligible for standings computation.
 
@@ -75,7 +82,8 @@ The result is now **official** and eligible for standings computation.
 1. If a party disputes the result, click **Contest Result**.
 2. `result_state` transitions to `contested`.
 3. `result_contest_reason` is filled in with the dispute justification.
-4. The result is excluded from standings until resolved.
+4. The result is excluded from standings until resolved and linked non-frozen standings are recomputed automatically.
+5. Home and away team / club contacts plus federation managers receive a contest notification.
 
 ### 6. Correction (Exception Path)
 
@@ -88,7 +96,11 @@ The result is now **official** and eligible for standings computation.
 4. `result_state` transitions to `corrected`.
 5. `result_correction_reason` is recorded.
 6. A governance override request may be filed for audit purposes.
-7. The corrected result can be re-submitted through the pipeline.
+7. The corrected result can be edited and re-submitted through the pipeline.
+8. If staff need a clean restart, an approver can reset the corrected or contested result back to `draft` before re-submission.
+
+Every transition is also written to `federation.match.result.audit`, so dispute
+history is preserved even after the current `result_state` moves on.
 
 ### 7. Standings Update
 
@@ -97,10 +109,10 @@ The result is now **official** and eligible for standings computation.
 
 1. Open the relevant standings record (tournament, stage, or group level).
 2. **Recompute standings** — only results with `include_in_official_standings = True`
-   are included.
+   are included. Approved and contested result transitions also trigger automatic recomputation unless the standing is frozen.
 3. Points are calculated using the rule set (win/draw/loss values).
 4. Tie-break rules are applied in sequence order.
-5. Standings states: `draft` → `computed` → `published`.
+5. Standings states: `draft` → `computed` → `frozen`.
 
 ### 8. Publication
 
@@ -115,11 +127,11 @@ The result is now **official** and eligible for standings computation.
 ## State Diagram
 
 ```
-Result: not_submitted → submitted → verified → approved
-                                              → contested → corrected
-                                                          → (re-submit)
+Result: draft → submitted → verified → approved
+                                        → contested → corrected
+                                                    → submitted
 
-Standings: draft → computed → published
+Standings: draft → computed → frozen
 ```
 
 ## Security Model
@@ -131,6 +143,7 @@ Standings: draft → computed → published
 | Result Approver | Approve verified results |
 
 Each step requires a different security group, enforcing **separation of duties**.
+The workflow is intentionally defensive: submitters cannot self-verify, and approvers cannot approve their own submissions or the result they verified.
 
 ## Audit Trail
 

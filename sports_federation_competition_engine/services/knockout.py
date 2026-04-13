@@ -1,8 +1,9 @@
 import logging
 import math
 import random
-from datetime import timedelta
-from odoo import models, _
+from datetime import datetime, timedelta
+
+from odoo import fields, models, _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -22,7 +23,9 @@ class KnockoutService(models.AbstractModel):
         """
         self._validate_inputs(tournament, stage, participants, options)
 
-        if not options.get("overwrite"):
+        if options.get("overwrite"):
+            self._clear_existing_matches(stage)
+        else:
             self._check_existing_matches(stage)
 
         teams = self._apply_seeding(participants, options.get("seeding", "seed"))
@@ -53,6 +56,9 @@ class KnockoutService(models.AbstractModel):
         existing = self.env["federation.match"].search([("stage_id", "=", stage.id)])
         if existing:
             raise UserError(_("Existing matches found. Enable overwrite to replace."))
+
+    def _clear_existing_matches(self, stage):
+        self.env["federation.match"].search([("stage_id", "=", stage.id)]).unlink()
 
     def _apply_seeding(self, participants, seeding):
         if seeding == "random":
@@ -93,22 +99,67 @@ class KnockoutService(models.AbstractModel):
 
         return pairs
 
+    def _build_round_sources(self, teams, bracket_size, round_1_matches):
+        """Build ordered sources for the next round after round 1.
+
+        When the bracket uses power-of-two expansion, top seeds receive byes and
+        should be paired against play-in winners in bracket order. Interleave the
+        bye entrants with the created round-1 matches so later rounds can be
+        wired without indexing past the available play-in matches.
+        """
+        bye_count = bracket_size - len(teams)
+        if bye_count <= 0:
+            return [
+                {"type": "match", "match": match, "result": "winner"}
+                for match in round_1_matches
+            ]
+
+        bye_sources = [
+            {"type": "bye", "team": team}
+            for team in teams[:bye_count]
+        ]
+        match_sources = [
+            {"type": "match", "match": match, "result": "winner"}
+            for match in round_1_matches
+        ]
+
+        round_sources = []
+        max_sources = max(len(bye_sources), len(match_sources))
+        for idx in range(max_sources):
+            if idx < len(bye_sources):
+                round_sources.append(bye_sources[idx])
+            if idx < len(match_sources):
+                round_sources.append(match_sources[idx])
+
+        return round_sources
+
     def _create_full_bracket(self, tournament, stage, teams, bracket_size, first_round_pairs, options, bracket_type):
         """Build the entire bracket: round 1 matches + placeholder matches for subsequent rounds."""
         Match = self.env["federation.match"]
+        Round = self.env["federation.tournament.round"]
         start_dt = options.get("start_datetime")
         interval = options.get("interval_hours", 0)
         venue = options.get("venue", "")
+        Venue = self.env.get("federation.venue")
+        venue_rec = None
+        if venue and Venue is not None:
+            venue_rec = Venue.search([("name", "=", venue)], limit=1)
 
         total_rounds = math.ceil(math.log2(bracket_size)) if bracket_size > 1 else 1
-        n_actual = len(teams)
-        bye_count = bracket_size - n_actual
-        bye_teams = teams[:bye_count] if bye_count > 0 else []
 
         round_names = self._get_round_names(total_rounds)
 
         # --- Round 1: real matches ---
         round_1_matches = []
+        round_1_base = fields.Datetime.to_datetime(start_dt) if start_dt else False
+        round_1_vals = {"name": round_names[1]}
+        if round_1_base:
+            round_1_vals["round_date"] = round_1_base.date()
+        if venue_rec and "venue_id" in Round._fields:
+            round_1_vals["venue_id"] = venue_rec.id
+        round_1_record = Round.get_or_create_stage_round(stage, 1, values=round_1_vals)
+        if round_1_record.round_date and round_1_base:
+            round_1_base = datetime.combine(round_1_record.round_date, round_1_base.time())
         for i, (home, away) in enumerate(first_round_pairs):
             vals = {
                 "tournament_id": tournament.id,
@@ -116,57 +167,34 @@ class KnockoutService(models.AbstractModel):
                 "home_team_id": home.id,
                 "away_team_id": away.id,
                 "state": "draft",
+                "round_id": round_1_record.id,
                 "round_number": 1,
                 "bracket_position": i + 1,
                 "bracket_type": bracket_type,
             }
-            if start_dt:
-                vals["date_scheduled"] = start_dt + timedelta(hours=i * interval)
+            if venue_rec and Venue is not None:
+                vals["venue_id"] = round_1_record.venue_id.id if "venue_id" in round_1_record._fields and round_1_record.venue_id else venue_rec.id
+            if round_1_base:
+                vals["date_scheduled"] = round_1_base + timedelta(hours=i * interval)
             round_1_matches.append(Match.create(vals))
 
         all_matches = list(round_1_matches)
-
-        # Build the feed list for round 2.
-        # Each slot in feed_sources will later become one side of a round-2 match.
-        # For byes, the team auto-advances (no match); for played matches, the winner advances.
-        # The bracket layout is: top seeds get byes, remaining play first round.
-        # Reconstruct the bracket order to properly wire sources.
-        feed_sources = []
-        bye_idx = 0
-        match_idx = 0
-        slots_in_r2 = bracket_size // 2
-
-        for slot in range(slots_in_r2):
-            # Standard bracket pairing: seed (slot+1) vs seed (bracket_size - slot)
-            top_seed_pos = slot          # 0-indexed
-            bot_seed_pos = bracket_size - 1 - slot
-
-            top_is_bye = top_seed_pos < bye_count
-            bot_is_bye = bot_seed_pos < bye_count
-
-            if top_is_bye and bot_is_bye:
-                # Both byes — shouldn't happen with a valid bracket but handle gracefully
-                feed_sources.append({"type": "bye", "team": teams[top_seed_pos]})
-                feed_sources.append({"type": "bye", "team": teams[bot_seed_pos]})
-            elif top_is_bye:
-                # Top seed has a bye, bottom seed's match result feeds in
-                feed_sources.append({"type": "bye", "team": teams[top_seed_pos]})
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
-            elif bot_is_bye:
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
-                feed_sources.append({"type": "bye", "team": teams[bot_seed_pos]})
-            else:
-                feed_sources.append({"type": "match", "match": round_1_matches[match_idx], "result": "winner"})
-                match_idx += 1
+        feed_sources = self._build_round_sources(teams, bracket_size, round_1_matches)
 
         # --- Rounds 2..N: placeholder matches ---
         prev_round_sources = feed_sources
         for rnd in range(2, total_rounds + 1):
             matches_in_round = len(prev_round_sources) // 2
             current_matches = []
-            round_dt = start_dt + timedelta(hours=(rnd - 1) * 24) if start_dt else None
+            round_dt = fields.Datetime.to_datetime(start_dt) + timedelta(hours=(rnd - 1) * 24) if start_dt else None
+            round_vals = {"name": round_names[rnd]}
+            if round_dt:
+                round_vals["round_date"] = round_dt.date()
+            if venue_rec and "venue_id" in Round._fields:
+                round_vals["venue_id"] = venue_rec.id
+            round_record = Round.get_or_create_stage_round(stage, rnd, values=round_vals)
+            if round_record.round_date and round_dt:
+                round_dt = datetime.combine(round_record.round_date, round_dt.time())
 
             for m in range(matches_in_round):
                 src_a = prev_round_sources[m * 2]
@@ -176,10 +204,13 @@ class KnockoutService(models.AbstractModel):
                     "tournament_id": tournament.id,
                     "stage_id": stage.id,
                     "state": "draft",
+                    "round_id": round_record.id,
                     "round_number": rnd,
                     "bracket_position": m + 1,
                     "bracket_type": bracket_type,
                 }
+                if venue_rec and Venue is not None:
+                    vals["venue_id"] = round_record.venue_id.id if "venue_id" in round_record._fields and round_record.venue_id else venue_rec.id
                 if round_dt:
                     vals["date_scheduled"] = round_dt + timedelta(hours=m * interval)
 

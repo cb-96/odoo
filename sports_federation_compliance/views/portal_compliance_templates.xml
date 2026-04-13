@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_federation_links_compliance"
+              inherit_id="sports_federation_portal.portal_federation_links"
+              priority="40">
+        <xpath expr="//div[@t-if='not federation_representative and not federation_referee']" position="before">
+            <div class="row" t-if="federation_representative or federation_referee">
+                <div class="col-12 col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fa fa-file-text-o me-2"/>My Compliance
+                            </h5>
+                            <p class="card-text">Track renewals, upload replacement documents, and follow compliance review status.</p>
+                            <a href="/my/compliance" class="btn btn-outline-primary btn-sm">Open Compliance</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="portal_my_compliance_workspace" name="My Compliance Workspace">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <div class="row mb-4 align-items-end">
+                    <div class="col-lg-8">
+                        <h2><i class="fa fa-file-text-o me-2"/>Compliance Workspace</h2>
+                        <p class="text-muted mb-0">
+                            Upload required documents, replace rejected submissions, and monitor renewal deadlines without email back-and-forth.
+                        </p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="border rounded-3 p-2 h-100">
+                                    <div class="small text-muted">Attention</div>
+                                    <strong t-esc="counts['attention']"/>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded-3 p-2 h-100">
+                                    <div class="small text-muted">In Review</div>
+                                    <strong t-esc="counts['in_review']"/>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded-3 p-2 h-100">
+                                    <div class="small text-muted">Approved</div>
+                                    <strong t-esc="counts['approved']"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div t-if="success" class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+
+                <div t-if="not has_compliance_access" class="alert alert-warning">
+                    <i class="fa fa-info-circle me-2"/>
+                    You do not currently have a club or official profile with portal-managed compliance responsibilities.
+                </div>
+
+                <div t-elif="not workspace_entries" class="alert alert-info">
+                    <i class="fa fa-info-circle me-2"/>
+                    No active portal compliance requirements are currently assigned to you.
+                </div>
+
+                <div class="row g-4" t-else="">
+                    <t t-foreach="workspace_entries" t-as="entry">
+                        <div class="col-12 col-xl-6">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <div>
+                                            <div class="text-uppercase small text-muted" t-esc="entry['target_label']"/>
+                                            <h4 class="card-title mb-1" t-esc="entry['requirement'].name"/>
+                                            <div class="text-muted">
+                                                <strong t-esc="entry['target'].display_name"/>
+                                            </div>
+                                        </div>
+                                        <span t-attf-class="badge rounded-pill text-bg-#{entry['status_tone']}">
+                                            <t t-esc="entry['status_label']"/>
+                                        </span>
+                                    </div>
+
+                                    <p class="text-muted mb-3" t-esc="entry['status_summary']"/>
+
+                                    <dl class="row small mb-3">
+                                        <dt class="col-sm-5">Latest Submission</dt>
+                                        <dd class="col-sm-7">
+                                            <t t-if="entry['latest_submission']">
+                                                <t t-esc="entry['latest_submission'].name"/>
+                                            </t>
+                                            <t t-else="">No submission yet</t>
+                                        </dd>
+                                        <dt class="col-sm-5" t-if="entry['renewal_due_date']">Renewal Due</dt>
+                                        <dd class="col-sm-7" t-if="entry['renewal_due_date']">
+                                            <span t-esc="entry['renewal_due_date']" t-options='{"widget": "date"}'/>
+                                        </dd>
+                                    </dl>
+
+                                    <div class="mt-auto d-flex gap-2 flex-wrap">
+                                        <a t-att-href="entry['detail_url']" class="btn btn-primary btn-sm">Open Item</a>
+                                        <span t-if="entry['status_key'] == 'submitted'" class="btn btn-outline-secondary btn-sm disabled">Waiting for Review</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_compliance_detail" name="Compliance Workspace Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="entry" t-value="compliance_entry"/>
+            <div class="container py-4">
+                <div class="row mb-4 align-items-end">
+                    <div class="col-lg-8">
+                        <a href="/my/compliance" class="text-decoration-none small text-muted">
+                            <i class="fa fa-chevron-left me-1"/> Back to compliance workspace
+                        </a>
+                        <h2 class="mt-2 mb-1" t-esc="entry['requirement'].name"/>
+                        <p class="text-muted mb-0">
+                            <span t-esc="entry['target_label']"/> · <strong t-esc="entry['target'].display_name"/>
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <span t-attf-class="badge rounded-pill text-bg-#{entry['status_tone']}">
+                            <t t-esc="entry['status_label']"/>
+                        </span>
+                    </div>
+                </div>
+
+                <div t-if="success" class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-5">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body">
+                                <h4 class="card-title mb-3">Current Status</h4>
+                                <p class="text-muted mb-3" t-esc="entry['status_summary']"/>
+                                <dl class="row small mb-0">
+                                    <dt class="col-sm-5">Requirement Code</dt>
+                                    <dd class="col-sm-7" t-esc="entry['requirement'].code"/>
+                                    <dt class="col-sm-5" t-if="entry['latest_submission']">Submission</dt>
+                                    <dd class="col-sm-7" t-if="entry['latest_submission']" t-esc="entry['latest_submission'].name"/>
+                                    <dt class="col-sm-5" t-if="entry['latest_submission'] and entry['latest_submission'].reviewed_on">Reviewed On</dt>
+                                    <dd class="col-sm-7" t-if="entry['latest_submission'] and entry['latest_submission'].reviewed_on">
+                                        <span t-field="entry['latest_submission'].reviewed_on"/>
+                                    </dd>
+                                    <dt class="col-sm-5" t-if="entry['renewal_due_date']">Renewal Due</dt>
+                                    <dd class="col-sm-7" t-if="entry['renewal_due_date']">
+                                        <span t-esc="entry['renewal_due_date']" t-options='{"widget": "date"}'/>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-7">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                    <h4 class="card-title mb-0">Upload or Renew Document</h4>
+                                    <span class="small text-muted">New submissions are sent directly into the review queue.</span>
+                                </div>
+
+                                <form t-att-action="'%s/submit' % entry['detail_url']" method="POST" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="issue_date">Issue Date</label>
+                                            <input id="issue_date" type="date" name="issue_date" class="form-control"
+                                                   t-att-value="entry['latest_submission'].issue_date if entry['latest_submission'] else ''"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="expiry_date">Expiry Date</label>
+                                            <input id="expiry_date" type="date" name="expiry_date" class="form-control"
+                                                   t-att-value="entry['latest_submission'].expiry_date if entry['latest_submission'] else ''"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label" for="attachment">Document Attachments</label>
+                                            <input id="attachment" type="file" name="attachment" class="form-control" multiple="multiple"/>
+                                            <div class="form-text">Upload one or more files for federation review. Existing attachments remain visible until replaced by a new submitted version.</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label" for="notes">Notes</label>
+                                            <textarea id="notes" name="notes" rows="5" class="form-control"><t t-esc="entry['latest_submission'].notes if entry['latest_submission'] else ''"/></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 flex-wrap mt-3">
+                                        <button type="submit" class="btn btn-primary" t-att-disabled="not entry['can_submit'] and 'disabled' or None">Submit for Review</button>
+                                        <a href="/my/compliance" class="btn btn-outline-secondary">Back to Workspace</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-xl-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <h4 class="card-title mb-3">Latest Attachments</h4>
+                                <div t-if="entry['latest_submission'] and entry['latest_submission'].attachment_ids" class="list-group list-group-flush small">
+                                    <t t-foreach="entry['latest_submission'].attachment_ids" t-as="attachment">
+                                        <a t-att-href="'/web/content/%s?download=true' % attachment.id" class="list-group-item list-group-item-action px-0">
+                                            <i class="fa fa-paperclip me-2"/><span t-esc="attachment.name"/>
+                                        </a>
+                                    </t>
+                                </div>
+                                <p t-else="" class="text-muted mb-0">No attachments are currently stored on the latest submission.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <h4 class="card-title mb-3">Submission History</h4>
+                                <div t-if="entry['submission_history']" class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Created</th>
+                                                <th>Status</th>
+                                                <th>Expiry</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="entry['submission_history']" t-as="submission">
+                                                <tr>
+                                                    <td><span t-field="submission.create_date"/></td>
+                                                    <td>
+                                                        <span class="badge text-bg-light border" t-esc="dict(submission._fields['status'].selection).get(submission.status)"/>
+                                                    </td>
+                                                    <td>
+                                                        <t t-if="submission.expiry_date">
+                                                            <span t-esc="submission.expiry_date" t-options='{"widget": "date"}'/>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p t-else="" class="text-muted mb-0">No submission history is available yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

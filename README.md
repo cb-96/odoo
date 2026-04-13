@@ -16,6 +16,13 @@ Table of contents
 - Contributing & docs
 - Module list (high level)
 
+Quick links
+- High-level context: `odoo/CONTEXT.md`
+- Technical notes: `odoo/TECHNICAL_NOTE.md`
+- Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
+- Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
+- Contributor guide: `CONTRIBUTING.md`
+
 **Architecture overview**
 
 High-level architecture (graph):
@@ -39,8 +46,8 @@ graph LR
 
   Engine -->|generates| Tournament
   Engine -->|generates| Matches[federation.match]
-  Matches -->|attached to| Gameday[federation.gameday]
-  Gameday --> Venues
+  Matches -->|belong to| Round[federation.tournament.round]
+  Round --> Venues
   Matches --> Standings
   Standings -->|feeds| Progression[federation.stage.progression]
   Progression --> Tournament
@@ -55,23 +62,20 @@ graph LR
 
 Notes:
 - The `competition_engine` contains deterministic scheduling services (round-
-  robin, knockout). It supports per-round scheduling, `gameday` bundling and
+  robin, knockout). It supports per-round scheduling, round-owned date/venue
+  planning, and
   full-bracket construction.
-- `federation.gameday` groups matches for a venue/day to simplify operations
-  (referees, volunteers, venue finance events).
+- `federation.tournament.round` is the shared schedule block for a stage: rounds
+  own the calendar date and venue, while matches keep the exact kickoff time.
 - Standings computation and `stage_progression` rules automate advancement
   across stages (optional `auto_advance`). See `odoo/TECHNICAL_NOTE.md`.
-
-Quick links
-- High-level context: `odoo/CONTEXT.md`
-- Technical notes: `odoo/TECHNICAL_NOTE.md`
-- Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
 
 Quickstart / Installation (example)
 
 Prerequisites
-- Python 3.10+ (use virtualenv)
-- PostgreSQL 12+
+- Python 3.10+ (for local linting and editor tooling)
+- Docker with Compose v2 (for the containerized Odoo test runner)
+- PostgreSQL 12+ only if you are running against a separate local Odoo checkout
 - Node.js/npm (optional: for asset tooling)
 - wkhtmltopdf (optional: PDF export)
 
@@ -82,19 +86,39 @@ git clone REPOSITORY_URL
 cd REPO_ROOT/odoo
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -U pip setuptools
-pip install -r requirements.txt
-python odoo-bin -d sports_fed --addons-path=addons,odoo -u all
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+black --check sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
+flake8 sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
+```
+
+Containerized module tests (Git Bash / WSL on Windows, or any POSIX shell):
+
+```bash
+cp ci/.env.example ci/.env
+bash ./ci/run_tests.sh --module sports_federation_standings
+bash ./ci/run_tests.sh --suite competition_core
+bash ./ci/run_tests.sh --suite portal_public_ops
+```
+
+Validate CI helper scripts before pushing changes:
+
+```bash
+bash -n ci/run_tests.sh
+bash -n ci/apply_env_to_ir_config.sh
 ```
 
 Notes and tips
+- `requirements.txt` pins repository-local tooling only. The Odoo runtime used by CI comes from the `odoo:19` Docker image declared in `ci/docker-compose.ci.yaml`.
+- Keep local runtime credentials in `ci/.env`; do not commit that file. The checked-in `ci/.env.example` is the safe template.
+- This repository does not ship `odoo-bin`. If you use a separate local Odoo checkout, point its `addons_path` at this repository and run tests from that checkout.
 - Use the module manifest `__manifest__.py` `data` entries to register new
   views/security/data files. If you add or change models, update
   `security/ir.model.access.csv` and include migration notes in the docs.
 - To run module tests (example):
 
-```powershell
-python odoo-bin -d test_db -i sports_federation_competition_engine --test-enable --stop-after-init
+```bash
+bash ./ci/run_tests.sh --module sports_federation_competition_engine
 ```
 
 Development & tests
@@ -110,6 +134,10 @@ Contributing & docs
 - Follow the PR checklist in `.github/copilot-instructions.md` and add tests
   for behavioural changes. If you cannot update docs immediately, add a clear
   TODO in the change and notify maintainers.
+- The canonical lifecycle and ownership reference for the core records is in
+  `STATE_AND_OWNERSHIP_MATRIX.md`.
+- Use `CONTRIBUTING.md` for the maintainer workflow: local prerequisites,
+  env setup, focused CI suites, and pre-push validation commands.
 
 Module list (high level)
 - `sports_federation_base` — master data (clubs, teams, seasons)
@@ -118,6 +146,6 @@ Module list (high level)
 - `sports_federation_standings` — standings computation and publishing
 - `sports_federation_rosters` — rosters and match-sheets
 - `sports_federation_officiating` — referee registry and assignments
-- `sports_federation_venues` — venues, gamedays and venue helpers
+- `sports_federation_venues` — venues, playing areas, and round-level venue scheduling
 - `sports_federation_finance_bridge` — finance event helpers
 - `sports_federation_public_site` / `sports_federation_portal` — public pages and portal flows

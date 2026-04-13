@@ -3,6 +3,12 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Local environment and generated runtime config
+.env
+.env.local
+ci/.env
+ci/odoo-ci.generated.conf
+
 # CI logs (keep .gitkeep, ignore run output)
 ci/logs/*
 

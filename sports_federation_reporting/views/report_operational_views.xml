@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_report_operational_search" model="ir.ui.view">
+        <field name="name">federation.report.operational.search</field>
+        <field name="model">federation.report.operational</field>
+        <field name="arch" type="xml">
+            <search string="Operational KPIs">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="readiness_status"/>
+                <filter name="blocked" string="Blocked" domain="[('readiness_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('readiness_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'readiness_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_operational_list" model="ir.ui.view">
+        <field name="name">federation.report.operational.list</field>
+        <field name="model">federation.report.operational</field>
+        <field name="arch" type="xml">
+            <list string="Operational KPIs" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="tournament_state"/>
+                <field name="participant_count"/>
+                <field name="confirmed_participant_count"/>
+                <field name="participant_confirmation_rate"/>
+                <field name="match_count"/>
+                <field name="completed_match_count"/>
+                <field name="match_completion_rate"/>
+                <field name="frozen_standing_count"/>
+                <field name="standing_line_coverage"/>
+                <field name="pending_finance_event_count"/>
+                <field name="pending_finance_amount"/>
+                <field name="open_club_compliance_count"/>
+                <field name="readiness_status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_operational_pivot" model="ir.ui.view">
+        <field name="name">federation.report.operational.pivot</field>
+        <field name="model">federation.report.operational</field>
+        <field name="arch" type="xml">
+            <pivot string="Operational KPIs">
+                <field name="season_id" type="row"/>
+                <field name="readiness_status" type="col"/>
+                <field name="participant_count" type="measure"/>
+                <field name="confirmed_participant_count" type="measure"/>
+                <field name="match_count" type="measure"/>
+                <field name="completed_match_count" type="measure"/>
+                <field name="pending_finance_amount" type="measure"/>
+                <field name="open_club_compliance_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_operational" model="ir.actions.act_window">
+        <field name="name">Operational KPIs</field>
+        <field name="res_model">federation.report.operational</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_operational_search"/>
+    </record>
+
+    <record id="view_federation_report_standing_reconciliation_search" model="ir.ui.view">
+        <field name="name">federation.report.standing.reconciliation.search</field>
+        <field name="model">federation.report.standing.reconciliation</field>
+        <field name="arch" type="xml">
+            <search string="Standings Reconciliation">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="reconciliation_status"/>
+                <filter name="blocked" string="Blocked" domain="[('reconciliation_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('reconciliation_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'reconciliation_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_standing_reconciliation_list" model="ir.ui.view">
+        <field name="name">federation.report.standing.reconciliation.list</field>
+        <field name="model">federation.report.standing.reconciliation</field>
+        <field name="arch" type="xml">
+            <list string="Standings Reconciliation" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="tournament_state"/>
+                <field name="confirmed_participant_count"/>
+                <field name="covered_participant_count"/>
+                <field name="frozen_standing_count"/>
+                <field name="missing_participant_count"/>
+                <field name="orphaned_participant_count"/>
+                <field name="reconciliation_status"/>
+                <field name="reconciliation_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_standing_reconciliation_pivot" model="ir.ui.view">
+        <field name="name">federation.report.standing.reconciliation.pivot</field>
+        <field name="model">federation.report.standing.reconciliation</field>
+        <field name="arch" type="xml">
+            <pivot string="Standings Reconciliation">
+                <field name="season_id" type="row"/>
+                <field name="reconciliation_status" type="col"/>
+                <field name="confirmed_participant_count" type="measure"/>
+                <field name="covered_participant_count" type="measure"/>
+                <field name="missing_participant_count" type="measure"/>
+                <field name="orphaned_participant_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_standing_reconciliation" model="ir.actions.act_window">
+        <field name="name">Standings Reconciliation</field>
+        <field name="res_model">federation.report.standing.reconciliation</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_standing_reconciliation_search"/>
+    </record>
+
+    <record id="view_federation_report_finance_reconciliation_search" model="ir.ui.view">
+        <field name="name">federation.report.finance.reconciliation.search</field>
+        <field name="model">federation.report.finance.reconciliation</field>
+        <field name="arch" type="xml">
+            <search string="Finance Reconciliation">
+                <field name="fee_type_id"/>
+                <field name="follow_up_status"/>
+                <field name="counterparty_display"/>
+                <field name="sla_status"/>
+                <filter name="needs_follow_up" string="Needs Follow-up" domain="[('needs_follow_up', '=', True)]"/>
+                <filter name="awaiting_reference" string="Awaiting Reference" domain="[('follow_up_status', '=', 'awaiting_reference')]"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
+                <group>
+                    <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
+                    <filter name="group_follow_up" string="Follow-up Status" context="{'group_by': 'follow_up_status'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_finance_reconciliation_list" model="ir.ui.view">
+        <field name="name">federation.report.finance.reconciliation.list</field>
+        <field name="model">federation.report.finance.reconciliation</field>
+        <field name="arch" type="xml">
+            <list string="Finance Reconciliation" create="0" edit="0" delete="0">
+                <field name="finance_event_id"/>
+                <field name="fee_type_id"/>
+                <field name="state"/>
+                <field name="follow_up_status"/>
+                <field name="counterparty_display"/>
+                <field name="source_model"/>
+                <field name="source_res_id"/>
+                <field name="amount"/>
+                <field name="external_ref"/>
+                <field name="invoice_ref"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
+                <field name="needs_follow_up"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_report_finance_reconciliation_pivot" model="ir.ui.view">
+        <field name="name">federation.report.finance.reconciliation.pivot</field>
+        <field name="model">federation.report.finance.reconciliation</field>
+        <field name="arch" type="xml">
+            <pivot string="Finance Reconciliation">
+                <field name="fee_type_id" type="row"/>
+                <field name="follow_up_status" type="row"/>
+                <field name="amount" type="measure"/>
+                <field name="age_days" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_federation_report_finance_reconciliation" model="ir.actions.act_window">
+        <field name="name">Finance Reconciliation</field>
+        <field name="res_model">federation.report.finance.reconciliation</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_federation_report_finance_reconciliation_search"/>
+        <field name="context">{'search_default_needs_follow_up': 1}</field>
+    </record>
+
+    <record id="view_federation_report_notification_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.notification.exception.search</field>
+        <field name="model">federation.report.notification.exception</field>
+        <field name="arch" type="xml">
+            <search string="Notification Exceptions">
+                <field name="target_model"/>
+                <field name="recipient_email"/>
+                <field name="template_xmlid"/>
+                <field name="notification_type"/>
+                <field name="sla_status"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
+                <group>
+                    <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
+                    <filter name="group_model" string="Target Model" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_notification_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.notification.exception.list</field>
+        <field name="model">federation.report.notification.exception</field>
+        <field name="arch" type="xml">
+            <list string="Notification Exceptions" create="0" edit="0" delete="0">
+                <field name="created_on"/>
+                <field name="name"/>
+                <field name="notification_type"/>
+                <field name="target_model"/>
+                <field name="target_res_id"/>
+                <field name="recipient_email"/>
+                <field name="template_xmlid"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
+                <field name="message"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_notification_exception" model="ir.actions.act_window">
+        <field name="name">Notification Exceptions</field>
+        <field name="res_model">federation.report.notification.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_notification_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_finance_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.finance.exception.search</field>
+        <field name="model">federation.report.finance.exception</field>
+        <field name="arch" type="xml">
+            <search string="Finance Exceptions">
+                <field name="case_reference"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="issue_type"/>
+                <group>
+                    <filter name="group_issue" string="Issue Type" context="{'group_by': 'issue_type'}"/>
+                    <filter name="group_case" string="Case" context="{'group_by': 'case_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_finance_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.finance.exception.list</field>
+        <field name="model">federation.report.finance.exception</field>
+        <field name="arch" type="xml">
+            <list string="Finance Exceptions" create="0" edit="0" delete="0">
+                <field name="effective_date"/>
+                <field name="sanction_id"/>
+                <field name="case_reference"/>
+                <field name="player_id"/>
+                <field name="club_id"/>
+                <field name="referee_id"/>
+                <field name="expected_fee_type_id"/>
+                <field name="expected_amount"/>
+                <field name="issue_type"/>
+                <field name="issue_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_finance_exception" model="ir.actions.act_window">
+        <field name="name">Finance Exceptions</field>
+        <field name="res_model">federation.report.finance.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_finance_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_workflow_exception_search" model="ir.ui.view">
+        <field name="name">federation.report.workflow.exception.search</field>
+        <field name="model">federation.report.workflow.exception</field>
+        <field name="arch" type="xml">
+            <search string="Workflow Exceptions">
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="exception_type"/>
+                <field name="state"/>
+                <field name="sla_status"/>
+                <filter name="result_queue" string="Result Queue" domain="[('source_model', '=', 'federation.match')]"/>
+                <filter name="override_queue" string="Override Queue" domain="[('source_model', '=', 'federation.override.request')]"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
+                <group>
+                    <filter name="group_type" string="Exception Type" context="{'group_by': 'exception_type'}"/>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_workflow_exception_list" model="ir.ui.view">
+        <field name="name">federation.report.workflow.exception.list</field>
+        <field name="model">federation.report.workflow.exception</field>
+        <field name="arch" type="xml">
+            <list string="Workflow Exceptions" create="0" edit="0" delete="0">
+                <field name="raised_on"/>
+                <field name="season_id" optional="show"/>
+                <field name="tournament_id" optional="show"/>
+                <field name="reference_name"/>
+                <field name="state"/>
+                <field name="exception_type"/>
+                <field name="queue_owner_display"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
+                <field name="responsible_user_id"/>
+                <field name="exception_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_workflow_exception" model="ir.actions.act_window">
+        <field name="name">Workflow Exceptions</field>
+        <field name="res_model">federation.report.workflow.exception</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_workflow_exception_search"/>
+    </record>
+
+    <record id="view_federation_report_compliance_remediation_search" model="ir.ui.view">
+        <field name="name">federation.report.compliance.remediation.search</field>
+        <field name="model">federation.report.compliance.remediation</field>
+        <field name="arch" type="xml">
+            <search string="Compliance Remediation">
+                <field name="requirement_id"/>
+                <field name="target_model"/>
+                <field name="status"/>
+                <field name="sla_status"/>
+                <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
+                <group>
+                    <filter name="group_status" string="Submission Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
+                    <filter name="group_target" string="Target Model" context="{'group_by': 'target_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_compliance_remediation_list" model="ir.ui.view">
+        <field name="name">federation.report.compliance.remediation.list</field>
+        <field name="model">federation.report.compliance.remediation</field>
+        <field name="arch" type="xml">
+            <list string="Compliance Remediation" create="0" edit="0" delete="0">
+                <field name="submission_id"/>
+                <field name="requirement_id"/>
+                <field name="target_model"/>
+                <field name="target_display"/>
+                <field name="status"/>
+                <field name="queue_owner_display"/>
+                <field name="created_on"/>
+                <field name="reviewed_on"/>
+                <field name="sla_due_on"/>
+                <field name="sla_status"/>
+                <field name="age_days"/>
+                <field name="remediation_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_compliance_remediation" model="ir.actions.act_window">
+        <field name="name">Compliance Remediation</field>
+        <field name="res_model">federation.report.compliance.remediation</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_compliance_remediation_search"/>
+    </record>
+
+    <record id="view_federation_report_season_checklist_search" model="ir.ui.view">
+        <field name="name">federation.report.season.checklist.search</field>
+        <field name="model">federation.report.season.checklist</field>
+        <field name="arch" type="xml">
+            <search string="Season Checklists">
+                <field name="season_id"/>
+                <field name="checklist_status"/>
+                <filter name="blocked" string="Blocked" domain="[('checklist_status', '=', 'blocked')]"/>
+                <filter name="attention" string="Attention" domain="[('checklist_status', '=', 'attention')]"/>
+                <group>
+                    <filter name="group_status" string="Status" context="{'group_by': 'checklist_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_federation_report_season_checklist_list" model="ir.ui.view">
+        <field name="name">federation.report.season.checklist.list</field>
+        <field name="model">federation.report.season.checklist</field>
+        <field name="arch" type="xml">
+            <list string="Season Checklists" create="0" edit="0" delete="0">
+                <field name="season_id"/>
+                <field name="season_state"/>
+                <field name="draft_season_registration_count"/>
+                <field name="submitted_season_registration_count"/>
+                <field name="draft_tournament_registration_count"/>
+                <field name="submitted_tournament_registration_count"/>
+                <field name="live_tournament_count"/>
+                <field name="published_tournament_count"/>
+                <field name="unpublished_tournament_count"/>
+                <field name="workflow_exception_count"/>
+                <field name="checklist_status"/>
+                <field name="checklist_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_federation_report_season_checklist" model="ir.actions.act_window">
+        <field name="name">Season Checklists</field>
+        <field name="res_model">federation.report.season.checklist</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_federation_report_season_checklist_search"/>
+    </record>
+
+</odoo>

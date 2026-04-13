@@ -36,32 +36,11 @@
               action="federation_tournament_group_action"
               sequence="20"/>
 
-    <menuitem id="menu_federation_tournament_participants"
-              name="Participants"
-              parent="menu_federation_tournament"
-              action="federation_tournament_participant_action"
-              sequence="20"/>
-
     <menuitem id="menu_federation_matches"
               name="Matches"
               parent="menu_federation_tournament"
               action="federation_match_action"
               sequence="30"/>
-
-    <record id="federation_tournament_create_action" model="ir.actions.act_window">
-        <field name="name">Create Tournament</field>
-        <field name="res_model">federation.tournament</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_federation_tournament_form"/>
-        <field name="target">new</field>
-        <field name="context">{'default_state': 'draft'}</field>
-    </record>
-
-    <menuitem id="menu_federation_tournament_create"
-              name="Create Tournament"
-              parent="menu_federation_tournament"
-              action="federation_tournament_create_action"
-              sequence="5"/>
 
     <menuitem id="menu_federation_tournament_list"
               name="Tournament List"

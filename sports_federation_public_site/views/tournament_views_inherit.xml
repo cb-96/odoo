@@ -13,10 +13,20 @@
                         <group string="Publication">
                             <field name="website_published"/>
                             <field name="public_slug"/>
+                            <field name="public_featured"/>
                         </group>
                         <group string="Display Options">
                             <field name="show_public_results"/>
                             <field name="show_public_standings"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Editorial">
+                            <field name="public_editorial_summary" placeholder="Short summary for the tournament hub and featured cards..."/>
+                            <field name="public_pinned_announcement" placeholder="Pinned public announcement..."/>
+                        </group>
+                        <group string="Hero Media">
+                            <field name="public_hero_image" widget="image" class="oe_avatar"/>
                         </group>
                     </group>
                     <group string="Public Description">

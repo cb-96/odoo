@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -46,3 +46,18 @@ class FederationClub(models.Model):
         for rec in self:
             if rec.email and "@" not in rec.email:
                 raise ValidationError("Invalid email address.")
+
+    def action_archive(self):
+        clubs_with_active_teams = self.filtered(lambda rec: rec.team_ids.filtered("active"))
+        if clubs_with_active_teams:
+            raise ValidationError(
+                _(
+                    "Archive all active teams before archiving a club."
+                )
+            )
+        self.write({"active": False})
+        return True
+
+    def action_restore(self):
+        self.write({"active": True})
+        return True

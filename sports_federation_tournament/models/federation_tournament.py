@@ -113,24 +113,58 @@ class FederationTournament(models.Model):
                 self.rule_set_id = self.edition_id.rule_set_id
 
     def action_open(self):
-        for rec in self:
-            rec.state = "open"
+        invalid_tournaments = self.filtered(
+            lambda rec: rec.state != "draft" or not rec.active or not rec.season_id
+        )
+        if invalid_tournaments:
+            raise ValidationError(
+                _("Only active draft tournaments linked to a season can be opened.")
+            )
+        self.write({"state": "open"})
 
     def action_start(self):
-        for rec in self:
-            rec.state = "in_progress"
+        invalid_tournaments = self.filtered(lambda rec: rec.state != "open")
+        if invalid_tournaments:
+            raise ValidationError(_("Only open tournaments can be started."))
+
+        tournaments_without_stages = self.filtered(lambda rec: not rec.stage_ids)
+        if tournaments_without_stages:
+            raise ValidationError(_("Add at least one stage before starting a tournament."))
+
+        self.write({"state": "in_progress"})
 
     def action_close(self):
-        for rec in self:
-            rec.state = "closed"
+        invalid_tournaments = self.filtered(lambda rec: rec.state != "in_progress")
+        if invalid_tournaments:
+            raise ValidationError(_("Only tournaments in progress can be closed."))
+        self.write({"state": "closed"})
 
     def action_cancel(self):
-        for rec in self:
-            rec.state = "cancelled"
+        invalid_tournaments = self.filtered(
+            lambda rec: rec.state not in ("draft", "open", "in_progress")
+        )
+        if invalid_tournaments:
+            raise ValidationError(_("Only draft, open, or in-progress tournaments can be cancelled."))
+        self.write({"state": "cancelled"})
 
     def action_draft(self):
-        for rec in self:
-            rec.state = "draft"
+        invalid_tournaments = self.filtered(lambda rec: rec.state != "cancelled")
+        if invalid_tournaments:
+            raise ValidationError(_("Only cancelled tournaments can be reset to draft."))
+        self.write({"state": "draft"})
+
+    def action_archive(self):
+        active_tournaments = self.filtered(lambda rec: rec.state in ("open", "in_progress"))
+        if active_tournaments:
+            raise ValidationError(
+                _("Close or cancel an operational tournament before archiving it.")
+            )
+        self.write({"active": False})
+        return True
+
+    def action_restore(self):
+        self.write({"active": True})
+        return True
 
     def action_view_stages(self):
         self.ensure_one()

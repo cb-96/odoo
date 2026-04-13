@@ -1,6 +1,9 @@
 """Tests for sports_federation_officiating: referees, certifications, match assignments."""
-from odoo.tests.common import TransactionCase
+from datetime import timedelta
+
+from odoo import fields
 from odoo.exceptions import ValidationError
+from odoo.tests.common import TransactionCase
 
 
 class TestFederationReferee(TransactionCase):
@@ -173,3 +176,97 @@ class TestMatchReferee(TransactionCase):
         })
         self.referee.invalidate_recordset()
         self.assertEqual(self.referee.assignment_count, 1)
+
+    def test_confirmation_deadline_is_48_hours_before_match(self):
+        self.match.write({"date_scheduled": "2024-06-20 18:00:00"})
+        assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": self.referee.id,
+            "role": "head",
+        })
+
+        self.assertEqual(
+            fields.Datetime.to_datetime(assignment.confirmation_deadline),
+            fields.Datetime.to_datetime(self.match.date_scheduled) - timedelta(hours=48),
+        )
+
+    def test_overdue_assignment_is_flagged(self):
+        self.match.write({"date_scheduled": "2024-01-05 12:00:00"})
+        assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": self.referee.id,
+            "role": "head",
+        })
+
+        self.assertTrue(assignment.is_confirmation_overdue)
+
+    def test_confirm_rejects_expired_certification(self):
+        expired_referee = self.env["federation.referee"].create({
+            "name": "Expired Referee",
+            "certification_level": "national",
+        })
+        self.env["federation.referee.certification"].create({
+            "name": "EXP-CERT",
+            "referee_id": expired_referee.id,
+            "level": "national",
+            "issue_date": "2023-01-01",
+            "expiry_date": "2024-01-01",
+        })
+        self.match.write({"date_scheduled": "2024-06-20 18:00:00"})
+        assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": expired_referee.id,
+            "role": "head",
+        })
+
+        with self.assertRaises(ValidationError):
+            assignment.action_confirm()
+
+    def test_match_readiness_detects_missing_head_referee(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Officiating Ready Rules",
+            "code": "OFFREADY",
+            "referee_required_count": 2,
+        })
+        self.tournament.write({"rule_set_id": rule_set.id})
+        assistant_referee = self.env["federation.referee"].create({
+            "name": "Assistant Only",
+            "certification_level": "regional",
+        })
+        assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": assistant_referee.id,
+            "role": "assistant_1",
+        })
+        assignment.action_confirm()
+
+        self.assertFalse(self.match.is_officially_ready)
+        self.assertIn("head referee", self.match.official_readiness_issues.lower())
+        self.assertEqual(self.match.missing_referees_count, 1)
+
+    def test_match_readiness_becomes_ready_with_required_confirmed_officials(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Full Officiating Rules",
+            "code": "FULLOFF",
+            "referee_required_count": 2,
+        })
+        self.tournament.write({"rule_set_id": rule_set.id})
+        assistant_referee = self.env["federation.referee"].create({
+            "name": "Ready Assistant",
+            "certification_level": "regional",
+        })
+        head_assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": self.referee.id,
+            "role": "head",
+        })
+        assistant_assignment = self.env["federation.match.referee"].create({
+            "match_id": self.match.id,
+            "referee_id": assistant_referee.id,
+            "role": "assistant_1",
+        })
+        head_assignment.action_confirm()
+        assistant_assignment.action_confirm()
+
+        self.assertTrue(self.match.is_officially_ready)
+        self.assertEqual(self.match.missing_referees_count, 0)

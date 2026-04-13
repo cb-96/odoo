@@ -100,6 +100,7 @@ The system enforces that exactly one target entity field is filled in.
    - `missing` — No submission at all
    - `pending` — Submission exists but not yet approved
    - `expired` — Submission approved but past expiry date
+   - `non_compliant` — Submission was explicitly rejected or otherwise failed policy review
 
 ### 6. Notification & Follow-Up
 
@@ -120,6 +121,15 @@ The system enforces that exactly one target entity field is filled in.
 2. Creates a new submission (the old one remains for audit).
 3. New submission follows the same review cycle.
 
+### 8. Operational Reporting
+
+**Actor**: Federation administrator
+**Module**: `sports_federation_reporting`
+
+1. Open the reporting menu for compliance status summaries and recurring report schedules.
+2. Use the compliance summary report to review `missing`, `pending`, `expired`, and `non_compliant` totals without querying the database directly.
+3. When a recurring weekly or monthly review is required, create a report schedule so the latest CSV snapshot is generated inside Odoo.
+
 ## State Diagram
 
 ```
@@ -127,7 +137,7 @@ Submission: draft → submitted → approved → expired
                               → rejected
                               → replacement_requested
 
-Compliance Check: compliant / missing / pending / expired
+Compliance Check: compliant / missing / pending / expired / non_compliant
                   (point-in-time status, regenerated each run)
 ```
 

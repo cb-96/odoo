@@ -13,9 +13,9 @@
                             invisible="state != 'confirmed'"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             invisible="state in ('done', 'cancelled')"/>
-                    <button name="action_draft" string="Reset to Draft" type="object"
+                    <button name="action_draft" string="Reset to Assigned" type="object"
                             invisible="state != 'cancelled'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,cancelled"/>
                 </header>
                 <sheet>
                     <group>
@@ -23,9 +23,17 @@
                             <field name="match_id"/>
                             <field name="tournament_id"/>
                             <field name="role"/>
+                            <field name="confirmation_deadline" readonly="1"/>
+                            <field name="is_confirmation_overdue" readonly="1"/>
                         </group>
                         <group string="Referee">
                             <field name="referee_id"/>
+                            <field name="assignment_ready" readonly="1"/>
+                            <field name="readiness_feedback" readonly="1" invisible="not readiness_feedback"/>
+                            <field name="assigned_on" readonly="1"/>
+                            <field name="confirmed_on" readonly="1" invisible="not confirmed_on"/>
+                            <field name="completed_on" readonly="1" invisible="not completed_on"/>
+                            <field name="cancelled_on" readonly="1" invisible="not cancelled_on"/>
                         </group>
                     </group>
                     <separator string="Notes"/>
@@ -44,6 +52,9 @@
                 <field name="tournament_id"/>
                 <field name="referee_id"/>
                 <field name="role"/>
+                <field name="confirmation_deadline" optional="show"/>
+                <field name="is_confirmation_overdue" optional="show"/>
+                <field name="assignment_ready" optional="hide"/>
                 <field name="state"/>
             </list>
         </field>
@@ -57,9 +68,11 @@
                 <field name="match_id"/>
                 <field name="referee_id"/>
                 <field name="tournament_id"/>
-                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <field name="confirmation_deadline"/>
+                <filter name="draft" string="Assigned" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="done" string="Done" domain="[('state', '=', 'done')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
                 <group>
                     <filter name="match" string="Match" context="{'group_by': 'match_id'}"/>

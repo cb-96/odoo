@@ -39,6 +39,12 @@ class TestKpiCsvExport(TransactionCase):
             "name": "KPI Rules", "code": "KPIRS",
             "points_win": 3, "points_draw": 1, "points_loss": 0,
         })
+        cls.finance_fee_type = cls.env["federation.fee.type"].create({
+            "name": "KPI Finance Fee",
+            "code": "KPIFIN",
+            "category": "registration",
+            "default_amount": 75.00,
+        })
         cls.participant_a = cls.env["federation.tournament.participant"].create({
             "tournament_id": cls.tournament.id, "team_id": cls.team_a.id,
         })
@@ -63,6 +69,25 @@ class TestKpiCsvExport(TransactionCase):
             match_vals["include_in_official_standings"] = True
         cls.match = cls.env["federation.match"].create(match_vals)
         cls.standing.action_recompute()
+        cls.finance_event_draft = cls.env["federation.finance.event"].create({
+            "name": "KPI Draft Fee",
+            "fee_type_id": cls.finance_fee_type.id,
+            "event_type": "charge",
+            "amount": 75.00,
+            "source_model": "federation.club",
+            "source_res_id": cls.club.id,
+            "club_id": cls.club.id,
+        })
+        cls.finance_event_confirmed = cls.env["federation.finance.event"].create({
+            "name": "KPI Confirmed Fee",
+            "fee_type_id": cls.finance_fee_type.id,
+            "event_type": "charge",
+            "amount": 90.00,
+            "source_model": "federation.team",
+            "source_res_id": cls.team_a.id,
+            "club_id": cls.club.id,
+        })
+        cls.finance_event_confirmed.action_confirm()
 
     # ---------------------------------------------------------------
     # Helper: build CSV from data as the controller would
@@ -108,6 +133,32 @@ class TestKpiCsvExport(TransactionCase):
                 p.team_id.name if p.team_id else "",
                 p.club_id.name if p.club_id else "",
                 p.state or "",
+            ])
+        output.seek(0)
+        return list(csv.reader(output))
+
+    def _build_finance_csv(self):
+        """Mirror the controller's finance CSV generation logic."""
+        finance_rows = self.env["federation.report.finance"].search(
+            [],
+            order="fee_type_id asc, state asc",
+        )
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Fee Type",
+            "Category",
+            "State",
+            "Event Count",
+            "Total Amount",
+        ])
+        for row in finance_rows:
+            writer.writerow([
+                row.fee_type_id.name if row.fee_type_id else "",
+                row.fee_type_id.category if row.fee_type_id else "",
+                row.state or "",
+                row.event_count,
+                row.total_amount,
             ])
         output.seek(0)
         return list(csv.reader(output))
@@ -197,3 +248,51 @@ class TestKpiCsvExport(TransactionCase):
         """Participation CSV for non-existent season has only the header."""
         rows = self._build_participation_csv(-999)
         self.assertEqual(len(rows), 1)
+
+    # ---------------------------------------------------------------
+    # Finance CSV tests
+    # ---------------------------------------------------------------
+
+    def test_finance_csv_has_header_row(self):
+        """Generated finance CSV starts with the expected headers."""
+        rows = self._build_finance_csv()
+        self.assertTrue(rows, "CSV should not be empty.")
+        self.assertEqual(
+            rows[0],
+            ["Fee Type", "Category", "State", "Event Count", "Total Amount"],
+        )
+
+    def test_finance_csv_includes_confirmed_and_draft_rows(self):
+        """Finance CSV contains grouped rows for the finance report states present."""
+        rows = self._build_finance_csv()
+        states = [
+            row[2]
+            for row in rows[1:]
+            if row[0] == self.finance_fee_type.name
+        ]
+        self.assertIn("draft", states)
+        self.assertIn("confirmed", states)
+
+    def test_finance_csv_aggregates_amounts(self):
+        """Finance CSV exposes aggregated totals from the report model."""
+        rows = self._build_finance_csv()
+        draft_row = next(
+            (
+                row
+                for row in rows[1:]
+                if row[0] == self.finance_fee_type.name and row[2] == "draft"
+            ),
+            None,
+        )
+        confirmed_row = next(
+            (
+                row
+                for row in rows[1:]
+                if row[0] == self.finance_fee_type.name and row[2] == "confirmed"
+            ),
+            None,
+        )
+        self.assertIsNotNone(draft_row)
+        self.assertIsNotNone(confirmed_row)
+        self.assertEqual(float(draft_row[4]), 75.0)
+        self.assertEqual(float(confirmed_row[4]), 90.0)

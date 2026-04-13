@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_federation_public_editorial_item_list" model="ir.ui.view">
+        <field name="name">federation.public.editorial.item.list</field>
+        <field name="model">federation.public.editorial.item</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="content_type"/>
+                <field name="publication_state"/>
+                <field name="publish_start"/>
+                <field name="publish_end"/>
+                <field name="season_id" optional="show"/>
+                <field name="tournament_id" optional="show"/>
+                <field name="team_id" optional="show"/>
+                <field name="sequence" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_federation_public_editorial_item_form" model="ir.ui.view">
+        <field name="name">federation.public.editorial.item.form</field>
+        <field name="model">federation.public.editorial.item</field>
+        <field name="arch" type="xml">
+            <form string="Public Editorial Item">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="content_type"/>
+                            <field name="publication_state"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="publish_start"/>
+                            <field name="publish_end"/>
+                            <field name="season_id"/>
+                            <field name="tournament_id"/>
+                            <field name="team_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="kicker"/>
+                        <field name="summary"/>
+                        <field name="body_html" widget="html"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_public_editorial_item_search" model="ir.ui.view">
+        <field name="name">federation.public.editorial.item.search</field>
+        <field name="model">federation.public.editorial.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="season_id"/>
+                <field name="tournament_id"/>
+                <field name="team_id"/>
+                <filter name="draft" string="Draft" domain="[('publication_state', '=', 'draft')]"/>
+                <filter name="scheduled" string="Scheduled" domain="[('publication_state', '=', 'scheduled')]"/>
+                <filter name="published" string="Published" domain="[('publication_state', '=', 'published')]"/>
+                <filter name="archived" string="Archived" domain="[('publication_state', '=', 'archived')]"/>
+                <group>
+                    <filter name="group_state" string="Publication State" context="{'group_by': 'publication_state'}"/>
+                    <filter name="group_type" string="Content Type" context="{'group_by': 'content_type'}"/>
+                    <filter name="group_season" string="Season" context="{'group_by': 'season_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_federation_public_editorial_items" model="ir.actions.act_window">
+        <field name="name">Public Editorial</field>
+        <field name="res_model">federation.public.editorial.item</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_federation_public_editorial_item_search"/>
+    </record>
+
+    <menuitem id="menu_federation_public_editorial"
+              name="Public Editorial"
+              parent="sports_federation_base.menu_federation_root"
+              action="action_federation_public_editorial_items"
+              sequence="85"
+              groups="sports_federation_base.group_federation_manager"/>
+
+</odoo>

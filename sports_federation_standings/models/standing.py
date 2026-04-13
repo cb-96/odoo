@@ -367,6 +367,9 @@ class FederationStanding(models.Model):
                     rules = Progression.search(domain)
                     for rule in rules:
                         rule.action_execute()
+            Dispatcher = record.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_standing_frozen(record)
 
     def action_unfreeze(self):
         """Unfreeze the standing to allow recomputation."""

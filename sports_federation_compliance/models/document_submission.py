@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -198,6 +200,107 @@ class FederationDocumentSubmission(models.Model):
             return [("expiry_date", "<", today), ("expiry_date", "!=", False)]
         return ["|", ("expiry_date", ">=", today), ("expiry_date", "=", False)]
 
+    def _get_target_record(self):
+        self.ensure_one()
+        return (
+            self.club_id
+            or self.player_id
+            or self.referee_id
+            or self.venue_id
+            or self.club_representative_id
+        )
+
+    def _portal_get_effective_status(self):
+        self.ensure_one()
+        if self.status == "approved" and self.is_expired:
+            return "expired"
+        return self.status
+
+    @api.model
+    def _portal_get_status_metadata(self, status_key, latest_submission=None):
+        metadata = {
+            "missing": {"label": "Missing", "tone": "danger"},
+            "draft": {"label": "Draft", "tone": "secondary"},
+            "submitted": {"label": "In Review", "tone": "warning"},
+            "approved": {"label": "Approved", "tone": "success"},
+            "rejected": {"label": "Rejected", "tone": "danger"},
+            "replacement_requested": {
+                "label": "Replacement Requested",
+                "tone": "warning",
+            },
+            "expired": {"label": "Renewal Due", "tone": "danger"},
+        }
+        meta = dict(metadata.get(status_key, {"label": status_key, "tone": "secondary"}))
+        if (
+            status_key == "approved"
+            and latest_submission
+            and latest_submission.expiry_date
+            and latest_submission.expiry_date
+            <= fields.Date.context_today(self) + timedelta(days=30)
+        ):
+            meta = {"label": "Renewal Upcoming", "tone": "warning"}
+        return meta
+
+    def _recompute_related_checks(self):
+        Check = self.env["federation.compliance.check"]
+        for record in self:
+            target_record = record._get_target_record()
+            if target_record and record.target_model:
+                Check.recompute_checks_for_target(target_record, record.target_model)
+
+    @api.model
+    def _portal_prepare_submission(self, requirement, target_record, values=None, user=None):
+        values = values or {}
+        user = user or self.env.user
+        Requirement = self.env["federation.document.requirement"]
+        requirement = Requirement.sudo().browse(requirement.id)
+        Requirement._portal_assert_target_access(requirement, target_record, user=user)
+
+        latest_submission = requirement._portal_get_latest_submission(target_record)
+        if latest_submission and latest_submission.status == "submitted":
+            raise ValidationError(
+                "A submission for this requirement is already awaiting review."
+            )
+
+        target_field_name = requirement._portal_get_target_field_name(requirement.target_model)
+        if not target_field_name:
+            raise ValidationError("This requirement target cannot be handled through the portal.")
+
+        prepared_issue_date = values.get("issue_date") or False
+        prepared_expiry_date = values.get("expiry_date") or False
+        prepared_notes = values.get("notes") or False
+
+        if latest_submission and latest_submission.status in (
+            "draft",
+            "rejected",
+            "replacement_requested",
+        ):
+            submission = latest_submission.with_user(user).sudo()
+        else:
+            target_name = target_record.display_name or getattr(target_record, "name", False) or requirement.name
+            submission = self.with_user(user).sudo().create(
+                {
+                    "name": f"{requirement.name} - {target_name}",
+                    "requirement_id": requirement.id,
+                    target_field_name: target_record.id,
+                    "issue_date": prepared_issue_date,
+                    "expiry_date": prepared_expiry_date,
+                    "notes": prepared_notes,
+                    "status": "draft",
+                }
+            )
+
+        write_vals = {
+            "issue_date": prepared_issue_date,
+            "expiry_date": prepared_expiry_date,
+            "notes": prepared_notes,
+            "status": "draft",
+            "reviewer_id": False,
+            "reviewed_on": False,
+        }
+        submission.with_user(user).sudo().write(write_vals)
+        return submission
+
     @api.constrains("requirement_id", "expiry_date")
     def _check_expiry_date_required(self):
         """Ensure expiry_date is set when requirement requires it."""
@@ -213,7 +316,14 @@ class FederationDocumentSubmission(models.Model):
         for rec in self:
             if rec.status != "draft":
                 raise ValidationError("Only draft documents can be submitted.")
-            rec.status = "submitted"
+            rec.write({"status": "submitted"})
+            rec.flush_recordset()
+        self._recompute_related_checks()
+
+        Dispatcher = self.env.get("federation.notification.dispatcher")
+        if Dispatcher is not None:
+            for rec in self:
+                Dispatcher.send_compliance_submission_received(rec)
 
     def action_approve(self):
         """Approve the submitted document."""
@@ -227,6 +337,8 @@ class FederationDocumentSubmission(models.Model):
                 "reviewer_id": self.env.user.id,
                 "reviewed_on": fields.Datetime.now(),
             })
+            rec.flush_recordset()
+        self._recompute_related_checks()
 
     def action_reject(self):
         """Reject the submitted document."""
@@ -240,6 +352,13 @@ class FederationDocumentSubmission(models.Model):
                 "reviewer_id": self.env.user.id,
                 "reviewed_on": fields.Datetime.now(),
             })
+            rec.flush_recordset()
+        self._recompute_related_checks()
+
+        Dispatcher = self.env.get("federation.notification.dispatcher")
+        if Dispatcher is not None:
+            for rec in self:
+                Dispatcher.send_compliance_remediation_requested(rec)
 
     def action_request_replacement(self):
         """Request a replacement document."""
@@ -253,8 +372,17 @@ class FederationDocumentSubmission(models.Model):
                 "reviewer_id": self.env.user.id,
                 "reviewed_on": fields.Datetime.now(),
             })
+            rec.flush_recordset()
+        self._recompute_related_checks()
+
+        Dispatcher = self.env.get("federation.notification.dispatcher")
+        if Dispatcher is not None:
+            for rec in self:
+                Dispatcher.send_compliance_remediation_requested(rec)
 
     def action_reset_to_draft(self):
         """Reset to draft status."""
         for rec in self:
-            rec.status = "draft"
+            rec.write({"status": "draft"})
+            rec.flush_recordset()
+        self._recompute_related_checks()

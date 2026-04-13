@@ -44,6 +44,11 @@ class FederationClubRoleType(models.Model):
         default=False,
         help="This role is responsible for safeguarding matters.",
     )
+    team_scoped = fields.Boolean(
+        string="Team Scoped",
+        default=False,
+        help="Use this role for staff assigned to a specific team rather than a whole club.",
+    )
 
     _code_unique = models.Constraint('UNIQUE(code)', 'Role type code must be unique.')
 
@@ -54,6 +59,8 @@ class FederationClubRoleType(models.Model):
             "competition_contact",
             "finance_contact",
             "safeguarding_contact",
+            "coach",
+            "team_manager",
             "president",
             "secretary",
             "admin",

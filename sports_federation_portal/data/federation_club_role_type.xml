@@ -29,6 +29,22 @@
         <field name="description">Responsible for safeguarding matters, child protection, and welfare.</field>
     </record>
 
+    <record id="role_type_coach" model="federation.club.role.type">
+        <field name="name">Coach</field>
+        <field name="code">coach</field>
+        <field name="sequence">35</field>
+        <field name="team_scoped">True</field>
+        <field name="description">Team-scoped coach role for roster readiness and match-day preparation.</field>
+    </record>
+
+    <record id="role_type_team_manager" model="federation.club.role.type">
+        <field name="name">Team Manager</field>
+        <field name="code">team_manager</field>
+        <field name="sequence">36</field>
+        <field name="team_scoped">True</field>
+        <field name="description">Team-scoped manager role for squad administration and match-sheet review.</field>
+    </record>
+
     <record id="role_type_president" model="federation.club.role.type">
         <field name="name">President</field>
         <field name="code">president</field>

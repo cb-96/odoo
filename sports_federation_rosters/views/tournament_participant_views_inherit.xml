@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_federation_tournament_participant_form_roster_readiness" model="ir.ui.view">
+        <field name="name">federation.tournament.participant.form.roster.readiness</field>
+        <field name="model">federation.tournament.participant</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_participant_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='registration_date']" position="after">
+                <field name="roster_deadline_date" readonly="1"/>
+                <field name="readiness_roster_id" readonly="1"/>
+                <field name="confirmation_feedback"
+                       readonly="1"
+                       invisible="not confirmation_feedback"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

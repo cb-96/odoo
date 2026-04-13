@@ -16,7 +16,6 @@ Scenario detection is done by checking ``include_in_official_standings`` in
 ``self.env["federation.match"]._fields`` at runtime.
 """
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 
 
 class TestStandingsResultFilter(TransactionCase):

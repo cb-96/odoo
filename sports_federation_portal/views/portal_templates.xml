@@ -40,6 +40,17 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
+                            <i class="fa fa-sitemap me-2"/>Tournament Workspace
+                        </h5>
+                        <p class="card-text">Track active tournament registrations, roster checkpoints, match-day tasks, and result follow-up in one place.</p>
+                        <a href="/my/tournament-workspaces" class="btn btn-outline-primary btn-sm">Open Workspace</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
                             <i class="fa fa-calendar me-2"/>Season Registrations
                         </h5>
                         <p class="card-text">Register teams for seasons and track status.</p>
@@ -59,11 +70,24 @@
                 </div>
             </div>
         </div>
-        <div class="row" t-if="not federation_representative">
+        <div class="row" t-if="federation_referee">
+            <div class="col-12 col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-flag me-2"/>My Officiating
+                        </h5>
+                        <p class="card-text">Review your assigned matches and respond before the confirmation deadline.</p>
+                        <a href="/my/referee-assignments" class="btn btn-outline-primary btn-sm">View Assignments</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" t-if="not federation_representative and not federation_referee">
             <div class="col-12">
                 <div class="alert alert-info">
                     <i class="fa fa-info-circle me-2"/>
-                    You are not currently assigned as a club representative.
+                    You are not currently assigned as a club representative or match official.
                     Please contact the federation for access.
                 </div>
             </div>
@@ -131,6 +155,9 @@
                                     </a>
                                     <a href="/my/season-registrations" class="btn btn-outline-primary btn-sm w-100 mb-2">
                                         <i class="fa fa-calendar me-1"/> Season Registrations
+                                    </a>
+                                    <a href="/my/tournament-workspaces" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                        <i class="fa fa-sitemap me-1"/> Tournament Workspace
                                     </a>
                                     <a href="/my/tournament-registrations" class="btn btn-outline-primary btn-sm w-100 mb-2">
                                         <i class="fa fa-trophy me-1"/> Tournament Registrations

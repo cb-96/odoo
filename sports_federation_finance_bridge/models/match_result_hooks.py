@@ -35,10 +35,15 @@ class FederationMatchFinanceHooks(models.Model):
         """Compute finance events whose source is this match."""
         FinanceEvent = self.env["federation.finance.event"]
         for rec in self:
-            events = FinanceEvent.search([
+            domain = [
                 ("source_model", "=", "federation.match"),
                 ("source_res_id", "=", rec.id),
-            ])
+            ]
+            if rec.result_fee_type_id:
+                domain.append(("fee_type_id", "=", rec.result_fee_type_id.id))
+            else:
+                domain.append(("id", "=", 0))
+            events = FinanceEvent.search(domain)
             rec.result_finance_event_ids = events
 
     def action_approve_result(self):
@@ -51,7 +56,7 @@ class FederationMatchFinanceHooks(models.Model):
         res = super().action_approve_result()
         for rec in self:
             if rec.result_fee_type_id:
-                self.env["federation.finance.event"].create_from_source(
+                self.env["federation.finance.event"].ensure_from_source(
                     rec,
                     rec.result_fee_type_id,
                     event_type="charge",

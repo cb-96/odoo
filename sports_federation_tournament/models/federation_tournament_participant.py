@@ -134,6 +134,9 @@ class FederationTournamentParticipant(models.Model):
     def action_confirm(self):
         for rec in self:
             rec.state = "confirmed"
+            Dispatcher = rec.env.get("federation.notification.dispatcher")
+            if Dispatcher is not None:
+                Dispatcher.send_participant_confirmed(rec)
 
     def action_withdraw(self):
         for rec in self:

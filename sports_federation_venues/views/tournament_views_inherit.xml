@@ -13,4 +13,27 @@
         </field>
     </record>
 
+    <record id="view_federation_tournament_stage_form_inherit_venue" model="ir.ui.view">
+        <field name="name">federation.tournament.stage.form.inherit.venue</field>
+        <field name="model">federation.tournament.stage</field>
+        <field name="inherit_id" ref="sports_federation_tournament.view_federation_tournament_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='notes']" position="after">
+                <separator string="Rounds"/>
+                <field name="round_ids"
+                       context="{'default_stage_id': id}">
+                    <list editable="bottom" default_order="sequence asc, id asc">
+                        <field name="sequence"/>
+                        <field name="name"/>
+                        <field name="group_id" optional="hide" domain="[('stage_id', '=', id)]"/>
+                        <field name="round_date"/>
+                        <field name="venue_id"/>
+                        <field name="match_count" readonly="1"/>
+                        <field name="state"/>
+                    </list>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

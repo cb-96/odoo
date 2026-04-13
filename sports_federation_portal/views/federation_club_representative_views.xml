@@ -37,6 +37,7 @@
                         </group>
                         <group string="Role">
                             <field name="role_type_id"/>
+                            <field name="team_id"/>
                             <field name="is_primary"/>
                             <field name="is_current"/>
                         </group>
@@ -67,6 +68,7 @@
                 <field name="partner_id"/>
                 <field name="user_id"/>
                 <field name="role_type_id"/>
+                <field name="team_id" optional="show"/>
                 <field name="is_primary"/>
                 <field name="is_current"/>
                 <field name="date_start"/>
@@ -86,12 +88,14 @@
                 <field name="partner_id"/>
                 <field name="user_id"/>
                 <field name="role_type_id"/>
+                <field name="team_id"/>
                 <filter name="primary" string="Primary Contacts" domain="[('is_primary', '=', True)]"/>
                 <filter name="current" string="Currently Active" domain="[('is_current', '=', True)]"/>
 
                 <separator/>
                 <group>
                     <filter name="club" string="Club" context="{'group_by': 'club_id'}"/>
+                    <filter name="team" string="Team" context="{'group_by': 'team_id'}"/>
                     <filter name="role_type" string="Role Type" context="{'group_by': 'role_type_id'}"/>
                     <filter name="partner" string="Contact" context="{'group_by': 'partner_id'}"/>
                 </group>

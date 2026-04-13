@@ -88,3 +88,29 @@ A check result linking a requirement to an entity's submission status.
    expired statuses per entity.
 5. **Multi-entity support** — Same framework covers clubs, players, referees, venues,
    and club representatives.
+6. **Portal self-service workspace** — Scoped portal users can review their own
+    requirements, renewal deadlines, remediation notes, and submission history at
+    `/my/compliance`.
+7. **Portal submission flow** — Club representatives and referees can upload
+    replacement documents and submit renewals directly from the portal detail page
+    without backend access.
+
+## Portal Self-Service
+
+Portal routes:
+
+- `GET /my/compliance` — workspace listing with renewal warnings, review state,
+   and attention-first sorting
+- `GET /my/compliance/<requirement_id>/<target_model>/<target_id>` — detail page
+   for one requirement and target record
+- `POST /my/compliance/<requirement_id>/<target_model>/<target_id>/submit` —
+   attachment-backed submission or renewal request
+
+Portal workspace behaviour:
+
+- access is limited to targets the current portal user is allowed to manage
+- remediation notes from the reporting layer are surfaced when available
+- renewal windows are highlighted before expiry so replacement documents can be
+   submitted proactively
+- attachment creation preserves the portal user identity while still using
+   controlled elevated writes for the compliance models

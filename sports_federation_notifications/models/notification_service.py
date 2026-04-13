@@ -25,7 +25,10 @@ class FederationNotificationService(models.AbstractModel):
         Returns:
             The created notification log record.
         """
-        Log = self.env["federation.notification.log"]
+        Log = self.env["federation.notification.log"].sudo()
+        if isinstance(email_to, (list, tuple, set)):
+            email_to = ",".join(dict.fromkeys(email for email in email_to if email))
+
         log_vals = {
             "name": log_name or f"Email: {template_xmlid}",
             "target_model": record._name,
@@ -50,6 +53,7 @@ class FederationNotificationService(models.AbstractModel):
                     "message": f"Template '{template_xmlid}' not found.",
                 })
                 return log
+            template = template.sudo()
 
             if partner:
                 template.send_mail(record.id, force_send=True, email_values={"recipient_ids": [(6, 0, [partner.id])]})
@@ -83,7 +87,7 @@ class FederationNotificationService(models.AbstractModel):
         Returns:
             The created notification log record.
         """
-        Log = self.env["federation.notification.log"]
+        Log = self.env["federation.notification.log"].sudo()
         activity_type = self.env.ref(activity_type_xmlid, raise_if_not_found=False)
 
         log_vals = {
@@ -97,7 +101,7 @@ class FederationNotificationService(models.AbstractModel):
         log = Log.create(log_vals)
 
         try:
-            self.env["mail.activity"].create({
+            self.env["mail.activity"].sudo().create({
                 "res_model_id": self.env["ir.model"]._get_id(record._name),
                 "res_id": record.id,
                 "activity_type_id": activity_type.id if activity_type else False,
@@ -119,14 +123,13 @@ class FederationNotificationService(models.AbstractModel):
 
     @api.model
     def _cron_placeholder_notification_scan(self):
-        """Placeholder cron method for scheduled notification scans.
+        """Default cron scan for stale registrations and officiating gaps.
 
-        This method is intentionally minimal. It searches for season registrations
-        in draft state older than 7 days and logs a reminder notice.
-
-        Future modules can extend this or add their own cron methods.
+        The scan logs draft season-registration reminders and, when the related
+        modules are installed, creates activities for overdue referee
+        confirmations and officiating shortages.
         """
-        Log = self.env["federation.notification.log"]
+        Log = self.env["federation.notification.log"].sudo()
         Registration = self.env.get("federation.season.registration")
 
         if not Registration:
@@ -166,3 +169,24 @@ class FederationNotificationService(models.AbstractModel):
                 "sent_on": fields.Datetime.now(),
                 "message": "No draft registrations older than 7 days found.",
             })
+
+        Dispatcher = self.env.get("federation.notification.dispatcher")
+        MatchReferee = self.env.get("federation.match.referee")
+        Match = self.env.get("federation.match")
+
+        if Dispatcher is not None and MatchReferee:
+            overdue_assignments = MatchReferee.search([
+                ("state", "=", "draft"),
+            ], limit=20).filtered(lambda assignment: assignment.is_confirmation_overdue)
+            for assignment in overdue_assignments:
+                Dispatcher.send_referee_confirmation_overdue(assignment)
+
+        if Dispatcher is not None and Match and "is_officially_ready" in Match._fields:
+            shortage_matches = Match.search([
+                ("state", "in", ("draft", "scheduled")),
+                ("date_scheduled", "!=", False),
+            ], limit=20).filtered(
+                lambda match: match.required_referee_count and not match.is_officially_ready
+            )
+            for match in shortage_matches:
+                Dispatcher.send_referee_shortage_alert(match)

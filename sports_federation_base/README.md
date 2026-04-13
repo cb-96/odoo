@@ -60,8 +60,9 @@ A time-bounded period during which competitions take place.
 | `date_start` / `date_end` | Date | Season boundaries (end ≥ start) |
 | `state` | Selection | draft → open → closed / cancelled |
 
-**Workflow:** `action_open()` → `action_close()` or `action_cancel()` →
-`action_draft()` to reset.
+**Workflow:** active `draft` seasons can be opened, `open` seasons can be closed,
+`draft` or `open` seasons can be cancelled, and only `cancelled` seasons can be
+reset to `draft`.
 
 ### `federation.season.registration`
 
@@ -78,6 +79,13 @@ creation (`FED/REG/YYYY/00001`).
 | `state` | Selection | draft → confirmed / cancelled |
 
 **Constraint:** a team can register for a given season only once.
+
+## Lifecycle guardrails
+
+- Clubs can only be archived after their active teams are archived.
+- Teams can only be archived when linked season registrations are cancelled.
+- Open seasons must be closed or cancelled before archiving.
+- The module exposes explicit archive and restore actions so lifecycle changes stay auditable in the backend UI.
 
 ## Security
 

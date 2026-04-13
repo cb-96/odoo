@@ -1,10 +1,9 @@
 from urllib.parse import quote_plus
 
-from odoo import http, fields
+from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
-from odoo.exceptions import AccessError, ValidationError, MissingError
-from odoo.tools import plaintext2html
+from odoo.exceptions import ValidationError
 
 
 class FederationWebsite(http.Controller):
@@ -219,8 +218,12 @@ class FederationPortal(CustomerPortal):
         representative = request.env["federation.club.representative"].search(
             [("user_id", "=", request.env.user.id)], limit=1
         )
+        referee = request.env["federation.referee"].with_user(request.env.user).sudo()._portal_get_for_user(
+            user=request.env.user
+        )
         values["federation_representative"] = representative
         values["federation_club"] = representative.club_id if representative else None
+        values["federation_referee"] = referee
         return values
 
     def _get_portal_default_domain(self):
@@ -374,6 +377,8 @@ class FederationPortal(CustomerPortal):
             "registrations": registrations,
             "pager": pager,
             "page_name": "my_season_registrations",
+            "success": kw.get("success"),
+            "error": kw.get("error"),
         }
         return request.render(
             "sports_federation_portal.portal_my_season_registrations", values
@@ -414,6 +419,65 @@ class FederationPortal(CustomerPortal):
         }
         return request.render(
             "sports_federation_portal.portal_my_tournament_registrations", values
+        )
+
+    # ------------------------------------------------------------------
+    # Active Tournament Workspace
+    # ------------------------------------------------------------------
+
+    @http.route(
+        ["/my/tournament-workspaces", "/my/tournament-workspaces/page/<int:page>"],
+        type="http",
+        auth="user",
+        website=True,
+    )
+    def portal_my_tournament_workspaces(self, page=1, **kw):
+        Tournament = request.env["federation.tournament"]
+        entries = Tournament._portal_get_workspace_entries(user=request.env.user)
+        step = 12
+        pager = portal_pager(
+            url="/my/tournament-workspaces",
+            total=len(entries),
+            page=page,
+            step=step,
+        )
+        values = {
+            "workspace_entries": entries[pager["offset"]:pager["offset"] + step],
+            "pager": pager,
+            "page_name": "my_tournament_workspaces",
+            "has_workspace_access": Tournament._portal_has_workspace_access(
+                user=request.env.user
+            ),
+        }
+        return request.render(
+            "sports_federation_portal.portal_my_tournament_workspaces",
+            values,
+        )
+
+    @http.route(
+        ["/my/tournament-workspaces/<int:tournament_id>/<int:team_id>"],
+        type="http",
+        auth="user",
+        website=True,
+    )
+    def portal_my_tournament_workspace_detail(self, tournament_id, team_id, **kw):
+        workspace_entry = request.env[
+            "federation.tournament"
+        ]._portal_get_workspace_entry_for_user(
+            tournament_id,
+            team_id,
+            user=request.env.user,
+        )
+        if not workspace_entry:
+            return request.not_found()
+
+        values = {
+            "workspace": workspace_entry,
+            "page_name": "my_tournament_workspaces",
+        }
+        return request.render(
+            "sports_federation_portal.portal_my_tournament_workspace_detail",
+            values,
         )
 
     # ------------------------------------------------------------------
@@ -467,6 +531,11 @@ class FederationPortal(CustomerPortal):
                 "/my/season-registration/new?error=Invalid+selection"
             )
         team = request.env["federation.team"].sudo().browse(team_id)
+        season = request.env["federation.season"].sudo().browse(season_id)
+        if not season.exists() or season.state != "open":
+            return request.redirect(
+                "/my/season-registration/new?error=The+selected+season+is+not+open+for+registrations"
+            )
         if team.club_id not in clubs:
             return request.redirect(
                 "/my/season-registration/new?error=You+can+only+register+your+own+teams"

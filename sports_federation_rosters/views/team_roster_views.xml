@@ -5,10 +5,10 @@
         <field name="model">federation.team.roster</field>
         <field name="arch" type="xml">
             <list>
-                <field name="name"/>
                 <field name="team_id"/>
                 <field name="season_id"/>
                 <field name="competition_id"/>
+                <field name="name" optional="hide"/>
                 <field name="rule_set_id"/>
                 <field name="status"/>
                 <field name="valid_from"/>
@@ -35,10 +35,13 @@
                         <button name="action_view_lines" type="object" class="oe_stat_button" icon="fa-users" invisible="not line_count">
                             <field name="line_count" string="Players" widget="statinfo"/>
                         </button>
+                        <button name="action_view_match_sheets" type="object" class="oe_stat_button" icon="fa-list" invisible="not match_sheet_count">
+                            <field name="match_sheet_count" string="Match Sheets" widget="statinfo"/>
+                        </button>
                     </div>
                     <div class="oe_title">
-                        <label for="name"/>
-                        <h1><field name="name"/></h1>
+                        <h1><field name="name" readonly="1"/></h1>
+                        <div class="text-muted">Generated automatically from the linked team and scope.</div>
                     </div>
                     <group>
                         <group>
@@ -56,6 +59,16 @@
                             <field name="club_id"/>
                         </group>
                     </group>
+                    <group>
+                        <group>
+                            <field name="ready_for_activation" readonly="1"/>
+                            <field name="readiness_feedback" readonly="1" invisible="not readiness_feedback"/>
+                        </group>
+                        <group>
+                            <field name="match_day_locked" readonly="1"/>
+                            <field name="match_day_lock_feedback" readonly="1" invisible="not match_day_lock_feedback"/>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="Roster Lines" name="roster_lines">
                             <field name="line_ids">
@@ -67,9 +80,22 @@
                                     <field name="is_vice_captain"/>
                                     <field name="license_id"/>
                                     <field name="eligible" readonly="1"/>
+                                    <field name="eligibility_feedback" readonly="1" optional="hide"/>
                                     <field name="date_from"/>
                                     <field name="date_to"/>
                                     <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Audit History" name="audit_history">
+                            <field name="audit_event_ids" readonly="1">
+                                <list create="0" delete="0" edit="0">
+                                    <field name="event_on"/>
+                                    <field name="event_type"/>
+                                    <field name="player_id" optional="hide"/>
+                                    <field name="match_sheet_id" optional="hide"/>
+                                    <field name="author_id"/>
+                                    <field name="description"/>
                                 </list>
                             </field>
                         </page>

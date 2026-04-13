@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="federation_import_template_clubs" model="federation.import.template">
+        <field name="name">Clubs Import Template</field>
+        <field name="code">clubs_csv</field>
+        <field name="wizard_model">federation.import.clubs.wizard</field>
+        <field name="target_model">federation.club</field>
+        <field name="contract_version">csv_v1</field>
+        <field name="required_columns_text">name</field>
+        <field name="optional_columns_text">code, email, phone, city</field>
+        <field name="sample_header">name,code,email,phone,city</field>
+        <field name="notes">Duplicate detection prefers code when present and falls back to an exact club-name match.</field>
+    </record>
+
+    <record id="federation_import_template_players" model="federation.import.template">
+        <field name="name">Players Import Template</field>
+        <field name="code">players_csv</field>
+        <field name="wizard_model">federation.import.players.wizard</field>
+        <field name="target_model">federation.player</field>
+        <field name="contract_version">csv_v1</field>
+        <field name="required_columns_text">first_name and last_name, or legacy name</field>
+        <field name="optional_columns_text">birth_date, club_code, club_name, gender, email, phone, state</field>
+        <field name="sample_header">first_name,last_name,birth_date,club_code,gender,email,phone,state</field>
+        <field name="notes">Duplicate detection uses first name, last name, and birth date to align with player uniqueness rules.</field>
+    </record>
+
+    <record id="federation_import_template_seasons" model="federation.import.template">
+        <field name="name">Seasons Import Template</field>
+        <field name="code">seasons_csv</field>
+        <field name="wizard_model">federation.import.seasons.wizard</field>
+        <field name="target_model">federation.season</field>
+        <field name="contract_version">csv_v1</field>
+        <field name="required_columns_text">name, code, date_start, date_end</field>
+        <field name="optional_columns_text">state, notes</field>
+        <field name="sample_header">name,code,date_start,date_end,state,notes</field>
+        <field name="notes">Dates must use YYYY-MM-DD and state must be one of draft, open, closed, or cancelled.</field>
+    </record>
+
+    <record id="federation_import_template_teams" model="federation.import.template">
+        <field name="name">Teams Import Template</field>
+        <field name="code">teams_csv</field>
+        <field name="wizard_model">federation.import.teams.wizard</field>
+        <field name="target_model">federation.team</field>
+        <field name="contract_version">csv_v1</field>
+        <field name="required_columns_text">team_name or name, and club_code or club_name</field>
+        <field name="optional_columns_text">code, category, gender, email, phone</field>
+        <field name="sample_header">club_code,team_name,code,category,gender,email,phone</field>
+        <field name="notes">Team duplicates prefer code when present and otherwise use the club plus team name pair.</field>
+    </record>
+
+    <record id="federation_import_template_tournament_participants" model="federation.import.template">
+        <field name="name">Tournament Participants Import Template</field>
+        <field name="code">tournament_participants_csv</field>
+        <field name="wizard_model">federation.import.tournament.participants.wizard</field>
+        <field name="target_model">federation.tournament.participant</field>
+        <field name="contract_version">csv_v1</field>
+        <field name="required_columns_text">tournament_code or tournament_name, and team_code or team_name</field>
+        <field name="optional_columns_text">seed</field>
+        <field name="sample_header">tournament_code,team_code,seed</field>
+        <field name="notes">Eligibility, duplicate, and seeding checks reuse the same backend rules as manual participant confirmation.</field>
+    </record>
+
+</odoo>

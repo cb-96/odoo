@@ -21,6 +21,18 @@ from odoo.http import request, Response
 
 
 class KpiExportController(http.Controller):
+    CSV_SCHEMA_VERSION = "csv_v1"
+
+    def _csv_response(self, payload, filename, contract_name):
+        return Response(
+            payload,
+            content_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Federation-Contract": contract_name,
+                "X-Federation-Contract-Version": self.CSV_SCHEMA_VERSION,
+            },
+        )
 
     # ------------------------------------------------------------------
     # Standings CSV
@@ -68,13 +80,7 @@ class KpiExportController(http.Controller):
                 ])
 
         filename = f"standings_{tournament.code or tournament_id}.csv"
-        return Response(
-            output.getvalue(),
-            content_type="text/csv; charset=utf-8",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-            },
-        )
+        return self._csv_response(output.getvalue(), filename, "standings_csv")
 
     # ------------------------------------------------------------------
     # Participation CSV
@@ -111,10 +117,64 @@ class KpiExportController(http.Controller):
             ])
 
         filename = f"participation_{season.code or season_id}.csv"
-        return Response(
+        return self._csv_response(output.getvalue(), filename, "participation_csv")
+
+    @http.route(
+        "/reporting/export/finance",
+        type="http",
+        auth="user",
+        methods=["GET"],
+    )
+    def export_finance_csv(self, **kw):
+        """Return a CSV file of the finance summary report."""
+        finance_rows = request.env["federation.report.finance"].search(
+            [],
+            order="fee_type_id asc, state asc",
+        )
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Fee Type",
+            "Category",
+            "State",
+            "Event Count",
+            "Total Amount",
+        ])
+        for row in finance_rows:
+            writer.writerow([
+                row.fee_type_id.name if row.fee_type_id else "",
+                row.fee_type_id.category if row.fee_type_id else "",
+                row.state or "",
+                row.event_count,
+                row.total_amount,
+            ])
+
+        return self._csv_response(
             output.getvalue(),
-            content_type="text/csv; charset=utf-8",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-            },
+            "finance_summary.csv",
+            "finance_summary_csv",
+        )
+
+    @http.route(
+        "/reporting/export/finance/events",
+        type="http",
+        auth="user",
+        methods=["GET"],
+    )
+    def export_finance_event_handoff_csv(self, **kw):
+        """Return a detailed CSV contract for finance-event handoff and reconciliation."""
+        FinanceEvent = request.env["federation.finance.event"]
+        events = FinanceEvent.search([], order="create_date desc, id desc")
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(FinanceEvent.get_handoff_export_headers())
+        for event in events:
+            writer.writerow(event.get_handoff_export_row())
+
+        return self._csv_response(
+            output.getvalue(),
+            "finance_events_handoff.csv",
+            FinanceEvent.EXPORT_SCHEMA_VERSION,
         )

@@ -35,7 +35,9 @@
                             <field name="round_id" domain="[('stage_id', '=', stage_id)]"/>
                         </group>
                         <group string="Schedule">
-                            <field name="date_scheduled"/>
+                            <field name="scheduled_date" readonly="1"/>
+                            <field name="scheduled_time" widget="float_time"/>
+                            <field name="date_scheduled" invisible="1"/>
                         </group>
                     </group>
                     <group>
@@ -80,9 +82,11 @@
         <field name="model">federation.match</field>
         <field name="arch" type="xml">
             <list string="Matches">
-                <field name="date_scheduled"/>
+                <field name="scheduled_date" optional="show"/>
+                <field name="scheduled_time" widget="float_time" optional="show"/>
                 <field name="tournament_id"/>
                 <field name="stage_id"/>
+                <field name="round_id" optional="hide"/>
                 <field name="home_team_id"/>
                 <field name="home_score" invisible="1"/>
                 <field name="away_team_id"/>

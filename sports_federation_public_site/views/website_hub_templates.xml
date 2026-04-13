@@ -1,0 +1,703 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="public_tournament_subnav" name="Public Tournament Sub Navigation">
+        <div class="position-sticky top-0 bg-white border rounded-3 shadow-sm px-3 py-2 mb-4" style="z-index: 10;">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a t-att-href="tournament.get_public_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'tournament_overview' else 'btn-outline-secondary' }}">
+                    Overview
+                </a>
+                <a t-att-href="tournament.get_public_teams_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'competition_teams' else 'btn-outline-secondary' }}">
+                    Teams
+                </a>
+                <a t-if="tournament.get_public_schedule_sections()"
+                   t-att-href="tournament.get_public_schedule_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'competition_schedule' else 'btn-outline-secondary' }}">
+                    Schedule
+                </a>
+                <a t-if="tournament.show_public_standings"
+                   t-att-href="tournament.get_public_standings_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'competition_standings' else 'btn-outline-secondary' }}">
+                    Standings
+                </a>
+                <a t-if="tournament.show_public_results"
+                   t-att-href="tournament.get_public_results_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'competition_results' else 'btn-outline-secondary' }}">
+                    Results
+                </a>
+                <a t-if="tournament.has_public_bracket()"
+                   t-att-href="tournament.get_public_bracket_path()"
+                   t-attf-class="btn btn-sm {{ 'btn-primary' if page_name == 'competition_bracket' else 'btn-outline-secondary' }}">
+                    Bracket
+                </a>
+                <span class="vr d-none d-md-inline-block" t-if="tournament.can_access_public_detail()"/>
+                <a t-if="tournament.can_access_public_detail()"
+                   t-att-href="tournament.get_public_schedule_ics_path()"
+                   class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-calendar-plus-o me-1"/> Subscribe
+                </a>
+                <a t-if="tournament.can_access_public_detail()"
+                   t-att-href="tournament.get_public_feed_path()"
+                   class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-rss me-1"/> Feed
+                </a>
+            </div>
+        </div>
+    </template>
+
+    <template id="public_match_card" name="Public Match Card">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div>
+                        <div class="small text-uppercase text-muted">Match</div>
+                        <strong t-esc="match.name or 'Fixture'"/>
+                    </div>
+                    <span class="badge text-bg-light" t-esc="match.state"/>
+                </div>
+                <div class="small text-muted mb-3">
+                    <t t-if="match.date_scheduled">
+                        <i class="fa fa-calendar me-1"/>
+                        <t t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                    </t>
+                    <t t-elif="match.scheduled_date">
+                        <i class="fa fa-calendar me-1"/>
+                        <t t-esc="match.scheduled_date.strftime('%b %d, %Y')"/>
+                    </t>
+                    <t t-else="">TBD</t>
+                </div>
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
+                    <div class="text-start flex-fill">
+                        <a t-if="match.home_team_id and match.home_team_id.can_access_public_profile()"
+                           t-att-href="match.home_team_id.get_public_path()"
+                           class="fw-semibold text-decoration-none"
+                           t-esc="match.home_team_id.name"/>
+                        <span t-else="" class="fw-semibold" t-esc="match.home_team_id.name or 'TBD'"/>
+                    </div>
+                    <div class="text-center px-2">
+                        <strong>
+                            <t t-esc="match.home_score"/> - <t t-esc="match.away_score"/>
+                        </strong>
+                    </div>
+                    <div class="text-end flex-fill">
+                        <a t-if="match.away_team_id and match.away_team_id.can_access_public_profile()"
+                           t-att-href="match.away_team_id.get_public_path()"
+                           class="fw-semibold text-decoration-none"
+                           t-esc="match.away_team_id.name"/>
+                        <span t-else="" class="fw-semibold" t-esc="match.away_team_id.name or 'TBD'"/>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    <t t-if="match.round_id" t-esc="match.round_id.name"/>
+                    <t t-if="match.round_id and match.stage_id"> • </t>
+                    <t t-if="match.stage_id" t-esc="match.stage_id.name"/>
+                    <t t-if="match.venue_id"> • <t t-esc="match.venue_id.name"/></t>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="page_tournaments_hub" name="Tournament Hub">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <section class="rounded-4 p-4 p-lg-5 mb-5 text-white" style="background: linear-gradient(135deg, #0f4c5c 0%, #1d7874 45%, #f4a261 100%);">
+                    <div class="row align-items-end g-4">
+                        <div class="col-lg-8">
+                            <p class="text-uppercase small mb-2 opacity-75">Tournament Hub</p>
+                            <h1 class="display-6 mb-3">One home for tournaments, live coverage, and public results</h1>
+                            <p class="mb-0 opacity-75">Published schedules, standings, results, brackets, and team pages now live together in one tournament hub.</p>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="row g-3 text-center">
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-10 rounded-3 p-3">
+                                        <div class="small opacity-75">Live</div>
+                                        <strong t-esc="len(live_public_tournaments)"/>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-10 rounded-3 p-3">
+                                        <div class="small opacity-75">Featured</div>
+                                        <strong t-esc="len(featured_public_tournaments)"/>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-10 rounded-3 p-3">
+                                        <div class="small opacity-75">Archive</div>
+                                        <strong t-esc="len(archived_public_tournaments)"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <form action="/tournaments" method="GET" class="card border-0 shadow-sm mb-5">
+                    <div class="card-body row g-3 align-items-end">
+                        <div class="col-lg-3">
+                            <label class="form-label" for="hub_search">Search</label>
+                            <input id="hub_search" type="text" name="search" class="form-control" placeholder="Tournament, code, venue, summary..." t-att-value="filters['search']"/>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label" for="hub_season">Season</label>
+                            <select id="hub_season" name="season_id" class="form-select">
+                                <option value="">All Seasons</option>
+                                <t t-foreach="seasons" t-as="season">
+                                    <option t-att-value="season.id" t-att-selected="filters['season_id'] == season.id and 'selected' or None" t-esc="season.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label" for="hub_state">State</label>
+                            <select id="hub_state" name="state" class="form-select">
+                                <t t-foreach="state_options" t-as="state_option">
+                                    <option t-att-value="state_option[0]" t-att-selected="filters['state'] == state_option[0] and 'selected' or None" t-esc="state_option[1]"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label" for="hub_category">Category</label>
+                            <select id="hub_category" name="category" class="form-select">
+                                <t t-foreach="category_options" t-as="category_option">
+                                    <option t-att-value="category_option[0]" t-att-selected="filters['category'] == category_option[0] and 'selected' or None" t-esc="category_option[1]"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label" for="hub_gender">Gender</label>
+                            <select id="hub_gender" name="gender" class="form-select">
+                                <t t-foreach="gender_options" t-as="gender_option">
+                                    <option t-att-value="gender_option[0]" t-att-selected="filters['gender'] == gender_option[0] and 'selected' or None" t-esc="gender_option[1]"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-1">
+                            <button class="btn btn-primary w-100" type="submit">Apply</button>
+                        </div>
+                        <div class="col-lg-3">
+                            <label class="form-label" for="hub_venue">Venue</label>
+                            <select id="hub_venue" name="venue_id" class="form-select">
+                                <option value="">All Venues</option>
+                                <t t-foreach="venues" t-as="venue">
+                                    <option t-att-value="venue.id" t-att-selected="filters['venue_id'] == venue.id and 'selected' or None" t-esc="venue.name"/>
+                                </t>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <section t-if="live_public_tournaments" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Live Now</h2>
+                        <span class="text-muted small">In-progress tournaments with published coverage</span>
+                    </div>
+                    <div class="row g-3">
+                        <t t-foreach="live_public_tournaments" t-as="tournament">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                            <a t-att-href="tournament.get_public_path()" class="h6 text-decoration-none mb-0" t-esc="tournament.name"/>
+                                            <span class="badge text-bg-danger">Live</span>
+                                        </div>
+                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Currently in progress with public coverage.'"/>
+                                        <a t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-primary">Latest Results</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section t-if="recent_public_tournaments" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Recently Updated</h2>
+                        <span class="text-muted small">Tournaments with newly approved results</span>
+                    </div>
+                    <div class="row g-3">
+                        <t t-foreach="recent_public_tournaments" t-as="tournament">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm bg-light">
+                                    <div class="card-body">
+                                        <a t-att-href="tournament.get_public_path()" class="h6 text-decoration-none d-block mb-2" t-esc="tournament.name"/>
+                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Recent results and standings are available.'"/>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <a t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-secondary">Results</a>
+                                            <a t-if="tournament.show_public_standings" t-att-href="tournament.get_public_standings_path()" class="btn btn-sm btn-outline-secondary">Standings</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section id="published" class="mb-5" t-if="featured_public_tournaments">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Featured Published Tournaments</h2>
+                        <span class="text-muted small">Editor-curated tournament coverage</span>
+                    </div>
+                    <div class="row g-4">
+                        <t t-foreach="featured_public_tournaments" t-as="tournament">
+                            <div class="col-lg-6">
+                                <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                                    <div t-if="tournament.public_hero_image" class="ratio ratio-16x9">
+                                        <img t-att-src="image_data_uri(tournament.public_hero_image)" class="w-100 h-100" style="object-fit: cover;" alt="Tournament hero"/>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                                            <div>
+                                                <a t-att-href="tournament.get_public_path()" class="h4 text-decoration-none d-block mb-1" t-esc="tournament.name"/>
+                                                <div class="small text-muted">
+                                                    <t t-if="tournament.date_start" t-esc="tournament.date_start" t-options='{"widget": "date"}'/>
+                                                    <t t-if="tournament.date_end"> - <t t-esc="tournament.date_end" t-options='{"widget": "date"}'/></t>
+                                                </div>
+                                            </div>
+                                            <span class="badge text-bg-primary">Featured</span>
+                                        </div>
+                                        <p class="mb-3" t-esc="tournament.public_editorial_summary or 'Published schedule, results, standings, and bracket coverage available.'"/>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <a t-att-href="tournament.get_public_path()" class="btn btn-primary btn-sm">Overview</a>
+                                            <a t-if="tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-outline-secondary btn-sm">Schedule</a>
+                                            <a t-if="tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-outline-secondary btn-sm">Results</a>
+                                            <a t-if="tournament.show_public_standings" t-att-href="tournament.get_public_standings_path()" class="btn btn-outline-secondary btn-sm">Standings</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section id="published-archive" class="mb-5" t-if="archived_public_tournaments">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Past Published Tournaments</h2>
+                        <span class="text-muted small">Archive of completed public coverage</span>
+                    </div>
+                    <div class="row g-3">
+                        <t t-foreach="archived_public_tournaments" t-as="tournament">
+                            <div class="col-lg-4 col-md-6">
+                                <div class="card h-100 border-secondary-subtle shadow-sm">
+                                    <div class="card-body">
+                                        <a t-att-href="tournament.get_public_path()" class="h6 text-decoration-none d-block mb-2" t-esc="tournament.name"/>
+                                        <p class="small text-muted mb-3">
+                                            <t t-if="tournament.date_start" t-esc="tournament.date_start" t-options='{"widget": "date"}'/>
+                                            <t t-if="tournament.date_end"> - <t t-esc="tournament.date_end" t-options='{"widget": "date"}'/></t>
+                                        </p>
+                                        <a t-att-href="tournament.get_public_path()" class="btn btn-sm btn-outline-secondary">Open Overview</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">All Tournaments</h2>
+                        <span class="text-muted small">Operational hub for registration and public coverage</span>
+                    </div>
+                    <div class="row g-4">
+                        <t t-foreach="tournaments" t-as="tournament">
+                            <div class="col-lg-4 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                            <a t-att-href="tournament.get_public_path()" class="h5 text-decoration-none mb-0" t-esc="tournament.name"/>
+                                            <span class="badge text-bg-light" t-esc="dict(tournament._fields['state'].selection).get(tournament.state)"/>
+                                        </div>
+                                        <div class="small text-muted mb-2">
+                                            <t t-if="tournament.date_start" t-esc="tournament.date_start" t-options='{"widget": "date"}'/>
+                                            <t t-if="tournament.date_end"> - <t t-esc="tournament.date_end" t-options='{"widget": "date"}'/></t>
+                                        </div>
+                                        <div class="small text-muted mb-3">
+                                            <t t-if="tournament.season_id"><span t-esc="tournament.season_id.name"/></t>
+                                            <t t-if="tournament.location"> • <span t-esc="tournament.location"/></t>
+                                            <t t-if="tournament.max_participants"> • <span t-esc="tournament.participant_count"/> / <span t-esc="tournament.max_participants"/> participants</t>
+                                        </div>
+                                        <p class="mb-3 flex-grow-1" t-esc="tournament.public_editorial_summary or tournament.notes or 'Tournament operations, registration, and public coverage live here.'"/>
+                                        <div class="d-flex flex-wrap gap-2 mt-auto">
+                                            <a t-att-href="tournament.get_public_path()" class="btn btn-sm btn-primary">Overview</a>
+                                            <a t-if="tournament.can_access_public_detail() and tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-sm btn-outline-secondary">Schedule</a>
+                                            <a t-if="tournament.can_access_public_detail() and tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-secondary">Results</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                    <div t-if="not tournaments" class="alert alert-info mt-4">No tournaments match the current filters.</div>
+                    <t t-call="website.pager" t-if="pager">
+                        <t t-set="pager" t-value="pager"/>
+                    </t>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_tournament_overview" name="Tournament Overview">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item active" t-esc="tournament.name"/>
+                    </ol>
+                </nav>
+
+                <section class="rounded-4 overflow-hidden border mb-4">
+                    <div t-if="tournament.public_hero_image" class="ratio ratio-21x9 bg-dark">
+                        <img t-att-src="image_data_uri(tournament.public_hero_image)" class="w-100 h-100" style="object-fit: cover;" alt="Tournament hero"/>
+                    </div>
+                    <div class="p-4 p-lg-5" t-attf-style="{{ '' if tournament.public_hero_image else 'background: linear-gradient(135deg, #143642 0%, #0f8b8d 55%, #ec9a29 100%); color: white;' }}">
+                        <div class="row g-4 align-items-start">
+                            <div class="col-lg-8">
+                                <p class="text-uppercase small mb-2 opacity-75">Tournament Overview</p>
+                                <h1 class="display-6 mb-3" t-esc="tournament.name"/>
+                                <p class="lead mb-3" t-esc="tournament.public_editorial_summary or 'Registration, schedule, standings, results, and publication all flow through this tournament hub.'"/>
+                                <div class="d-flex flex-wrap gap-3 small">
+                                    <span t-if="tournament.date_start"><i class="fa fa-calendar me-1"/><t t-esc="tournament.date_start" t-options='{"widget": "date"}'/></span>
+                                    <span t-if="tournament.date_end">to <t t-esc="tournament.date_end" t-options='{"widget": "date"}'/></span>
+                                    <span t-if="tournament.location"><i class="fa fa-map-marker me-1"/><t t-esc="tournament.location"/></span>
+                                    <span t-if="tournament.season_id"><i class="fa fa-flag me-1"/><t t-esc="tournament.season_id.name"/></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <a t-if="can_register" t-att-href="tournament.get_public_register_path()" class="btn btn-primary">Register for This Tournament</a>
+                                            <a t-if="tournament.can_access_public_detail() and tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-outline-secondary">Open Schedule</a>
+                                            <a t-if="tournament.can_access_public_detail() and tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-outline-secondary">Open Results</a>
+                                            <a t-if="tournament.can_access_public_detail() and tournament.show_public_standings" t-att-href="tournament.get_public_standings_path()" class="btn btn-outline-secondary">Open Standings</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div t-if="tournament.can_access_public_detail() and tournament.public_pinned_announcement" class="alert alert-warning border-0 shadow-sm">
+                    <strong class="me-2">Announcement</strong>
+                    <span t-esc="tournament.public_pinned_announcement"/>
+                </div>
+
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
+
+                <div class="row g-4">
+                    <div class="col-xl-8">
+                        <section class="mb-4" t-if="tournament.can_access_public_detail() and public_live_matches">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Live Matches</h2>
+                                <span class="text-muted small">Currently in progress</span>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="public_live_matches" t-as="match">
+                                    <div class="col-md-6">
+                                        <t t-call="sports_federation_public_site.public_match_card"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="upcoming_matches">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Upcoming Matches</h2>
+                                <a t-if="tournament.can_access_public_detail() and tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-sm btn-outline-secondary">Full Schedule</a>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="upcoming_matches" t-as="match">
+                                    <div class="col-md-6">
+                                        <t t-call="sports_federation_public_site.public_match_card"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="recent_results">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Recent Results</h2>
+                                <a t-if="tournament.can_access_public_detail() and tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-secondary">All Results</a>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="recent_results" t-as="match">
+                                    <div class="col-md-6">
+                                        <t t-call="sports_federation_public_site.public_match_card"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="tournament.public_description">
+                            <h2 class="h4 mb-3">About This Tournament</h2>
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div t-field="tournament.public_description"/>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="public_participants">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Teams in This Tournament</h2>
+                                <a t-att-href="tournament.get_public_teams_path()" class="btn btn-sm btn-outline-secondary">View All Teams</a>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="public_participants" t-as="participant">
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="card h-100 border-0 shadow-sm">
+                                            <div class="card-body">
+                                                <a t-if="participant.team_id and participant.team_id.can_access_public_profile()"
+                                                   t-att-href="participant.team_id.get_public_path()"
+                                                   class="h6 text-decoration-none d-block mb-1"
+                                                   t-esc="participant.team_id.name"/>
+                                                <span t-else="" class="h6 d-block mb-1" t-esc="participant.team_id.name"/>
+                                                <div class="small text-muted mb-2" t-esc="participant.club_id.name"/>
+                                                <span class="badge text-bg-light" t-esc="participant.state"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="col-xl-4">
+                        <section class="mb-4" t-if="tournament.can_access_public_detail() and public_standings">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="h5 mb-0">Standings Snapshot</h2>
+                                        <a t-att-href="tournament.get_public_standings_path()" class="small text-decoration-none">Full Table</a>
+                                    </div>
+                                    <t t-foreach="public_standings" t-as="standing">
+                                        <div class="mb-3">
+                                            <div class="fw-semibold mb-2" t-esc="standing.public_title or standing.name"/>
+                                            <div class="list-group list-group-flush small">
+                                                <t t-foreach="standing.line_ids.sorted(lambda line: line.rank)[:5]" t-as="line">
+                                                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <span class="me-2 text-muted" t-esc="line.rank"/>
+                                                            <a t-if="line.team_id and line.team_id.can_access_public_profile()" t-att-href="line.team_id.get_public_path()" class="text-decoration-none" t-esc="line.team_id.name"/>
+                                                            <span t-else="" t-esc="line.team_id.name"/>
+                                                        </div>
+                                                        <strong t-esc="line.points"/>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="mb-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Quick Facts</h2>
+                                    <dl class="row small mb-0">
+                                        <dt class="col-5">State</dt>
+                                        <dd class="col-7" t-esc="dict(tournament._fields['state'].selection).get(tournament.state)"/>
+                                        <dt class="col-5">Type</dt>
+                                        <dd class="col-7" t-esc="dict(tournament._fields['tournament_type'].selection).get(tournament.tournament_type)"/>
+                                        <dt class="col-5" t-if="tournament.category">Category</dt>
+                                        <dd class="col-7" t-if="tournament.category" t-esc="dict(tournament._fields['category'].selection).get(tournament.category)"/>
+                                        <dt class="col-5" t-if="tournament.gender">Gender</dt>
+                                        <dd class="col-7" t-if="tournament.gender" t-esc="dict(tournament._fields['gender'].selection).get(tournament.gender)"/>
+                                        <dt class="col-5" t-if="tournament.max_participants">Participants</dt>
+                                        <dd class="col-7" t-if="tournament.max_participants"><t t-esc="tournament.participant_count"/> / <t t-esc="tournament.max_participants"/></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="not tournament.can_access_public_detail()">
+                            <div class="alert alert-info border-0 shadow-sm mb-0">
+                                Public coverage is not published for this tournament yet. Registration and operational details remain available here, but schedule, standings, results, and bracket links will appear once publication is enabled.
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_tournament_register" name="Tournament Registration Public">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item active">Register</li>
+                    </ol>
+                </nav>
+
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h1 class="h3 mb-3">Register for <t t-esc="tournament.name"/></h1>
+                                <p class="text-muted mb-4">Submit a club team through the tournament hub. Eligibility and duplicate checks are applied before the registration request is accepted.</p>
+
+                                <div t-if="error" class="alert alert-danger"><t t-esc="error"/></div>
+                                <div t-if="success" class="alert alert-success"><t t-esc="success"/></div>
+
+                                <form t-if="teams" t-att-action="tournament.get_public_register_path()" method="POST">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                    <div class="mb-3">
+                                        <label for="register_team_id" class="form-label">Select Team</label>
+                                        <select id="register_team_id" name="team_id" class="form-select" required="1">
+                                            <option value="">-- Select a team --</option>
+                                            <t t-foreach="teams" t-as="team">
+                                                <option t-att-value="team.id"><t t-esc="team.name"/> (<t t-esc="team.club_id.name"/>)</option>
+                                            </t>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="register_notes" class="form-label">Notes</label>
+                                        <textarea id="register_notes" name="notes" class="form-control" rows="4" placeholder="Optional context for federation staff..."/>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="submit" class="btn btn-primary">Submit Registration</button>
+                                        <a t-att-href="tournament.get_public_path()" class="btn btn-outline-secondary">Back to Tournament</a>
+                                    </div>
+                                </form>
+
+                                <div t-elif="not error" class="alert alert-warning mb-0">
+                                    No eligible teams are currently available for this tournament.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mt-4" t-if="excluded_teams">
+                            <div class="card-body p-4">
+                                <h2 class="h5 mb-3">Unavailable Teams</h2>
+                                <div class="list-group list-group-flush">
+                                    <t t-foreach="excluded_teams" t-as="entry">
+                                        <div class="list-group-item px-0">
+                                            <div class="fw-semibold">
+                                                <t t-esc="entry['name']"/> <span class="text-muted">(<t t-esc="entry['club']"/>)</span>
+                                            </div>
+                                            <div class="small text-muted"><t t-esc="entry['reason']"/></div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_public_team_profile" name="Public Team Profile">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item active" t-esc="team.name"/>
+                    </ol>
+                </nav>
+
+                <section class="card border-0 shadow-sm mb-4 overflow-hidden">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="row g-4 align-items-center">
+                            <div class="col-auto" t-if="team.logo">
+                                <img t-att-src="image_data_uri(team.logo)" class="rounded-3 border" style="width: 120px; height: 120px; object-fit: cover;" alt="Team logo"/>
+                            </div>
+                            <div class="col">
+                                <p class="text-uppercase small text-muted mb-2">Team Profile</p>
+                                <h1 class="display-6 mb-2" t-esc="team.name"/>
+                                <p class="text-muted mb-3">
+                                    <t t-if="team.club_id"><span t-esc="team.club_id.name"/></t>
+                                    <t t-if="team.category"> • <span t-esc="dict(team._fields['category'].selection).get(team.category)"/></t>
+                                    <t t-if="team.gender"> • <span t-esc="dict(team._fields['gender'].selection).get(team.gender)"/></t>
+                                </p>
+                                <p class="mb-0" t-esc="team.notes or 'This team appears on published tournament coverage and public standings.'"/>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="row g-4">
+                    <div class="col-xl-8">
+                        <section class="mb-4" t-if="upcoming_matches">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Upcoming Matches</h2>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="upcoming_matches" t-as="match">
+                                    <div class="col-md-6">
+                                        <t t-call="sports_federation_public_site.public_match_card"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="recent_results">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h4 mb-0">Recent Results</h2>
+                            </div>
+                            <div class="row g-3">
+                                <t t-foreach="recent_results" t-as="match">
+                                    <div class="col-md-6">
+                                        <t t-call="sports_federation_public_site.public_match_card"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="col-xl-4">
+                        <section class="mb-4" t-if="public_tournaments">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Published Tournaments</h2>
+                                    <div class="list-group list-group-flush small">
+                                        <t t-foreach="public_tournaments" t-as="tournament">
+                                            <a t-att-href="tournament.get_public_path()" class="list-group-item list-group-item-action px-0">
+                                                <div class="fw-semibold" t-esc="tournament.name"/>
+                                                <div class="text-muted">
+                                                    <t t-if="tournament.date_start" t-esc="tournament.date_start" t-options='{"widget": "date"}'/>
+                                                    <t t-if="tournament.date_end"> - <t t-esc="tournament.date_end" t-options='{"widget": "date"}'/></t>
+                                                </div>
+                                            </a>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="mb-4" t-if="standing_lines">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Standings Lines</h2>
+                                    <div class="list-group list-group-flush small">
+                                        <t t-foreach="standing_lines" t-as="line">
+                                            <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="fw-semibold" t-esc="line.standing_id.public_title or line.standing_id.name"/>
+                                                    <div class="text-muted">Rank <t t-esc="line.rank"/></div>
+                                                </div>
+                                                <strong><t t-esc="line.points"/> pts</strong>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

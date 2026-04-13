@@ -12,6 +12,12 @@
                             invisible="state != 'draft'"/>
                     <button name="action_settle" string="Settle" type="object" class="btn-secondary"
                             invisible="state != 'confirmed'"/>
+                    <button name="action_mark_exported" string="Mark Exported" type="object" class="btn-secondary"
+                        invisible="state not in ('confirmed', 'settled') or handoff_state in ('exported', 'reconciled', 'closed')"/>
+                    <button name="action_mark_reconciled" string="Mark Reconciled" type="object" class="btn-secondary"
+                        invisible="state != 'settled' or handoff_state not in ('exported', 'reconciled')"/>
+                    <button name="action_close_handoff" string="Close Handoff" type="object" class="btn-secondary"
+                        invisible="state != 'settled' or handoff_state != 'reconciled'"/>
                     <button name="action_cancel" string="Cancel" type="object"
                             invisible="state in ('settled', 'cancelled')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,settled"/>
@@ -30,6 +36,7 @@
                             <field name="source_res_id"/>
                             <field name="invoice_ref"/>
                             <field name="external_ref"/>
+                            <field name="export_schema_version" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -39,9 +46,21 @@
                             <field name="player_id"/>
                             <field name="referee_id"/>
                         </group>
+                        <group string="Accounting Handoff">
+                            <field name="handoff_state"/>
+                            <field name="accounting_batch_ref"/>
+                            <field name="reconciliation_ref"/>
+                            <field name="exported_on" readonly="1"/>
+                            <field name="exported_by_id" readonly="1"/>
+                            <field name="reconciled_on" readonly="1"/>
+                            <field name="reconciled_by_id" readonly="1"/>
+                            <field name="closed_on" readonly="1"/>
+                            <field name="closed_by_id" readonly="1"/>
+                        </group>
                     </group>
                     <group string="Notes">
                         <field name="notes" nolabel="1"/>
+                        <field name="closure_note" placeholder="Optional closure and reconciliation notes..."/>
                     </group>
                 </sheet>
             </form>
@@ -61,6 +80,14 @@
                 <field name="amount"/>
                 <field name="currency_id"/>
                 <field name="club_id" optional="show"/>
+                <field name="referee_id" optional="hide"/>
+                <field name="external_ref" optional="show"/>
+                <field name="handoff_state" optional="show"/>
+                <field name="accounting_batch_ref" optional="hide"/>
+                <field name="reconciliation_ref" optional="hide"/>
+                <field name="invoice_ref" optional="show"/>
+                <field name="source_model" optional="hide"/>
+                <field name="source_res_id" optional="hide"/>
                 <field name="state"/>
             </list>
         </field>
@@ -77,17 +104,28 @@
                 <field name="club_id"/>
                 <field name="player_id"/>
                 <field name="referee_id"/>
+                <field name="external_ref"/>
+                <field name="invoice_ref"/>
+                <field name="source_model"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="settled" string="Settled" domain="[('state', '=', 'settled')]"/>
                 <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
+                <filter name="pending_export" string="Pending Export" domain="[('handoff_state', '=', 'pending_export')]"/>
+                <filter name="exported" string="Exported" domain="[('handoff_state', '=', 'exported')]"/>
+                <filter name="reconciled" string="Reconciled" domain="[('handoff_state', '=', 'reconciled')]"/>
+                <filter name="closed_handoff" string="Closed Handoff" domain="[('handoff_state', '=', 'closed')]"/>
+                <separator/>
                 <filter name="charge" string="Charge" domain="[('event_type', '=', 'charge')]"/>
                 <filter name="credit" string="Credit" domain="[('event_type', '=', 'credit')]"/>
                 <filter name="reimbursement" string="Reimbursement" domain="[('event_type', '=', 'reimbursement')]"/>
+                <filter name="open_items" string="Open Items" domain="[('state', 'in', ('draft', 'confirmed'))]"/>
+                <filter name="needs_invoice" string="Needs Invoice Ref" domain="[('state', '=', 'confirmed'), ('invoice_ref', '=', False)]"/>
                 <separator/>
                 <group>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_handoff_state" string="Handoff State" context="{'group_by': 'handoff_state'}"/>
                     <filter name="group_event_type" string="Event Type" context="{'group_by': 'event_type'}"/>
                     <filter name="group_fee_type" string="Fee Type" context="{'group_by': 'fee_type_id'}"/>
                     <filter name="group_club" string="Club" context="{'group_by': 'club_id'}"/>

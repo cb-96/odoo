@@ -22,12 +22,19 @@ class RoundRobinWizard(models.TransientModel):
         relation="fed_rr_wiz_participant_rel",
         string="Participants",
     )
-    use_all_participants = fields.Boolean(string="Use All Registered", default=True)
+    use_all_participants = fields.Boolean(
+        string="Use All Confirmed Participants", default=True
+    )
     round_type = fields.Selection(
         [("single", "Single Round"), ("double", "Double Round")],
         string="Round Type", default="single", required=True
     )
     rounds_count = fields.Integer(string="Full Cycles (repeats)", default=1)
+    stage_round_count = fields.Integer(
+        string="Existing Rounds",
+        compute="_compute_stage_round_count",
+        store=False,
+    )
     schedule_by_round = fields.Boolean(string="Schedule By Round", default=False)
     round_interval_hours = fields.Integer(string="Round Interval (hours)", default=24)
     start_datetime = fields.Datetime(string="Start Date/Time")
@@ -37,25 +44,95 @@ class RoundRobinWizard(models.TransientModel):
 
     summary = fields.Text(string="Summary", compute="_compute_summary", store=False)
 
-    @api.depends("tournament_id", "stage_id", "group_id", "use_all_participants",
-                 "participant_ids", "round_type")
+    @api.depends("stage_id", "group_id")
+    def _compute_stage_round_count(self):
+        Round = self.env["federation.tournament.round"]
+        for wiz in self:
+            if not wiz.stage_id:
+                wiz.stage_round_count = 0
+                continue
+            domain = [("stage_id", "=", wiz.stage_id.id)]
+            domain.append(("group_id", "=", wiz.group_id.id if wiz.group_id else False))
+            wiz.stage_round_count = Round.search_count(domain)
+
+    def _get_round_stats(self, participant_count):
+        self.ensure_one()
+        base_rounds = participant_count - 1 if participant_count % 2 == 0 else participant_count
+        rounds_per_cycle = base_rounds * (2 if self.round_type == "double" else 1)
+        total_rounds = rounds_per_cycle * (self.rounds_count or 1)
+        matches_per_round = participant_count // 2
+        total_matches = matches_per_round * total_rounds
+        return {
+            "base_rounds": base_rounds,
+            "total_rounds": total_rounds,
+            "matches_per_round": matches_per_round,
+            "total_matches": total_matches,
+        }
+
+    @api.depends(
+        "tournament_id",
+        "stage_id",
+        "group_id",
+        "use_all_participants",
+        "participant_ids",
+        "round_type",
+        "rounds_count",
+        "stage_round_count",
+        "schedule_by_round",
+        "start_datetime",
+    )
     def _compute_summary(self):
         for wiz in self:
             parts = wiz._get_participants()
             n = len(parts)
             if n < 2:
-                wiz.summary = "Need at least 2 participants."
+                wiz.summary = wiz._get_participant_requirement_message(parts)
                 continue
-            rounds = n - 1 if n % 2 == 0 else n
-            matches_per_round = n // 2
-            per_cycle = rounds * matches_per_round
-            if wiz.round_type == "double":
-                per_cycle *= 2
-            total = per_cycle * (wiz.rounds_count or 1)
-            wiz.summary = (
-                f"{n} participants, {rounds} rounds, "
-                f"{matches_per_round} matches/round, {total} total matches."
+            invalid_participants = parts.filtered(lambda participant: participant.state != "confirmed")
+            if invalid_participants:
+                wiz.summary = wiz._get_participant_requirement_message(parts)
+                continue
+            stats = wiz._get_round_stats(n)
+            summary = (
+                f"{n} participants, {stats['total_rounds']} rounds, "
+                f"{stats['matches_per_round']} matches/round, {stats['total_matches']} total matches."
             )
+            required_rounds = stats["total_rounds"]
+            if wiz.stage_round_count:
+                reused_rounds = min(wiz.stage_round_count, required_rounds)
+                missing_rounds = max(required_rounds - wiz.stage_round_count, 0)
+                if missing_rounds:
+                    summary += " " + _(
+                        "This stage already has %(existing)s rounds. %(reused)s existing rounds will be reused and %(missing)s additional rounds will be created."
+                    ) % {
+                        "existing": wiz.stage_round_count,
+                        "reused": reused_rounds,
+                        "missing": missing_rounds,
+                    }
+                else:
+                    summary += " " + _(
+                        "This stage already has %(existing)s rounds. The first %(required)s rounds will be reused in sequence order."
+                    ) % {
+                        "existing": wiz.stage_round_count,
+                        "required": required_rounds,
+                    }
+            else:
+                summary += " " + _(
+                    "Generated matches will create %(required)s rounds on the selected stage."
+                ) % {
+                    "required": required_rounds,
+                }
+
+            if wiz.schedule_by_round and wiz.start_datetime:
+                summary += " " + _(
+                    "Round dates will be derived from the start date and round interval, while individual match kickoff times stay on the matches themselves."
+                )
+            elif wiz.schedule_by_round:
+                summary += " " + _(
+                    "Enable Start Date/Time to assign kickoff times inside each generated round automatically."
+                )
+
+            wiz.summary = summary
 
     def _get_participants(self):
         self.ensure_one()
@@ -68,11 +145,53 @@ class RoundRobinWizard(models.TransientModel):
             return self.env["federation.tournament.participant"].search(domain)
         return self.participant_ids
 
+    def _get_participant_scope_domain(self):
+        self.ensure_one()
+        domain = [("tournament_id", "=", self.tournament_id.id)]
+        if self.group_id:
+            domain.append(("group_id", "=", self.group_id.id))
+        elif self.stage_id:
+            domain.append(("stage_id", "=", self.stage_id.id))
+        return domain
+
+    def _get_participant_requirement_message(self, participants):
+        self.ensure_one()
+        Participant = self.env["federation.tournament.participant"]
+        scope_domain = self._get_participant_scope_domain()
+        scope_total = Participant.search_count(scope_domain)
+        scope_confirmed = Participant.search_count(scope_domain + [("state", "=", "confirmed")])
+        tournament_confirmed = Participant.search_count(
+            [("tournament_id", "=", self.tournament_id.id), ("state", "=", "confirmed")]
+        )
+
+        if not self.use_all_participants:
+            selected_total = len(self.participant_ids)
+            selected_confirmed = len(
+                self.participant_ids.filtered(lambda participant: participant.state == "confirmed")
+            )
+            if selected_total < 2:
+                return _(
+                    "Need at least 2 selected participants. Only %(selected)s selected."
+                ) % {"selected": selected_total}
+            return _(
+                "Only confirmed participants can be generated. %(confirmed)s of %(selected)s selected participants are confirmed."
+            ) % {
+                "confirmed": selected_confirmed,
+                "selected": selected_total,
+            }
+
+        return _(
+            "Need at least 2 confirmed participants in the selected stage or group. Found %(scope_confirmed)s confirmed in scope, %(scope_total)s participant records in scope, and %(tournament_confirmed)s confirmed across the tournament. Confirm the linked tournament participants and make sure they are assigned to this stage or group."
+        ) % {
+            "scope_confirmed": scope_confirmed,
+            "scope_total": scope_total,
+            "tournament_confirmed": tournament_confirmed,
+        }
+
     def action_generate(self):
         self.ensure_one()
         participants = self._get_participants()
-        if len(participants) < 2:
-            raise UserError(_("At least 2 confirmed participants required."))
+        self._validate_generation_request(participants)
         options = {
             "double_round": self.round_type == "double",
             "start_datetime": self.start_datetime,
@@ -98,3 +217,23 @@ class RoundRobinWizard(models.TransientModel):
                 "next": {"type": "ir.actions.act_window_close"},
             },
         }
+
+    def _validate_generation_request(self, participants):
+        if self.tournament_id.state not in ("open", "in_progress"):
+            raise UserError(_("Tournament must be Open or In Progress to generate matches."))
+
+        if not self.tournament_id._get_effective_rule_set():
+            raise UserError(_("Assign a rule set before generating a round-robin schedule."))
+
+        if self.stage_id.tournament_id != self.tournament_id:
+            raise UserError(_("The selected stage must belong to the selected tournament."))
+
+        if self.group_id and self.group_id.stage_id != self.stage_id:
+            raise UserError(_("The selected group must belong to the selected stage."))
+
+        if len(participants) < 2:
+            raise UserError(self._get_participant_requirement_message(participants))
+
+        invalid_participants = participants.filtered(lambda participant: participant.state != "confirmed")
+        if invalid_participants:
+            raise UserError(self._get_participant_requirement_message(participants))

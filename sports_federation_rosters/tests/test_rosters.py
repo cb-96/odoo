@@ -52,6 +52,29 @@ class TestRosters(TransactionCase):
         self.assertEqual(roster.team_id, self.team)
         self.assertEqual(roster.season_id, self.season)
 
+    def test_create_roster_generates_name_from_scope(self):
+        roster = self.env["federation.team.roster"].create({
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+            "competition_id": self.competition.id,
+        })
+
+        self.assertTrue(roster.name)
+        self.assertIn(self.team.display_name, roster.name)
+        self.assertIn(self.season.display_name, roster.name)
+        self.assertIn(self.competition.display_name, roster.name)
+
+    def test_team_roster_button_opens_single_roster_form(self):
+        roster = self.env["federation.team.roster"].create({
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+
+        action = self.team.action_view_rosters()
+
+        self.assertEqual(action["view_mode"], "form")
+        self.assertEqual(action["res_id"], roster.id)
+
     def test_roster_team_season_registration_consistency(self):
         """Test that season registration must match team and season."""
         registration = self.env["federation.season.registration"].create({
@@ -189,3 +212,110 @@ class TestRosters(TransactionCase):
                 "roster_id": roster.id,
                 "player_id": male_player.id,
             })
+
+    def test_roster_activation_blocks_lines_with_invalid_season_license(self):
+        rule_set = self.env["federation.rule.set"].create({
+            "name": "Roster License Rules",
+            "code": "RLR",
+            "squad_min_size": 1,
+        })
+        self.env["federation.eligibility.rule"].create({
+            "rule_set_id": rule_set.id,
+            "name": "Season License Required",
+            "eligibility_type": "license_valid",
+        })
+        roster = self.env["federation.team.roster"].create({
+            "name": "Licensed Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+            "rule_set_id": rule_set.id,
+        })
+        license_record = self.env["federation.player.license"].create({
+            "name": "LIC-ROSTER-1",
+            "player_id": self.player1.id,
+            "season_id": self.season.id,
+            "club_id": self.club.id,
+            "issue_date": "2024-01-01",
+            "expiry_date": "2099-12-31",
+            "state": "active",
+        })
+        line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+            "license_id": license_record.id,
+        })
+
+        roster.action_activate()
+        self.assertEqual(roster.status, "active")
+
+        license_record.write({"state": "cancelled"})
+        line.invalidate_recordset()
+        roster.invalidate_recordset()
+        self.assertFalse(line.eligible)
+        self.assertIn("not active", line.eligibility_feedback.lower())
+        self.assertFalse(roster.ready_for_activation)
+        self.assertIn(self.player1.display_name, roster.readiness_feedback)
+
+    def test_live_match_sheet_locks_roster_scope_and_used_lines(self):
+        roster = self.env["federation.team.roster"].create({
+            "name": "Locked Scope Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+        line = self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+        match = self.env["federation.match"].create({
+            "tournament_id": self.env["federation.tournament"].create({
+                "name": "Roster Lock Tournament",
+                "code": "RLT",
+                "season_id": self.season.id,
+                "date_start": "2024-02-01",
+            }).id,
+            "home_team_id": self.team.id,
+            "away_team_id": self.env["federation.team"].create({
+                "name": "Opponent Team",
+                "club_id": self.club.id,
+                "code": "OTL",
+            }).id,
+            "date_scheduled": "2024-02-10 15:00:00",
+        })
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Locked Scope Sheet",
+            "match_id": match.id,
+            "team_id": self.team.id,
+            "roster_id": roster.id,
+            "side": "home",
+        })
+        self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "roster_line_id": line.id,
+            "is_starter": True,
+        })
+        sheet.action_submit()
+
+        self.assertTrue(roster.match_day_locked)
+        with self.assertRaises(ValidationError):
+            roster.write({"valid_to": "2024-12-15"})
+        with self.assertRaises(ValidationError):
+            line.write({"status": "inactive"})
+
+    def test_roster_audit_events_are_created_for_lifecycle_changes(self):
+        roster = self.env["federation.team.roster"].create({
+            "name": "Audited Roster",
+            "team_id": self.team.id,
+            "season_id": self.season.id,
+        })
+        self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": self.player1.id,
+        })
+        roster.action_activate()
+
+        event_types = roster.audit_event_ids.mapped("event_type")
+        self.assertIn("roster_created", event_types)
+        self.assertIn("roster_line_added", event_types)
+        self.assertIn("roster_activated", event_types)

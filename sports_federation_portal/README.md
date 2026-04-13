@@ -3,7 +3,7 @@
 ## Solution Design
 
 ### Overview
-The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons. It sits on top of `sports_federation_base` and `sports_federation_tournament`, using `website` and `portal` from Odoo core.
+The `sports_federation_portal` module adds public website pages and portal flows for club representatives to register for tournaments and seasons, to work from a unified active-tournament workspace, to review operational rosters and match sheets with their audit history, and for linked match officials to respond to their own officiating assignments. It sits on top of `sports_federation_base`, `sports_federation_tournament`, `sports_federation_officiating`, `sports_federation_rosters`, and `sports_federation_result_control`, using `website` and `portal` from Odoo core.
 
 ### Key Design Decisions
 
@@ -38,6 +38,8 @@ draft -> submitted -> confirmed / rejected / cancelled
 #### 3. Season Registration Extension
 
 The existing `federation.season.registration` model is extended with a `submitted` state and portal fields (`user_id`, `partner_id`, `rejection_reason`). This avoids creating a duplicate model while adding the portal workflow.
+The same model now also enforces club ownership at ORM level so portal-created season registrations cannot bypass controller checks.
+Federation staff review the same record in the backend, where they can submit, confirm, reject back to draft with a reason, or cancel the registration without creating a second review model. There is no persistent `rejected` state on season registrations; rejection is represented by `state='draft'` plus `rejection_reason`.
 
 #### 4. Public vs Portal Separation
 
@@ -47,7 +49,34 @@ The existing `federation.season.registration` model is extended with a `submitte
 | Registration form (`/tournament/<id>/register`) | `auth="user"` | Logged-in users only. Ownership verified server-side. |
 | Portal (`/my/*`) | `auth="user"` | Only records belonging to user's club. Record rules enforce this. |
 
-#### 5. Record Rule Strategy
+#### 5. Match-Official Self-Service
+
+Referee assignments now support a second portal ownership path alongside club representation.
+
+- `federation.referee.user_id` links an official profile to a portal user.
+- officials in `group_federation_portal_official` can see only their own referee profile and assignment records.
+- the portal exposes `/my/referee-assignments` and assignment-detail response pages.
+- officials can confirm or decline draft assignments from the portal while reusing the existing officiating readiness checks.
+
+**Why keep this separate from club representative ownership?**
+- officials are not club-owned records and often work across unrelated clubs and tournaments.
+- a dedicated official access path avoids leaking club data just to allow assignment confirmation.
+- the self-service flow reuses the same `federation.match.referee` lifecycle rather than inventing a parallel response model.
+
+#### 6. Active Tournament Workspace
+
+Club and team-scoped portal users now get a tournament-first workspace for active obligations.
+
+- `/my/tournament-workspaces` groups visible teams by active tournament (`open` or `in_progress`).
+- each entry summarizes registration state, the preferred roster checkpoint, upcoming match-day sheet work, and done matches whose results still need follow-up.
+- `/my/tournament-workspaces/<tournament>/<team>` expands that entry into operational detail with direct links to the roster, match-day queue, and team match sheets.
+
+**Why add a separate workspace instead of more dashboard counters?**
+- recurring club operations are tournament-scoped, not model-scoped.
+- operators need to answer “what still needs attention for this team in this tournament?” without jumping across registration, roster, and result pages.
+- the workspace reuses existing portal security and underlying record pages rather than duplicating those workflows.
+
+#### 7. Record Rule Strategy
 
 Portal users (`group_federation_portal_club`) get these record rules:
 
@@ -60,8 +89,17 @@ Portal users (`group_federation_portal_club`) get these record rules:
 | `federation.tournament.registration` | `('club_id', 'in', ...)` | See only own tournament registrations |
 | `federation.tournament` | `[(1, '=', 1)]` | See all tournaments (read-only, for listing) |
 | `federation.tournament.participant` | `('club_id', 'in', ...)` | See only own participants |
+| `federation.team.roster` | `('club_id', 'in', ...)` | See only own season rosters |
+| `federation.team.roster.line` | `('roster_id.club_id', 'in', ...)` | See only own roster lines |
+| `federation.match.sheet` | `('team_id.club_id', 'in', ...)` | See only own match sheets |
+| `federation.match.sheet.line` | `('match_sheet_id.team_id.club_id', 'in', ...)` | See only own match-sheet lines |
+| `federation.participation.audit` | `('team_id.club_id', 'in', ...)` | See only own participation audit events |
+| `federation.match.result.audit` | home/away team club ownership | See only own result dispute and approval history |
 
 Additionally, controllers validate ownership on every write operation as defense-in-depth.
+Official portal users also receive own-record rules for `federation.referee` and
+`federation.match.referee`.
+For season and tournament registrations, the models also enforce that `user_id` can only submit teams for represented clubs.
 
 ## Module Tree
 
@@ -72,6 +110,7 @@ sports_federation_portal/
     controllers/
         __init__.py
         main.py
+        rosters.py
     data/
         ir_sequence.xml
     models/
@@ -88,6 +127,8 @@ sports_federation_portal/
         federation_club_representative_views.xml
         federation_tournament_registration_views.xml
         portal_templates.xml
+        portal_tournament_workspace_templates.xml
+        portal_roster_templates.xml
         website_menus.xml
         website_tournament_templates.xml
 ```
@@ -96,6 +137,7 @@ sports_federation_portal/
 
 ### Groups
 - **`group_federation_portal_club`**: Portal Club Representative. Implies `base.group_portal`. Users in this group get ACL and record rules that restrict them to their club's data.
+- **`group_federation_portal_official`**: Portal Match Official. Implies `base.group_portal`. Users in this group get ACL and record rules that restrict them to their own referee profile and officiating assignments.
 
 ### ACL (Access Control List)
 Portal group gets:
@@ -103,6 +145,10 @@ Portal group gets:
 - **Read/Create/Write** on season registrations and tournament registrations (to submit and cancel).
 - **Read-only** on club representatives (to resolve ownership).
 - **No unlink** on anything (portal users cannot delete records).
+
+Official portal group gets:
+- **Read-only** on referee profiles and match-referee assignments.
+- portal-driven confirm and decline actions execute through controller helpers with explicit ownership checks and `sudo()`.
 
 Manager group gets full CRUD on all new models.
 
@@ -115,6 +161,8 @@ Every write operation in the controllers:
 2. Verifies the target team/registration belongs to those clubs.
 3. Checks for duplicates and capacity limits.
 4. Creates records with `sudo()` after validation passes.
+
+The same ownership rules are also enforced in the ORM for portal-managed registration models. That second layer matters whenever data is created from tests, server actions, imports, or future controllers.
 
 ### Public Routes
 Public routes use `sudo()` to bypass ACL (since anonymous users have no federation access). They only expose:
@@ -136,12 +184,21 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Tournament listing** (`/tournaments`) shows open/in_progress/closed tournaments.
 - [ ] **Tournament detail** (`/tournament/<id>`) shows participants and register button when state is `open`.
 - [ ] **Tournament registration** creates a `federation.tournament.registration` in `submitted` state.
+- [ ] **Roster portal pages** (`/my/rosters`, `/my/rosters/<id>`) show only the representative's clubs, including lock feedback and audit events.
+- [ ] **Match-sheet portal pages** (`/my/match-sheets`, `/my/match-sheets/<id>`) show substitutions plus related result disputes and corrections.
 - [ ] **Duplicate registration** is rejected with an error message.
 - [ ] **Max participants** limit is enforced.
 - [ ] **Season registration** creates a `federation.season.registration` in `submitted` state.
+- [ ] **Season registration backend review** shows submit, confirm, reject, and portal metadata (`user_id`, `partner_id`, `rejection_reason`).
+- [ ] **Season registration rejection** returns the record to `draft` and preserves the rejection reason for the submitting representative.
 - [ ] **Cancel registration** sets state to `cancelled`.
 - [ ] **Confirm registration** in backend creates `federation.tournament.participant`.
 - [ ] **Portal dashboard** shows federation cards for club representatives.
+- [ ] **Tournament workspace** (`/my/tournament-workspaces`) groups active tournament obligations by visible team.
+- [ ] **Tournament workspace detail** shows registration checkpoint, roster checkpoint, upcoming match-day sheets, and result follow-up links.
+- [ ] **Portal dashboard** shows officiating cards for linked match officials.
+- [ ] **Match official portal** (`/my/referee-assignments`) shows only the current official's assignments.
+- [ ] **Match official response** can confirm or decline draft assignments with an optional or required response note respectively.
 - [ ] **Breadcrumb navigation** works on all pages.
 
 ### Backend Flows

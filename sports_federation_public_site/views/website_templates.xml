@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Competitions List Page -->
-    <template id="page_competitions" name="Competitions">
+    <!-- Tournament Coverage List Page -->
+    <template id="page_competitions" name="Tournament Coverage">
         <t t-call="website.layout">
             <div class="container py-4">
-                <h1 class="mb-4">Competitions</h1>
+                <h1 class="mb-4">Published Tournament Coverage</h1>
                 <div class="row">
                     <t t-foreach="tournaments" t-as="tournament">
                         <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
                                     <h5 class="card-title">
-                                        <a t-attf-href="/competitions/{{tournament.id}}">
+                                        <a t-att-href="tournament.get_public_path()">
                                             <t t-esc="tournament.name"/>
                                         </a>
                                     </h5>
@@ -27,33 +27,42 @@
                                     <p class="card-text text-muted" t-if="tournament.venue_id">
                                         <i class="fa fa-map-marker"/> <t t-esc="tournament.venue_id.name"/>
                                     </p>
-                                    <div t-if="tournament.public_description" class="card-text">
-                                        <t t-raw="tournament.public_description[:150]"/>
-                                        <t t-if="len(tournament.public_description) > 150">...</t>
-                                    </div>
+                                    <div t-if="tournament.public_description"
+                                         class="card-text"
+                                         style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;"
+                                         t-field="tournament.public_description"/>
                                 </div>
                             </div>
                         </div>
                     </t>
                 </div>
                 <div t-if="not tournaments" class="alert alert-info">
-                    No competitions are currently published.
+                    No tournaments are currently published for public coverage.
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- Competition Detail Page -->
-    <template id="page_competition_detail" name="Competition Detail">
+    <!-- Tournament Coverage Detail Page -->
+    <template id="page_competition_detail" name="Tournament Coverage Detail">
         <t t-call="website.layout">
             <div class="container py-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
-                        <li class="breadcrumb-item active" t-esc="tournament.name"/>
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()">Tournament Hub</a></li>
+                        <li class="breadcrumb-item active">Public Coverage</li>
                     </ol>
                 </nav>
-                <h1 class="mb-4" t-esc="tournament.name"/>
+                <div class="d-flex flex-wrap justify-content-between align-items-start mb-4 gap-3">
+                    <div>
+                        <h1 class="mb-1" t-esc="tournament.name"/>
+                        <p class="text-muted mb-0">Public schedule, standings, results, and bracket coverage for this tournament.</p>
+                    </div>
+                    <a t-att-href="tournament.get_public_path()" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Tournament Hub
+                    </a>
+                </div>
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <p>
@@ -73,40 +82,55 @@
                         </p>
                     </div>
                     <div class="col-md-6 text-right">
+                                <a t-att-href="tournament.get_public_teams_path()"
+                           class="btn btn-outline-primary mr-2">
+                            <i class="fa fa-users"/> Teams
+                        </a>
+                        <a t-if="tournament.get_public_schedule_sections()"
+                           t-att-href="tournament.get_public_schedule_path()"
+                           class="btn btn-outline-primary mr-2">
+                            <i class="fa fa-calendar"/> Schedule
+                        </a>
                         <a t-if="tournament.show_public_standings"
-                           t-attf-href="/competitions/{{tournament.id}}/standings"
+                           t-att-href="tournament.get_public_standings_path()"
                            class="btn btn-outline-primary mr-2">
                             <i class="fa fa-table"/> Standings
                         </a>
                         <a t-if="tournament.show_public_results"
-                           t-attf-href="/competitions/{{tournament.id}}/results"
+                           t-att-href="tournament.get_public_results_path()"
                            class="btn btn-outline-primary">
                             <i class="fa fa-list"/> Results
+                        </a>
+                        <a t-if="tournament.has_public_bracket()"
+                           t-att-href="tournament.get_public_bracket_path()"
+                           class="btn btn-outline-primary ml-2">
+                            <i class="fa fa-sitemap"/> Bracket
                         </a>
                     </div>
                 </div>
                 <div t-if="tournament.public_description" class="mb-4">
                     <h3>About</h3>
-                    <div t-raw="tournament.public_description"/>
+                    <div t-field="tournament.public_description"/>
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- Competition Standings Page -->
-    <template id="page_competition_standings" name="Competition Standings">
+    <!-- Tournament Standings Page -->
+    <template id="page_competition_standings" name="Tournament Standings">
         <t t-call="website.layout">
             <div class="container py-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
-                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()">Tournament Hub</a></li>
                         <li class="breadcrumb-item active">Standings</li>
                     </ol>
                 </nav>
                 <h1 class="mb-4">
                     <t t-esc="tournament.name"/> - Standings
                 </h1>
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
                 <t t-foreach="standings" t-as="standing">
                     <div class="mb-5">
                         <h3 t-if="standing.public_title" t-esc="standing.public_title"/>
@@ -136,7 +160,10 @@
                                 <t t-foreach="standing.line_ids" t-as="line">
                                     <tr>
                                         <td t-esc="line.rank"/>
-                                        <td t-esc="line.team_id.name"/>
+                                        <td>
+                                            <a t-if="line.team_id and line.team_id.can_access_public_profile()" t-att-href="line.team_id.get_public_path()" class="text-decoration-none" t-esc="line.team_id.name"/>
+                                            <span t-else="" t-esc="line.team_id.name"/>
+                                        </td>
                                         <td t-esc="line.played"/>
                                         <td t-esc="line.won"/>
                                         <td t-esc="line.drawn"/>
@@ -152,26 +179,27 @@
                     </div>
                 </t>
                 <div t-if="not standings" class="alert alert-info">
-                    No standings are currently published for this competition.
+                    No standings are currently published for this tournament.
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- Competition Results Page -->
-    <template id="page_competition_results" name="Competition Results">
+    <!-- Tournament Results Page -->
+    <template id="page_competition_results" name="Tournament Results">
         <t t-call="website.layout">
             <div class="container py-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
-                        <li class="breadcrumb-item"><a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/></li>
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()">Tournament Hub</a></li>
                         <li class="breadcrumb-item active">Results</li>
                     </ol>
                 </nav>
                 <h1 class="mb-4">
                     <t t-esc="tournament.name"/> - Results
                 </h1>
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
                 <div t-if="matches" class="table-responsive">
                     <table class="table table-striped">
                         <thead class="thead-dark">
@@ -191,13 +219,19 @@
                                             <t t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
                                         </t>
                                     </td>
-                                    <td t-esc="match.home_team_id.name"/>
+                                    <td>
+                                        <a t-if="match.home_team_id and match.home_team_id.can_access_public_profile()" t-att-href="match.home_team_id.get_public_path()" class="text-decoration-none" t-esc="match.home_team_id.name"/>
+                                        <span t-else="" t-esc="match.home_team_id.name"/>
+                                    </td>
                                     <td class="text-center">
                                         <strong>
                                             <t t-esc="match.home_score"/> - <t t-esc="match.away_score"/>
                                         </strong>
                                     </td>
-                                    <td t-esc="match.away_team_id.name"/>
+                                    <td>
+                                        <a t-if="match.away_team_id and match.away_team_id.can_access_public_profile()" t-att-href="match.away_team_id.get_public_path()" class="text-decoration-none" t-esc="match.away_team_id.name"/>
+                                        <span t-else="" t-esc="match.away_team_id.name"/>
+                                    </td>
                                     <td>
                                         <t t-if="match.venue_id" t-esc="match.venue_id.name"/>
                                         <t t-elif="match.venue" t-esc="match.venue"/>
@@ -211,30 +245,157 @@
                     </table>
                 </div>
                 <div t-if="not matches" class="alert alert-info">
-                    No approved results are available for this competition.
+                    No approved results are available for this tournament.
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- Competitions Archive Page -->
-    <template id="page_competitions_archive" name="Competitions Archive">
+    <template id="page_competition_schedule" name="Tournament Schedule">
         <t t-call="website.layout">
             <div class="container py-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()">Tournament Hub</a></li>
+                        <li class="breadcrumb-item active">Schedule</li>
+                    </ol>
+                </nav>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <h1 class="mb-0"><t t-esc="tournament.name"/> - Schedule</h1>
+                    <a t-att-href="tournament.get_public_schedule_ics_path()" class="btn btn-outline-secondary">
+                        <i class="fa fa-calendar-plus-o me-1"/> Download ICS
+                    </a>
+                </div>
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
+                <t t-foreach="schedule_sections" t-as="section">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="mb-0" t-esc="section['title']"/>
+                            <small class="text-muted" t-if="section['subtitle']" t-esc="section['subtitle']"/>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Kickoff</th>
+                                        <th>Home Team</th>
+                                        <th>Away Team</th>
+                                        <th>Venue</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="section['matches']" t-as="match">
+                                        <tr>
+                                            <td>
+                                                <t t-if="match.date_scheduled">
+                                                    <t t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                                                </t>
+                                                <t t-else="">TBD</t>
+                                            </td>
+                                            <td>
+                                                <a t-if="match.home_team_id and match.home_team_id.can_access_public_profile()" t-att-href="match.home_team_id.get_public_path()" class="text-decoration-none" t-esc="match.home_team_id.name"/>
+                                                <span t-else="" t-esc="match.home_team_id.name"/>
+                                            </td>
+                                            <td>
+                                                <a t-if="match.away_team_id and match.away_team_id.can_access_public_profile()" t-att-href="match.away_team_id.get_public_path()" class="text-decoration-none" t-esc="match.away_team_id.name"/>
+                                                <span t-else="" t-esc="match.away_team_id.name"/>
+                                            </td>
+                                            <td>
+                                                <t t-if="match.venue_id" t-esc="match.venue_id.name"/>
+                                                <t t-if="match.playing_area_id">(<t t-esc="match.playing_area_id.name"/>)</t>
+                                            </td>
+                                            <td><span class="badge bg-secondary" t-esc="match.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+                <div t-if="not schedule_sections" class="alert alert-info">
+                    No fixtures are currently available for this tournament.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="page_competition_bracket" name="Tournament Bracket">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
+                        <li class="breadcrumb-item"><a t-att-href="tournament.get_public_path()">Tournament Hub</a></li>
+                        <li class="breadcrumb-item active">Bracket</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-4"><t t-esc="tournament.name"/> - Bracket</h1>
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
+                <div class="row">
+                    <t t-foreach="bracket_sections" t-as="section">
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong t-esc="section['title']"/>
+                                </div>
+                                <div class="card-body">
+                                    <t t-foreach="section['matches']" t-as="match">
+                                        <div class="border rounded p-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <strong t-esc="match.name"/>
+                                                <small class="text-muted" t-if="match.date_scheduled" t-esc="match.date_scheduled.strftime('%b %d, %Y %H:%M')"/>
+                                            </div>
+                                            <div class="text-muted mb-2" t-if="match.source_match_1_id or match.source_match_2_id">
+                                                <div t-if="match.source_match_1_id">Source 1: <t t-esc="match.source_type_1"/> of <t t-esc="match.source_match_1_id.name"/></div>
+                                                <div t-if="match.source_match_2_id">Source 2: <t t-esc="match.source_type_2"/> of <t t-esc="match.source_match_2_id.name"/></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>
+                                                    <a t-if="match.home_team_id and match.home_team_id.can_access_public_profile()" t-att-href="match.home_team_id.get_public_path()" class="text-decoration-none" t-esc="match.home_team_id.name"/>
+                                                    <span t-else="" t-esc="match.home_team_id.name or 'TBD'"/>
+                                                </span>
+                                                <strong>
+                                                    <t t-esc="match.home_score"/> - <t t-esc="match.away_score"/>
+                                                </strong>
+                                                <span>
+                                                    <a t-if="match.away_team_id and match.away_team_id.can_access_public_profile()" t-att-href="match.away_team_id.get_public_path()" class="text-decoration-none" t-esc="match.away_team_id.name"/>
+                                                    <span t-else="" t-esc="match.away_team_id.name or 'TBD'"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div t-if="not bracket_sections" class="alert alert-info">
+                    No bracket structure is currently published for this tournament.
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Tournament Coverage Archive Page -->
+    <template id="page_competitions_archive" name="Tournament Coverage Archive">
+        <t t-call="website.layout">
+            <div class="container py-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
                         <li class="breadcrumb-item active">Archive</li>
                     </ol>
                 </nav>
-                <h1 class="mb-4">Past Competitions</h1>
+                <h1 class="mb-4">Past Published Tournaments</h1>
                 <div class="row">
                     <t t-foreach="tournaments" t-as="tournament">
                         <div class="col-md-4 mb-4">
                             <div class="card h-100 border-secondary">
                                 <div class="card-body">
                                     <h5 class="card-title">
-                                        <a t-attf-href="/competitions/{{tournament.id}}">
+                                        <a t-att-href="tournament.get_public_path()">
                                             <t t-esc="tournament.name"/>
                                         </a>
                                     </h5>
@@ -253,26 +414,27 @@
                     </t>
                 </div>
                 <div t-if="not tournaments" class="alert alert-info">
-                    No archived competitions found.
+                    No archived published tournaments found.
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- Competition Teams Page -->
-    <template id="page_competition_teams" name="Competition Teams">
+    <!-- Tournament Teams Page -->
+    <template id="page_competition_teams" name="Tournament Teams">
         <t t-call="website.layout">
             <div class="container py-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                        <li class="breadcrumb-item"><a href="/tournaments">Tournaments</a></li>
                         <li class="breadcrumb-item">
-                            <a t-attf-href="/competitions/{{tournament.id}}" t-esc="tournament.name"/>
+                            <a t-att-href="tournament.get_public_path()">Tournament Hub</a>
                         </li>
                         <li class="breadcrumb-item active">Teams</li>
                     </ol>
                 </nav>
                 <h1 class="mb-4"><t t-esc="tournament.name"/> — Teams</h1>
+                <t t-call="sports_federation_public_site.public_tournament_subnav"/>
                 <table class="table table-striped" t-if="participants">
                     <thead>
                         <tr>
@@ -284,7 +446,10 @@
                     <tbody>
                         <t t-foreach="participants" t-as="participant">
                             <tr>
-                                <td t-esc="participant.team_id.name"/>
+                                <td>
+                                    <a t-if="participant.team_id and participant.team_id.can_access_public_profile()" t-att-href="participant.team_id.get_public_path()" class="text-decoration-none" t-esc="participant.team_id.name"/>
+                                    <span t-else="" t-esc="participant.team_id.name"/>
+                                </td>
                                 <td t-esc="participant.club_id.name"/>
                                 <td>
                                     <span t-attf-class="badge bg-#{participant.state == 'confirmed' and 'success' or 'secondary'}">
@@ -296,7 +461,7 @@
                     </tbody>
                 </table>
                 <div t-if="not participants" class="alert alert-info">
-                    No teams registered for this competition yet.
+                    No teams are currently published for this tournament.
                 </div>
             </div>
         </t>

@@ -39,6 +39,24 @@ class FederationSeasonRegistration(models.Model):
         tracking=True,
     )
 
+    @api.constrains("team_id", "club_id", "user_id")
+    def _check_portal_ownership(self):
+        for rec in self:
+            if rec.user_id and rec.team_id and rec.club_id:
+                rep = self.env["federation.club.representative"].search(
+                    [
+                        ("user_id", "=", rec.user_id.id),
+                        ("club_id", "=", rec.club_id.id),
+                    ],
+                    limit=1,
+                )
+                if not rep and not rec.user_id.has_group(
+                    "sports_federation_base.group_federation_manager"
+                ):
+                    raise ValidationError(
+                        "You can only register teams that belong to your club."
+                    )
+
     # ------------------------------------------------------------------
     # Portal actions
     # ------------------------------------------------------------------
@@ -61,9 +79,11 @@ class FederationSeasonRegistration(models.Model):
 
     def action_confirm(self):
         """Confirm a submitted or draft registration."""
-        for rec in self:
-            if rec.state not in ("draft", "submitted"):
-                raise ValidationError(
-                    "Only draft or submitted registrations can be confirmed."
-                )
-            rec.state = "confirmed"
+        invalid_registrations = self.filtered(
+            lambda rec: rec.state not in ("draft", "submitted")
+        )
+        if invalid_registrations:
+            raise ValidationError(
+                "Only draft or submitted registrations can be confirmed."
+            )
+        return super().action_confirm()

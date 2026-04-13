@@ -9,7 +9,7 @@
         <field name="arch" type="xml">
             <!-- Add result control buttons in header -->
             <xpath expr="//header" position="inside">
-                <field name="result_state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved"/>
+                <field name="result_state" widget="statusbar" statusbar_visible="draft,submitted,verified,approved,contested,corrected"/>
             </xpath>
             <!-- Add result control buttons -->
             <xpath expr="//header/button[@name='action_draft']" position="after">
@@ -42,10 +42,29 @@
                         <field name="result_approved_on"/>
                     </group>
                 </group>
-                <group string="Contest/Correction" invisible="result_state not in ('contested', 'corrected')">
-                    <field name="result_contest_reason" invisible="result_state != 'contested'"/>
-                    <field name="result_correction_reason" invisible="result_state != 'corrected'"/>
+                <group string="Contest/Correction">
+                    <field name="result_contest_reason"
+                           placeholder="Required before contesting a result."
+                           invisible="result_state not in ('submitted', 'verified', 'approved', 'contested')"/>
+                    <field name="result_correction_reason"
+                           placeholder="Required before correcting a result."
+                           invisible="result_state not in ('approved', 'contested', 'corrected')"/>
                 </group>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Result Audit" name="result_audit">
+                    <field name="result_audit_ids" readonly="1">
+                        <list create="0" delete="0" edit="0">
+                            <field name="created_on"/>
+                            <field name="event_type"/>
+                            <field name="from_state" optional="hide"/>
+                            <field name="to_state" optional="hide"/>
+                            <field name="author_id"/>
+                            <field name="reason" optional="hide"/>
+                            <field name="description"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

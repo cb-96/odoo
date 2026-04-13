@@ -42,7 +42,14 @@
                             <field name="coach_name"/>
                             <field name="manager_name"/>
                             <field name="line_count"/>
+                            <field name="substitution_count" readonly="1"/>
+                            <field name="locked_on" readonly="1"/>
+                            <field name="locked_by_id" readonly="1"/>
                         </group>
+                    </group>
+                    <group>
+                        <field name="ready_for_submission" readonly="1"/>
+                        <field name="readiness_feedback" readonly="1" invisible="not readiness_feedback"/>
                     </group>
                     <notebook>
                         <page string="Sheet Lines" name="sheet_lines">
@@ -54,8 +61,22 @@
                                     <field name="is_substitute"/>
                                     <field name="is_captain"/>
                                     <field name="jersey_number"/>
+                                    <field name="entered_minute"/>
+                                    <field name="left_minute"/>
                                     <field name="eligible" readonly="1"/>
+                                    <field name="eligibility_feedback" readonly="1" optional="hide"/>
                                     <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Audit History" name="audit_history">
+                            <field name="audit_event_ids" readonly="1">
+                                <list create="0" delete="0" edit="0">
+                                    <field name="event_on"/>
+                                    <field name="event_type"/>
+                                    <field name="player_id" optional="hide"/>
+                                    <field name="author_id"/>
+                                    <field name="description"/>
                                 </list>
                             </field>
                         </page>

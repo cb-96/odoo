@@ -70,5 +70,15 @@ follows standard tournament bracket placement.
    explicitly checked.
 2. **Tournament state check** — Wizards enforce that the tournament is in the correct
    state (open or in_progress) before generating.
-3. **Minimum participants** — At least 2 teams are required.
-4. **Button integration** — Wizard launch buttons are added to the tournament form view.
+3. **Rule-set requirement** — Wizard-driven generation requires an effective rule set on the tournament or linked competition before fixtures can be created.
+4. **Preview-first UI** — Both wizards show a computed preview summary before confirmation and display an explicit warning when overwrite mode is enabled.
+5. **Minimum participants** — At least 2 teams are required.
+6. **Tournament templates** — `federation.tournament.template.action_apply()` scaffolds stages, groups, and progression rules and now has regression coverage.
+7. **Button integration** — Wizard launch buttons are added to the tournament form view.
+
+## Validation and safeguards
+
+- Round-robin generation rejects stages or groups that do not belong to the selected tournament.
+- Knockout generation validates source-stage ownership before it will seed a bracket from prior standings.
+- Both wizards require an effective rule set from the tournament or linked competition before persisting matches.
+- Preview summaries are meant to be read before confirmation; overwrite mode shows an explicit warning because it replaces existing fixtures in the selected scope.

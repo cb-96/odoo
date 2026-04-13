@@ -19,10 +19,13 @@ class TestPublicSiteNewEndpoints(TransactionCase):
             "name": "PS Club", "code": "PSC",
         })
         cls.team_a = cls.env["federation.team"].create({
-            "name": "PS Team A", "club_id": cls.club.id, "code": "PSTA",
+            "name": "PS Team A", "club_id": cls.club.id, "code": "PSTA", "public_slug": "ps-team-a",
         })
         cls.team_b = cls.env["federation.team"].create({
             "name": "PS Team B", "club_id": cls.club.id, "code": "PSTB",
+        })
+        cls.team_c = cls.env["federation.team"].create({
+            "name": "PS Team C", "club_id": cls.club.id, "code": "PSTC",
         })
         cls.season = cls.env["federation.season"].create({
             "name": "PS Season", "code": "PSS24",
@@ -33,8 +36,15 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         cls.active_tour = cls.env["federation.tournament"].create({
             "name": "Active Tour",
             "code": "ATOUR",
+            "public_slug": "active-tour",
             "season_id": cls.season.id,
             "date_start": "2024-06-01",
+            "state": "in_progress",
+            "public_featured": True,
+            "public_editorial_summary": "A featured in-progress tournament.",
+            "public_pinned_announcement": "Final round starts tonight.",
+            "show_public_results": True,
+            "show_public_standings": True,
             "website_published": True,
         })
 
@@ -58,6 +68,47 @@ class TestPublicSiteNewEndpoints(TransactionCase):
             "date_end": "2023-06-30",
             "website_published": False,
             "state": "closed",
+        })
+        cls.schedule_match = cls.env["federation.match"].create({
+            "tournament_id": cls.active_tour.id,
+            "home_team_id": cls.team_a.id,
+            "away_team_id": cls.team_b.id,
+            "date_scheduled": "2024-06-03 10:00:00",
+            "state": "scheduled",
+        })
+        cls.result_match = cls.env["federation.match"].create({
+            "tournament_id": cls.active_tour.id,
+            "home_team_id": cls.team_a.id,
+            "away_team_id": cls.team_b.id,
+            "date_scheduled": "2024-06-01 10:00:00",
+            "state": "done",
+            "home_score": 3,
+            "away_score": 1,
+            "result_state": "approved",
+        })
+        cls.bracket_match = cls.env["federation.match"].create({
+            "tournament_id": cls.active_tour.id,
+            "home_team_id": cls.team_a.id,
+            "away_team_id": cls.team_b.id,
+            "date_scheduled": "2024-06-05 14:00:00",
+            "state": "scheduled",
+            "round_number": 1,
+            "bracket_type": "winners",
+        })
+        cls.standing = cls.env["federation.standing"].create({
+            "name": "Active Tour Standing",
+            "tournament_id": cls.active_tour.id,
+            "website_published": True,
+        })
+        cls.confirmed_participant = cls.env["federation.tournament.participant"].create({
+            "tournament_id": cls.active_tour.id,
+            "team_id": cls.team_a.id,
+            "state": "confirmed",
+        })
+        cls.season.write({
+            "website_published": True,
+            "public_slug": "ps-season",
+            "public_summary": "Season-wide discovery entry.",
         })
 
     # ------------------------------------------------------------------
@@ -95,11 +146,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
 
     def test_teams_excludes_withdrawn_participants(self):
         """The teams page query excludes withdrawn participants."""
-        p_confirmed = self.env["federation.tournament.participant"].create({
-            "tournament_id": self.active_tour.id,
-            "team_id": self.team_a.id,
-            "state": "confirmed",
-        })
+        p_confirmed = self.confirmed_participant
         p_withdrawn = self.env["federation.tournament.participant"].create({
             "tournament_id": self.active_tour.id,
             "team_id": self.team_b.id,
@@ -114,11 +161,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
 
     def test_teams_shows_participant_state(self):
         """Participants carry their state for display in the teams page."""
-        p = self.env["federation.tournament.participant"].create({
-            "tournament_id": self.active_tour.id,
-            "team_id": self.team_a.id,
-            "state": "confirmed",
-        })
+        p = self.confirmed_participant
         self.assertEqual(p.state, "confirmed")
         self.assertTrue(p.team_id)
         self.assertTrue(p.club_id)
@@ -168,3 +211,138 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         })
         date_end_val = t.date_end.isoformat() if t.date_end else None
         self.assertIsNone(date_end_val)
+
+    def test_public_slug_resolves_and_generates_canonical_paths(self):
+        """Explicit slugs produce canonical tournament URLs and resolve cleanly."""
+        resolved = self.env["federation.tournament"].resolve_public_slug("active-tour")
+
+        self.assertEqual(resolved, self.active_tour)
+        self.assertEqual(self.active_tour.get_public_path(), "/tournaments/active-tour")
+        self.assertEqual(self.active_tour.get_public_schedule_ics_path(), "/tournaments/active-tour/schedule.ics")
+
+    def test_team_public_slug_and_profile_helpers(self):
+        """Teams that appear on published tournaments expose public profile URLs."""
+        self.team_a.write({"public_slug": "ps-team-a"})
+        resolved = self.env["federation.team"].resolve_public_slug("ps-team-a")
+
+        self.assertEqual(resolved, self.team_a)
+        self.assertTrue(self.team_a.can_access_public_profile())
+        self.assertEqual(self.team_a.get_public_path(), "/teams/ps-team-a")
+        self.assertFalse(self.team_c.can_access_public_profile())
+
+    def test_public_featured_tournaments_only_return_active_published(self):
+        """Featured tournament coverage only includes published active tournaments."""
+        featured = self.env["federation.tournament"].get_public_featured_tournaments()
+
+        self.assertIn(self.active_tour, featured)
+        self.assertNotIn(self.closed_tour, featured)
+        self.assertNotIn(self.unpub_closed_tour, featured)
+
+    def test_public_archived_tournaments_only_return_published_archive(self):
+        """Archived tournament coverage only includes published closed or cancelled tournaments."""
+        archived = self.env["federation.tournament"].get_public_archived_tournaments()
+
+        self.assertIn(self.closed_tour, archived)
+        self.assertNotIn(self.active_tour, archived)
+        self.assertNotIn(self.unpub_closed_tour, archived)
+
+    def test_live_and_recent_public_tournament_helpers(self):
+        """Live and recently updated helper queries surface the expected tournaments."""
+        live = self.env["federation.tournament"].get_public_live_tournaments()
+        recent = self.env["federation.tournament"].get_public_recent_result_tournaments()
+
+        self.assertIn(self.active_tour, live)
+        self.assertIn(self.active_tour, recent)
+
+    def test_schedule_sections_use_fixture_query_not_approved_results(self):
+        """The schedule helper returns future fixtures and excludes completed matches."""
+        sections = self.active_tour.get_public_schedule_sections()
+        scheduled_ids = []
+        for section in sections:
+            scheduled_ids.extend(section["matches"].ids)
+
+        self.assertIn(self.schedule_match.id, scheduled_ids)
+        self.assertIn(self.bracket_match.id, scheduled_ids)
+        self.assertNotIn(self.result_match.id, scheduled_ids)
+
+    def test_public_bracket_sections_group_knockout_matches(self):
+        """Bracket helper exposes knockout sections for public rendering."""
+        sections = self.active_tour.get_public_bracket_sections()
+
+        self.assertTrue(sections)
+        self.assertIn(self.bracket_match, sections[0]["matches"])
+        self.assertTrue(self.active_tour.has_public_bracket())
+
+    def test_versioned_public_feed_payload_has_stable_keys(self):
+        """Versioned public feed payload exposes the expected top-level structure."""
+        payload = self.active_tour.get_public_feed_payload()
+
+        self.assertEqual(payload["api_version"], "v1")
+        self.assertIn("tournament", payload)
+        self.assertIn("schedule_sections", payload)
+        self.assertIn("bracket_sections", payload)
+        self.assertIn("results", payload)
+        self.assertIn("standings", payload)
+        self.assertEqual(payload["tournament"]["id"], self.active_tour.id)
+        self.assertEqual(payload["tournament"]["slug"], "active-tour")
+        self.assertEqual(payload["tournament"]["public_url"], "/tournaments/active-tour")
+        self.assertEqual(payload["tournament"]["schedule_ics_url"], "/tournaments/active-tour/schedule.ics")
+        self.assertEqual(payload["participants"][0]["team_url"], self.team_a.get_public_path())
+        self.assertEqual(payload["results"][0]["id"], self.result_match.id)
+
+    def test_schedule_ics_contains_public_event_rows(self):
+        """ICS export includes scheduled fixtures with tournament metadata."""
+        payload = self.active_tour.get_public_schedule_ics()
+
+        self.assertIn("BEGIN:VCALENDAR", payload)
+        self.assertIn("BEGIN:VEVENT", payload)
+        self.assertIn("Active Tour", payload)
+        self.assertIn("/tournaments/active-tour/schedule", payload)
+
+    def test_published_season_slug_and_helper_paths(self):
+        resolved = self.env["federation.season"].resolve_public_slug("ps-season")
+
+        self.assertEqual(resolved, self.season)
+        self.assertTrue(self.season.can_access_public_detail())
+        self.assertEqual(self.season.get_public_path(), "/seasons/ps-season")
+        self.assertIn(self.season, self.env["federation.season"].get_public_published_seasons())
+
+    def test_editorial_items_only_go_live_inside_publication_window(self):
+        live_item = self.env["federation.public.editorial.item"].create({
+            "name": "Season Highlight",
+            "content_type": "highlight",
+            "publication_state": "scheduled",
+            "summary": "Currently live highlight.",
+            "season_id": self.season.id,
+            "publish_start": "2024-05-01 08:00:00",
+            "publish_end": "2026-07-01 08:00:00",
+        })
+        future_item = self.env["federation.public.editorial.item"].create({
+            "name": "Future Highlight",
+            "content_type": "announcement",
+            "publication_state": "scheduled",
+            "summary": "Not live yet.",
+            "season_id": self.season.id,
+            "publish_start": "2099-01-01 08:00:00",
+        })
+
+        items = self.env["federation.public.editorial.item"].get_live_items(season=self.season)
+
+        self.assertIn(live_item, items)
+        self.assertNotIn(future_item, items)
+
+    def test_team_follow_helpers_expose_schedule_results_and_feed(self):
+        schedule_sections = self.team_a.get_public_schedule_sections()
+        result_sections = self.team_a.get_public_result_sections()
+        payload = self.team_a.get_public_feed_payload()
+        ics_payload = self.team_a.get_public_schedule_ics()
+
+        self.assertEqual(self.team_a.get_public_schedule_path(), "/teams/ps-team-a/schedule")
+        self.assertEqual(self.team_a.get_public_results_path(), "/teams/ps-team-a/results")
+        self.assertEqual(self.team_a.get_public_schedule_ics_path(), "/teams/ps-team-a/schedule.ics")
+        self.assertEqual(self.team_a.get_public_feed_path(), "/api/v1/teams/ps-team-a/feed")
+        self.assertTrue(schedule_sections)
+        self.assertTrue(result_sections)
+        self.assertEqual(payload["api_version"], "v1")
+        self.assertEqual(payload["team"]["slug"], "ps-team-a")
+        self.assertIn("BEGIN:VCALENDAR", ics_payload)

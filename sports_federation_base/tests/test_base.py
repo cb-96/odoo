@@ -43,6 +43,23 @@ class TestFederationClub(TransactionCase):
         self.club.invalidate_recordset()
         self.assertEqual(self.club.team_count, 1)
 
+    def test_club_archive_requires_archived_teams(self):
+        team = self.env["federation.team"].create({
+            "name": "Archive Team",
+            "club_id": self.club.id,
+            "code": "AT01",
+        })
+
+        with self.assertRaises(ValidationError):
+            self.club.action_archive()
+
+        team.action_archive()
+        self.club.action_archive()
+        self.assertFalse(self.club.active)
+
+        self.club.action_restore()
+        self.assertTrue(self.club.active)
+
 
 class TestFederationTeam(TransactionCase):
 
@@ -64,6 +81,9 @@ class TestFederationTeam(TransactionCase):
         self.assertTrue(self.team.id)
         self.assertEqual(self.team.category, "senior")
 
+    def test_team_display_name_includes_gender(self):
+        self.assertEqual(self.team.display_name, "Senior Squad (Men)")
+
     def test_team_code_unique(self):
         with self.assertRaises(Exception):
             self.env["federation.team"].create({
@@ -77,6 +97,28 @@ class TestFederationTeam(TransactionCase):
         results = self.env["federation.team"].name_search("SS01")
         ids = [r[0] if isinstance(r, (list, tuple)) else r.id for r in results]
         self.assertIn(self.team.id, ids)
+
+    def test_team_archive_requires_cancelled_registrations(self):
+        season = self.env["federation.season"].create({
+            "name": "Archive Season",
+            "code": "AS24",
+            "date_start": "2024-01-01",
+            "date_end": "2024-12-31",
+        })
+        registration = self.env["federation.season.registration"].create({
+            "season_id": season.id,
+            "team_id": self.team.id,
+        })
+
+        with self.assertRaises(ValidationError):
+            self.team.action_archive()
+
+        registration.action_cancel()
+        self.team.action_archive()
+        self.assertFalse(self.team.active)
+
+        self.team.action_restore()
+        self.assertTrue(self.team.active)
 
 
 class TestFederationSeason(TransactionCase):
@@ -100,10 +142,25 @@ class TestFederationSeason(TransactionCase):
         self.assertEqual(self.season.state, "open")
         self.season.action_close()
         self.assertEqual(self.season.state, "closed")
-        self.season.action_draft()
-        self.assertEqual(self.season.state, "draft")
+
+    def test_season_state_guards_and_archive(self):
+        with self.assertRaises(ValidationError):
+            self.season.action_close()
+
+        self.season.action_open()
+        with self.assertRaises(ValidationError):
+            self.season.action_archive()
+
         self.season.action_cancel()
         self.assertEqual(self.season.state, "cancelled")
+        self.season.action_draft()
+        self.assertEqual(self.season.state, "draft")
+
+        self.season.action_archive()
+        self.assertFalse(self.season.active)
+
+        self.season.action_restore()
+        self.assertTrue(self.season.active)
 
     def test_season_invalid_dates(self):
         with self.assertRaises(ValidationError):

@@ -144,6 +144,46 @@ class TestFederationCompetition(TransactionCase):
         self.assertEqual(edition.tournament_count, 1)
         self.assertEqual(tournament.edition_id, edition)
 
+    def test_tournament_open_requires_season(self):
+        tournament = self.env["federation.tournament"].create({
+            "name": "Seasonless Tournament",
+            "code": "SLT",
+            "date_start": "2025-09-01",
+        })
+
+        with self.assertRaises(ValidationError):
+            tournament.action_open()
+
+    def test_tournament_start_requires_stage_and_archive_rules(self):
+        tournament = self.env["federation.tournament"].create({
+            "name": "Guarded Tournament",
+            "code": "GT01",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+        })
+
+        tournament.action_open()
+        with self.assertRaises(ValidationError):
+            tournament.action_start()
+
+        self.env["federation.tournament.stage"].create({
+            "name": "Group Stage",
+            "tournament_id": tournament.id,
+            "stage_type": "group",
+        })
+        tournament.action_start()
+        self.assertEqual(tournament.state, "in_progress")
+
+        with self.assertRaises(ValidationError):
+            tournament.action_archive()
+
+        tournament.action_close()
+        tournament.action_archive()
+        self.assertFalse(tournament.active)
+
+        tournament.action_restore()
+        self.assertTrue(tournament.active)
+
     def test_tournament_team_eligibility_uses_category_and_gender(self):
         club = self.env["federation.club"].create({
             "name": "Eligibility Club",

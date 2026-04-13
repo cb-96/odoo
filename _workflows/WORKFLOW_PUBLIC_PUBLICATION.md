@@ -6,7 +6,7 @@ Publishing tournament information, standings, and results to the public website.
 
 The federation's public website allows fans, club officials, and media to view
 competition information without logging in. This workflow covers how tournament
-data is made publicly accessible through opt-in publication flags, URL slugs,
+data is made publicly accessible through opt-in publication flags, publication identifiers,
 and public page controllers.
 
 ## Modules Involved
@@ -17,6 +17,7 @@ and public page controllers.
 | `sports_federation_tournament` | Tournament and match data |
 | `sports_federation_standings` | Standings data |
 | `sports_federation_result_control` | Approved results |
+| `sports_federation_notifications` | Publication emails to participating clubs/teams |
 | `sports_federation_venues` | Venue information on match pages |
 | `website` | Odoo website framework |
 
@@ -40,10 +41,13 @@ Before publishing, ensure the tournament has:
 1. Open the tournament record.
 2. Configure public-site fields:
    - `website_published` — Set to `True` to make visible.
-   - `public_slug` — URL-friendly identifier (e.g. `national-league-2025`).
+   - `public_slug` — URL-friendly public identifier (e.g. `national-league-2025`). Keep it unique across tournaments.
    - `public_description` — Rich-text HTML description for the public page.
    - `show_public_results` — Toggle match results visibility.
    - `show_public_standings` — Toggle standings visibility.
+3. When `website_published` changes from `False` to `True`, the notification
+   dispatcher emails the participating club and team contacts so publication is
+   visible outside the back office.
 
 ### 3. Standings Publication
 
@@ -64,10 +68,10 @@ Once published, the following pages become available:
 | URL | Content |
 |-----|---------|
 | `/competitions` | List of all published tournaments |
-| `/competitions/<slug>` | Tournament detail page with description |
-| `/competitions/<slug>/standings` | Standings table (if enabled) |
-| `/competitions/<slug>/results` | Match results (if enabled, only approved) |
-| `/competitions/<slug>/schedule` | Upcoming fixtures |
+| `/competitions/<tournament>` | Tournament detail page with description |
+| `/competitions/<tournament>/standings` | Standings table (if enabled) |
+| `/competitions/<tournament>/results` | Match results (if enabled, only approved) |
+| `/competitions/<tournament>/schedule` | Upcoming fixtures |
 
 All routes use `auth="public"` — no login required.
 
@@ -80,6 +84,8 @@ As the tournament progresses:
 2. Standings are recomputed and published.
 3. Public pages automatically reflect the latest approved data.
 4. Schedule pages show upcoming fixtures.
+5. Publication emails are only sent on the publish transition itself; later
+   content updates reuse the live public pages instead of re-emailing everyone.
 
 ### 6. End-of-Season
 
@@ -97,7 +103,7 @@ As the tournament progresses:
 | Results approved | Yes (for results page) | `result_control` |
 | Standings computed & published | Yes (for standings page) | `standings` |
 | `website_published = True` on tournament | Yes | `public_site` |
-| `public_slug` set | Yes | `public_site` |
+| `public_slug` set and unique | Yes | `public_site` |
 | `show_public_results` toggled | Optional | `public_site` |
 | `show_public_standings` toggled | Optional | `public_site` |
 | Standing records published | Yes (for standings page) | `standings` |

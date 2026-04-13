@@ -169,3 +169,16 @@ class TestRoundRobin(TransactionCase):
         # Compare team pairings (order of matches may vary but pairings should be same)
         second_pairs = {(m.home_team_id.id, m.away_team_id.id) for m in second}
         self.assertEqual(first_pairs, second_pairs)
+
+    def test_round_numbers_follow_generated_rounds(self):
+        """Generated matches should persist round numbers for downstream scheduling tools."""
+        matches = self.env["federation.match"].browse([match.id for match in self._generate(double_round=False)])
+
+        round_numbers = sorted(set(matches.mapped("round_number")))
+        self.assertEqual(round_numbers, [1, 2, 3, 4, 5])
+
+        for round_number in round_numbers:
+            round_matches = matches.filtered(lambda match: match.round_number == round_number)
+            self.assertEqual(len(round_matches), 3)
+            self.assertEqual(len(round_matches.mapped("round_id")), 1)
+            self.assertEqual(round_matches.mapped("round_id.sequence"), [round_number])

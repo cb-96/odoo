@@ -1,30 +1,136 @@
-New competition models and behaviours (2026-04-07)
+# Sports Federation — Technical Note
+
+Last updated: 2026-04-10
+
+## Import safety hardening (2026-04-10)
+
+Year 1 Priority 1 item 7 hardened the onboarding and rollover import path in
+`sports_federation_import_tools`.
+
+- All import wizards now share `federation.import.wizard.mixin`, which provides
+    UTF-8 BOM handling, comma or semicolon delimiter support, mapping guidance,
+    shared dry-run statistics, and categorized row-level failure reporting.
+- A new `federation.import.seasons.wizard` covers season creation for annual
+    rollover work, including required-code enforcement and `YYYY-MM-DD` date
+    validation.
+- Club, team, player, and tournament-participant imports now prefer code-based
+    matching when codes are available, which aligns the implementation with the
+    documented onboarding workflow.
+- The player import path no longer attempts to create `federation.player`
+    records with a nonexistent writable `name` field. Imports now populate
+    `first_name` and `last_name`, while still accepting legacy full-name CSVs
+    when they contain both parts.
+- Duplicate rows are intentionally reported and skipped rather than overwritten,
+    so administrators can rehearse and rerun seasonal imports safely.
+
+## Operational reporting expansion (2026-04-10)
+
+Year 1 Priority 1 item 6 expanded reporting from raw CSV extraction into
+operator-facing application reports.
+
+- `sports_federation_reporting` now includes `federation.report.operational`
+    for tournament readiness KPIs across participation, standings coverage,
+    match completion, finance follow-up, and participant-club compliance.
+- A new `federation.report.standing.reconciliation` view exposes mismatches
+    between confirmed participants and standings coverage, with operator-readable
+    reconciliation notes.
+- A new `federation.report.finance.reconciliation` view turns finance events
+    into a follow-up queue keyed by counterparty, references, age, and
+    completion status instead of only grouped fee totals.
+- `federation.report.schedule` plus a daily cron now generate recurring weekly
+    or monthly CSV snapshots from inside Odoo, so administrators can run the
+    reporting cadence without direct database access.
+- The compliance summary report now exposes `non_compliant_count` so rejected
+    or explicitly failed checks are visible alongside missing, pending, and
+    expired totals.
+
+## Notification activation (2026-04-10)
+
+Year 1 Priority 1 item 5 converted the notification module from mostly logged
+placeholders into active workflow delivery.
+
+- `sports_federation_notifications` now sends real emails for season
+    registration decisions, tournament publication, participant confirmation,
+    approved and contested results, frozen standings, finance confirmations,
+    and referee assignments.
+- Result submission now creates validator activities instead of a placeholder
+    log entry, and the scheduled notification scan now creates federation
+    manager activities for overdue referee confirmations and officiating
+    shortages.
+- Shared notification helpers now accept multi-recipient email payloads,
+    deduplicate them, and keep failures non-blocking by writing `failed`
+    notification-log rows instead of rolling back the business action.
+- Suspension issuance remains the only modeled scenario still left as a stub.
+
+## Match-day roster traceability (2026-04-10)
+
+Year 1 Priority 1 item 2 closed the operational gap between season rosters,
+match sheets, portal visibility, and disputed results.
+
+- `sports_federation_rosters` now logs roster, lineup, and substitution events
+    in `federation.participation.audit`.
+- Season rosters now expose match-day locking state. Once a live match sheet
+    references a roster line, that referenced line cannot be structurally changed
+    or removed.
+- Approved match sheets now freeze lineup edits while still allowing
+    substitution timing (`entered_minute`, `left_minute`) until final lock.
+- `sports_federation_result_control` now logs every result transition in
+    `federation.match.result.audit`, including dispute and correction reasons.
+- `sports_federation_portal` now exposes read-only roster and match-sheet pages
+    so club representatives can review eligibility blocks, substitutions,
+    participation audit history, and result disputes from the portal.
+
+## Eligibility workflow hardening (2026-04-10)
+
+Year 1 Priority 1 item 1 connected the existing eligibility models to live
+workflow boundaries instead of leaving them as isolated checks.
+
+- `sports_federation_rules` now evaluates license rules with season, club,
+    selected-license, and reference-date context. Registration rules validate the
+    actual `federation.season.registration` team/season model rather than
+    non-existent player-level registration fields.
+- `sports_federation_rosters` now computes `ready_for_activation` and
+    `readiness_feedback` on rosters. Activation blocks until the active lines meet
+    the rule-set size limits and all players pass eligibility checks.
+- `sports_federation_rosters` now computes `ready_for_submission` and
+    `readiness_feedback` on match sheets. Submission blocks when players are not
+    tied to valid active roster lines, do not satisfy license or registration
+    rules, or the submitted squad size is outside the allowed bounds.
+- `sports_federation_rosters` extends `federation.tournament.participant` so
+    participant confirmation requires an active ready roster for the tournament
+    season, with competition-specific rosters preferred over generic season
+    rosters.
+- Regression coverage was added for season-aware license checks, team-season
+    registration checks, roster activation gating, match-sheet submission gating,
+    and participant confirmation readiness.
+
+## New competition models and behaviours (2026-04-07)
 
 Several new models and scheduling behaviours were added to support more realistic tournaments and automated stage progression:
 
 - `federation.stage.progression` (in `sports_federation_competition_engine`) — a rule model that formalises how teams advance from a source stage/group into a target stage/group. It supports per-group and cross-group selection (`cross_group`), rank windows (`rank_from` / `rank_to`), seeding strategies (`keep_rank`, `reseed`, `random`) and an `auto_advance` flag. Use `action_execute()` to apply a progression and the model is used automatically when standings are frozen and `auto_advance=True`.
 
-- `federation.tournament.round` (in `sports_federation_tournament`) — materialises a logical round inside a stage (useful for per-round scheduling, reporting and tying rounds to `gameday` records). Rounds have a `sequence`, `match_ids` and a simple `state` (draft/scheduled/completed).
+- `federation.tournament.round` (in `sports_federation_tournament`) — materialises a logical round inside a stage. Rounds own shared schedule metadata such as sequence and calendar date, and matches attach to them for per-round planning and reporting.
 
 - `federation.tournament.template` (in `sports_federation_competition_engine`) — templates to predefine stage/group layouts and progression rules. A template's `action_apply(tournament)` will create stages, groups and progression rules automatically, enabling one-click tournament scaffolding (useful for repeatable event formats).
 
-- `federation.gameday` (in `sports_federation_venues`) — represents a venue/day/time block that bundles multiple matches at the same venue on the same calendar day. When `schedule_by_round` is enabled in the round-robin wizard the scheduler will create or find a `gameday` per round and attach created matches to it.
+- Round venue extensions (in `sports_federation_venues`) — add `venue_id` to `federation.tournament.round` so venue ownership sits on the same round object that already owns the schedule date and sequence.
 
 - Match bracket/linking fields — `federation.match` now includes: `round_id`, `round_number`, `bracket_position`, `bracket_type`, `source_match_1_id`, `source_match_2_id`, `source_type_1/2` and helper `next_match_ids`. These turn matches into first-class bracket nodes so full knockout trees can be created and wired together programmatically.
 
 - Full knockout bracket generation — the knockout service now constructs a full bracket tree (all rounds) rather than only first-round matches. Placeholder matches for later rounds are created and linked to their source matches (by `source_match_*`); when a match is completed the system will auto-populate winners/losers into the next round using the `action_done()` / `_advance_bracket_teams()` logic.
 
-- Round-robin enhancements — the round-robin service now returns explicit per-round pairings, supports `rounds_count` (repeat full cycles), `schedule_by_round` (create a `gameday` per round) and attempts to alternate `male` / `female` fixtures within a round to provide rest. When a `venue` string matches a `federation.venue` record the scheduler will attach `venue_id` and create/find the `gameday` record.
+- Round-robin enhancements — the round-robin service now returns explicit per-round pairings, supports `rounds_count` (repeat full cycles), always materialises `federation.tournament.round` records, and can derive round dates from `schedule_by_round`. Existing stage rounds are reused by sequence order, and when a `venue` string matches a `federation.venue` record the scheduler applies it to the round and linked matches. The service also attempts to alternate `male` / `female` fixtures within a round to provide rest.
 
 Implementation notes
 
-- Gameday constraints: the `sports_federation_venues` module adds a `gameday_id` on `federation.match` and enforces a constraint preventing teams in the same `category` from playing the same opponent more than once on the same gameday. This prevents repeated pairings inside a single venue/day block.
+- Round constraints: the `sports_federation_venues` module extends `federation.match` so teams in the same `category` cannot play the same opponent more than once inside the same round. This prevents repeated pairings inside a shared round block.
 
 - Alternation policy: when scheduling by round the scheduler partitions same-gender fixtures and interleaves male/female matches where possible. Mixed-gender fixtures are appended after the alternation. This is a best-effort policy (it preserves determinism but will not re-seed teams).
 
 - Auto-advance: `federation.standing.action_freeze()` triggers any `federation.stage.progression` rules with `auto_advance=True` for the stage/group being frozen — this provides an automated pipeline from computed standings into new stage participants (and is safe-guarded by the progression rule's `state`).
 
-- Venue handling: the `venue` free-text field has been removed from `federation.match`. Use `venue_id` (Many2one to `federation.venue`) instead. The round-robin and knockout wizards accept a venue name string and resolve it to a `federation.venue` record to populate `venue_id` and `gameday_id`.
+- Venue handling: the `venue` free-text field has been removed from `federation.match`. Use `venue_id` (Many2one to `federation.venue`) instead. The round-robin and knockout wizards accept a venue name string and resolve it to a `federation.venue` record to populate the generated rounds and linked matches.
 
 Testing and coverage
 
@@ -32,13 +138,11 @@ Add unit and integration tests covering the following:
 
 - `federation.stage.progression`: ensure `action_execute()` selects the correct teams across single-group and cross-group rules and that `seeding_method` options behave as documented.
 - `federation.tournament.template`: applying a template creates the expected stages, groups and progression rules.
-- Round-robin scheduling: `rounds_count`, `schedule_by_round`, per-round gameday creation, alternation of male/female fixtures, and repeat cycles.
+- Round-robin scheduling: `rounds_count`, `schedule_by_round`, automatic round materialisation, alternation of male/female fixtures, and repeat cycles.
 - Knockout bracket generation: bracket size determination, bye handling, and automatic wiring of placeholder matches and advancement on `action_done()`.
-- Gameday constraints: enforce no duplicate same-category pairings on a gameday.
+- Round constraints: enforce no duplicate same-category pairings inside the same round.
 
-# Sports Federation — Technical Note
-
-Last updated: 2026-04-07
+## Architecture and conventions
 
 This technical note documents architecture, coding conventions, workflows, and extension points for the Sports Federation Odoo 19 custom addons collection located in the `odoo/` folder. It is intended for developers, integrators, and release engineers working on federation features: tournaments, matches, rosters, refereeing, results pipelines, and public website publication.
 
@@ -59,7 +163,7 @@ This technical note documents architecture, coding conventions, workflows, and e
 
 ## Executive summary
 
-The project is a modular suite of Odoo 19 addons implementing a sports federation management system. Modules are intentionally small and focused: `sports_federation_base` owns master data (clubs, teams, seasons), `sports_federation_tournament` implements tournament structure and match records, and `sports_federation_competition_engine` contains deterministic scheduling algorithms and wizards. Domain features (`people`, `rosters`, `officiating`, `result_control`, `standings`, `public_site`, `reporting`) extend core behaviour without mixing responsibilities.
+The project is a modular suite of Odoo 19 addons implementing a sports federation management system. Modules are intentionally small and focused: `sports_federation_base` owns master data (clubs, teams, seasons), `sports_federation_tournament` implements tournament structure and match records, and `sports_federation_competition_engine` contains deterministic scheduling algorithms and wizards. Domain features (`people`, `rosters`, `officiating`, `result_control`, `standings`, `public_site`, `notifications`, `reporting`) extend core behaviour without mixing responsibilities.
 
 Design goals
 
@@ -76,6 +180,12 @@ Design goals
 - `sports_federation_people` — Player and license models used for eligibility checks and rosters.
 - `sports_federation_rosters` — Season rosters and match sheet management.
 - `sports_federation_officiating` — Referee registry and assignment workflows.
+- `sports_federation_finance_bridge` — Lightweight finance events with source-linked,
+  idempotent hooks for registrations, result approval, sanctions, officiating,
+  and venue settlements.
+- `sports_federation_notifications` — Central email/activity dispatcher and
+    audit log for registration, publication, result, officiating, standings, and
+    finance workflow events.
 - `sports_federation_result_control` — Result submission, verification, approval, contest and correction flows.
 - `sports_federation_standings` — Standings computation, tie-break logic, and publishing controls.
 - `sports_federation_public_site` / `sports_federation_portal` — Website and portal layers for public pages and club self-service.
@@ -105,14 +215,16 @@ The canonical workflows live in `odoo/_workflows` (authoritative). Implementatio
 
 Tournament lifecycle
 
-- States: `draft → open → in_progress → completed | cancelled`.
+- States: `draft → open → in_progress → closed | cancelled`.
 - Preconditions for `open`: participants registered/confirmed, ruleset assigned, optional venues configured.
 - Schedule creation typically moves the tournament to `in_progress` (explicit action required).
+- Archive and restore are explicit backend actions. Open or in-progress tournaments must be closed or cancelled before archiving, and only active draft tournaments linked to a season may be opened.
 
 Match lifecycle and match-day operations
 
-- States: `draft → scheduled → in_progress → completed | cancelled`.
+- States: `draft → scheduled → in_progress → done | cancelled`.
 - Pre-match checks: both teams have confirmed match-sheets, required referee roles filled and confirmed, no suspensions on selected players, venue confirmed.
+- Officiating readiness is computed directly on the match from assignment state, rule-set referee counts, overdue confirmations, and referee certification validity so operators can filter or inspect staffing gaps without opening each assignment.
 - During match: record events (substitutions, cards) which feed the discipline and finance modules.
 
 Result pipeline
@@ -120,6 +232,8 @@ Result pipeline
 - States: `not_submitted → submitted → verified → approved` (exceptions: `contested`, `corrected`).
 - Permissions: separate groups for submit/verify/approve to enforce audit and separation of duties.
 - Approved results are the only ones included in official standings computations.
+- The same user must not submit, verify, and approve the same result. Self-verification is blocked and approvers cannot approve their own submissions or the result they verified.
+- Approving, contesting, correcting, or resetting a result triggers automatic recomputation of linked non-frozen standings. Approved scores become immutable until the result is moved out of the approved state.
 
 ## Competition engine — algorithms and wizards
 
@@ -164,6 +278,7 @@ Knockout bracket generation
 Wizards
 
 - Wizards (transient models under `wizards/`) do validations, produce a `summary` preview, and require explicit confirmation to persist matches. They must not perform destructive replacements unless the user explicitly enables `overwrite`.
+- Competition-generation wizards validate tournament state, the effective rule set, minimum participant counts, and stage/group ownership before creating matches. Overwrite mode is warning-first and should remain opt-in.
 
 ## Controllers, portal, and public site patterns
 
@@ -171,11 +286,14 @@ Portal patterns
 
 - Use a dedicated `federation.club.representative` model to map `res.users` → `federation.club` for portal ownership and record rules.
 - Controllers must perform ownership validation (`_get_clubs_for_user()`) before writes. Record rules are enforcement, controllers are defense-in-depth.
+- ORM-level ownership constraints should mirror controller checks for portal-created registrations so bypassing a controller does not widen access.
 
 Public site
 
 - Public controllers use `auth='public'` and `sudo()` for reads. Only expose non-sensitive fields (no emails/phones/notes) to public templates.
-- Provide toggles on tournaments and standings for `website_published` and `show_public_results`.
+- Enforce `website_published` and the relevant visibility toggle (`show_public_results`, `show_public_standings`) before serving direct public routes.
+- Render public rich text through sanitized website field rendering rather than raw `t-raw` output.
+- Keep `public_slug` unique even while the public routes remain model-bound, so publication metadata and future external references cannot collide.
 
 CSRF and forms
 
@@ -225,11 +343,17 @@ CI recommendations
 
 - Run module tests in CI and fail PRs on test regressions.
 - Include a lint step (flake8/black for Python where applicable) and XML/manifest validation.
+- The repository CI entrypoint is `ci/run_tests.sh`; the GitHub workflow at `.github/workflows/ci.yml` reuses that script and runs Black/Flake8 from `requirements.txt`.
+- `ci/run_tests.sh` also provides named suites (`competition_core`, `portal_public_ops`, `finance_reporting`) so maintainers can run the same focused coverage locally and in GitHub Actions.
+- Do not commit runtime credentials. Keep local CI values in `ci/.env`, commit only `ci/.env.example`, and let CI generate ephemeral values at runtime.
+- Integration environment variables: maintain `ci/integrations.env.example` with the common external-integration keys (SMTP, SendGrid/Mailgun keys, OAuth client IDs/secrets, Slack webhook, Twilio credentials, AWS S3 keys). Keep real values out of VCS and populate `ci/.env` locally or via your secret store in CI runs.
+- Contributor-facing local setup, suite selection, and script validation commands live in `CONTRIBUTING.md`.
 
 Example test command
 
 ```bash
-odoo-bin -d testdb -i sports_federation_competition_engine --test-enable --stop-after-init
+bash ./ci/run_tests.sh --module sports_federation_competition_engine
+bash ./ci/run_tests.sh --suite competition_core
 ```
 
 ## Upgrade, migrations and deployment notes
@@ -258,6 +382,7 @@ When introducing a new feature follow this minimal patch checklist:
 5. Write tests under `tests/` covering the main business rule.
 6. Update module `README.md` with short usage notes.
 7. Run tests locally; run `odoo-bin -d <db> -i <module> --test-enable`.
+8. Keep `STATE_AND_OWNERSHIP_MATRIX.md` aligned with any lifecycle or portal-ownership change.
 
 PR checklist (required)
 

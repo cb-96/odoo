@@ -7,6 +7,7 @@ class FederationMatchSheet(models.Model):
 
     @api.model
     def _portal_get_domain(self, user=None):
+        """Handle the portal-specific get domain flow."""
         user = user or self.env.user
         club_scope = user.portal_club_scope_ids
         team_scope = user.portal_team_scope_ids
@@ -20,6 +21,7 @@ class FederationMatchSheet(models.Model):
         return [("id", "=", False)]
 
     def _portal_assert_review_access(self, user=None):
+        """Handle the portal-specific assert review access flow."""
         user = user or self.env.user
         domain = self._portal_get_domain(user=user)
         if domain == [("id", "=", False)]:
@@ -31,6 +33,7 @@ class FederationMatchSheet(models.Model):
         return True
 
     def _portal_update_preparation(self, values=None, user=None):
+        """Handle the portal-specific update preparation flow."""
         user = user or self.env.user
         self._portal_assert_review_access(user=user)
         locked = self.filtered(lambda sheet: sheet.state == "locked")
@@ -49,6 +52,7 @@ class FederationMatchSheet(models.Model):
         return True
 
     def _portal_action_submit(self, user=None):
+        """Handle the portal-specific action submit flow."""
         user = user or self.env.user
         self._portal_assert_review_access(user=user)
         drafts = self.filtered(lambda sheet: sheet.state == "draft")

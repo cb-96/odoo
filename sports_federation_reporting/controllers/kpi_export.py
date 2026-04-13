@@ -24,6 +24,7 @@ class KpiExportController(http.Controller):
     CSV_SCHEMA_VERSION = "csv_v1"
 
     def _csv_response(self, payload, filename, contract_name):
+        """Handle CSV response."""
         return Response(
             payload,
             content_type="text/csv; charset=utf-8",

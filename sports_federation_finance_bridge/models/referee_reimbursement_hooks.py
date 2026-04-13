@@ -6,11 +6,13 @@ class FederationMatchRefereeFinanceHooks(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         assignments = super().create(vals_list)
         assignments._sync_reimbursement_finance_event()
         return assignments
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         should_sync = any(
             key in vals for key in ("state", "referee_id", "match_id", "role")
         )
@@ -20,6 +22,7 @@ class FederationMatchRefereeFinanceHooks(models.Model):
         return res
 
     def _sync_reimbursement_finance_event(self):
+        """Synchronize reimbursement finance event."""
         FinanceEvent = self.env["federation.finance.event"]
         role_labels = dict(self._fields["role"].selection)
         for assignment in self:
@@ -52,6 +55,7 @@ class FederationMatchRefereeFinanceHooks(models.Model):
                 existing_event.action_cancel()
 
     def _get_referee_reimbursement_fee_type(self, create_if_missing=True):
+        """Return referee reimbursement fee type."""
         self.ensure_one()
         fee_type = self.env["federation.fee.type"].search(
             [("code", "=", "referee_reimbursement")],

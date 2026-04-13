@@ -86,6 +86,7 @@ class FederationParticipationAudit(models.Model):
         match=False,
         author=False,
     ):
+        """Handle create event."""
         match = match or (match_sheet.match_id if match_sheet else False)
         return self.create(
             {

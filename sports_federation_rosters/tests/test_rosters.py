@@ -6,6 +6,7 @@ class TestRosters(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Test Club",
@@ -53,6 +54,7 @@ class TestRosters(TransactionCase):
         self.assertEqual(roster.season_id, self.season)
 
     def test_create_roster_generates_name_from_scope(self):
+        """Test that create roster generates name from scope."""
         roster = self.env["federation.team.roster"].create({
             "team_id": self.team.id,
             "season_id": self.season.id,
@@ -65,6 +67,7 @@ class TestRosters(TransactionCase):
         self.assertIn(self.competition.display_name, roster.name)
 
     def test_team_roster_button_opens_single_roster_form(self):
+        """Test that team roster button opens single roster form."""
         roster = self.env["federation.team.roster"].create({
             "team_id": self.team.id,
             "season_id": self.season.id,
@@ -214,6 +217,7 @@ class TestRosters(TransactionCase):
             })
 
     def test_roster_activation_blocks_lines_with_invalid_season_license(self):
+        """Test that roster activation blocks lines with invalid season license."""
         rule_set = self.env["federation.rule.set"].create({
             "name": "Roster License Rules",
             "code": "RLR",
@@ -257,6 +261,7 @@ class TestRosters(TransactionCase):
         self.assertIn(self.player1.display_name, roster.readiness_feedback)
 
     def test_live_match_sheet_locks_roster_scope_and_used_lines(self):
+        """Test that live match sheet locks roster scope and used lines."""
         roster = self.env["federation.team.roster"].create({
             "name": "Locked Scope Roster",
             "team_id": self.team.id,
@@ -304,6 +309,7 @@ class TestRosters(TransactionCase):
             line.write({"status": "inactive"})
 
     def test_roster_audit_events_are_created_for_lifecycle_changes(self):
+        """Test that roster audit events are created for lifecycle changes."""
         roster = self.env["federation.team.roster"].create({
             "name": "Audited Roster",
             "team_id": self.team.id,

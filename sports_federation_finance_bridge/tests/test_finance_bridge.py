@@ -7,6 +7,7 @@ class TestFinanceBridge(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create test club
         cls.club = cls.env["federation.club"].create({
@@ -82,6 +83,7 @@ class TestFinanceBridge(TransactionCase):
         self.assertEqual(event.external_ref, f"TESTFEE-federation_club-{self.club.id}")
 
     def test_ensure_finance_event_from_source_is_idempotent(self):
+        """Test that ensure finance event from source is idempotent."""
         fee_type = self.env["federation.fee.type"].create({
             "name": "Idempotent Fee",
             "code": "IDEMP",
@@ -176,6 +178,7 @@ class TestFinanceBridge(TransactionCase):
             event.action_cancel()
 
     def test_reconciliation_requires_export_and_settlement(self):
+        """Test that reconciliation requires export and settlement."""
         fee_type = self.env["federation.fee.type"].create({
             "name": "Handoff Fee",
             "code": "HANDOFF",
@@ -206,6 +209,7 @@ class TestFinanceBridge(TransactionCase):
         self.assertEqual(event.handoff_state, "reconciled")
 
     def test_handoff_export_row_includes_contract_fields(self):
+        """Test that handoff export row includes contract fields."""
         fee_type = self.env["federation.fee.type"].create({
             "name": "Export Fee",
             "code": "EXPFEE",
@@ -237,6 +241,7 @@ class TestFinanceBridge(TransactionCase):
         self.assertIn("REC-2026-001", row)
 
     def test_finance_event_infers_season_from_source_record(self):
+        """Test that finance event infers season from source record."""
         fee_type = self.env["federation.fee.type"].create({
             "name": "Season Fee",
             "code": "SEASONFEE",
@@ -256,6 +261,7 @@ class TestFinanceBridge(TransactionCase):
         self.assertEqual(event.season_id, self.season)
 
     def test_season_budget_tracks_actuals_and_variance(self):
+        """Test that season budget tracks actuals and variance."""
         fee_type = self.env["federation.fee.type"].create({
             "name": "Budget Fee",
             "code": "BUDGETFEE",

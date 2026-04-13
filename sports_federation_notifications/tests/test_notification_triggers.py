@@ -4,6 +4,7 @@ from odoo.tests.common import TransactionCase
 class TestNotificationTriggers(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Trigger Club",
@@ -108,6 +109,7 @@ class TestNotificationTriggers(TransactionCase):
         })
 
     def _create_active_roster(self, team):
+        """Exercise create active roster."""
         player = self.env["federation.player"].create({
             "first_name": team.code,
             "last_name": "Roster Player",
@@ -132,6 +134,7 @@ class TestNotificationTriggers(TransactionCase):
         return roster
 
     def test_participant_confirm_action_creates_notification_log(self):
+        """Test that participant confirm action creates notification log."""
         self._create_active_roster(self.team)
         participant = self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
@@ -156,6 +159,7 @@ class TestNotificationTriggers(TransactionCase):
         self.assertIn(log.state, ("sent", "failed"))
 
     def test_tournament_published_write_creates_notification_log(self):
+        """Test that tournament published write creates notification log."""
         self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.team.id,
@@ -179,6 +183,7 @@ class TestNotificationTriggers(TransactionCase):
         self.assertIn(log.state, ("sent", "failed"))
 
     def test_referee_assignment_create_creates_notification_log(self):
+        """Test that referee assignment create creates notification log."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -201,6 +206,7 @@ class TestNotificationTriggers(TransactionCase):
         self.assertIn(log.state, ("sent", "failed"))
 
     def test_result_approval_workflow_creates_result_logs(self):
+        """Test that result approval workflow creates result logs."""
         match = self.match.with_user(self.submit_user)
         match.action_submit_result()
         self.match.invalidate_recordset()
@@ -235,6 +241,7 @@ class TestNotificationTriggers(TransactionCase):
         self.assertIn(approval_log.state, ("sent", "failed"))
 
     def test_standing_freeze_creates_notification_log(self):
+        """Test that standing freeze creates notification log."""
         self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.team.id,
@@ -258,6 +265,7 @@ class TestNotificationTriggers(TransactionCase):
         self.assertIn(log.state, ("sent", "failed"))
 
     def test_finance_event_confirm_creates_notification_log(self):
+        """Test that finance event confirm creates notification log."""
         self.finance_event.action_confirm()
 
         log = self.env["federation.notification.log"].search(

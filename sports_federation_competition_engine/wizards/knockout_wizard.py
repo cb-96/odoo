@@ -48,6 +48,7 @@ class KnockoutWizard(models.TransientModel):
     @api.depends("tournament_id", "stage_id", "participant_source",
                  "participant_ids", "source_stage_id", "bracket_size")
     def _compute_summary(self):
+        """Compute summary."""
         import math
         for wiz in self:
             parts = wiz._get_participants()
@@ -64,6 +65,7 @@ class KnockoutWizard(models.TransientModel):
             wiz.summary = f"{n} participants, bracket {bracket}, {byes} byes, {bracket // 2} matches."
 
     def _get_participants(self):
+        """Return participants."""
         self.ensure_one()
         if self.participant_source == "manual":
             return self.participant_ids
@@ -79,6 +81,7 @@ class KnockoutWizard(models.TransientModel):
         return self.env["federation.tournament.participant"]
 
     def action_generate(self):
+        """Execute the generate action."""
         self.ensure_one()
         participants = self._get_participants()
         self._validate_generation_request(participants)
@@ -107,6 +110,7 @@ class KnockoutWizard(models.TransientModel):
         }
 
     def _validate_generation_request(self, participants):
+        """Validate generation request."""
         if self.tournament_id.state not in ("open", "in_progress"):
             raise UserError(_("Tournament must be Open or In Progress."))
 

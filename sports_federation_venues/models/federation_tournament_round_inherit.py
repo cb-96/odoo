@@ -10,6 +10,7 @@ class FederationTournamentRound(models.Model):
     )
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         sync_match_venues = "venue_id" in vals
         result = super().write(vals)
         if sync_match_venues:
@@ -17,6 +18,7 @@ class FederationTournamentRound(models.Model):
         return result
 
     def _sync_match_venues_from_round(self):
+        """Synchronize match venues from round."""
         for round_record in self.filtered(lambda rec: rec.venue_id):
             for match in round_record.match_ids:
                 match_vals = {"venue_id": round_record.venue_id.id}

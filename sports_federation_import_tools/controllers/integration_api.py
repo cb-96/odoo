@@ -9,6 +9,7 @@ from odoo.http import Response, request
 
 class FederationIntegrationApi(http.Controller):
     def _json_response(self, payload, status=200):
+        """Handle JSON response."""
         return Response(
             json.dumps(payload),
             status=status,
@@ -16,6 +17,7 @@ class FederationIntegrationApi(http.Controller):
         )
 
     def _get_credentials(self):
+        """Return credentials."""
         headers = request.httprequest.headers
         partner_code = (
             headers.get("X-Federation-Partner-Code")
@@ -32,6 +34,7 @@ class FederationIntegrationApi(http.Controller):
         return partner_code, token
 
     def _authenticate(self, contract_code=None):
+        """Handle authenticate."""
         partner_code, token = self._get_credentials()
         return request.env["federation.integration.partner"].sudo().authenticate_partner(
             partner_code,
@@ -48,6 +51,7 @@ class FederationIntegrationApi(http.Controller):
         csrf=False,
     )
     def integration_contracts(self, **kw):
+        """Handle integration contracts."""
         try:
             partner, _subscription = self._authenticate()
         except (AccessError, ValidationError) as error:
@@ -78,6 +82,7 @@ class FederationIntegrationApi(http.Controller):
         csrf=False,
     )
     def integration_finance_events(self, **kw):
+        """Handle integration finance events."""
         try:
             partner, _subscription = self._authenticate(contract_code="finance_event_v1")
         except (AccessError, ValidationError) as error:
@@ -117,6 +122,7 @@ class FederationIntegrationApi(http.Controller):
         csrf=False,
     )
     def integration_stage_inbound_delivery(self, contract_code, **kw):
+        """Handle integration stage inbound delivery."""
         try:
             partner, subscription = self._authenticate(contract_code=contract_code)
             payload = request.httprequest.get_json(silent=True) or {}

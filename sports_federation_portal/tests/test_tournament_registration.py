@@ -5,6 +5,7 @@ from odoo.tests.common import TransactionCase
 class TestTournamentRegistration(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Portal Registration Club",
@@ -81,6 +82,7 @@ class TestTournamentRegistration(TransactionCase):
         })
 
     def test_registration_accepts_eligible_team(self):
+        """Test that registration accepts eligible team."""
         registration = self.env["federation.tournament.registration"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.eligible_team.id,
@@ -88,6 +90,7 @@ class TestTournamentRegistration(TransactionCase):
         self.assertEqual(registration.team_id, self.eligible_team)
 
     def test_registration_rejects_ineligible_team(self):
+        """Test that registration rejects ineligible team."""
         with self.assertRaises(ValidationError):
             self.env["federation.tournament.registration"].create({
                 "tournament_id": self.tournament.id,
@@ -95,6 +98,7 @@ class TestTournamentRegistration(TransactionCase):
             })
 
     def test_registration_backend_domain_uses_eligible_teams(self):
+        """Test that registration backend domain uses eligible teams."""
         registration = self.env["federation.tournament.registration"].new({
             "tournament_id": self.tournament.id,
         })
@@ -110,6 +114,7 @@ class TestTournamentRegistration(TransactionCase):
         self.assertIn("Ineligible Portal Team", registration.excluded_team_feedback_html)
 
     def test_registration_backend_feedback_explains_duplicate_team(self):
+        """Test that registration backend feedback explains duplicate team."""
         self.env["federation.tournament.registration"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.eligible_team.id,
@@ -125,6 +130,7 @@ class TestTournamentRegistration(TransactionCase):
         self.assertIn("Already registered or currently awaiting review.", registration.excluded_team_feedback_html)
 
     def test_portal_user_only_sees_own_tournament_registrations(self):
+        """Test that portal user only sees own tournament registrations."""
         own_registration = self.env["federation.tournament.registration"].with_user(self.user_a).create({
             "tournament_id": self.tournament.id,
             "team_id": self.eligible_team.id,
@@ -142,6 +148,7 @@ class TestTournamentRegistration(TransactionCase):
             other_registration.with_user(self.user_a).write({"notes": "Not allowed"})
 
     def test_tournament_action_view_registration_requests(self):
+        """Test that tournament action view registration requests."""
         other_tournament = self.env["federation.tournament"].create({
             "name": "Other Portal Tournament",
             "code": "OPT",

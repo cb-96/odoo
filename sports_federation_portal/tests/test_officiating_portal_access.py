@@ -5,6 +5,7 @@ from odoo.tests.common import TransactionCase
 class TestOfficiatingPortalAccess(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.portal_official_group = cls.env.ref(
             "sports_federation_portal.group_federation_portal_official"
@@ -83,12 +84,14 @@ class TestOfficiatingPortalAccess(TransactionCase):
         })
 
     def test_portal_referee_profile_resolves_for_user(self):
+        """Test that portal referee profile resolves for user."""
         profile = self.env["federation.referee"]._portal_get_for_user(
             user=self.official_user
         )
         self.assertEqual(profile, self.referee)
 
     def test_portal_official_only_sees_own_assignments(self):
+        """Test that portal official only sees own assignments."""
         visible_assignments = self.env["federation.match.referee"].with_user(
             self.official_user
         ).search([])
@@ -96,6 +99,7 @@ class TestOfficiatingPortalAccess(TransactionCase):
         self.assertNotIn(self.other_assignment, visible_assignments)
 
     def test_portal_official_can_confirm_assignment(self):
+        """Test that portal official can confirm assignment."""
         self.assignment._portal_action_confirm(
             user=self.official_user,
             response_note="Confirmed through portal.",
@@ -105,6 +109,7 @@ class TestOfficiatingPortalAccess(TransactionCase):
         self.assertEqual(self.assignment.response_note, "Confirmed through portal.")
 
     def test_portal_official_decline_requires_reason(self):
+        """Test that portal official decline requires reason."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.other_match.id,
             "referee_id": self.referee.id,
@@ -122,5 +127,6 @@ class TestOfficiatingPortalAccess(TransactionCase):
         self.assertEqual(assignment.response_note, "Unavailable due to travel.")
 
     def test_other_user_cannot_manage_assignment(self):
+        """Test that other user cannot manage assignment."""
         with self.assertRaises(AccessError):
             self.assignment._portal_action_confirm(user=self.other_user)

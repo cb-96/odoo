@@ -9,6 +9,7 @@ _SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
 def _slugify_public_text(value):
+    """Handle slugify public text."""
     normalized = unicodedata.normalize("NFKD", value or "")
     ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
     slug = _SLUG_PATTERN.sub("-", ascii_value).strip("-")
@@ -16,6 +17,7 @@ def _slugify_public_text(value):
 
 
 def _ics_escape(value):
+    """Handle ICS escape."""
     if not value:
         return ""
     return (
@@ -28,6 +30,7 @@ def _ics_escape(value):
 
 
 def _ics_format_datetime(value):
+    """Handle ICS format datetime."""
     return fields.Datetime.to_datetime(value).strftime("%Y%m%dT%H%M%S")
 
 
@@ -75,16 +78,19 @@ class FederationTournament(models.Model):
     )
 
     def _normalize_public_slug_vals(self, vals):
+        """Normalize public slug vals."""
         normalized = dict(vals)
         if "public_slug" in normalized:
             normalized["public_slug"] = _slugify_public_text(normalized["public_slug"]) if normalized.get("public_slug") else False
         return normalized
 
     def _get_public_slug_seed(self):
+        """Return public slug seed."""
         self.ensure_one()
         return self.public_slug or self.name or self.code or "tournament"
 
     def get_public_slug_value(self):
+        """Return public slug value."""
         self.ensure_one()
         if self.public_slug:
             return self.public_slug
@@ -92,6 +98,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def resolve_public_slug(self, slug_value):
+        """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
@@ -109,43 +116,53 @@ class FederationTournament(models.Model):
         return self.browse([])
 
     def get_public_path(self):
+        """Return public path."""
         self.ensure_one()
         return f"/tournaments/{self.get_public_slug_value()}"
 
     def get_public_register_path(self):
+        """Return public register path."""
         self.ensure_one()
         return f"{self.get_public_path()}/register"
 
     def get_public_teams_path(self):
+        """Return public teams path."""
         self.ensure_one()
         return f"{self.get_public_path()}/teams"
 
     def get_public_schedule_path(self):
+        """Return public schedule path."""
         self.ensure_one()
         return f"{self.get_public_path()}/schedule"
 
     def get_public_results_path(self):
+        """Return public results path."""
         self.ensure_one()
         return f"{self.get_public_path()}/results"
 
     def get_public_standings_path(self):
+        """Return public standings path."""
         self.ensure_one()
         return f"{self.get_public_path()}/standings"
 
     def get_public_bracket_path(self):
+        """Return public bracket path."""
         self.ensure_one()
         return f"{self.get_public_path()}/bracket"
 
     def get_public_feed_path(self):
+        """Return public feed path."""
         self.ensure_one()
         return f"/api/v1/tournaments/{self.get_public_slug_value()}/feed"
 
     def get_public_schedule_ics_path(self):
+        """Return public schedule ICS path."""
         self.ensure_one()
         return f"{self.get_public_path()}/schedule.ics"
 
     @api.model
     def _get_public_site_search_domain(self, search=None):
+        """Return public site search domain."""
         if not search:
             return []
 
@@ -165,6 +182,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def get_public_published_tournaments(self, search=None, limit=None, extra_domain=None):
+        """Return public published tournaments."""
         tournaments = self.sudo().search(
             [("website_published", "=", True)] + self._get_public_site_search_domain(search) + list(extra_domain or []),
             order="date_start asc, id asc",
@@ -173,6 +191,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def get_public_featured_tournaments(self, search=None, limit=None, extra_domain=None):
+        """Return public featured tournaments."""
         domain = [
             ("website_published", "=", True),
             ("state", "in", ("open", "in_progress")),
@@ -184,6 +203,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def get_public_archived_tournaments(self, search=None, limit=None, extra_domain=None):
+        """Return public archived tournaments."""
         domain = [
             ("website_published", "=", True),
             ("state", "in", ("closed", "cancelled")),
@@ -193,6 +213,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def get_public_live_tournaments(self, limit=None, extra_domain=None):
+        """Return public live tournaments."""
         domain = [
             ("website_published", "=", True),
             ("state", "=", "in_progress"),
@@ -204,6 +225,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def get_public_recent_result_tournaments(self, limit=None, extra_domain=None):
+        """Return public recent result tournaments."""
         tournaments = self.sudo().search(
             [
                 ("website_published", "=", True),
@@ -231,10 +253,12 @@ class FederationTournament(models.Model):
         return self.browse(result_ids)
 
     def can_access_public_detail(self):
+        """Return whether access public detail is allowed."""
         self.ensure_one()
         return bool(self.website_published)
 
     def get_public_standings(self):
+        """Return public standings."""
         self.ensure_one()
         return self.env["federation.standing"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -242,6 +266,7 @@ class FederationTournament(models.Model):
         ], order="stage_id asc, group_id asc, id asc")
 
     def get_public_participants(self, limit=None):
+        """Return public participants."""
         self.ensure_one()
         participants = self.env["federation.tournament.participant"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -250,6 +275,7 @@ class FederationTournament(models.Model):
         return participants[:limit] if limit else participants
 
     def get_public_result_matches(self):
+        """Return public result matches."""
         self.ensure_one()
         return self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -257,6 +283,7 @@ class FederationTournament(models.Model):
         ], order="scheduled_date asc, date_scheduled asc, id asc")
 
     def get_public_recent_result_matches(self, limit=None):
+        """Return public recent result matches."""
         self.ensure_one()
         matches = self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -265,6 +292,7 @@ class FederationTournament(models.Model):
         return matches[:limit] if limit else matches
 
     def get_public_schedule_matches(self):
+        """Return public schedule matches."""
         self.ensure_one()
         return self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -272,6 +300,7 @@ class FederationTournament(models.Model):
         ], order="scheduled_date asc, date_scheduled asc, round_number asc, id asc")
 
     def get_public_live_matches(self, limit=None):
+        """Return public live matches."""
         self.ensure_one()
         matches = self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -280,6 +309,7 @@ class FederationTournament(models.Model):
         return matches[:limit] if limit else matches
 
     def get_public_upcoming_matches(self, limit=None):
+        """Return public upcoming matches."""
         self.ensure_one()
         matches = self.env["federation.match"].sudo().search([
             ("tournament_id", "=", self.id),
@@ -289,6 +319,7 @@ class FederationTournament(models.Model):
         return matches[:limit] if limit else matches
 
     def get_public_schedule_sections(self):
+        """Return public schedule sections."""
         self.ensure_one()
         Match = self.env["federation.match"].sudo().browse([])
         sections = []
@@ -327,10 +358,12 @@ class FederationTournament(models.Model):
         return sections
 
     def has_public_bracket(self):
+        """Return whether the record has public bracket."""
         self.ensure_one()
         return bool(self.get_public_bracket_sections())
 
     def get_public_bracket_sections(self):
+        """Return public bracket sections."""
         self.ensure_one()
         Match = self.env["federation.match"].sudo().browse([])
         bracket_matches = self.env["federation.match"].sudo().search(
@@ -368,6 +401,7 @@ class FederationTournament(models.Model):
         return sections
 
     def _serialize_public_match(self, match):
+        """Serialize public match."""
         return {
             "id": match.id,
             "name": match.name,
@@ -392,6 +426,7 @@ class FederationTournament(models.Model):
         }
 
     def get_public_schedule_ics(self):
+        """Return public schedule ICS."""
         self.ensure_one()
         events = [
             "BEGIN:VCALENDAR",
@@ -433,6 +468,7 @@ class FederationTournament(models.Model):
         return "\r\n".join(events) + "\r\n"
 
     def get_public_feed_payload(self):
+        """Return public feed payload."""
         self.ensure_one()
         participants = self.get_public_participants()
         standings = self.get_public_standings()
@@ -518,9 +554,11 @@ class FederationTournament(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         return super().create([self._normalize_public_slug_vals(vals) for vals in vals_list])
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         vals = self._normalize_public_slug_vals(vals)
         to_publish = self.env["federation.tournament"].browse([])
         if vals.get("website_published"):
@@ -537,10 +575,12 @@ class FederationTournament(models.Model):
         return res
 
     def can_access_public_results(self):
+        """Return whether access public results is allowed."""
         self.ensure_one()
         return bool(self.can_access_public_detail() and self.show_public_results)
 
     def can_access_public_standings(self):
+        """Return whether access public standings is allowed."""
         self.ensure_one()
         return bool(self.can_access_public_detail() and self.show_public_standings)
 
@@ -571,12 +611,14 @@ class FederationTeam(models.Model):
     )
 
     def _normalize_public_slug_vals(self, vals):
+        """Normalize public slug vals."""
         normalized = dict(vals)
         if "public_slug" in normalized:
             normalized["public_slug"] = _slugify_public_text(normalized["public_slug"]) if normalized.get("public_slug") else False
         return normalized
 
     def _get_public_slug_seed(self):
+        """Return public slug seed."""
         self.ensure_one()
         if self.public_slug:
             return self.public_slug
@@ -584,6 +626,7 @@ class FederationTeam(models.Model):
         return "-".join(filter(None, [self.name, club_name])) or self.code or "team"
 
     def get_public_slug_value(self):
+        """Return public slug value."""
         self.ensure_one()
         if self.public_slug:
             return self.public_slug
@@ -591,6 +634,7 @@ class FederationTeam(models.Model):
 
     @api.model
     def resolve_public_slug(self, slug_value):
+        """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
@@ -608,10 +652,12 @@ class FederationTeam(models.Model):
         return self.browse([])
 
     def get_public_path(self):
+        """Return public path."""
         self.ensure_one()
         return f"/teams/{self.get_public_slug_value()}"
 
     def can_access_public_profile(self):
+        """Return whether access public profile is allowed."""
         self.ensure_one()
         Participant = self.env["federation.tournament.participant"].sudo()
         if Participant.search_count(
@@ -638,6 +684,7 @@ class FederationTeam(models.Model):
         )
 
     def get_public_tournaments(self, limit=None):
+        """Return public tournaments."""
         self.ensure_one()
         tournaments = self.env["federation.tournament"].sudo().search(
             [
@@ -649,6 +696,7 @@ class FederationTeam(models.Model):
         return tournaments[:limit] if limit else tournaments
 
     def get_public_recent_result_matches(self, limit=None):
+        """Return public recent result matches."""
         self.ensure_one()
         matches = self.env["federation.match"].sudo().search(
             [
@@ -663,6 +711,7 @@ class FederationTeam(models.Model):
         return matches[:limit] if limit else matches
 
     def get_public_upcoming_matches(self, limit=None):
+        """Return public upcoming matches."""
         self.ensure_one()
         matches = self.env["federation.match"].sudo().search(
             [
@@ -678,6 +727,7 @@ class FederationTeam(models.Model):
         return matches[:limit] if limit else matches
 
     def get_public_standing_lines(self, limit=None):
+        """Return public standing lines."""
         self.ensure_one()
         lines = self.env["federation.standing.line"].sudo().search(
             [
@@ -690,7 +740,9 @@ class FederationTeam(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         return super().create([self._normalize_public_slug_vals(vals) for vals in vals_list])
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         return super().write(self._normalize_public_slug_vals(vals))

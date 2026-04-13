@@ -73,10 +73,12 @@ class FederationStanding(models.Model):
 
     @api.depends("line_ids")
     def _compute_line_count(self):
+        """Compute line count."""
         for record in self:
             record.line_count = len(record.line_ids)
 
     def action_view_lines(self):
+        """Execute the view lines action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_standings.action_federation_standing_line"
@@ -87,6 +89,7 @@ class FederationStanding(models.Model):
 
     @api.constrains("group_id", "stage_id")
     def _check_group_stage_consistency(self):
+        """Validate group stage consistency."""
         for record in self:
             if record.group_id and not record.stage_id:
                 raise ValidationError(
@@ -100,6 +103,7 @@ class FederationStanding(models.Model):
 
     @api.constrains("stage_id", "tournament_id")
     def _check_stage_tournament_consistency(self):
+        """Validate stage tournament consistency."""
         for record in self:
             if record.stage_id and record.tournament_id:
                 if record.stage_id.tournament_id != record.tournament_id:
@@ -257,6 +261,7 @@ class FederationStanding(models.Model):
         items = list(stats.items())
 
         def sort_key(item):
+            """Handle sort key."""
             pid, s = item
             participant = participant_map.get(pid)
             team_name = participant.team_id.name if participant else ""
@@ -473,5 +478,6 @@ class FederationStandingLine(models.Model):
 
     @api.depends("score_for", "score_against")
     def _compute_score_diff(self):
+        """Compute score diff."""
         for record in self:
             record.score_diff = record.score_for - record.score_against

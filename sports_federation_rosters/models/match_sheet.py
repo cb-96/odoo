@@ -3,6 +3,7 @@ from odoo.exceptions import ValidationError
 
 
 def _dedupe_reasons(reasons):
+    """Handle dedupe reasons."""
     unique_reasons = []
     seen = set()
     for reason in reasons:
@@ -114,11 +115,13 @@ class FederationMatchSheet(models.Model):
 
     @api.depends("line_ids")
     def _compute_line_count(self):
+        """Compute line count."""
         for record in self:
             record.line_count = len(record.line_ids)
 
     @api.depends("line_ids.entered_minute")
     def _compute_substitution_count(self):
+        """Compute substitution count."""
         for record in self:
             record.substitution_count = len(
                 record.line_ids.filtered(lambda line: bool(line.entered_minute))
@@ -126,6 +129,7 @@ class FederationMatchSheet(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         records = super().create(vals_list)
         for record in records:
             record._log_audit_event(
@@ -141,6 +145,7 @@ class FederationMatchSheet(models.Model):
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         if not self.env.context.get("bypass_match_sheet_lock"):
             locked_records = self.filtered(lambda rec: rec.state == "locked")
             if locked_records:
@@ -170,6 +175,7 @@ class FederationMatchSheet(models.Model):
         "match_id.date_scheduled",
     )
     def _compute_readiness(self):
+        """Compute readiness."""
         for record in self:
             issues = record._get_submission_issues()
             record.ready_for_submission = not bool(issues)
@@ -177,6 +183,7 @@ class FederationMatchSheet(models.Model):
 
     @api.constrains("side", "team_id", "match_id")
     def _check_side_team_consistency(self):
+        """Validate side team consistency."""
         for record in self:
             if record.side == "home" and record.match_id.home_team_id:
                 if record.team_id != record.match_id.home_team_id:
@@ -190,6 +197,7 @@ class FederationMatchSheet(models.Model):
                     )
 
     def _get_effective_rule_set(self):
+        """Return effective rule set."""
         self.ensure_one()
         if self.roster_id:
             return self.roster_id._get_effective_rule_set()
@@ -199,12 +207,14 @@ class FederationMatchSheet(models.Model):
         return self.env["federation.rule.set"]
 
     def _get_reference_date(self):
+        """Return reference date."""
         self.ensure_one()
         if self.match_id.date_scheduled:
             return fields.Datetime.to_datetime(self.match_id.date_scheduled).date()
         return fields.Date.context_today(self)
 
     def _get_submission_issues(self):
+        """Return submission issues."""
         self.ensure_one()
         issues = []
 
@@ -255,6 +265,7 @@ class FederationMatchSheet(models.Model):
         return issues
 
     def _log_audit_event(self, event_type, description, player=False):
+        """Handle log audit event."""
         Audit = self.env.get("federation.participation.audit")
         if Audit is None:
             return False
@@ -271,6 +282,7 @@ class FederationMatchSheet(models.Model):
         return True
 
     def action_submit(self):
+        """Execute the submit action."""
         for record in self:
             issues = record._get_submission_issues()
             if issues:
@@ -290,6 +302,7 @@ class FederationMatchSheet(models.Model):
             )
 
     def action_approve(self):
+        """Execute the approve action."""
         for record in self:
             if record.state != "submitted":
                 raise ValidationError(
@@ -304,6 +317,7 @@ class FederationMatchSheet(models.Model):
             )
 
     def action_lock(self):
+        """Execute the lock action."""
         for record in self:
             if record.state != "approved":
                 raise ValidationError(
@@ -372,6 +386,7 @@ class FederationMatchSheetLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         self._assert_parent_sheets_allow_new_lines(vals_list)
         records = super().create(vals_list)
         for record in records:
@@ -384,6 +399,7 @@ class FederationMatchSheetLine(models.Model):
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         self._assert_parent_sheet_line_editable(vals)
         result = super().write(vals)
         if {"entered_minute", "left_minute"} & set(vals):
@@ -434,6 +450,7 @@ class FederationMatchSheetLine(models.Model):
         return result
 
     def unlink(self):
+        """Delete records after applying module-specific safeguards."""
         self._assert_parent_sheet_line_editable()
         audit_payloads = [
             (
@@ -469,12 +486,14 @@ class FederationMatchSheetLine(models.Model):
         "match_sheet_id.match_id.tournament_id",
     )
     def _compute_eligible(self):
+        """Compute eligible."""
         for record in self:
             reasons = record._get_eligibility_reasons()
             record.eligible = not bool(reasons)
             record.eligibility_feedback = "\n".join(reasons) if reasons else False
 
     def _assert_parent_sheets_allow_new_lines(self, vals_list):
+        """Handle assert parent sheets allow new lines."""
         sheet_ids = [vals.get("match_sheet_id") for vals in vals_list if vals.get("match_sheet_id")]
         sheets = self.env["federation.match.sheet"].browse(sheet_ids)
         for sheet in sheets:
@@ -487,6 +506,7 @@ class FederationMatchSheetLine(models.Model):
                 )
 
     def _assert_parent_sheet_line_editable(self, vals=None):
+        """Handle assert parent sheet line editable."""
         for record in self:
             if record.match_sheet_id.state == "locked":
                 raise ValidationError(
@@ -503,6 +523,7 @@ class FederationMatchSheetLine(models.Model):
 
     @api.constrains("is_starter", "is_substitute")
     def _check_starter_substitute(self):
+        """Validate starter substitute."""
         for record in self:
             if record.is_starter and record.is_substitute:
                 raise ValidationError(
@@ -511,6 +532,7 @@ class FederationMatchSheetLine(models.Model):
 
     @api.constrains("entered_minute", "left_minute", "is_starter", "is_substitute")
     def _check_substitution_governance(self):
+        """Validate substitution governance."""
         for record in self:
             entered_minute = record.entered_minute or False
             left_minute = record.left_minute or False
@@ -543,6 +565,7 @@ class FederationMatchSheetLine(models.Model):
 
     @api.constrains("roster_line_id", "match_sheet_id")
     def _check_roster_line_consistency(self):
+        """Validate roster line consistency."""
         for record in self:
             if record.roster_line_id and record.match_sheet_id.roster_id:
                 if record.roster_line_id.roster_id != record.match_sheet_id.roster_id:
@@ -551,6 +574,7 @@ class FederationMatchSheetLine(models.Model):
                     )
 
     def _get_eligibility_reasons(self):
+        """Return eligibility reasons."""
         self.ensure_one()
         if not self.player_id or not self.match_sheet_id:
             return []

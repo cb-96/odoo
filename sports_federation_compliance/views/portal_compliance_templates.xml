@@ -69,7 +69,7 @@
 
                 <div t-elif="not workspace_entries" class="alert alert-info">
                     <i class="fa fa-info-circle me-2"/>
-                    No active portal compliance requirements are currently assigned to you.
+                    No portal-managed compliance items are assigned to you right now. New uploads and renewals will appear here when federation staff opens them.
                 </div>
 
                 <div class="row g-4" t-else="">
@@ -98,7 +98,7 @@
                                             <t t-if="entry['latest_submission']">
                                                 <t t-esc="entry['latest_submission'].name"/>
                                             </t>
-                                            <t t-else="">No submission yet</t>
+                                            <t t-else="">No submission on file yet</t>
                                         </dd>
                                         <dt class="col-sm-5" t-if="entry['renewal_due_date']">Renewal Due</dt>
                                         <dd class="col-sm-7" t-if="entry['renewal_due_date']">
@@ -226,7 +226,7 @@
                                         </a>
                                     </t>
                                 </div>
-                                <p t-else="" class="text-muted mb-0">No attachments are currently stored on the latest submission.</p>
+                                <p t-else="" class="text-muted mb-0">No attachments are on file yet. Upload at least one document before sending this item for review.</p>
                             </div>
                         </div>
                     </div>
@@ -261,7 +261,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <p t-else="" class="text-muted mb-0">No submission history is available yet.</p>
+                                <p t-else="" class="text-muted mb-0">Your submission timeline will appear here after the first upload is saved or sent for review.</p>
                             </div>
                         </div>
                     </div>

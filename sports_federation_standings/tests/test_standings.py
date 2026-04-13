@@ -6,6 +6,7 @@ class TestStandings(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.has_result_control = (
             "include_in_official_standings" in cls.env["federation.match"]._fields

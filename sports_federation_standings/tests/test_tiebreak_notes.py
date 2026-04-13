@@ -16,6 +16,7 @@ class TestTiebreakNotes(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "TB Club",
@@ -63,6 +64,7 @@ class TestTiebreakNotes(TransactionCase):
         return tour, t1, t2, p1, p2
 
     def _make_match(self, tour, home, away, home_score, away_score, state="done"):
+        """Exercise make match."""
         vals = {
             "tournament_id": tour.id,
             "home_team_id": home.id,
@@ -76,6 +78,7 @@ class TestTiebreakNotes(TransactionCase):
         return self.env["federation.match"].create(vals)
 
     def _standing(self, tour):
+        """Exercise standing."""
         return self.env["federation.standing"].create({
             "name": f"Standing {tour.name}",
             "tournament_id": tour.id,

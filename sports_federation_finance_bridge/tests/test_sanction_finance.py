@@ -4,6 +4,7 @@ from odoo.tests import TransactionCase
 class TestSanctionFinanceHooks(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.player = cls.env["federation.player"].create({
             "name": "Sanctioned Player",
@@ -17,6 +18,7 @@ class TestSanctionFinanceHooks(TransactionCase):
         })
 
     def test_fine_sanction_creates_finance_event(self):
+        """Test that fine sanction creates finance event."""
         sanction = self.env["federation.sanction"].create({
             "name": "Late payment fine",
             "case_id": self.case.id,
@@ -39,6 +41,7 @@ class TestSanctionFinanceHooks(TransactionCase):
         self.assertTrue(event.external_ref)
 
     def test_warning_sanction_creates_no_finance_event(self):
+        """Test that warning sanction creates no finance event."""
         sanction = self.env["federation.sanction"].create({
             "name": "Written warning",
             "case_id": self.case.id,
@@ -54,6 +57,7 @@ class TestSanctionFinanceHooks(TransactionCase):
         self.assertEqual(count, 0)
 
     def test_fine_amount_updates_existing_draft_event(self):
+        """Test that fine amount updates existing draft event."""
         sanction = self.env["federation.sanction"].create({
             "name": "Appeal fine",
             "case_id": self.case.id,

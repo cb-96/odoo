@@ -48,6 +48,7 @@ class FederationSeasonBudget(models.Model):
 
     @api.depends("season_id", "fee_type_id")
     def _compute_name(self):
+        """Compute name."""
         for record in self:
             season_name = record.season_id.display_name or "Season"
             fee_name = record.fee_type_id.display_name or "Budget"
@@ -55,6 +56,7 @@ class FederationSeasonBudget(models.Model):
 
     @api.depends("season_id", "fee_type_id", "budget_amount")
     def _compute_actual_metrics(self):
+        """Compute actual metrics."""
         metrics = {}
         season_ids = self.mapped("season_id").ids
         fee_type_ids = self.mapped("fee_type_id").ids
@@ -85,11 +87,13 @@ class FederationSeasonBudget(models.Model):
 
     @api.constrains("budget_amount")
     def _check_budget_amount(self):
+        """Validate budget amount."""
         for record in self:
             if record.budget_amount < 0:
                 raise ValidationError("Budget amounts must be zero or greater.")
 
     def action_view_finance_events(self):
+        """Execute the view finance events action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_finance_bridge.action_federation_finance_event"

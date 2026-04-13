@@ -18,6 +18,7 @@ class FederationMatch(models.Model):
     )
 
     def _apply_round_venue_defaults(self, vals):
+        """Apply round venue defaults."""
         round_id = vals.get("round_id")
         if not round_id:
             return vals
@@ -36,17 +37,20 @@ class FederationMatch(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         prepared_vals_list = [
             self._apply_round_venue_defaults(dict(vals)) for vals in vals_list
         ]
         return super().create(prepared_vals_list)
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         prepared_vals = self._apply_round_venue_defaults(dict(vals))
         return super().write(prepared_vals)
 
     @api.constrains("venue_id", "playing_area_id")
     def _check_playing_area_venue(self):
+        """Validate playing area venue."""
         for rec in self:
             if rec.playing_area_id and rec.venue_id:
                 if rec.playing_area_id.venue_id != rec.venue_id:
@@ -56,11 +60,13 @@ class FederationMatch(models.Model):
 
     @api.onchange("playing_area_id")
     def _onchange_playing_area_id(self):
+        """Handle onchange playing area ID."""
         if self.playing_area_id and not self.venue_id:
             self.venue_id = self.playing_area_id.venue_id
 
     @api.onchange("round_id")
     def _onchange_round_id(self):
+        """Handle onchange round ID."""
         super()._onchange_round_id()
         if not self.round_id:
             return
@@ -71,6 +77,7 @@ class FederationMatch(models.Model):
 
     @api.constrains("round_id", "venue_id")
     def _check_round_venue_scope(self):
+        """Validate round venue scope."""
         for rec in self:
             if not rec.round_id:
                 continue
@@ -81,6 +88,7 @@ class FederationMatch(models.Model):
 
     @api.constrains("round_id", "home_team_id", "away_team_id")
     def _check_no_duplicate_pairings_in_round(self):
+        """Validate no duplicate pairings in round."""
         for rec in self:
             if not rec.round_id or not rec.home_team_id or not rec.away_team_id:
                 continue

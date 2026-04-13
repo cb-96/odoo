@@ -14,6 +14,7 @@ class FederationOfficiatingPortal(http.Controller):
         website=True,
     )
     def portal_my_referee_assignments(self, page=1, filterby="upcoming", **kw):
+        """Handle the portal my referee assignments flow."""
         Referee = request.env["federation.referee"].with_user(request.env.user).sudo()
         referee = Referee._portal_get_for_user(user=request.env.user)
         if not referee:
@@ -63,6 +64,7 @@ class FederationOfficiatingPortal(http.Controller):
         website=True,
     )
     def portal_my_referee_assignment_detail(self, assignment_id, **kw):
+        """Handle the portal my referee assignment detail flow."""
         Assignment = request.env["federation.match.referee"].with_user(request.env.user).sudo()
         assignment = Assignment.browse(assignment_id)
         try:
@@ -92,6 +94,7 @@ class FederationOfficiatingPortal(http.Controller):
         csrf=True,
     )
     def portal_my_referee_assignment_respond(self, assignment_id, action=None, response_note=None, **kw):
+        """Handle the portal my referee assignment respond flow."""
         Assignment = request.env["federation.match.referee"].with_user(request.env.user).sudo()
         assignment = Assignment.browse(assignment_id)
         try:

@@ -5,6 +5,9 @@ on:
     branches:
       - main
   pull_request:
+  schedule:
+    - cron: '15 2 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -146,3 +149,75 @@ jobs:
         run: |
           chmod +x ci/run_tests.sh
           bash ./ci/run_tests.sh --suite ${{ matrix.suite }}
+
+  odoo-release-surfaces:
+    name: Odoo tests (release_surfaces)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Prepare CI environment file
+        run: |
+          cp ci/.env.example ci/.env
+          password="$(openssl rand -hex 16)"
+          sed -i "s/^CI_PROJECT_NAME=.*/CI_PROJECT_NAME=sf_ci_${GITHUB_RUN_ID}_release/" ci/.env
+          sed -i "s/^CI_POSTGRES_PASSWORD=.*/CI_POSTGRES_PASSWORD=${password}/" ci/.env
+          SMTP_HOST="${{ secrets.SMTP_HOST }}"
+          SMTP_PORT="${{ secrets.SMTP_PORT }}"
+          SMTP_USER="${{ secrets.SMTP_USER }}"
+          SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}"
+          SMTP_USE_TLS="${{ secrets.SMTP_USE_TLS }}"
+          EMAIL_FROM="${{ secrets.EMAIL_FROM }}"
+          SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}"
+          MAILGUN_API_KEY="${{ secrets.MAILGUN_API_KEY }}"
+          OAUTH_GOOGLE_CLIENT_ID="${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}"
+          OAUTH_GOOGLE_CLIENT_SECRET="${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}"
+          OAUTH_GOOGLE_REDIRECT_URI="${{ secrets.OAUTH_GOOGLE_REDIRECT_URI }}"
+          OAUTH_GITHUB_CLIENT_ID="${{ secrets.OAUTH_GITHUB_CLIENT_ID }}"
+          OAUTH_GITHUB_CLIENT_SECRET="${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}"
+          OAUTH_GITHUB_REDIRECT_URI="${{ secrets.OAUTH_GITHUB_REDIRECT_URI }}"
+          TWILIO_ACCOUNT_SID="${{ secrets.TWILIO_ACCOUNT_SID }}"
+          TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}"
+          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          S3_BUCKET="${{ secrets.S3_BUCKET }}"
+          S3_REGION="${{ secrets.S3_REGION }}"
+          ALLOWED_HOSTS="${{ secrets.ALLOWED_HOSTS }}"
+
+          append_if_set() { name="$1"; val="$2"; if [[ -n "$val" ]]; then echo "$name=$val" >> ci/.env; fi; }
+
+          append_if_set "SMTP_HOST" "$SMTP_HOST"
+          append_if_set "SMTP_PORT" "$SMTP_PORT"
+          append_if_set "SMTP_USER" "$SMTP_USER"
+          append_if_set "SMTP_PASSWORD" "$SMTP_PASSWORD"
+          append_if_set "SMTP_USE_TLS" "$SMTP_USE_TLS"
+          append_if_set "EMAIL_FROM" "$EMAIL_FROM"
+          append_if_set "SENDGRID_API_KEY" "$SENDGRID_API_KEY"
+          append_if_set "MAILGUN_API_KEY" "$MAILGUN_API_KEY"
+          append_if_set "OAUTH_GOOGLE_CLIENT_ID" "$OAUTH_GOOGLE_CLIENT_ID"
+          append_if_set "OAUTH_GOOGLE_CLIENT_SECRET" "$OAUTH_GOOGLE_CLIENT_SECRET"
+          append_if_set "OAUTH_GOOGLE_REDIRECT_URI" "$OAUTH_GOOGLE_REDIRECT_URI"
+          append_if_set "OAUTH_GITHUB_CLIENT_ID" "$OAUTH_GITHUB_CLIENT_ID"
+          append_if_set "OAUTH_GITHUB_CLIENT_SECRET" "$OAUTH_GITHUB_CLIENT_SECRET"
+          append_if_set "OAUTH_GITHUB_REDIRECT_URI" "$OAUTH_GITHUB_REDIRECT_URI"
+          append_if_set "TWILIO_ACCOUNT_SID" "$TWILIO_ACCOUNT_SID"
+          append_if_set "TWILIO_AUTH_TOKEN" "$TWILIO_AUTH_TOKEN"
+          append_if_set "SLACK_WEBHOOK_URL" "$SLACK_WEBHOOK_URL"
+          append_if_set "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID"
+          append_if_set "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY"
+          append_if_set "S3_BUCKET" "$S3_BUCKET"
+          append_if_set "S3_REGION" "$S3_REGION"
+          append_if_set "ALLOWED_HOSTS" "$ALLOWED_HOSTS"
+
+      - name: Run broader release-surface suite
+        run: |
+          chmod +x ci/run_tests.sh
+          bash ./ci/run_tests.sh --suite release_surfaces

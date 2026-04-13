@@ -14,6 +14,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "PS Club", "code": "PSC",
@@ -300,6 +301,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertIn("/tournaments/active-tour/schedule", payload)
 
     def test_published_season_slug_and_helper_paths(self):
+        """Test that published season slug and helper paths."""
         resolved = self.env["federation.season"].resolve_public_slug("ps-season")
 
         self.assertEqual(resolved, self.season)
@@ -308,6 +310,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertIn(self.season, self.env["federation.season"].get_public_published_seasons())
 
     def test_editorial_items_only_go_live_inside_publication_window(self):
+        """Test that editorial items only go live inside publication window."""
         live_item = self.env["federation.public.editorial.item"].create({
             "name": "Season Highlight",
             "content_type": "highlight",
@@ -332,6 +335,7 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertNotIn(future_item, items)
 
     def test_team_follow_helpers_expose_schedule_results_and_feed(self):
+        """Test that team follow helpers expose schedule results and feed."""
         schedule_sections = self.team_a.get_public_schedule_sections()
         result_sections = self.team_a.get_public_result_sections()
         payload = self.team_a.get_public_feed_payload()

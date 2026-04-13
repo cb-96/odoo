@@ -5,6 +5,7 @@ class FederationSeasonRegistrationNotifications(models.Model):
     _inherit = "federation.season.registration"
 
     def action_confirm(self):
+        """Execute the confirm action."""
         result = super().action_confirm()
         dispatcher = self.env.get("federation.notification.dispatcher")
         if dispatcher is not None:
@@ -13,6 +14,7 @@ class FederationSeasonRegistrationNotifications(models.Model):
         return result
 
     def action_reject(self, reason=None):
+        """Execute the reject action."""
         submitted_registrations = self.filtered(lambda rec: rec.state == "submitted")
         result = super().action_reject(reason=reason)
         dispatcher = self.env.get("federation.notification.dispatcher")

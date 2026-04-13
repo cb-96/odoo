@@ -35,6 +35,7 @@ class FederationReportSnapshot(models.Model):
 
     @api.depends("snapshot_on", "snapshot_type")
     def _compute_name(self):
+        """Compute name."""
         labels = dict(self._fields["snapshot_type"].selection)
         for record in self:
             label = labels.get(record.snapshot_type, record.snapshot_type or "Snapshot")
@@ -42,11 +43,13 @@ class FederationReportSnapshot(models.Model):
 
     @api.depends("current_value", "previous_value")
     def _compute_delta_value(self):
+        """Compute delta value."""
         for record in self:
             record.delta_value = (record.current_value or 0) - (record.previous_value or 0)
 
     @api.model
     def _build_snapshot_rows(self):
+        """Build snapshot rows."""
         workflow_model = self.env["federation.report.workflow.exception"]
         compliance_model = self.env["federation.report.compliance"]
         finance_follow_up_model = self.env["federation.report.finance.reconciliation"]
@@ -131,6 +134,7 @@ class FederationReportSnapshot(models.Model):
 
     @api.model
     def capture_snapshot(self, snapshot_on=None):
+        """Handle capture snapshot."""
         snapshot_on = fields.Date.to_date(snapshot_on) if snapshot_on else fields.Date.context_today(self)
         records = self.browse([])
         for row in self._build_snapshot_rows():
@@ -163,4 +167,5 @@ class FederationReportSnapshot(models.Model):
 
     @api.model
     def _cron_capture_snapshots(self):
+        """Handle cron capture snapshots."""
         self.capture_snapshot()

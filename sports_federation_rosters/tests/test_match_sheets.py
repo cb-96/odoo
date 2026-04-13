@@ -5,6 +5,7 @@ from odoo.exceptions import ValidationError
 class TestMatchSheets(TransactionCase):
 
     def _create_active_roster(self, name, min_players=1):
+        """Exercise create active roster."""
         rule_set = self.env["federation.rule.set"].create({
             "name": f"{name} Rules",
             "code": name.upper().replace(" ", "_")[:20],
@@ -31,6 +32,7 @@ class TestMatchSheets(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Test Club",
@@ -188,6 +190,7 @@ class TestMatchSheets(TransactionCase):
             })
 
     def test_match_sheet_submit_blocks_ineligible_players_with_reason(self):
+        """Test that match sheet submit blocks ineligible players with reason."""
         rule_set = self.env["federation.rule.set"].create({
             "name": "Match Suspension Rules",
             "code": "MSR",
@@ -232,6 +235,7 @@ class TestMatchSheets(TransactionCase):
             sheet.action_submit()
 
     def test_match_sheet_submit_enforces_squad_minimum(self):
+        """Test that match sheet submit enforces squad minimum."""
         roster, roster_line, _second_line = self._create_active_roster(
             "Sized Roster",
             min_players=2,
@@ -256,6 +260,7 @@ class TestMatchSheets(TransactionCase):
             sheet.action_submit()
 
     def test_match_sheet_substitution_minutes_require_valid_roles(self):
+        """Test that match sheet substitution minutes require valid roles."""
         sheet = self.env["federation.match.sheet"].create({
             "name": "Substitution Rules Sheet",
             "match_id": self.match.id,
@@ -271,6 +276,7 @@ class TestMatchSheets(TransactionCase):
             })
 
     def test_approved_match_sheet_allows_substitution_updates_but_not_lineup_changes(self):
+        """Test that approved match sheet allows substitution updates but not lineup changes."""
         roster, _starter_line, line_roster = self._create_active_roster(
             "Approved Sheet Roster",
             min_players=1,
@@ -303,6 +309,7 @@ class TestMatchSheets(TransactionCase):
             line.write({"jersey_number": "12"})
 
     def test_lock_blocks_any_further_match_sheet_changes(self):
+        """Test that lock blocks any further match sheet changes."""
         roster, starter_line, _unused = self._create_active_roster(
             "Locked Sheet Roster",
             min_players=1,

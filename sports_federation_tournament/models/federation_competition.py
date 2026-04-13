@@ -56,22 +56,27 @@ class FederationCompetition(models.Model):
 
     @api.depends("edition_ids")
     def _compute_edition_count(self):
+        """Compute edition count."""
         for rec in self:
             rec.edition_count = len(rec.edition_ids)
 
     def action_activate(self):
+        """Execute the activate action."""
         for rec in self:
             rec.state = "active"
 
     def action_close(self):
+        """Execute the close action."""
         for rec in self:
             rec.state = "closed"
 
     def action_draft(self):
+        """Execute the draft action."""
         for rec in self:
             rec.state = "draft"
 
     def action_view_editions(self):
+        """Execute the view editions action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_competition_edition_action')
         action['domain'] = [('competition_id', '=', self.id)]

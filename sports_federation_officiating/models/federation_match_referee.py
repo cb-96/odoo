@@ -71,6 +71,7 @@ class FederationMatchReferee(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         records = super().create(vals_list)
         Dispatcher = self.env.get("federation.notification.dispatcher")
         if Dispatcher is not None:
@@ -89,6 +90,7 @@ class FederationMatchReferee(models.Model):
         "state",
     )
     def _compute_assignment_readiness(self):
+        """Compute assignment readiness."""
         for record in self:
             issues = record._get_readiness_issues()
             record.assignment_ready = not bool(issues)
@@ -108,6 +110,7 @@ class FederationMatchReferee(models.Model):
             )
 
     def _has_valid_certification_for_match(self):
+        """Return whether the record has valid certification for match."""
         self.ensure_one()
         if not self.referee_id:
             return False
@@ -127,6 +130,7 @@ class FederationMatchReferee(models.Model):
         return bool(valid_certifications)
 
     def _get_readiness_issues(self):
+        """Return readiness issues."""
         self.ensure_one()
         issues = []
         if not self.referee_id.active:
@@ -138,6 +142,7 @@ class FederationMatchReferee(models.Model):
         return issues
 
     def action_confirm(self):
+        """Execute the confirm action."""
         for rec in self:
             issues = rec._get_readiness_issues()
             if issues:
@@ -149,6 +154,7 @@ class FederationMatchReferee(models.Model):
             })
 
     def action_done(self):
+        """Execute the done action."""
         for rec in self:
             rec.write({
                 "state": "done",
@@ -156,6 +162,7 @@ class FederationMatchReferee(models.Model):
             })
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for rec in self:
             rec.write({
                 "state": "cancelled",
@@ -163,6 +170,7 @@ class FederationMatchReferee(models.Model):
             })
 
     def action_draft(self):
+        """Execute the draft action."""
         for rec in self:
             rec.write({
                 "state": "draft",
@@ -209,6 +217,7 @@ class FederationMatchRefereeExtension(models.Model):
 
     @api.depends("referee_assignment_ids")
     def _compute_referee_assignment_count(self):
+        """Compute referee assignment count."""
         for record in self:
             record.referee_assignment_count = len(record.referee_assignment_ids)
 
@@ -224,6 +233,7 @@ class FederationMatchRefereeExtension(models.Model):
         "referee_assignment_ids.readiness_feedback",
     )
     def _compute_officiating_readiness(self):
+        """Compute officiating readiness."""
         for record in self:
             issues = record._get_officiating_issues()
             confirmed_assignments = record.referee_assignment_ids.filtered(
@@ -241,6 +251,7 @@ class FederationMatchRefereeExtension(models.Model):
             record.official_readiness_issues = "\n".join(issues) if issues else False
 
     def _get_effective_officiating_rule_set(self):
+        """Return effective officiating rule set."""
         self.ensure_one()
         if self.tournament_id and self.tournament_id.rule_set_id:
             return self.tournament_id.rule_set_id
@@ -249,11 +260,13 @@ class FederationMatchRefereeExtension(models.Model):
         return self.env["federation.rule.set"].browse([])
 
     def _get_required_referee_count(self):
+        """Return required referee count."""
         self.ensure_one()
         rule_set = self._get_effective_officiating_rule_set()
         return rule_set.referee_required_count if rule_set else 0
 
     def _get_officiating_issues(self):
+        """Return officiating issues."""
         self.ensure_one()
         issues = []
         confirmed_assignments = self.referee_assignment_ids.filtered(
@@ -299,6 +312,7 @@ class FederationMatchRefereeExtension(models.Model):
         return issues
 
     def action_view_referee_assignments(self):
+        """Execute the view referee assignments action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_officiating.federation_match_referee_action"

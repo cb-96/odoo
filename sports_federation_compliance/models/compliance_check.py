@@ -90,6 +90,7 @@ class FederationComplianceCheck(models.Model):
     )
 
     def _get_target_res_id(self):
+        """Return target res ID."""
         self.ensure_one()
         target_fields_map = {
             "federation.club": self.club_id,
@@ -102,6 +103,7 @@ class FederationComplianceCheck(models.Model):
         return target_record.id if target_record else 0
 
     def _archive_current_state(self):
+        """Archive current state."""
         Archive = self.env["federation.compliance.check.archive"].with_user(self.env.user).sudo()
         for rec in self:
             if not rec.target_model or not rec.requirement_id or not rec._get_target_res_id():
@@ -123,11 +125,13 @@ class FederationComplianceCheck(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         records = super().create(vals_list)
         records._archive_current_state()
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         result = super().write(vals)
         tracked_fields = {
             "status",
@@ -154,6 +158,7 @@ class FederationComplianceCheck(models.Model):
         "club_representative_id",
     )
     def _compute_target_display(self):
+        """Compute target display."""
         for rec in self:
             if rec.club_id:
                 rec.target_display = rec.club_id.name

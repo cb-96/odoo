@@ -5,6 +5,7 @@ from odoo.tests.common import TransactionCase
 class TestRosterPortalAccess(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.portal_group = cls.env.ref(
             "sports_federation_portal.group_federation_portal_club"
@@ -154,6 +155,7 @@ class TestRosterPortalAccess(TransactionCase):
         })
 
     def test_portal_user_only_sees_own_rosters_match_sheets_and_audit(self):
+        """Test that portal user only sees own rosters match sheets and audit."""
         visible_rosters = self.env["federation.team.roster"].with_user(self.user_a).search([])
         self.assertIn(self.roster_a, visible_rosters)
         self.assertNotIn(self.roster_b, visible_rosters)
@@ -167,6 +169,7 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertTrue(all(event.team_id.club_id == self.club_a for event in visible_audits))
 
     def test_team_scoped_coach_only_sees_assigned_team_records(self):
+        """Test that team scoped coach only sees assigned team records."""
         self.assertEqual(self.coach_user.portal_team_scope_ids, self.team_a)
         self.assertFalse(self.coach_user.portal_club_scope_ids)
 
@@ -179,6 +182,7 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertNotIn(self.sheet_b, visible_sheets)
 
     def test_team_scoped_coach_can_prepare_and_submit_assigned_sheet(self):
+        """Test that team scoped coach can prepare and submit assigned sheet."""
         self.sheet_a._portal_update_preparation(
             user=self.coach_user,
             values={
@@ -205,12 +209,14 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertEqual(self.sheet_a.state, "submitted")
 
     def test_portal_user_cannot_modify_roster_records(self):
+        """Test that portal user cannot modify roster records."""
         with self.assertRaises(AccessError):
             self.roster_a.with_user(self.user_a).write({"notes": "Not allowed"})
         with self.assertRaises(AccessError):
             self.sheet_a.with_user(self.user_a).write({"notes": "Not allowed"})
 
     def test_portal_user_can_create_roster_for_confirmed_registration(self):
+        """Test that portal user can create roster for confirmed registration."""
         team_c = self.env["federation.team"].create({
             "name": "Portal Roster Team C",
             "club_id": self.club_a.id,
@@ -233,6 +239,7 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertEqual(roster.create_uid, self.user_a)
 
     def test_portal_user_cannot_create_roster_without_confirmation_or_for_other_club(self):
+        """Test that portal user cannot create roster without confirmation or for other club."""
         draft_team = self.env["federation.team"].create({
             "name": "Portal Draft Team",
             "club_id": self.club_a.id,
@@ -257,6 +264,7 @@ class TestRosterPortalAccess(TransactionCase):
             )
 
     def test_portal_user_can_manage_owned_roster_with_portal_helpers(self):
+        """Test that portal user can manage owned roster with portal helpers."""
         self.roster_a._portal_update_roster(
             user=self.user_a,
             values={"notes": "Updated through portal helper"},
@@ -297,6 +305,7 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertFalse(self.env["federation.team.roster.line"].browse(line_id).exists())
 
     def test_portal_player_picker_filters_by_team_gender(self):
+        """Test that portal player picker filters by team gender."""
         women_team = self.env["federation.team"].create({
             "name": "Portal Women Team",
             "club_id": self.club_a.id,

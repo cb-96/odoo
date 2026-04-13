@@ -111,6 +111,7 @@ class FederationDocumentSubmission(models.Model):
         "club_representative_id",
     )
     def _compute_target_display(self):
+        """Compute target display."""
         for rec in self:
             if rec.club_id:
                 rec.target_display = rec.club_id.name
@@ -190,17 +191,20 @@ class FederationDocumentSubmission(models.Model):
 
     @api.depends("expiry_date")
     def _compute_is_expired(self):
+        """Compute is expired."""
         today = fields.Date.context_today(self)
         for rec in self:
             rec.is_expired = bool(rec.expiry_date and rec.expiry_date < today)
 
     def _search_is_expired(self, operator, value):
+        """Handle search is expired."""
         today = fields.Date.context_today(self)
         if (operator == "=" and value) or (operator == "!=" and not value):
             return [("expiry_date", "<", today), ("expiry_date", "!=", False)]
         return ["|", ("expiry_date", ">=", today), ("expiry_date", "=", False)]
 
     def _get_target_record(self):
+        """Return target record."""
         self.ensure_one()
         return (
             self.club_id
@@ -211,6 +215,7 @@ class FederationDocumentSubmission(models.Model):
         )
 
     def _portal_get_effective_status(self):
+        """Handle the portal-specific get effective status flow."""
         self.ensure_one()
         if self.status == "approved" and self.is_expired:
             return "expired"
@@ -218,6 +223,7 @@ class FederationDocumentSubmission(models.Model):
 
     @api.model
     def _portal_get_status_metadata(self, status_key, latest_submission=None):
+        """Handle the portal-specific get status metadata flow."""
         metadata = {
             "missing": {"label": "Missing", "tone": "danger"},
             "draft": {"label": "Draft", "tone": "secondary"},
@@ -242,6 +248,7 @@ class FederationDocumentSubmission(models.Model):
         return meta
 
     def _recompute_related_checks(self):
+        """Handle recompute related checks."""
         Check = self.env["federation.compliance.check"]
         for record in self:
             target_record = record._get_target_record()
@@ -250,6 +257,7 @@ class FederationDocumentSubmission(models.Model):
 
     @api.model
     def _portal_prepare_submission(self, requirement, target_record, values=None, user=None):
+        """Handle the portal-specific prepare submission flow."""
         values = values or {}
         user = user or self.env.user
         Requirement = self.env["federation.document.requirement"]

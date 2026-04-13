@@ -73,6 +73,7 @@ class FederationMatchIncident(models.Model):
 
     @api.constrains("match_id", "player_id", "club_id", "referee_id")
     def _check_subject_reference(self):
+        """Validate subject reference."""
         for record in self:
             if not any([
                 record.match_id,

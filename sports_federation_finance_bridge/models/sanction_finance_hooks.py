@@ -6,11 +6,13 @@ class FederationSanctionFinanceHooks(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         sanctions = super().create(vals_list)
         sanctions._sync_fine_finance_event()
         return sanctions
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         should_sync = any(
             key in vals
             for key in ("sanction_type", "amount", "player_id", "club_id", "referee_id", "case_id")
@@ -21,6 +23,7 @@ class FederationSanctionFinanceHooks(models.Model):
         return res
 
     def _sync_fine_finance_event(self):
+        """Synchronize fine finance event."""
         FinanceEvent = self.env["federation.finance.event"]
         for sanction in self:
             fee_type = sanction._get_discipline_fine_fee_type(
@@ -54,6 +57,7 @@ class FederationSanctionFinanceHooks(models.Model):
                 existing_event.action_cancel()
 
     def _get_finance_subject_vals(self):
+        """Return finance subject vals."""
         self.ensure_one()
         player = self.player_id or self.case_id.subject_player_id
         club = self.club_id or self.case_id.subject_club_id
@@ -65,6 +69,7 @@ class FederationSanctionFinanceHooks(models.Model):
         }
 
     def _get_discipline_fine_fee_type(self, create_if_missing=True):
+        """Return discipline fine fee type."""
         self.ensure_one()
         fee_type = self.env["federation.fee.type"].search(
             [("code", "=", "discipline_fine")],

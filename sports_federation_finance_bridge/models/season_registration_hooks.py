@@ -6,11 +6,13 @@ class FederationSeasonRegistrationFinanceHooks(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         registrations = super().create(vals_list)
         registrations.filtered(lambda rec: rec.state == "confirmed")._ensure_registration_finance_event()
         return registrations
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         should_create_events = vals.get("state") == "confirmed"
         res = super().write(vals)
         if should_create_events:
@@ -18,6 +20,7 @@ class FederationSeasonRegistrationFinanceHooks(models.Model):
         return res
 
     def _ensure_registration_finance_event(self):
+        """Handle ensure registration finance event."""
         finance_event_model = self.env["federation.finance.event"].sudo()
         for registration in self:
             registration_sudo = registration.sudo()
@@ -38,6 +41,7 @@ class FederationSeasonRegistrationFinanceHooks(models.Model):
             )
 
     def _get_registration_fee_type(self):
+        """Return registration fee type."""
         self.ensure_one()
         fee_type_model = self.env["federation.fee.type"].sudo()
         fee_type = fee_type_model.search(

@@ -26,6 +26,7 @@ class EligibilityResult:
     """Lightweight data class for an eligibility check outcome."""
 
     def __init__(self, eligible=True, reasons=None):
+        """Handle init."""
         self.eligible = eligible
         self.reasons = reasons or []
 
@@ -37,6 +38,7 @@ class EligibilityResult:
         return self
 
     def to_dict(self):
+        """Convert the value to dict."""
         return {"eligible": self.eligible, "reasons": self.reasons}
 
 
@@ -202,6 +204,7 @@ class FederationEligibilityService(models.AbstractModel):
         return ref.year - born.year - ((ref.month, ref.day) < (born.month, born.day))
 
     def _check_age_min(self, rule, player, context):
+        """Validate age min."""
         ref = context.get("match_date") or date.today()
         age = self._player_age(player, ref)
         if age is None:
@@ -217,6 +220,7 @@ class FederationEligibilityService(models.AbstractModel):
         return EligibilityResult()
 
     def _check_age_max(self, rule, player, context):
+        """Validate age max."""
         ref = context.get("match_date") or date.today()
         age = self._player_age(player, ref)
         if age is None:
@@ -232,6 +236,7 @@ class FederationEligibilityService(models.AbstractModel):
         return EligibilityResult()
 
     def _check_gender(self, rule, player):
+        """Validate gender."""
         if not rule.allowed_categories:
             return EligibilityResult()
         allowed = [c.strip().lower() for c in rule.allowed_categories.split(",")]

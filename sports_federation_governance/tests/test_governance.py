@@ -7,6 +7,7 @@ class TestGovernance(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create test user
         cls.user = cls.env.ref("base.user_admin")
@@ -83,6 +84,7 @@ class TestGovernance(TransactionCase):
         self.assertEqual(request.outcome_ids[0].outcome, "implemented")
 
     def test_override_outcome_records_request_snapshot(self):
+        """Test that override outcome records request snapshot."""
         request = self.env["federation.override.request"].create({
             "name": "Tracked Request",
             "request_type": "standing_adjustment",

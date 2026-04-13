@@ -21,5 +21,6 @@ class FederationSeasonRegistration(models.Model):
 
     @api.onchange("competition_id")
     def _onchange_competition_id(self):
+        """Handle onchange competition ID."""
         if self.competition_id and self.competition_id.rule_set_id:
             self.rule_set_id = self.competition_id.rule_set_id

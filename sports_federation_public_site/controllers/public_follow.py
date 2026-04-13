@@ -8,6 +8,7 @@ from .public_competitions import PublicTournamentHubController
 
 class PublicSeasonAndTeamController(PublicTournamentHubController):
     def _resolve_season(self, season_slug=None, season_id=None):
+        """Resolve season."""
         Season = request.env["federation.season"]
         if season_id:
             return Season.sudo().browse(int(season_id))
@@ -17,6 +18,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/seasons"], type="http", auth="public", website=True)
     def seasons_list(self, **kw):
+        """Handle seasons list."""
         seasons = request.env["federation.season"].get_public_published_seasons()
         values = {
             "seasons": seasons,
@@ -26,6 +28,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/seasons/<string:season_slug>", "/season/<int:season_id>"], type="http", auth="public", website=True)
     def season_detail(self, season_slug=None, season_id=None, **kw):
+        """Handle season detail."""
         season = self._resolve_season(season_slug=season_slug, season_id=season_id)
         if not season.exists() or not season.can_access_public_detail():
             return request.not_found()
@@ -50,6 +53,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/teams/<string:team_slug>/schedule"], type="http", auth="public", website=True)
     def team_schedule(self, team_slug, **kw):
+        """Handle team schedule."""
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()
@@ -67,6 +71,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/teams/<string:team_slug>/results"], type="http", auth="public", website=True)
     def team_results(self, team_slug, **kw):
+        """Handle team results."""
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()
@@ -84,6 +89,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/teams/<string:team_slug>/schedule.ics"], type="http", auth="public", methods=["GET"])
     def team_schedule_ics(self, team_slug, **kw):
+        """Handle team schedule ICS."""
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()
@@ -105,6 +111,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
 
     @http.route(["/api/v1/teams/<string:team_slug>/feed"], type="http", auth="public", methods=["GET"])
     def team_feed_v1(self, team_slug, **kw):
+        """Handle team feed v1."""
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()

@@ -25,10 +25,12 @@ class FederationTournament(models.Model):
 
     @api.depends("registration_request_ids")
     def _compute_registration_request_count(self):
+        """Compute registration request count."""
         for tournament in self:
             tournament.registration_request_count = len(tournament.registration_request_ids)
 
     def action_view_registration_requests(self):
+        """Execute the view registration requests action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_portal.action_federation_tournament_registration"
@@ -39,6 +41,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def _portal_get_workspace_team_domain(self, user=None):
+        """Handle the portal-specific get workspace team domain flow."""
         user = user or self.env.user
         club_scope = user.portal_club_scope_ids
         team_scope = user.portal_team_scope_ids
@@ -53,9 +56,11 @@ class FederationTournament(models.Model):
 
     @api.model
     def _portal_has_workspace_access(self, user=None):
+        """Handle the portal-specific has workspace access flow."""
         return self._portal_get_workspace_team_domain(user=user) != [("id", "=", False)]
 
     def _portal_get_registration_checkpoint(self, registration, participant):
+        """Handle the portal-specific get registration checkpoint flow."""
         self.ensure_one()
         if participant and participant.state == "confirmed":
             return {
@@ -123,6 +128,7 @@ class FederationTournament(models.Model):
         }
 
     def _portal_get_roster_checkpoint(self, roster):
+        """Handle the portal-specific get roster checkpoint flow."""
         self.ensure_one()
         if not roster:
             return {
@@ -184,6 +190,7 @@ class FederationTournament(models.Model):
         }
 
     def _portal_get_workspace_entry(self, team, user=None):
+        """Handle the portal-specific get workspace entry flow."""
         self.ensure_one()
         user = user or self.env.user
 
@@ -275,6 +282,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def _portal_workspace_entry_has_activity(self, entry):
+        """Handle the portal-specific workspace entry has activity flow."""
         return bool(
             entry["tournament_registration"]
             or entry["participant"]
@@ -284,6 +292,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def _portal_get_workspace_entry_for_user(self, tournament_id, team_id, user=None):
+        """Handle the portal-specific get workspace entry for user flow."""
         user = user or self.env.user
         team_domain = self._portal_get_workspace_team_domain(user=user)
         if team_domain == [("id", "=", False)]:
@@ -313,6 +322,7 @@ class FederationTournament(models.Model):
 
     @api.model
     def _portal_get_workspace_entries(self, user=None):
+        """Handle the portal-specific get workspace entries flow."""
         user = user or self.env.user
         team_domain = self._portal_get_workspace_team_domain(user=user)
         if team_domain == [("id", "=", False)]:

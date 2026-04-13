@@ -10,6 +10,7 @@ class TestFederationReferee(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.referee = cls.env["federation.referee"].create({
             "name": "Test Referee",
@@ -18,10 +19,12 @@ class TestFederationReferee(TransactionCase):
         })
 
     def test_create_referee(self):
+        """Test that create referee."""
         self.assertTrue(self.referee.id)
         self.assertEqual(self.referee.certification_level, "national")
 
     def test_certification_count(self):
+        """Test that certification count."""
         self.assertEqual(self.referee.certification_count, 0)
         self.env["federation.referee.certification"].create({
             "name": "CERT-001",
@@ -37,12 +40,14 @@ class TestRefereeCertification(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.referee = cls.env["federation.referee"].create({
             "name": "Cert Referee",
         })
 
     def test_create_certification(self):
+        """Test that create certification."""
         cert = self.env["federation.referee.certification"].create({
             "name": "CERT-002",
             "referee_id": self.referee.id,
@@ -53,6 +58,7 @@ class TestRefereeCertification(TransactionCase):
         self.assertTrue(cert.active)
 
     def test_certification_invalid_dates(self):
+        """Test that certification invalid dates."""
         with self.assertRaises(ValidationError):
             self.env["federation.referee.certification"].create({
                 "name": "CERT-BAD",
@@ -63,6 +69,7 @@ class TestRefereeCertification(TransactionCase):
             })
 
     def test_duplicate_certification_rejected(self):
+        """Test that duplicate certification rejected."""
         self.env["federation.referee.certification"].create({
             "name": "CERT-003",
             "referee_id": self.referee.id,
@@ -83,6 +90,7 @@ class TestMatchReferee(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Ref Test Club", "code": "RTC",
@@ -114,6 +122,7 @@ class TestMatchReferee(TransactionCase):
         })
 
     def test_assign_referee_to_match(self):
+        """Test that assign referee to match."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -124,6 +133,7 @@ class TestMatchReferee(TransactionCase):
         self.assertEqual(assignment.tournament_id, self.tournament)
 
     def test_assignment_state_transitions(self):
+        """Test that assignment state transitions."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -139,6 +149,7 @@ class TestMatchReferee(TransactionCase):
         self.assertEqual(assignment.state, "cancelled")
 
     def test_duplicate_role_rejected(self):
+        """Test that duplicate role rejected."""
         self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -153,6 +164,7 @@ class TestMatchReferee(TransactionCase):
             self.env.cr.flush()
 
     def test_different_roles_allowed(self):
+        """Test that different roles allowed."""
         ref2 = self.env["federation.referee"].create({
             "name": "Assistant Ref",
         })
@@ -169,6 +181,7 @@ class TestMatchReferee(TransactionCase):
         self.assertTrue(assignment2.id)
 
     def test_assignment_count_computed(self):
+        """Test that assignment count computed."""
         self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -178,6 +191,7 @@ class TestMatchReferee(TransactionCase):
         self.assertEqual(self.referee.assignment_count, 1)
 
     def test_confirmation_deadline_is_48_hours_before_match(self):
+        """Test that confirmation deadline is 48 hours before match."""
         self.match.write({"date_scheduled": "2024-06-20 18:00:00"})
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
@@ -191,6 +205,7 @@ class TestMatchReferee(TransactionCase):
         )
 
     def test_overdue_assignment_is_flagged(self):
+        """Test that overdue assignment is flagged."""
         self.match.write({"date_scheduled": "2024-01-05 12:00:00"})
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
@@ -201,6 +216,7 @@ class TestMatchReferee(TransactionCase):
         self.assertTrue(assignment.is_confirmation_overdue)
 
     def test_confirm_rejects_expired_certification(self):
+        """Test that confirm rejects expired certification."""
         expired_referee = self.env["federation.referee"].create({
             "name": "Expired Referee",
             "certification_level": "national",
@@ -223,6 +239,7 @@ class TestMatchReferee(TransactionCase):
             assignment.action_confirm()
 
     def test_match_readiness_detects_missing_head_referee(self):
+        """Test that match readiness detects missing head referee."""
         rule_set = self.env["federation.rule.set"].create({
             "name": "Officiating Ready Rules",
             "code": "OFFREADY",
@@ -245,6 +262,7 @@ class TestMatchReferee(TransactionCase):
         self.assertEqual(self.match.missing_referees_count, 1)
 
     def test_match_readiness_becomes_ready_with_required_confirmed_officials(self):
+        """Test that match readiness becomes ready with required confirmed officials."""
         rule_set = self.env["federation.rule.set"].create({
             "name": "Full Officiating Rules",
             "code": "FULLOFF",

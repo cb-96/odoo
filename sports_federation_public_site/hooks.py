@@ -1,2 +1,3 @@
 def post_init_hook(env):
-    env["website.menu"]._cleanup_stale_public_site_menus()
+    """Run the module post-init hook."""
+    env["website"]._cleanup_default_public_site_content()

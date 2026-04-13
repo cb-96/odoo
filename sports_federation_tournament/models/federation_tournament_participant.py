@@ -59,6 +59,7 @@ class FederationTournamentParticipant(models.Model):
 
     @api.depends("team_id", "tournament_id")
     def _compute_name(self):
+        """Compute name."""
         for rec in self:
             if rec.team_id and rec.tournament_id:
                 rec.name = f"{rec.team_id.name} @ {rec.tournament_id.name}"
@@ -67,6 +68,7 @@ class FederationTournamentParticipant(models.Model):
 
     @api.depends("tournament_id", "team_id")
     def _compute_team_selection(self):
+        """Compute team selection."""
         Team = self.env["federation.team"]
         for rec in self:
             if not rec.tournament_id:
@@ -85,6 +87,7 @@ class FederationTournamentParticipant(models.Model):
             )
 
     def _render_excluded_team_feedback_html(self, excluded_teams):
+        """Handle render excluded team feedback HTML."""
         if not excluded_teams:
             return False
 
@@ -104,6 +107,7 @@ class FederationTournamentParticipant(models.Model):
         return f"<p>{intro}</p><ul>{items}</ul>"
 
     def _get_team_unavailability_reason(self, team):
+        """Return team unavailability reason."""
         self.ensure_one()
         return self.tournament_id.get_participant_team_unavailability_reason(
             team,
@@ -112,6 +116,7 @@ class FederationTournamentParticipant(models.Model):
 
     @api.onchange("tournament_id")
     def _onchange_tournament_id(self):
+        """Handle onchange tournament ID."""
         domain = [("id", "in", self.available_team_ids.ids)]
         if self.team_id and self.tournament_id and self.team_id not in self.available_team_ids:
             warning = {
@@ -124,6 +129,7 @@ class FederationTournamentParticipant(models.Model):
 
     @api.constrains("team_id", "tournament_id")
     def _check_team_eligibility(self):
+        """Validate team eligibility."""
         for rec in self:
             if not rec.team_id or not rec.tournament_id:
                 continue
@@ -132,6 +138,7 @@ class FederationTournamentParticipant(models.Model):
                 raise ValidationError(error)
 
     def action_confirm(self):
+        """Execute the confirm action."""
         for rec in self:
             rec.state = "confirmed"
             Dispatcher = rec.env.get("federation.notification.dispatcher")
@@ -139,5 +146,6 @@ class FederationTournamentParticipant(models.Model):
                 Dispatcher.send_participant_confirmed(rec)
 
     def action_withdraw(self):
+        """Execute the withdraw action."""
         for rec in self:
             rec.state = "withdrawn"

@@ -7,6 +7,7 @@ class TestNotifications(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create test club
         cls.club = cls.env["federation.club"].create({
@@ -67,7 +68,51 @@ class TestNotifications(TransactionCase):
         except Exception as e:
             self.fail(f"Cron method raised exception: {e}")
 
+    def test_suspension_activation_creates_notification_log(self):
+        """Test that suspension activation creates notification log."""
+        Suspension = self.env.get("federation.suspension")
+        DisciplineCase = self.env.get("federation.disciplinary.case")
+        if Suspension is None or DisciplineCase is None:
+            self.skipTest("Discipline module is not installed in this test run.")
+
+        player = self.env["federation.player"].create({
+            "first_name": "Suspended",
+            "last_name": "Player",
+            "club_id": self.club.id,
+            "email": "suspended.player@example.com",
+        })
+        case = DisciplineCase.create({
+            "name": "Suspension Notification Case",
+            "subject_player_id": player.id,
+            "summary": "Suspension notification coverage.",
+        })
+        suspension = Suspension.create({
+            "name": "One Match Suspension",
+            "case_id": case.id,
+            "player_id": player.id,
+            "date_start": "2026-07-01",
+            "date_end": "2026-07-07",
+            "notes": "Activated during notification test.",
+        })
+
+        suspension.action_activate()
+
+        log = self.env["federation.notification.log"].search(
+            [
+                ("target_model", "=", "federation.suspension"),
+                ("target_res_id", "=", suspension.id),
+                ("name", "=", "Suspension issued: One Match Suspension"),
+            ],
+            limit=1,
+        )
+        self.assertTrue(log)
+        self.assertIn(log.state, ("sent", "failed"))
+        self.assertNotIn("[stub]", log.name)
+        self.assertIn("suspended.player@example.com", log.recipient_email)
+        self.assertIn("test@example.com", log.recipient_email)
+
     def test_season_registration_confirm_creates_notification_log(self):
+        """Test that season registration confirm creates notification log."""
         portal_group = self.env.ref(
             "sports_federation_portal.group_federation_portal_club"
         )
@@ -121,6 +166,7 @@ class TestNotifications(TransactionCase):
         self.assertIn(log.state, ("sent", "failed"))
 
     def test_season_registration_reject_creates_notification_log(self):
+        """Test that season registration reject creates notification log."""
         portal_group = self.env.ref(
             "sports_federation_portal.group_federation_portal_club"
         )
@@ -175,6 +221,7 @@ class TestNotifications(TransactionCase):
         self.assertEqual(registration.rejection_reason, "Missing supporting document")
 
     def test_referee_shortage_alert_creates_notification_log(self):
+        """Test that referee shortage alert creates notification log."""
         season = self.env["federation.season"].create({
             "name": "Notification Match Season",
             "code": "NMSEASON",

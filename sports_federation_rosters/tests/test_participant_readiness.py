@@ -7,6 +7,7 @@ from odoo.tests.common import TransactionCase
 class TestParticipantReadiness(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.today = date.today()
         cls.season_start = cls.today - timedelta(days=30)
@@ -61,6 +62,7 @@ class TestParticipantReadiness(TransactionCase):
         })
 
     def _create_ready_roster(self, team, player, name):
+        """Exercise create ready roster."""
         roster = self.env["federation.team.roster"].create({
             "name": name,
             "team_id": team.id,
@@ -85,6 +87,7 @@ class TestParticipantReadiness(TransactionCase):
         return roster
 
     def test_participant_confirm_allows_missing_roster_before_deadline(self):
+        """Test that participant confirm allows missing roster before deadline."""
         participant = self.env["federation.tournament.participant"].create({
             "tournament_id": self.tournament.id,
             "team_id": self.team.id,
@@ -101,6 +104,7 @@ class TestParticipantReadiness(TransactionCase):
         self.assertEqual(participant.state, "confirmed")
 
     def test_participant_confirm_allows_group_workflow_once_deadline_reached(self):
+        """Test that participant confirm allows group workflow once deadline reached."""
         urgent_tournament = self.env["federation.tournament"].create({
             "name": "Participant Deadline Tournament",
             "code": "PRT-DEADLINE",
@@ -122,6 +126,7 @@ class TestParticipantReadiness(TransactionCase):
         self.assertEqual(participant.state, "confirmed")
 
     def test_participant_confirm_succeeds_with_ready_roster(self):
+        """Test that participant confirm succeeds with ready roster."""
         self._create_ready_roster(
             self.team,
             self.player,
@@ -139,6 +144,7 @@ class TestParticipantReadiness(TransactionCase):
         self.assertFalse(participant.confirmation_feedback)
 
     def test_match_schedule_within_deadline_requires_ready_team_rosters(self):
+        """Test that match schedule within deadline requires ready team rosters."""
         urgent_tournament = self.env["federation.tournament"].create({
             "name": "Roster Deadline Match Tournament",
             "code": "PRT-MATCH-DEADLINE",
@@ -156,6 +162,7 @@ class TestParticipantReadiness(TransactionCase):
             })
 
     def test_match_schedule_within_deadline_allows_ready_team_rosters(self):
+        """Test that match schedule within deadline allows ready team rosters."""
         urgent_tournament = self.env["federation.tournament"].create({
             "name": "Roster Deadline Match Ready Tournament",
             "code": "PRT-MATCH-READY",

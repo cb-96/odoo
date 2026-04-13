@@ -5,6 +5,7 @@ from odoo.tests.common import TransactionCase
 class TestSeasonRegistrationOwnership(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.portal_group = cls.env.ref(
             "sports_federation_portal.group_federation_portal_club"
@@ -55,6 +56,7 @@ class TestSeasonRegistrationOwnership(TransactionCase):
         )
 
     def test_portal_user_can_create_owned_season_registration(self):
+        """Test that portal user can create owned season registration."""
         registration = self.env["federation.season.registration"].with_user(
             self.user
         ).create(
@@ -69,6 +71,7 @@ class TestSeasonRegistrationOwnership(TransactionCase):
         self.assertEqual(registration.state, "submitted")
 
     def test_portal_user_cannot_create_other_club_registration(self):
+        """Test that portal user cannot create other club registration."""
         with self.assertRaises(ValidationError):
             self.env["federation.season.registration"].with_user(self.user).create(
                 {
@@ -78,6 +81,7 @@ class TestSeasonRegistrationOwnership(TransactionCase):
             )
 
     def test_submitted_registration_can_be_confirmed_by_staff(self):
+        """Test that submitted registration can be confirmed by staff."""
         registration = self.env["federation.season.registration"].with_user(
             self.user
         ).create(

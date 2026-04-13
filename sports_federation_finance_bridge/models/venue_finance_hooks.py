@@ -7,11 +7,13 @@ class FederationMatchVenueFinanceHooks(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         matches = super().create(vals_list)
         matches._sync_venue_finance_event()
         return matches
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         should_sync = any(key in vals for key in ("state", "venue_id"))
         res = super().write(vals)
         if should_sync:
@@ -19,6 +21,7 @@ class FederationMatchVenueFinanceHooks(models.Model):
         return res
 
     def _sync_venue_finance_event(self):
+        """Synchronize venue finance event."""
         FinanceEvent = self.env["federation.finance.event"]
         for match in self:
             fee_type = match._get_venue_fee_type(create_if_missing=bool(match.venue_id and match.state == "scheduled"))
@@ -44,6 +47,7 @@ class FederationMatchVenueFinanceHooks(models.Model):
                 existing_event.action_cancel()
 
     def _get_venue_fee_type(self, create_if_missing=True, fee_type_code="venue_booking"):
+        """Return venue fee type."""
         self.ensure_one()
         fee_type = self.env["federation.fee.type"].search(
             [("code", "=", fee_type_code)],
@@ -63,6 +67,7 @@ class FederationMatchVenueFinanceHooks(models.Model):
         )
 
     def action_create_venue_finance_event(self, fee_type_code="venue_booking", amount=None, partner=None, note=None):
+        """Execute the create venue finance event action."""
         events = self.env["federation.finance.event"]
 
         for match in self:

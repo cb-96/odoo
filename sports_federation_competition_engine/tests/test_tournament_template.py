@@ -5,6 +5,7 @@ from odoo.tests.common import TransactionCase
 class TestCompetitionEngineWizardGuards(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({"name": "Wizard Club", "code": "WCLUB"})
         cls.season = cls.env["federation.season"].create({
@@ -47,6 +48,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
             })
 
     def test_round_robin_wizard_requires_rule_set(self):
+        """Test that round robin wizard requires rule set."""
         wizard = self.env["federation.round.robin.wizard"].create({
             "tournament_id": self.tournament.id,
             "stage_id": self.stage.id,
@@ -56,6 +58,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
             wizard.action_generate()
 
     def test_round_robin_wizard_computes_preview_summary(self):
+        """Test that round robin wizard computes preview summary."""
         wizard = self.env["federation.round.robin.wizard"].new({
             "tournament_id": self.tournament.id,
             "stage_id": self.stage.id,
@@ -70,6 +73,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
         self.assertIn("6 total matches", wizard.summary)
 
     def test_round_robin_wizard_summary_explains_confirmed_scope_requirement(self):
+        """Test that round robin wizard summary explains confirmed scope requirement."""
         self.participants[:3].write({"state": "registered"})
         wizard = self.env["federation.round.robin.wizard"].new({
             "tournament_id": self.tournament.id,
@@ -83,6 +87,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
         self.assertIn("Found 1 confirmed", wizard.summary)
 
     def test_round_robin_wizard_rejects_selected_unconfirmed_participants(self):
+        """Test that round robin wizard rejects selected unconfirmed participants."""
         rule_set = self.env["federation.rule.set"].create({
             "name": "Wizard Rule Set",
             "code": "WRS",
@@ -100,6 +105,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
             wizard.action_generate()
 
     def test_knockout_wizard_requires_rule_set(self):
+        """Test that knockout wizard requires rule set."""
         wizard = self.env["federation.knockout.wizard"].create({
             "tournament_id": self.tournament.id,
             "stage_id": self.knockout_stage.id,
@@ -113,6 +119,7 @@ class TestCompetitionEngineWizardGuards(TransactionCase):
 class TestTournamentTemplate(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.season = cls.env["federation.season"].create({
             "name": "Template Season",
@@ -128,6 +135,7 @@ class TestTournamentTemplate(TransactionCase):
         })
 
     def test_template_apply_creates_stages_groups_and_progressions(self):
+        """Test that template apply creates stages groups and progressions."""
         template = self.env["federation.tournament.template"].create({
             "name": "Two Stage Template",
         })
@@ -175,6 +183,7 @@ class TestTournamentTemplate(TransactionCase):
         self.assertTrue(progression.auto_advance)
 
     def test_template_apply_rejects_tournament_with_existing_stages(self):
+        """Test that template apply rejects tournament with existing stages."""
         template = self.env["federation.tournament.template"].create({"name": "Existing Stage Template"})
         self.env["federation.tournament.template.line"].create({
             "template_id": template.id,

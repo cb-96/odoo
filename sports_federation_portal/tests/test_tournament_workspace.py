@@ -4,6 +4,7 @@ from odoo.tests.common import TransactionCase
 class TestTournamentWorkspace(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.portal_group = cls.env.ref(
             "sports_federation_portal.group_federation_portal_club"
@@ -248,12 +249,14 @@ class TestTournamentWorkspace(TransactionCase):
         cls.past_sheet.write({"state": "approved"})
 
     def _workspace_entry(self, entries, tournament, team):
+        """Exercise workspace entry."""
         for entry in entries:
             if entry["tournament"] == tournament and entry["team"] == team:
                 return entry
         self.fail("Workspace entry not found")
 
     def test_workspace_entries_summarize_active_tournament_operations(self):
+        """Test that workspace entries summarize active tournament operations."""
         entries = self.env["federation.tournament"]._portal_get_workspace_entries(
             user=self.user_a
         )
@@ -289,6 +292,7 @@ class TestTournamentWorkspace(TransactionCase):
         self.assertEqual(live_entry["result_follow_up_rows"][0]["sheet"], self.past_sheet)
 
     def test_workspace_entry_lookup_enforces_portal_scope(self):
+        """Test that workspace entry lookup enforces portal scope."""
         own_entry = self.env["federation.tournament"]._portal_get_workspace_entry_for_user(
             self.live_tournament.id,
             self.team_a.id,
@@ -304,6 +308,7 @@ class TestTournamentWorkspace(TransactionCase):
         self.assertFalse(other_team_entry)
 
     def test_team_scoped_coach_only_sees_assigned_team_workspaces(self):
+        """Test that team scoped coach only sees assigned team workspaces."""
         entries = self.env["federation.tournament"]._portal_get_workspace_entries(
             user=self.coach_user
         )

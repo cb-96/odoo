@@ -41,6 +41,7 @@ class FederationSeasonRegistration(models.Model):
 
     @api.constrains("team_id", "club_id", "user_id")
     def _check_portal_ownership(self):
+        """Validate portal ownership."""
         for rec in self:
             if rec.user_id and rec.team_id and rec.club_id:
                 rep = self.env["federation.club.representative"].search(

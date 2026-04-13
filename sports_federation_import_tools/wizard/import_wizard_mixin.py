@@ -52,6 +52,7 @@ class FederationImportWizardMixin(models.AbstractModel):
     preview_file_checksum = fields.Char(readonly=True)
 
     def _compute_mapping_guide(self):
+        """Compute mapping guide."""
         for wizard in self:
             parts = []
             if wizard.template_id:
@@ -62,24 +63,29 @@ class FederationImportWizardMixin(models.AbstractModel):
             wizard.mapping_guide = "\n\n".join(part for part in parts if part)
 
     def _default_template_id(self):
+        """Handle default template ID."""
         return self.env["federation.import.template"].search(
             [("wizard_model", "=", self._name)],
             limit=1,
         )
 
     def _get_mapping_guide(self):
+        """Return mapping guide."""
         return ""
 
     def _get_import_target_model(self):
+        """Return import target model."""
         return ""
 
     def _current_upload_checksum(self):
+        """Handle current upload checksum."""
         self.ensure_one()
         if not self.upload_file:
             raise ValidationError("Please upload a CSV file.")
         return hashlib.sha256(base64.b64decode(self.upload_file)).hexdigest()
 
     def _get_target_record_count(self):
+        """Return target record count."""
         self.ensure_one()
         target_model = self._get_import_target_model()
         if not target_model:
@@ -87,6 +93,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return self.env[target_model].search_count([])
 
     def _build_preview_verification_summary(self):
+        """Build preview verification summary."""
         self.ensure_one()
         return "\n".join(
             [
@@ -99,6 +106,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         )
 
     def _build_execution_verification_summary(self, baseline_count):
+        """Build execution verification summary."""
         self.ensure_one()
         after_count = self._get_target_record_count()
         net_new = after_count - (baseline_count or 0)
@@ -114,6 +122,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         )
 
     def _ensure_live_import_approved(self):
+        """Handle ensure live import approved."""
         self.ensure_one()
         if not self.template_id or not self.template_id.approval_required:
             return
@@ -132,6 +141,7 @@ class FederationImportWizardMixin(models.AbstractModel):
             )
 
     def _prepare_import_execution(self):
+        """Prepare import execution."""
         self.ensure_one()
         if self.dry_run:
             return 0
@@ -139,6 +149,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return self._get_target_record_count()
 
     def _reopen_wizard(self):
+        """Handle reopen wizard."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
@@ -157,6 +168,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         error_categories=None,
         baseline_count=0,
     ):
+        """Handle finalize import result."""
         self.ensure_one()
         checksum = self._current_upload_checksum()
         result_message = self._build_result_message(
@@ -205,6 +217,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return self._reopen_wizard()
 
     def action_request_approval(self):
+        """Execute the request approval action."""
         self.ensure_one()
         if not self.template_id:
             raise ValidationError("Select an import template before requesting approval.")
@@ -241,6 +254,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return self._reopen_wizard()
 
     def action_approve_import(self):
+        """Execute the approve import action."""
         self.ensure_one()
         if not self.env.user.has_group("sports_federation_base.group_federation_manager"):
             raise AccessError("Only federation managers can approve import jobs.")
@@ -254,6 +268,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return self._reopen_wizard()
 
     def action_view_governance_job(self):
+        """Execute the view governance job action."""
         self.ensure_one()
         if not self.governance_job_id:
             raise ValidationError("No governance job is linked to this import yet.")
@@ -267,6 +282,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         }
 
     def _get_csv_reader(self):
+        """Return CSV reader."""
         self.ensure_one()
         if not self.upload_file:
             raise ValidationError("Please upload a CSV file.")
@@ -286,11 +302,13 @@ class FederationImportWizardMixin(models.AbstractModel):
         return reader
 
     def _require_columns(self, fieldnames, required_columns):
+        """Handle require columns."""
         missing = [column for column in required_columns if column not in fieldnames]
         if missing:
             raise ValidationError(f"Missing required columns: {', '.join(missing)}")
 
     def _get_row_value(self, row, *candidates):
+        """Return row value."""
         for candidate in candidates:
             value = row.get(candidate)
             if value not in (None, False):
@@ -300,10 +318,12 @@ class FederationImportWizardMixin(models.AbstractModel):
         return ""
 
     def _record_error(self, errors, error_categories, row_num, category, message):
+        """Record error."""
         errors.append(f"Row {row_num} [{category}]: {message}")
         error_categories[category] = error_categories.get(category, 0) + 1
 
     def _categorize_exception(self, error):
+        """Handle categorize exception."""
         message = str(error)
         lowered = message.lower()
         if "not found" in lowered:
@@ -321,6 +341,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         return "unexpected_error", message
 
     def _build_result_message(self, line_count, success_count, error_count, errors, error_categories=None):
+        """Build result message."""
         result_parts = [
             f"Total lines processed: {line_count}",
             f"Successful: {success_count}",

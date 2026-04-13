@@ -46,6 +46,7 @@ class FederationReportSchedule(models.Model):
     notes = fields.Text()
 
     def _get_reporting_window(self):
+        """Return reporting window."""
         self.ensure_one()
         period_end = fields.Date.context_today(self)
         if self.period_type == "monthly":
@@ -55,6 +56,7 @@ class FederationReportSchedule(models.Model):
         return period_start, period_end
 
     def _get_next_run_on(self, reference_dt=None):
+        """Return next run on."""
         self.ensure_one()
         reference_dt = fields.Datetime.to_datetime(reference_dt or fields.Datetime.now())
         if self.period_type == "monthly":
@@ -62,12 +64,14 @@ class FederationReportSchedule(models.Model):
         return fields.Datetime.to_string(reference_dt + timedelta(days=7))
 
     def _get_effective_season(self):
+        """Return effective season."""
         self.ensure_one()
         return self.season_id or self.env["federation.season"].search([
             ("active", "=", True),
         ], limit=1)
 
     def _build_operational_rows(self):
+        """Build operational rows."""
         season = self._get_effective_season()
         domain = [("season_id", "=", season.id)] if season else []
         rows = self.env["federation.report.operational"].search(domain, order="tournament_id asc")
@@ -112,6 +116,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"operational_{self.period_type}_{season_code}"
 
     def _build_standing_reconciliation_rows(self):
+        """Build standing reconciliation rows."""
         season = self._get_effective_season()
         domain = [("season_id", "=", season.id)] if season else []
         rows = self.env["federation.report.standing.reconciliation"].search(
@@ -149,6 +154,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"standing_reconciliation_{self.period_type}_{season_code}"
 
     def _build_finance_reconciliation_rows(self):
+        """Build finance reconciliation rows."""
         rows = self.env["federation.report.finance.reconciliation"].search(
             [("needs_follow_up", "=", True)],
             order="follow_up_status asc, created_on desc",
@@ -187,6 +193,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"finance_reconciliation_{self.period_type}"
 
     def _build_workflow_exception_rows(self):
+        """Build workflow exception rows."""
         season = self._get_effective_season()
         domain = [(
             "season_id",
@@ -229,6 +236,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"workflow_exceptions_{self.period_type}_{season_code}"
 
     def _build_season_checklist_rows(self):
+        """Build season checklist rows."""
         season = self._get_effective_season()
         domain = [("season_id", "=", season.id)] if season else []
         rows = self.env["federation.report.season.checklist"].search(domain, order="season_id asc")
@@ -267,6 +275,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"season_checklist_{self.period_type}_{season_code}"
 
     def _build_season_portfolio_rows(self):
+        """Build season portfolio rows."""
         season = self._get_effective_season()
         domain = [("season_id", "=", season.id)] if season else []
         rows = self.env["federation.report.season.portfolio"].search(domain, order="date_start desc, season_id asc")
@@ -321,6 +330,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"season_portfolio_{self.period_type}_{season_code}"
 
     def _build_club_performance_rows(self):
+        """Build club performance rows."""
         season = self._get_effective_season()
         domain = [("season_id", "=", season.id)] if season else []
         rows = self.env["federation.report.club.performance"].search(
@@ -372,6 +382,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"club_performance_{self.period_type}_{season_code}"
 
     def _build_compliance_summary_rows(self):
+        """Build compliance summary rows."""
         rows = self.env["federation.report.compliance"].search([], order="target_model asc")
         headers = [
             "Target Model",
@@ -395,6 +406,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"compliance_summary_{self.period_type}"
 
     def _build_compliance_remediation_rows(self):
+        """Build compliance remediation rows."""
         rows = self.env["federation.report.compliance.remediation"].search(
             [],
             order="sla_status desc, age_days desc, created_on asc",
@@ -433,6 +445,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"compliance_remediation_{self.period_type}"
 
     def _build_board_pack_rows(self):
+        """Build board pack rows."""
         snapshot_model = self.env["federation.report.snapshot"]
         snapshot_model.capture_snapshot()
         snapshots = snapshot_model.search([], order="snapshot_on desc, snapshot_type asc")
@@ -468,6 +481,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"board_pack_{self.period_type}"
 
     def _build_audit_pack_rows(self):
+        """Build audit pack rows."""
         workflow_rows = self.env["federation.report.workflow.exception"].search([])
         finance_rows = self.env["federation.report.finance.reconciliation"].search([
             ("needs_follow_up", "=", True),
@@ -478,9 +492,11 @@ class FederationReportSchedule(models.Model):
         season_rows = self.env["federation.report.season.checklist"].search([])
 
         def _escalated_count(records):
+            """Handle escalated count."""
             return len(records.filtered(lambda row: getattr(row, "sla_status", False) == "escalated"))
 
         def _oldest_age(records):
+            """Handle oldest age."""
             ages = [getattr(row, "age_days", 0) or 0 for row in records]
             return max(ages) if ages else 0
 
@@ -533,6 +549,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"audit_pack_{self.period_type}"
 
     def _build_report_payload(self):
+        """Build report payload."""
         self.ensure_one()
         builders = {
             "operational": self._build_operational_rows,
@@ -565,6 +582,7 @@ class FederationReportSchedule(models.Model):
         return output.getvalue().encode(), filename, len(rows), period_start, period_end
 
     def _generate_report(self):
+        """Handle generate report."""
         run_at = fields.Datetime.now()
         for schedule in self:
             payload, filename, row_count, period_start, period_end = schedule._build_report_payload()
@@ -579,10 +597,12 @@ class FederationReportSchedule(models.Model):
             })
 
     def action_generate_now(self):
+        """Execute the generate now action."""
         self._generate_report()
         return True
 
     def action_open_report(self):
+        """Execute the open report action."""
         self.ensure_one()
         action_xmlid = {
             "operational": "sports_federation_reporting.action_federation_report_operational",
@@ -614,6 +634,7 @@ class FederationReportSchedule(models.Model):
 
     @api.model
     def _cron_generate_scheduled_reports(self):
+        """Handle cron generate scheduled reports."""
         schedules = self.search([
             ("active", "=", True),
             ("next_run_on", "!=", False),

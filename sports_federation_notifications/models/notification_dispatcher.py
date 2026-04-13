@@ -4,8 +4,8 @@ Notification Dispatcher — event-driven notification routing.
 Each method here maps to one row in ``odoo/NOTIFICATION_MATRIX.md`` and
 resolves recipients before delegating to ``send_email_template`` or
 ``create_activity``. Most modeled workflow scenarios are now live; suspension
-issuance remains the only placeholder until the discipline template and
-recipient mapping are finalized.
+issuance uses a direct-email fallback until a dedicated discipline template is
+introduced.
 
 Usage (from any model override):
 ::
@@ -29,6 +29,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     _inherit = "federation.notification.service"
 
     def _unique_emails(self, emails):
+        """Handle unique emails."""
         unique = []
         for email in emails:
             normalized = (email or "").strip()
@@ -37,6 +38,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         return unique
 
     def _log_missing_recipients(self, record, log_name, notification_type, message):
+        """Handle log missing recipients."""
         return self.env["federation.notification.log"].sudo().create({
             "name": log_name,
             "target_model": record._name,
@@ -47,6 +49,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         })
 
     def _send_email_or_log(self, record, template_xmlid, log_name, emails):
+        """Handle send email or log."""
         unique_emails = self._unique_emails(emails)
         if not unique_emails:
             return self._log_missing_recipients(
@@ -62,7 +65,56 @@ class FederationNotificationDispatcher(models.AbstractModel):
             log_name=log_name,
         )
 
+    def _send_direct_email_or_log(self, record, subject, body_html, log_name, emails):
+        """Send a direct email when a dedicated template does not exist."""
+        unique_emails = self._unique_emails(emails)
+        if not unique_emails:
+            return self._log_missing_recipients(
+                record,
+                log_name,
+                "email",
+                "No recipient email available for this notification.",
+            )
+
+        log = self.env["federation.notification.log"].sudo().create({
+            "name": log_name,
+            "target_model": record._name,
+            "target_res_id": record.id,
+            "recipient_email": ",".join(unique_emails),
+            "notification_type": "email",
+            "state": "pending",
+        })
+        email_from = (
+            self.env.user.company_id.email_formatted
+            or self.env.user.email_formatted
+            or self.env.company.email
+            or self.env.user.email
+            or False
+        )
+
+        try:
+            mail = self.env["mail.mail"].sudo().create({
+                "subject": subject,
+                "body_html": body_html,
+                "email_to": ",".join(unique_emails),
+                "email_from": email_from,
+                "auto_delete": False,
+            })
+            mail.send()
+            log.write({
+                "state": "sent",
+                "sent_on": fields.Datetime.now(),
+            })
+        except Exception as exc:
+            log.write({
+                "state": "failed",
+                "message": str(exc),
+            })
+
+        return log
+
     def _create_group_activities(self, record, group_xmlid, summary, note=None):
+        """Handle create group activities."""
         group = self.env.ref(group_xmlid, raise_if_not_found=False)
         users = group.user_ids if group else self.env["res.users"].browse([])
         if not users:
@@ -83,6 +135,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def _get_season_registration_recipient(self, registration):
+        """Return season registration recipient."""
         partner = False
         if "partner_id" in registration._fields and registration.partner_id and registration.partner_id.email:
             partner = registration.partner_id
@@ -94,6 +147,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         return partner, email_to
 
     def send_season_registration_confirmed(self, registration):
+        """Handle send season registration confirmed."""
         partner, email_to = self._get_season_registration_recipient(registration)
         return self.send_email_template(
             registration,
@@ -104,6 +158,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     def send_season_registration_rejected(self, registration):
+        """Handle send season registration rejected."""
         partner, email_to = self._get_season_registration_recipient(registration)
         return self.send_email_template(
             registration,
@@ -118,6 +173,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_tournament_published(self, tournament):
+        """Handle send tournament published."""
         emails = tournament.participant_ids.mapped("club_id.email") + tournament.participant_ids.mapped("team_id.email")
         return self._send_email_or_log(
             tournament,
@@ -131,6 +187,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_participant_confirmed(self, participant):
+        """Handle send participant confirmed."""
         emails = [participant.team_id.email, participant.club_id.email]
         return self._send_email_or_log(
             participant,
@@ -144,6 +201,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_result_submitted(self, match):
+        """Handle send result submitted."""
         return self._create_group_activities(
             match,
             "sports_federation_result_control.group_result_validator",
@@ -152,6 +210,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     def send_result_approved(self, match):
+        """Handle send result approved."""
         emails = [
             match.home_team_id.email,
             match.home_team_id.club_id.email,
@@ -166,6 +225,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     def send_result_contested(self, match):
+        """Handle send result contested."""
         manager_group = self.env.ref(
             "sports_federation_base.group_federation_manager",
             raise_if_not_found=False,
@@ -190,6 +250,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_referee_confirmation_overdue(self, match_officiating):
+        """Handle send referee confirmation overdue."""
         return self._create_group_activities(
             match_officiating,
             "sports_federation_base.group_federation_manager",
@@ -198,6 +259,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     def send_referee_shortage_alert(self, match):
+        """Handle send referee shortage alert."""
         return self._create_group_activities(
             match,
             "sports_federation_base.group_federation_manager",
@@ -210,6 +272,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_standing_frozen(self, standing):
+        """Handle send standing frozen."""
         emails = standing.tournament_id.participant_ids.mapped("club_id.email")
         return self._send_email_or_log(
             standing,
@@ -223,6 +286,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_finance_event_confirmed(self, finance_event):
+        """Handle send finance event confirmed."""
         emails = [
             finance_event.partner_id.email,
             finance_event.club_id.email,
@@ -241,6 +305,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_compliance_submission_received(self, submission):
+        """Handle send compliance submission received."""
         return self._create_group_activities(
             submission,
             "sports_federation_base.group_federation_manager",
@@ -252,6 +317,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
         )
 
     def send_compliance_remediation_requested(self, submission):
+        """Handle send compliance remediation requested."""
         return self._create_group_activities(
             submission,
             "sports_federation_base.group_federation_manager",
@@ -268,6 +334,7 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_referee_assigned(self, match_officiating):
+        """Handle send referee assigned."""
         return self._send_email_or_log(
             match_officiating,
             "sports_federation_notifications.template_federation_referee_assigned",
@@ -280,27 +347,24 @@ class FederationNotificationDispatcher(models.AbstractModel):
     # ------------------------------------------------------------------
 
     def send_suspension_issued(self, suspension):
-        """Notify the player and club contact when a suspension is issued.
-
-        TODO: template ``sports_federation_notifications.mail_suspension_issued``;
-        resolve from ``suspension.player_id.partner_id``.
-        """
-        Log = self.env["federation.notification.log"]
-        try:
-            name = getattr(suspension, "name", str(suspension.id))
-            Log.create({
-                "name": f"[stub] Suspension issued: {name}",
-                "target_model": suspension._name,
-                "target_res_id": suspension.id,
-                "notification_type": "email",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "Dispatcher stub — no email template configured yet.",
-            })
-        except Exception as exc:
-            Log.create({
-                "name": "[error] Suspension issued",
-                "notification_type": "email",
-                "state": "failed",
-                "message": str(exc),
-            })
+        """Notify the player and club contact when a suspension is issued."""
+        player = suspension.player_id
+        club = player.club_id
+        emails = [player.email, club.email]
+        subject = f"Suspension issued: {suspension.name}"
+        body_html = (
+            "<p>Dear federation contact,</p>"
+            f"<p>A suspension has been activated for <strong>{player.display_name}</strong>.</p>"
+            f"<p>Case: {suspension.case_id.display_name}</p>"
+            f"<p>Start date: {suspension.date_start}</p>"
+            f"<p>End date: {suspension.date_end}</p>"
+            f"<p>Notes: {suspension.notes or 'No additional notes provided.'}</p>"
+            "<p>Best regards,<br/>Sports Federation</p>"
+        )
+        return self._send_direct_email_or_log(
+            suspension,
+            subject,
+            body_html,
+            f"Suspension issued: {suspension.name}",
+            emails,
+        )

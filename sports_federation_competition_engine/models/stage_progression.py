@@ -96,6 +96,7 @@ class FederationStageProgression(models.Model):
 
     @api.depends("source_stage_id", "target_stage_id", "rank_from", "rank_to")
     def _compute_name(self):
+        """Compute name."""
         for rec in self:
             parts = []
             if rec.source_stage_id:
@@ -108,11 +109,13 @@ class FederationStageProgression(models.Model):
 
     @api.depends("source_group_id")
     def _compute_cross_group(self):
+        """Compute cross group."""
         for rec in self:
             rec.cross_group = not rec.source_group_id
 
     @api.constrains("rank_from", "rank_to")
     def _check_ranks(self):
+        """Validate ranks."""
         for rec in self:
             if rec.rank_from < 1:
                 raise ValidationError("From Rank must be at least 1.")
@@ -121,6 +124,7 @@ class FederationStageProgression(models.Model):
 
     @api.constrains("source_stage_id", "target_stage_id")
     def _check_not_same_stage(self):
+        """Validate not same stage."""
         for rec in self:
             if rec.source_stage_id == rec.target_stage_id:
                 raise ValidationError("Source and target stages must be different.")

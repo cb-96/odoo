@@ -72,6 +72,7 @@ class FederationDisciplinaryCase(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         for vals in vals_list:
             if vals.get("reference", "New") == "New":
                 vals["reference"] = self.env["ir.sequence"].next_by_code(
@@ -86,6 +87,7 @@ class FederationDisciplinaryCase(models.Model):
         "incident_ids",
     )
     def _check_subject(self):
+        """Validate subject."""
         for record in self:
             if not any([
                 record.subject_player_id,
@@ -99,6 +101,7 @@ class FederationDisciplinaryCase(models.Model):
                 )
 
     def action_submit_review(self):
+        """Execute the submit review action."""
         for record in self:
             record.state = "under_review"
             for incident in record.incident_ids:
@@ -106,15 +109,18 @@ class FederationDisciplinaryCase(models.Model):
                     incident.status = "attached"
 
     def action_decide(self):
+        """Execute the decide action."""
         for record in self:
             record.state = "decided"
             record.decided_on = fields.Date.context_today(record)
 
     def action_mark_appealed(self):
+        """Execute the mark appealed action."""
         for record in self:
             record.state = "appealed"
 
     def action_close(self):
+        """Execute the close action."""
         for record in self:
             record.state = "closed"
             record.closed_on = fields.Date.context_today(record)

@@ -98,6 +98,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def _resolve_source_record(self, source_model, source_res_id):
+        """Resolve source record."""
         if not source_model or not source_res_id:
             return self.env[source_model].browse() if source_model else self.env["federation.season"].browse()
         model = self.env.get(source_model)
@@ -107,6 +108,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def _resolve_path_value(self, record, path):
+        """Resolve path value."""
         value = record
         for attribute in path.split("."):
             value = getattr(value, attribute, False)
@@ -116,6 +118,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def _infer_season_from_source(self, source_record):
+        """Infer season from source."""
         if not source_record:
             return self.env["federation.season"].browse()
 
@@ -135,6 +138,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def _infer_season_from_vals(self, vals):
+        """Infer season from vals."""
         source_model = vals.get("source_model")
         source_res_id = vals.get("source_res_id")
         source_record = self._resolve_source_record(source_model, source_res_id)
@@ -142,6 +146,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         prepared_vals_list = []
         for vals in vals_list:
             prepared_vals = dict(vals)
@@ -154,23 +159,27 @@ class FederationFinanceEvent(models.Model):
 
     @api.constrains("amount")
     def _check_amount(self):
+        """Validate amount."""
         for record in self:
             if record.amount < 0:
                 raise ValidationError("Amount must be >= 0.")
 
     @api.constrains("source_model")
     def _check_source_model(self):
+        """Validate source model."""
         for record in self:
             if not record.source_model:
                 raise ValidationError("Source model must not be empty.")
 
     @api.constrains("source_res_id")
     def _check_source_res_id(self):
+        """Validate source res ID."""
         for record in self:
             if record.source_res_id <= 0:
                 raise ValidationError("Source res ID must be > 0.")
 
     def action_confirm(self):
+        """Execute the confirm action."""
         for record in self:
             if record.state != "draft":
                 raise ValidationError("Only draft events can be confirmed.")
@@ -181,6 +190,7 @@ class FederationFinanceEvent(models.Model):
                 Dispatcher.send_finance_event_confirmed(record)
 
     def action_settle(self):
+        """Execute the settle action."""
         for record in self:
             if record.state != "confirmed":
                 raise ValidationError("Only confirmed events can be settled.")
@@ -188,6 +198,7 @@ class FederationFinanceEvent(models.Model):
             record.flush_recordset()
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for record in self:
             if record.state == "settled":
                 raise ValidationError("Settled events cannot be cancelled.")
@@ -202,6 +213,7 @@ class FederationFinanceEvent(models.Model):
             record.flush_recordset()
 
     def action_mark_exported(self):
+        """Execute the mark exported action."""
         for record in self:
             if record.state not in ("confirmed", "settled"):
                 raise ValidationError(
@@ -219,6 +231,7 @@ class FederationFinanceEvent(models.Model):
             record.flush_recordset()
 
     def action_mark_reconciled(self):
+        """Execute the mark reconciled action."""
         for record in self:
             if record.state != "settled":
                 raise ValidationError(
@@ -238,6 +251,7 @@ class FederationFinanceEvent(models.Model):
             record.flush_recordset()
 
     def action_close_handoff(self):
+        """Execute the close handoff action."""
         for record in self:
             if record.state != "settled":
                 raise ValidationError(
@@ -258,6 +272,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def _build_external_ref(self, source_record, fee_type):
+        """Build external ref."""
         fee_code = (fee_type.code or str(fee_type.id)).upper()
         model_token = source_record._name.replace(".", "_")
         return f"{fee_code}-{model_token}-{source_record.id}"
@@ -273,6 +288,7 @@ class FederationFinanceEvent(models.Model):
         note=None,
         extra_vals=None,
     ):
+        """Prepare from source vals."""
         if amount is None:
             amount = fee_type.default_amount
 
@@ -324,6 +340,7 @@ class FederationFinanceEvent(models.Model):
         extra_vals=None,
         update_existing=False,
     ):
+        """Handle ensure from source."""
         existing = self.search(
             [
                 ("fee_type_id", "=", fee_type.id),
@@ -381,6 +398,7 @@ class FederationFinanceEvent(models.Model):
 
     @api.model
     def get_handoff_export_headers(self):
+        """Return handoff export headers."""
         return [
             "Schema Version",
             "Event ID",
@@ -408,6 +426,7 @@ class FederationFinanceEvent(models.Model):
         ]
 
     def get_handoff_export_row(self):
+        """Return handoff export row."""
         self.ensure_one()
         return [
             self.export_schema_version,

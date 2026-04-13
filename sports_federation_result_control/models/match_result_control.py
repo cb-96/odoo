@@ -67,6 +67,7 @@ class FederationMatchResultControl(models.Model):
     )
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         if (
             {"home_score", "away_score"} & set(vals)
             and not self.env.context.get("allow_approved_result_score_write")
@@ -79,10 +80,12 @@ class FederationMatchResultControl(models.Model):
         return super().write(vals)
 
     def _check_result_group(self, group_xmlid, error_message):
+        """Validate result group."""
         if not self.env.user.has_group(group_xmlid):
             raise ValidationError(error_message)
 
     def _recompute_related_standings(self):
+        """Handle recompute related standings."""
         Standing = self.env.get("federation.standing")
         if Standing is None:
             return
@@ -101,6 +104,7 @@ class FederationMatchResultControl(models.Model):
                     standing.action_recompute()
 
     def _log_result_audit(self, event_type, description, from_state, to_state, reason=False):
+        """Handle log result audit."""
         Audit = self.env.get("federation.match.result.audit")
         if Audit is None:
             return False

@@ -7,6 +7,7 @@ class TestFederationCompetition(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.season = cls.env["federation.season"].create({
             "name": "2025-2026",
@@ -145,6 +146,7 @@ class TestFederationCompetition(TransactionCase):
         self.assertEqual(tournament.edition_id, edition)
 
     def test_tournament_open_requires_season(self):
+        """Test that tournament open requires season."""
         tournament = self.env["federation.tournament"].create({
             "name": "Seasonless Tournament",
             "code": "SLT",
@@ -155,6 +157,7 @@ class TestFederationCompetition(TransactionCase):
             tournament.action_open()
 
     def test_tournament_start_requires_stage_and_archive_rules(self):
+        """Test that tournament start requires stage and archive rules."""
         tournament = self.env["federation.tournament"].create({
             "name": "Guarded Tournament",
             "code": "GT01",
@@ -185,6 +188,7 @@ class TestFederationCompetition(TransactionCase):
         self.assertTrue(tournament.active)
 
     def test_tournament_team_eligibility_uses_category_and_gender(self):
+        """Test that tournament team eligibility uses category and gender."""
         club = self.env["federation.club"].create({
             "name": "Eligibility Club",
             "code": "ELIGCLUB",
@@ -230,6 +234,7 @@ class TestFederationCompetition(TransactionCase):
         self.assertNotIn(wrong_category_team, eligible_teams)
 
     def test_tournament_participant_rejects_ineligible_team(self):
+        """Test that tournament participant rejects ineligible team."""
         club = self.env["federation.club"].create({
             "name": "Participant Club",
             "code": "PARTCLUB",
@@ -270,6 +275,7 @@ class TestFederationCompetition(TransactionCase):
             })
 
     def test_tournament_participant_backend_domain_uses_eligible_teams(self):
+        """Test that tournament participant backend domain uses eligible teams."""
         club = self.env["federation.club"].create({
             "name": "Domain Club",
             "code": "DOMAINCLUB",
@@ -312,6 +318,7 @@ class TestFederationCompetition(TransactionCase):
         self.assertIn("Domain Ineligible Team", participant.excluded_team_feedback_html)
 
     def test_tournament_participant_backend_feedback_explains_duplicate_team(self):
+        """Test that tournament participant backend feedback explains duplicate team."""
         club = self.env["federation.club"].create({
             "name": "Duplicate Team Club",
             "code": "DUPCLUB",

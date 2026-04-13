@@ -1,221 +1,16 @@
-from urllib.parse import quote_plus
-
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import ValidationError
 
 
-class FederationWebsite(http.Controller):
-    """Public website controllers for tournament listing and registration."""
-
-    # ------------------------------------------------------------------
-    # Public tournament pages
-    # ------------------------------------------------------------------
-
-    @http.route(
-        ["/tournaments", "/tournaments/page/<int:page>"],
-        type="http",
-        auth="public",
-        website=True,
-    )
-    def tournaments_list(self, page=1, search="", **kw):
-        """Public tournament listing page."""
-        domain = [("state", "in", ("open", "in_progress", "closed"))]
-        if search:
-            domain += [
-                "|",
-                ("name", "ilike", search),
-                ("location", "ilike", search),
-            ]
-        Tournament = request.env["federation.tournament"].sudo()
-        total = Tournament.search_count(domain)
-        step = 12
-        pager = portal_pager(
-            url="/tournaments",
-            total=total,
-            page=page,
-            step=step,
-            url_args={"search": search},
-        )
-        tournaments = Tournament.search(
-            domain, limit=step, offset=pager["offset"], order="date_start desc"
-        )
-        values = {
-            "tournaments": tournaments,
-            "pager": pager,
-            "search": search,
-        }
-        return request.render("sports_federation_portal.tournament_list_page", values)
-
-    @http.route(
-        ["/tournament/<int:tournament_id>"],
-        type="http",
-        auth="public",
-        website=True,
-    )
-    def tournament_detail(self, tournament_id, **kw):
-        """Public tournament detail page."""
-        Tournament = request.env["federation.tournament"].sudo()
-        tournament = Tournament.browse(tournament_id)
-        if not tournament.exists():
-            return request.not_found()
-        participants = request.env["federation.tournament.participant"].sudo().search(
-            [("tournament_id", "=", tournament_id)],
-            order="seed, name",
-        )
-        values = {
-            "tournament": tournament,
-            "participants": participants,
-            "can_register": tournament.state == "open",
-        }
-        return request.render("sports_federation_portal.tournament_detail_page", values)
-
-    @http.route(
-        ["/tournament/<int:tournament_id>/register"],
-        type="http",
-        auth="user",
-        website=True,
-        methods=["GET"],
-    )
-    def tournament_register_form(self, tournament_id, **kw):
-        """Show tournament registration form (requires login)."""
-        Tournament = request.env["federation.tournament"].sudo()
-        tournament = Tournament.browse(tournament_id)
-        if not tournament.exists() or tournament.state != "open":
-            return request.redirect("/tournaments")
-        # Get the user's clubs
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
-        if not clubs:
-            values = {
-                "error": "You are not registered as a club representative. "
-                "Please contact the federation.",
-                "tournament": tournament,
-            }
-            return request.render(
-                "sports_federation_portal.tournament_register_page", values
-            )
-        existing = request.env["federation.tournament.registration"].sudo().search(
-            [
-                ("tournament_id", "=", tournament_id),
-                ("team_id.club_id", "in", clubs.ids),
-                ("state", "!=", "cancelled"),
-            ]
-        )
-        blocked_reason_by_team_id = {
-            team.id: "Already registered or currently awaiting review."
-            for team in existing.mapped("team_id")
-        }
-        selection_snapshot = tournament.sudo().get_team_selection_snapshot(
-            extra_domain=[("club_id", "in", clubs.ids)],
-            blocked_reason_by_team_id=blocked_reason_by_team_id,
-        )
-        values = {
-            "tournament": tournament,
-            "clubs": clubs,
-            "teams": selection_snapshot["available_teams"],
-            "excluded_teams": [
-                {
-                    "name": item["team"].name,
-                    "club": item["team"].club_id.name,
-                    "reason": item["reason"],
-                }
-                for item in selection_snapshot["excluded_teams"]
-            ],
-            "error": kw.get("error"),
-            "success": kw.get("success"),
-        }
-        return request.render(
-            "sports_federation_portal.tournament_register_page", values
-        )
-
-    @http.route(
-        ["/tournament/<int:tournament_id>/register"],
-        type="http",
-        auth="user",
-        website=True,
-        methods=["POST"],
-        csrf=True,
-    )
-    def tournament_register_submit(self, tournament_id, team_id, notes="", **kw):
-        """Process tournament registration form submission."""
-        Tournament = request.env["federation.tournament"].sudo()
-        tournament = Tournament.browse(tournament_id)
-        if not tournament.exists() or tournament.state != "open":
-            return request.redirect("/tournaments")
-        try:
-            team_id = int(team_id)
-        except (ValueError, TypeError):
-            return request.redirect(
-                f"/tournament/{tournament_id}/register?error=Invalid+team+selection"
-            )
-        # Verify the team belongs to the user's club
-        team = request.env["federation.team"].sudo().browse(team_id)
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
-        if team.club_id not in clubs:
-            return request.redirect(
-                f"/tournament/{tournament_id}/register?error=You+can+only+register+your+own+teams"
-            )
-        eligibility_error = tournament.get_team_eligibility_error(team)
-        if eligibility_error:
-            return request.redirect(
-                f"/tournament/{tournament_id}/register?error={quote_plus(eligibility_error)}"
-            )
-        # Check for duplicate
-        existing = request.env["federation.tournament.registration"].sudo().search(
-            [
-                ("tournament_id", "=", tournament_id),
-                ("team_id", "=", team_id),
-                ("state", "!=", "cancelled"),
-            ],
-            limit=1,
-        )
-        if existing:
-            return request.redirect(
-                f"/tournament/{tournament_id}/register?error=This+team+is+already+registered"
-            )
-        # Check max participants
-        if tournament.max_participants > 0:
-            current_count = request.env["federation.tournament.participant"].sudo().search_count(
-                [("tournament_id", "=", tournament_id), ("state", "=", "confirmed")]
-            )
-            pending_count = request.env["federation.tournament.registration"].sudo().search_count(
-                [("tournament_id", "=", tournament_id), ("state", "=", "submitted")]
-            )
-            if current_count + pending_count >= tournament.max_participants:
-                return request.redirect(
-                    f"/tournament/{tournament_id}/register?error=Tournament+is+full"
-                )
-        # Create the registration
-        try:
-            registration = (
-                request.env["federation.tournament.registration"]
-                .sudo()
-                .create(
-                    {
-                        "tournament_id": tournament_id,
-                        "team_id": team_id,
-                        "notes": notes,
-                        "user_id": request.env.user.id,
-                    }
-                )
-            )
-            registration.sudo().action_submit()
-        except ValidationError as e:
-            return request.redirect(
-                f"/tournament/{tournament_id}/register?error={quote_plus(str(e))}"
-            )
-        return request.redirect(
-            f"/tournament/{tournament_id}/register?success=Registration+submitted+successfully"
-        )
-
-
 class FederationPortal(CustomerPortal):
     """Portal controllers for club representatives."""
 
     def _prepare_portal_layout_values(self):
+        """Prepare portal layout values."""
         values = super()._prepare_portal_layout_values()
-        representative = request.env["federation.club.representative"].search(
+        representative = request.env["federation.club.representative"].sudo().search(
             [("user_id", "=", request.env.user.id)], limit=1
         )
         referee = request.env["federation.referee"].with_user(request.env.user).sudo()._portal_get_for_user(
@@ -296,6 +91,7 @@ class FederationPortal(CustomerPortal):
         methods=["GET"],
     )
     def portal_my_teams_new(self, **kw):
+        """Handle the portal my teams new flow."""
         clubs = request.env["federation.club.representative"]._get_clubs_for_user()
         if not clubs:
             return request.redirect("/my/club")
@@ -315,6 +111,7 @@ class FederationPortal(CustomerPortal):
         csrf=True,
     )
     def portal_my_teams_create(self, name, club_id, category=None, gender=None, email=None, phone=None, **kw):
+        """Handle the portal my teams create flow."""
         clubs = request.env["federation.club.representative"]._get_clubs_for_user()
         team_name = (name or "").strip()
         category = (category or "").strip()
@@ -432,6 +229,7 @@ class FederationPortal(CustomerPortal):
         website=True,
     )
     def portal_my_tournament_workspaces(self, page=1, **kw):
+        """Handle the portal my tournament workspaces flow."""
         Tournament = request.env["federation.tournament"]
         entries = Tournament._portal_get_workspace_entries(user=request.env.user)
         step = 12
@@ -461,6 +259,7 @@ class FederationPortal(CustomerPortal):
         website=True,
     )
     def portal_my_tournament_workspace_detail(self, tournament_id, team_id, **kw):
+        """Handle the portal my tournament workspace detail flow."""
         workspace_entry = request.env[
             "federation.tournament"
         ]._portal_get_workspace_entry_for_user(

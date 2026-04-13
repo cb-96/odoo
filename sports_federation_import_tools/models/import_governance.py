@@ -25,6 +25,7 @@ class FederationImportTemplate(models.Model):
     )
 
     def build_mapping_guide(self):
+        """Build mapping guide."""
         self.ensure_one()
         parts = [f"Template: {self.name} ({self.contract_version})"]
         if self.required_columns_text:
@@ -86,6 +87,7 @@ class FederationImportJob(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         Template = self.env["federation.import.template"]
         for vals in vals_list:
             if vals.get("name"):
@@ -97,10 +99,12 @@ class FederationImportJob(models.Model):
         return super().create(vals_list)
 
     def _require_manager(self):
+        """Handle require manager."""
         if not self.env.user.has_group("sports_federation_base.group_federation_manager"):
             raise AccessError("Only federation managers can approve or reject import jobs.")
 
     def action_submit_for_approval(self):
+        """Execute the submit for approval action."""
         for record in self:
             if record.state not in ("draft", "rejected"):
                 raise ValidationError("Only draft or rejected jobs can be submitted for approval.")
@@ -120,6 +124,7 @@ class FederationImportJob(models.Model):
                 record.integration_delivery_id.action_mark_awaiting_approval(record)
 
     def action_approve(self):
+        """Execute the approve action."""
         self._require_manager()
         for record in self:
             if record.state != "awaiting_approval":
@@ -138,6 +143,7 @@ class FederationImportJob(models.Model):
                 record.integration_delivery_id.action_mark_approved(record)
 
     def action_reject(self):
+        """Execute the reject action."""
         self._require_manager()
         for record in self:
             if record.state not in ("awaiting_approval", "approved"):

@@ -3,20 +3,21 @@ from urllib.parse import quote_plus
 
 from odoo import http
 from odoo.addons.portal.controllers.portal import pager as portal_pager
-from odoo.addons.sports_federation_portal.controllers.main import FederationWebsite
 from odoo.exceptions import ValidationError
 from odoo.http import Response, request
 
 
-class PublicTournamentHubController(FederationWebsite):
+class PublicTournamentHubController(http.Controller):
 
     def _parse_int_param(self, value):
+        """Parse int param."""
         try:
             return int(value) if value else False
         except (TypeError, ValueError):
             return False
 
     def _build_filters(self, search="", **kw):
+        """Build filters."""
         return {
             "search": (search or kw.get("search") or "").strip(),
             "season_id": self._parse_int_param(kw.get("season_id")),
@@ -27,6 +28,7 @@ class PublicTournamentHubController(FederationWebsite):
         }
 
     def _build_shared_filter_domain(self, filters):
+        """Build shared filter domain."""
         Tournament = request.env["federation.tournament"]
         domain = []
         if filters["search"]:
@@ -42,6 +44,7 @@ class PublicTournamentHubController(FederationWebsite):
         return domain
 
     def _build_main_tournament_domain(self, filters):
+        """Build main tournament domain."""
         domain = [("state", "in", ("open", "in_progress", "closed", "cancelled"))]
         domain += self._build_shared_filter_domain(filters)
         if filters["state"]:
@@ -49,6 +52,7 @@ class PublicTournamentHubController(FederationWebsite):
         return domain
 
     def _get_filter_reference_data(self):
+        """Return filter reference data."""
         Tournament = request.env["federation.tournament"]
         category_options = [("", "All Categories")] + list(Tournament._fields["category"].selection)
         gender_options = [("", "All Genders")] + list(Tournament._fields["gender"].selection)
@@ -68,6 +72,7 @@ class PublicTournamentHubController(FederationWebsite):
         }
 
     def _resolve_tournament(self, tournament_slug=None, tournament_id=None, tournament=False):
+        """Resolve tournament."""
         Tournament = request.env["federation.tournament"]
         if tournament:
             return tournament.sudo()
@@ -78,23 +83,38 @@ class PublicTournamentHubController(FederationWebsite):
         return Tournament.browse([])
 
     def _resolve_team(self, team_slug):
+        """Resolve team."""
         return request.env["federation.team"].resolve_public_slug(team_slug)
 
     def _canonical_redirect(self, record, slug_value, path_getter):
+        """Handle canonical redirect."""
         if slug_value != record.get_public_slug_value():
             return request.redirect(path_getter())
         return None
 
+    def _get_request_user_clubs(self):
+        """Return club scope for the authenticated website user."""
+        return request.env["federation.club.representative"].sudo()._get_clubs_for_user(
+            user=request.env.user
+        )
+
+    def _redirect_with_error(self, path, message):
+        """Redirect to a path with a user-facing error message."""
+        return request.redirect(f"{path}?error={quote_plus(message)}")
+
     @http.route(["/competitions"], type="http", auth="public", website=True)
     def competitions_list(self, **kw):
+        """Handle competitions list."""
         return request.redirect("/tournaments#published")
 
     @http.route(["/competitions/archive"], type="http", auth="public", website=True)
     def competitions_archive(self, **kw):
+        """Handle competitions archive."""
         return request.redirect("/tournaments?state=closed#published-archive")
 
     @http.route(["/competitions/api/json", "/tournaments/api/json"], type="jsonrpc", auth="public", methods=["POST"])
     def competitions_api_json(self, **kw):
+        """Handle competitions API JSON."""
         tournaments = request.env["federation.tournament"].get_public_published_tournaments(limit=None)
         return {
             "tournaments": [
@@ -114,6 +134,7 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/tournaments", "/tournaments/page/<int:page>"], type="http", auth="public", website=True)
     def tournaments_list(self, page=1, search="", **kw):
+        """Handle tournaments list."""
         filters = self._build_filters(search=search, **kw)
         Tournament = request.env["federation.tournament"].sudo()
 
@@ -173,6 +194,7 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/tournament/<int:tournament_id>/coverage", "/competitions/<model('federation.tournament'):tournament>"], type="http", auth="public", website=True)
     def legacy_public_overview(self, tournament_id=None, tournament=False, **kw):
+        """Handle legacy public overview."""
         tournament = self._resolve_tournament(tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()
@@ -180,6 +202,7 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/tournaments/<string:tournament_slug>", "/tournament/<int:tournament_id>"], type="http", auth="public", website=True)
     def tournament_detail(self, tournament_slug=None, tournament_id=None, **kw):
+        """Handle tournament detail."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id)
         if not tournament.exists():
             return request.not_found()
@@ -210,11 +233,12 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/tournaments/<string:tournament_slug>/register"], type="http", auth="user", website=True, methods=["GET"])
     def tournament_register_form(self, tournament_slug=None, **kw):
+        """Handle tournament register form."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug)
         if not tournament.exists() or tournament.state != "open":
             return request.redirect("/tournaments")
 
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
+        clubs = self._get_request_user_clubs()
         if not clubs:
             values = {
                 "error": "You are not registered as a club representative. Please contact the federation.",
@@ -256,30 +280,52 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/tournament/<int:tournament_id>/register"], type="http", auth="user", website=True, methods=["GET"])
     def tournament_register_form_legacy(self, tournament_id, **kw):
+        """Handle tournament register form legacy."""
         tournament = self._resolve_tournament(tournament_id=tournament_id)
         if not tournament.exists():
             return request.redirect("/tournaments")
         return request.redirect(tournament.get_public_register_path())
 
-    @http.route(["/tournaments/<string:tournament_slug>/register"], type="http", auth="user", website=True, methods=["POST"], csrf=True)
+    @http.route(["/tournaments/<string:tournament_slug>/register"], type="http", auth="user", website=True, methods=["POST"], csrf=False)
     def tournament_register_submit(self, tournament_slug, team_id, notes="", **kw):
+        """Handle tournament register submit."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug)
         if not tournament.exists() or tournament.state != "open":
             return request.redirect("/tournaments")
 
+        if not request.validate_csrf(kw.get("csrf_token")):
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                "Your session expired. Refresh the page and try again.",
+            )
+
         try:
             team_id = int(team_id)
         except (ValueError, TypeError):
-            return request.redirect(f"{tournament.get_public_register_path()}?error=Invalid+team+selection")
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                "Invalid team selection",
+            )
 
         team = request.env["federation.team"].sudo().browse(team_id)
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
+        clubs = self._get_request_user_clubs()
+        if not clubs:
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                "You are not registered as a club representative. Please contact the federation.",
+            )
         if team.club_id not in clubs:
-            return request.redirect(f"{tournament.get_public_register_path()}?error=You+can+only+register+your+own+teams")
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                "You can only register your own teams",
+            )
 
         eligibility_error = tournament.get_team_eligibility_error(team)
         if eligibility_error:
-            return request.redirect(f"{tournament.get_public_register_path()}?error={quote_plus(eligibility_error)}")
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                eligibility_error,
+            )
 
         existing = request.env["federation.tournament.registration"].sudo().search(
             [
@@ -290,7 +336,10 @@ class PublicTournamentHubController(FederationWebsite):
             limit=1,
         )
         if existing:
-            return request.redirect(f"{tournament.get_public_register_path()}?error=This+team+is+already+registered")
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                "This team is already registered",
+            )
 
         if tournament.max_participants > 0:
             current_count = request.env["federation.tournament.participant"].sudo().search_count(
@@ -300,7 +349,10 @@ class PublicTournamentHubController(FederationWebsite):
                 [("tournament_id", "=", tournament.id), ("state", "=", "submitted")]
             )
             if current_count + pending_count >= tournament.max_participants:
-                return request.redirect(f"{tournament.get_public_register_path()}?error=Tournament+is+full")
+                return self._redirect_with_error(
+                    tournament.get_public_register_path(),
+                    "Tournament is full",
+                )
 
         try:
             registration = request.env["federation.tournament.registration"].sudo().create(
@@ -313,12 +365,16 @@ class PublicTournamentHubController(FederationWebsite):
             )
             registration.sudo().action_submit()
         except ValidationError as error:
-            return request.redirect(f"{tournament.get_public_register_path()}?error={quote_plus(str(error))}")
+            return self._redirect_with_error(
+                tournament.get_public_register_path(),
+                str(error),
+            )
 
         return request.redirect(f"{tournament.get_public_register_path()}?success=Registration+submitted+successfully")
 
-    @http.route(["/tournament/<int:tournament_id>/register"], type="http", auth="user", website=True, methods=["POST"], csrf=True)
+    @http.route(["/tournament/<int:tournament_id>/register"], type="http", auth="user", website=True, methods=["POST"], csrf=False)
     def tournament_register_submit_legacy(self, tournament_id, team_id, notes="", **kw):
+        """Handle tournament register submit legacy."""
         tournament = self._resolve_tournament(tournament_id=tournament_id)
         if not tournament.exists():
             return request.redirect("/tournaments")
@@ -330,6 +386,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/competitions/<model('federation.tournament'):tournament>/teams",
     ], type="http", auth="public", website=True)
     def tournament_teams(self, tournament_slug=None, tournament_id=None, tournament=False, **kw):
+        """Handle tournament teams."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()
@@ -353,6 +410,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/competitions/<model('federation.tournament'):tournament>/standings",
     ], type="http", auth="public", website=True)
     def tournament_standings(self, tournament_slug=None, tournament_id=None, tournament=False, **kw):
+        """Handle tournament standings."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_standings():
             return request.not_found()
@@ -376,6 +434,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/competitions/<model('federation.tournament'):tournament>/results",
     ], type="http", auth="public", website=True)
     def tournament_results(self, tournament_slug=None, tournament_id=None, tournament=False, **kw):
+        """Handle tournament results."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_results():
             return request.not_found()
@@ -399,6 +458,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/competitions/<model('federation.tournament'):tournament>/schedule",
     ], type="http", auth="public", website=True)
     def tournament_schedule(self, tournament_slug=None, tournament_id=None, tournament=False, **kw):
+        """Handle tournament schedule."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()
@@ -422,6 +482,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/competitions/<model('federation.tournament'):tournament>/bracket",
     ], type="http", auth="public", website=True)
     def tournament_bracket(self, tournament_slug=None, tournament_id=None, tournament=False, **kw):
+        """Handle tournament bracket."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id, tournament=tournament)
         if not tournament.exists() or not tournament.can_access_public_detail() or not tournament.has_public_bracket():
             return request.not_found()
@@ -444,6 +505,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/tournament/<int:tournament_id>/schedule.ics",
     ], type="http", auth="public", methods=["GET"])
     def tournament_schedule_ics(self, tournament_slug=None, tournament_id=None, **kw):
+        """Handle tournament schedule ICS."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()
@@ -469,6 +531,7 @@ class PublicTournamentHubController(FederationWebsite):
         "/api/v1/competitions/<int:tournament_id>/feed",
     ], type="http", auth="public", methods=["GET"])
     def competition_feed_v1(self, tournament_slug=None, tournament_id=None, **kw):
+        """Handle competition feed v1."""
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()
@@ -483,6 +546,7 @@ class PublicTournamentHubController(FederationWebsite):
 
     @http.route(["/teams/<string:team_slug>"], type="http", auth="public", website=True)
     def team_detail(self, team_slug, **kw):
+        """Handle team detail."""
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()

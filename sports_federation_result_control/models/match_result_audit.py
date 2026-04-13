@@ -45,6 +45,7 @@ class FederationMatchResultAudit(models.Model):
 
     @api.model
     def create_event(self, match, event_type, description, from_state, to_state, reason=False, author=False):
+        """Handle create event."""
         return self.sudo().create(
             {
                 "match_id": match.id,

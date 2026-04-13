@@ -8,6 +8,7 @@ class TestFederationPlayer(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "People Test Club", "code": "PTC",
@@ -21,13 +22,16 @@ class TestFederationPlayer(TransactionCase):
         })
 
     def test_create_player(self):
+        """Test that create player."""
         self.assertTrue(self.player.id)
         self.assertEqual(self.player.state, "active")
 
     def test_computed_name(self):
+        """Test that computed name."""
         self.assertEqual(self.player.name, "John Doe")
 
     def test_future_birth_date_rejected(self):
+        """Test that future birth date rejected."""
         with self.assertRaises(ValidationError):
             self.env["federation.player"].create({
                 "first_name": "Future",
@@ -36,6 +40,7 @@ class TestFederationPlayer(TransactionCase):
             })
 
     def test_player_state_transitions(self):
+        """Test that player state transitions."""
         self.player.action_deactivate()
         self.assertEqual(self.player.state, "inactive")
         self.player.action_suspend()
@@ -44,11 +49,13 @@ class TestFederationPlayer(TransactionCase):
         self.assertEqual(self.player.state, "active")
 
     def test_name_search_by_first_name(self):
+        """Test that name search by first name."""
         results = self.env["federation.player"].name_search("John")
         ids = [r[0] if isinstance(r, (list, tuple)) else r.id for r in results]
         self.assertIn(self.player.id, ids)
 
     def test_name_search_by_last_name(self):
+        """Test that name search by last name."""
         results = self.env["federation.player"].name_search("Doe")
         ids = [r[0] if isinstance(r, (list, tuple)) else r.id for r in results]
         self.assertIn(self.player.id, ids)
@@ -58,6 +65,7 @@ class TestFederationPlayerLicense(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "License Club", "code": "LC",
@@ -73,6 +81,7 @@ class TestFederationPlayerLicense(TransactionCase):
         })
 
     def test_create_license(self):
+        """Test that create license."""
         lic = self.env["federation.player.license"].create({
             "name": "LIC-001",
             "player_id": self.player.id,
@@ -85,6 +94,7 @@ class TestFederationPlayerLicense(TransactionCase):
         self.assertEqual(lic.state, "draft")
 
     def test_license_invalid_dates(self):
+        """Test that license invalid dates."""
         with self.assertRaises(ValidationError):
             self.env["federation.player.license"].create({
                 "name": "LIC-BAD",
@@ -96,6 +106,7 @@ class TestFederationPlayerLicense(TransactionCase):
             })
 
     def test_license_state_transitions(self):
+        """Test that license state transitions."""
         lic = self.env["federation.player.license"].create({
             "name": "LIC-002",
             "player_id": self.player.id,
@@ -112,6 +123,7 @@ class TestFederationPlayerLicense(TransactionCase):
         self.assertEqual(lic.state, "draft")
 
     def test_duplicate_player_season_rejected(self):
+        """Test that duplicate player season rejected."""
         self.env["federation.player.license"].create({
             "name": "LIC-003",
             "player_id": self.player.id,
@@ -132,6 +144,7 @@ class TestFederationPlayerLicense(TransactionCase):
             self.env.cr.flush()
 
     def test_license_count_computed(self):
+        """Test that license count computed."""
         self.env["federation.player.license"].create({
             "name": "LIC-005",
             "player_id": self.player.id,

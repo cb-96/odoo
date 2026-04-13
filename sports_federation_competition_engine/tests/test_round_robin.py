@@ -8,6 +8,7 @@ class TestRoundRobin(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create a club and teams
         cls.club = cls.env["federation.club"].create({"name": "Test Club"})

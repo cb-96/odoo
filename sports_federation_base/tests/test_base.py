@@ -7,6 +7,7 @@ class TestFederationClub(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Test Club",
@@ -14,10 +15,12 @@ class TestFederationClub(TransactionCase):
         })
 
     def test_create_club(self):
+        """Test that create club."""
         self.assertTrue(self.club.id)
         self.assertEqual(self.club.name, "Test Club")
 
     def test_club_code_unique(self):
+        """Test that club code unique."""
         with self.assertRaises(Exception):
             self.env["federation.club"].create({
                 "name": "Duplicate Code Club",
@@ -26,14 +29,17 @@ class TestFederationClub(TransactionCase):
             self.env.cr.flush()
 
     def test_club_invalid_email(self):
+        """Test that club invalid email."""
         with self.assertRaises(ValidationError):
             self.club.write({"email": "not-an-email"})
 
     def test_club_valid_email(self):
+        """Test that club valid email."""
         self.club.write({"email": "club@example.com"})
         self.assertEqual(self.club.email, "club@example.com")
 
     def test_club_team_count(self):
+        """Test that club team count."""
         self.assertEqual(self.club.team_count, 0)
         self.env["federation.team"].create({
             "name": "Team A",
@@ -44,6 +50,7 @@ class TestFederationClub(TransactionCase):
         self.assertEqual(self.club.team_count, 1)
 
     def test_club_archive_requires_archived_teams(self):
+        """Test that club archive requires archived teams."""
         team = self.env["federation.team"].create({
             "name": "Archive Team",
             "club_id": self.club.id,
@@ -65,6 +72,7 @@ class TestFederationTeam(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Team Test Club",
@@ -78,13 +86,16 @@ class TestFederationTeam(TransactionCase):
         })
 
     def test_create_team(self):
+        """Test that create team."""
         self.assertTrue(self.team.id)
         self.assertEqual(self.team.category, "senior")
 
     def test_team_display_name_includes_gender(self):
+        """Test that team display name includes gender."""
         self.assertEqual(self.team.display_name, "Senior Squad (Men)")
 
     def test_team_code_unique(self):
+        """Test that team code unique."""
         with self.assertRaises(Exception):
             self.env["federation.team"].create({
                 "name": "Other Team",
@@ -94,11 +105,13 @@ class TestFederationTeam(TransactionCase):
             self.env.cr.flush()
 
     def test_team_name_search_by_code(self):
+        """Test that team name search by code."""
         results = self.env["federation.team"].name_search("SS01")
         ids = [r[0] if isinstance(r, (list, tuple)) else r.id for r in results]
         self.assertIn(self.team.id, ids)
 
     def test_team_archive_requires_cancelled_registrations(self):
+        """Test that team archive requires cancelled registrations."""
         season = self.env["federation.season"].create({
             "name": "Archive Season",
             "code": "AS24",
@@ -125,6 +138,7 @@ class TestFederationSeason(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.season = cls.env["federation.season"].create({
             "name": "2024-25 Season",
@@ -134,16 +148,19 @@ class TestFederationSeason(TransactionCase):
         })
 
     def test_create_season(self):
+        """Test that create season."""
         self.assertTrue(self.season.id)
         self.assertEqual(self.season.state, "draft")
 
     def test_season_state_transitions(self):
+        """Test that season state transitions."""
         self.season.action_open()
         self.assertEqual(self.season.state, "open")
         self.season.action_close()
         self.assertEqual(self.season.state, "closed")
 
     def test_season_state_guards_and_archive(self):
+        """Test that season state guards and archive."""
         with self.assertRaises(ValidationError):
             self.season.action_close()
 
@@ -163,6 +180,7 @@ class TestFederationSeason(TransactionCase):
         self.assertTrue(self.season.active)
 
     def test_season_invalid_dates(self):
+        """Test that season invalid dates."""
         with self.assertRaises(ValidationError):
             self.env["federation.season"].create({
                 "name": "Bad Season",
@@ -171,6 +189,7 @@ class TestFederationSeason(TransactionCase):
             })
 
     def test_season_same_dates_rejected(self):
+        """Test that season same dates rejected."""
         with self.assertRaises(ValidationError):
             self.env["federation.season"].create({
                 "name": "Same Date Season",
@@ -179,6 +198,7 @@ class TestFederationSeason(TransactionCase):
             })
 
     def test_season_planning_targets_are_stored_and_non_negative(self):
+        """Test that season planning targets are stored and non negative."""
         self.season.write({
             "target_club_count": 6,
             "target_team_count": 14,
@@ -199,6 +219,7 @@ class TestFederationSeasonRegistration(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Reg Club", "code": "RC",
@@ -212,6 +233,7 @@ class TestFederationSeasonRegistration(TransactionCase):
         })
 
     def test_create_registration(self):
+        """Test that create registration."""
         reg = self.env["federation.season.registration"].create({
             "season_id": self.season.id,
             "team_id": self.team.id,
@@ -221,6 +243,7 @@ class TestFederationSeasonRegistration(TransactionCase):
         self.assertEqual(reg.club_id, self.club)
 
     def test_registration_state_transitions(self):
+        """Test that registration state transitions."""
         reg = self.env["federation.season.registration"].create({
             "season_id": self.season.id,
             "team_id": self.team.id,
@@ -233,6 +256,7 @@ class TestFederationSeasonRegistration(TransactionCase):
         self.assertEqual(reg.state, "draft")
 
     def test_duplicate_registration_rejected(self):
+        """Test that duplicate registration rejected."""
         self.env["federation.season.registration"].create({
             "season_id": self.season.id,
             "team_id": self.team.id,

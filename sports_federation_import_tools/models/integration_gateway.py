@@ -63,6 +63,7 @@ class FederationIntegrationContract(models.Model):
     )
 
     def _is_available(self):
+        """Return whether the record is available."""
         self.ensure_one()
         if not self.required_module:
             return True
@@ -77,6 +78,7 @@ class FederationIntegrationContract(models.Model):
         )
 
     def build_manifest_payload(self, subscription=None):
+        """Build manifest payload."""
         self.ensure_one()
         payload = {
             "code": self.code,
@@ -130,16 +132,19 @@ class FederationIntegrationPartner(models.Model):
 
     @api.model
     def _generate_auth_token(self):
+        """Handle generate auth token."""
         return secrets.token_urlsafe(24)
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         for vals in vals_list:
             vals.setdefault("auth_token", self._generate_auth_token())
             vals.setdefault("token_last_rotated_on", fields.Datetime.now())
         return super().create(vals_list)
 
     def action_rotate_token(self):
+        """Execute the rotate token action."""
         for record in self:
             record.write(
                 {
@@ -149,6 +154,7 @@ class FederationIntegrationPartner(models.Model):
             )
 
     def _get_subscription(self, contract_code):
+        """Return subscription."""
         self.ensure_one()
         return self.subscription_ids.filtered(
             lambda line: line.contract_id.code == contract_code and line.state == "active"
@@ -156,6 +162,7 @@ class FederationIntegrationPartner(models.Model):
 
     @api.model
     def authenticate_partner(self, partner_code, token, contract_code=None):
+        """Handle authenticate partner."""
         partner = self.sudo().search(
             [
                 ("code", "=", partner_code),
@@ -210,6 +217,7 @@ class FederationIntegrationPartnerContract(models.Model):
     )
 
     def mark_used(self):
+        """Handle mark used."""
         self.write({"last_used_on": fields.Datetime.now()})
 
 
@@ -279,6 +287,7 @@ class FederationIntegrationDelivery(models.Model):
 
     @api.depends("partner_id", "contract_id", "filename")
     def _compute_name(self):
+        """Compute name."""
         for record in self:
             parts = [
                 record.partner_id.name or "Partner",
@@ -289,6 +298,7 @@ class FederationIntegrationDelivery(models.Model):
 
     @api.constrains("contract_id")
     def _check_contract_direction(self):
+        """Validate contract direction."""
         for record in self:
             if record.contract_id.direction != "inbound":
                 raise ValidationError("Only inbound contracts can be staged as deliveries.")
@@ -297,6 +307,7 @@ class FederationIntegrationDelivery(models.Model):
 
     @api.model
     def stage_partner_delivery(self, partner, contract, filename, payload_base64, notes=None, source_reference=None):
+        """Handle stage partner delivery."""
         if not partner:
             raise ValidationError("Select a partner before staging an inbound delivery.")
         if not contract or contract.direction != "inbound":
@@ -347,6 +358,7 @@ class FederationIntegrationDelivery(models.Model):
         return delivery
 
     def action_open_import_wizard(self):
+        """Execute the open import wizard action."""
         self.ensure_one()
         if self.state == "cancelled":
             raise ValidationError("Cancelled deliveries cannot be reopened in the import pipeline.")
@@ -379,9 +391,11 @@ class FederationIntegrationDelivery(models.Model):
         }
 
     def action_cancel(self):
+        """Execute the cancel action."""
         self.write({"state": "cancelled"})
 
     def action_mark_previewed(self, wizard):
+        """Execute the mark previewed action."""
         wizard.ensure_one()
         self.ensure_one()
         self.write(
@@ -396,6 +410,7 @@ class FederationIntegrationDelivery(models.Model):
         )
 
     def action_mark_awaiting_approval(self, job):
+        """Execute the mark awaiting approval action."""
         job.ensure_one()
         self.ensure_one()
         self.write(
@@ -407,6 +422,7 @@ class FederationIntegrationDelivery(models.Model):
         )
 
     def action_mark_approved(self, job):
+        """Execute the mark approved action."""
         job.ensure_one()
         self.ensure_one()
         self.write(
@@ -419,6 +435,7 @@ class FederationIntegrationDelivery(models.Model):
         )
 
     def action_mark_processed(self, job):
+        """Execute the mark processed action."""
         job.ensure_one()
         self.ensure_one()
         self.write(
@@ -435,6 +452,7 @@ class FederationIntegrationDelivery(models.Model):
         )
 
     def action_mark_failed(self, message=None, job=None):
+        """Execute the mark failed action."""
         self.ensure_one()
         values = {
             "state": "failed",

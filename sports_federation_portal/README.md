@@ -110,27 +110,46 @@ sports_federation_portal/
     controllers/
         __init__.py
         main.py
+        officiating.py
         rosters.py
+        web_auth.py
     data/
         ir_sequence.xml
     models/
         __init__.py
         federation_club.py
         federation_club_representative.py
+        federation_club_role_type.py
+        federation_match_referee.py
+        federation_match_sheet.py
+        federation_referee.py
         federation_season_registration.py
+        federation_team_roster.py
+        federation_tournament.py
         federation_tournament_registration.py
+        res_partner.py
+        res_users.py
     security/
         ir.model.access.csv
         ir_rule.xml
         res_groups.xml
     views/
+        federation_club_representative_portal_views.xml
         federation_club_representative_views.xml
+        federation_club_role_type_views.xml
+        federation_club_views.xml
+        federation_referee_views.xml
+        federation_season_registration_views.xml
         federation_tournament_registration_views.xml
+        federation_tournament_views.xml
+        menu_items.xml
+        portal_officiating_templates.xml
         portal_templates.xml
         portal_tournament_workspace_templates.xml
         portal_roster_templates.xml
+        res_partner_views.xml
+        res_users_views.xml
         website_menus.xml
-        website_tournament_templates.xml
 ```
 
 ## Security Explanation

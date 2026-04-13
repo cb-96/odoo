@@ -8,9 +8,11 @@ class FederationImportClubsWizard(models.TransientModel):
     _inherit = "federation.import.wizard.mixin"
 
     def _get_import_target_model(self):
+        """Return import target model."""
         return "federation.club"
 
     def _get_mapping_guide(self):
+        """Return mapping guide."""
         return (
             "Required columns: name.\n"
             "Recommended columns for safe onboarding: code, email, phone, city.\n"
@@ -18,6 +20,7 @@ class FederationImportClubsWizard(models.TransientModel):
         )
 
     def action_parse_and_import(self):
+        """Execute the parse and import action."""
         self.ensure_one()
         baseline_count = self._prepare_import_execution()
         reader = self._get_csv_reader()

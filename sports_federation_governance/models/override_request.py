@@ -73,18 +73,21 @@ class FederationOverrideRequest(models.Model):
 
     @api.constrains("target_model")
     def _check_target_model(self):
+        """Validate target model."""
         for record in self:
             if not record.target_model:
                 raise ValidationError("Target model must not be empty.")
 
     @api.constrains("target_res_id")
     def _check_target_res_id(self):
+        """Validate target res ID."""
         for record in self:
             if record.target_res_id <= 0:
                 raise ValidationError("Target record ID must be > 0.")
 
     @api.constrains("reason")
     def _check_reason(self):
+        """Validate reason."""
         for record in self:
             if not record.reason or not record.reason.strip():
                 raise ValidationError("Reason is required.")

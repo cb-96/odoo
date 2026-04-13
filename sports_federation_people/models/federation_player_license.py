@@ -46,18 +46,22 @@ class FederationPlayerLicense(models.Model):
 
     @api.constrains("issue_date", "expiry_date")
     def _check_dates(self):
+        """Validate dates."""
         for rec in self:
             if rec.issue_date and rec.expiry_date and rec.expiry_date <= rec.issue_date:
                 raise ValidationError("Expiry date must be after issue date.")
 
     def action_activate(self):
+        """Execute the activate action."""
         for rec in self:
             rec.state = "active"
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for rec in self:
             rec.state = "cancelled"
 
     def action_draft(self):
+        """Execute the draft action."""
         for rec in self:
             rec.state = "draft"

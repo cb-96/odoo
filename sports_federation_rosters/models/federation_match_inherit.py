@@ -16,10 +16,12 @@ class FederationMatch(models.Model):
     )
 
     def _compute_match_sheet_count(self):
+        """Compute match sheet count."""
         for record in self:
             record.match_sheet_count = len(record.match_sheet_ids)
 
     def action_view_match_sheets(self):
+        """Execute the view match sheets action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_rosters.action_federation_match_sheet"
@@ -29,6 +31,7 @@ class FederationMatch(models.Model):
         return action
 
     def _get_team_roster_deadline_issues(self):
+        """Return team roster deadline issues."""
         self.ensure_one()
         if (
             not self.tournament_id
@@ -66,6 +69,7 @@ class FederationMatch(models.Model):
         "state",
     )
     def _check_team_roster_deadlines(self):
+        """Validate team roster deadlines."""
         for record in self:
             if record.state == "cancelled":
                 continue

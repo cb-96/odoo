@@ -9,6 +9,7 @@ class TestRoundSchedule(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Round Test Club",
@@ -65,6 +66,7 @@ class TestRoundSchedule(TransactionCase):
         })
 
     def _create_round(self, sequence, round_date=False, venue=False, stage=False, group=False):
+        """Exercise create round."""
         vals = {
             "stage_id": (stage or self.group_stage).id,
             "sequence": sequence,
@@ -78,6 +80,7 @@ class TestRoundSchedule(TransactionCase):
         return self.env["federation.tournament.round"].create(vals)
 
     def _create_participants(self, teams, stage=False):
+        """Exercise create participants."""
         participants = self.env["federation.tournament.participant"]
         for index, team in enumerate(teams, start=1):
             participants |= self.env["federation.tournament.participant"].create({
@@ -90,6 +93,7 @@ class TestRoundSchedule(TransactionCase):
         return participants
 
     def test_match_round_assignment_inherits_scope_and_venue(self):
+        """Test that match round assignment inherits scope and venue."""
         round_record = self._create_round(1, round_date="2024-09-15", venue=self.venue)
 
         match = self.env["federation.match"].create({
@@ -105,6 +109,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertEqual(match.scheduled_date, fields.Date.to_date("2024-09-15"))
 
     def test_match_scheduled_time_write_uses_round_date_even_at_midnight(self):
+        """Test that match scheduled time write uses round date even at midnight."""
         round_record = self._create_round(1, round_date="2024-09-15")
         match = self.env["federation.match"].create({
             "home_team_id": self.team_a.id,
@@ -121,6 +126,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertEqual(match.scheduled_time, 0.0)
 
     def test_match_datetime_write_is_normalized_to_round_date(self):
+        """Test that match datetime write is normalized to round date."""
         round_record = self._create_round(1, round_date="2024-09-15")
         match = self.env["federation.match"].create({
             "home_team_id": self.team_a.id,
@@ -137,6 +143,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertAlmostEqual(match.scheduled_time, 18.75, places=2)
 
     def test_match_round_rejects_conflicting_venue(self):
+        """Test that match round rejects conflicting venue."""
         round_record = self._create_round(1, venue=self.venue)
 
         with self.assertRaises(ValidationError):
@@ -151,6 +158,7 @@ class TestRoundSchedule(TransactionCase):
             })
 
     def test_duplicate_same_category_pairing_rejected_in_same_round(self):
+        """Test that duplicate same category pairing rejected in same round."""
         round_record = self._create_round(1)
         self.env["federation.match"].create({
             "tournament_id": self.tournament.id,
@@ -172,6 +180,7 @@ class TestRoundSchedule(TransactionCase):
             })
 
     def test_same_pairing_in_different_rounds_allowed(self):
+        """Test that same pairing in different rounds allowed."""
         round_one = self._create_round(1)
         round_two = self._create_round(2)
 
@@ -196,6 +205,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertTrue(second_match.id)
 
     def test_round_date_write_preserves_match_time_components(self):
+        """Test that round date write preserves match time components."""
         round_record = self._create_round(1)
         match = self.env["federation.match"].create({
             "tournament_id": self.tournament.id,
@@ -214,6 +224,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertEqual((scheduled_dt.hour, scheduled_dt.minute), (19, 30))
 
     def test_round_date_write_keeps_midnight_matches(self):
+        """Test that round date write keeps midnight matches."""
         round_record = self._create_round(1, round_date="2024-10-01")
         match = self.env["federation.match"].create({
             "tournament_id": self.tournament.id,
@@ -232,6 +243,7 @@ class TestRoundSchedule(TransactionCase):
         self.assertEqual((scheduled_dt.hour, scheduled_dt.minute), (0, 0))
 
     def test_schedule_by_round_creates_rounds_with_dates_and_venue(self):
+        """Test that schedule by round creates rounds with dates and venue."""
         if not self.env.get("federation.round.robin.service"):
             self.skipTest("sports_federation_competition_engine not installed.")
 
@@ -275,6 +287,7 @@ class TestRoundSchedule(TransactionCase):
         )
 
     def test_round_robin_wizard_reuses_existing_stage_rounds(self):
+        """Test that round robin wizard reuses existing stage rounds."""
         if not self.env.get("federation.round.robin.wizard"):
             self.skipTest("sports_federation_competition_engine not installed.")
 

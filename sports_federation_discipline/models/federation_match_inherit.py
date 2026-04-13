@@ -15,10 +15,12 @@ class FederationMatch(models.Model):
     )
 
     def _compute_incident_count(self):
+        """Compute incident count."""
         for record in self:
             record.incident_count = len(record.incident_ids)
 
     def action_view_incidents(self):
+        """Execute the view incidents action."""
         self.ensure_one()
         action = self.env.ref(
             "sports_federation_discipline.action_federation_incident"

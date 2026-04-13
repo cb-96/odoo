@@ -31,6 +31,7 @@ class FederationRefereeCertification(models.Model):
 
     @api.constrains("issue_date", "expiry_date")
     def _check_dates(self):
+        """Validate dates."""
         for rec in self:
             if rec.issue_date and rec.expiry_date and rec.expiry_date <= rec.issue_date:
                 raise ValidationError("Expiry date must be after issue date.")

@@ -40,17 +40,20 @@ class FederationReferee(models.Model):
 
     @api.depends("certification_ids", "match_assignment_ids")
     def _compute_counts(self):
+        """Compute counts."""
         for rec in self:
             rec.certification_count = len(rec.certification_ids)
             rec.assignment_count = len(rec.match_assignment_ids)
 
     def action_view_certifications(self):
+        """Execute the view certifications action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_officiating.federation_referee_certification_action')
         action['domain'] = [('referee_id', '=', self.id)]
         return action
 
     def action_view_assignments(self):
+        """Execute the view assignments action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_officiating.federation_match_referee_action')
         action['domain'] = [('referee_id', '=', self.id)]

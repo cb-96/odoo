@@ -14,6 +14,7 @@ class TestFinanceHooks(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.has_result_control = "result_state" in cls.env["federation.match"]._fields
 
@@ -114,6 +115,7 @@ class TestFinanceHooks(TransactionCase):
         self.assertEqual(event.state, "draft")
 
     def test_venue_finance_event_helper_is_idempotent(self):
+        """Test that venue finance event helper is idempotent."""
         match = self._create_done_match(with_venue=True)
 
         match.action_create_venue_finance_event(fee_type_code="venue_booking", amount=150.0)
@@ -129,6 +131,7 @@ class TestFinanceHooks(TransactionCase):
         )
 
     def test_scheduling_match_with_venue_creates_automatic_venue_event(self):
+        """Test that scheduling match with venue creates automatic venue event."""
         match = self.env["federation.match"].create({
             "tournament_id": self.tournament.id,
             "home_team_id": self.team_a.id,
@@ -212,6 +215,7 @@ class TestFinanceHooks(TransactionCase):
         self.assertEqual(event.amount, self.fee_type_result.default_amount)
 
     def test_result_approval_reuses_existing_finance_event(self):
+        """Test that result approval reuses existing finance event."""
         if not self.has_result_control:
             self.skipTest("result_control not installed.")
         match = self._create_done_match(with_venue=False, with_result_fee=True)

@@ -50,11 +50,13 @@ class ResUsers(models.Model):
 
     @api.depends("representative_ids")
     def _compute_representative_count(self):
+        """Compute representative count."""
         for rec in self:
             rec.representative_count = len(rec.representative_ids)
 
     @api.depends("representative_ids.club_id")
     def _compute_represented_club_ids(self):
+        """Compute represented club IDs."""
         for rec in self:
             rec.represented_club_ids = rec.representative_ids.mapped("club_id")
 
@@ -64,6 +66,7 @@ class ResUsers(models.Model):
         "representative_ids.is_current",
     )
     def _compute_portal_scope_ids(self):
+        """Compute portal scope IDs."""
         for rec in self:
             current_reps = rec.representative_ids.filtered("is_current")
             rec.portal_club_scope_ids = current_reps.filtered(lambda rep: not rep.team_id).mapped("club_id")

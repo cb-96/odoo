@@ -4,6 +4,7 @@ from odoo.tests import TransactionCase
 class TestSeasonRegistrationFinance(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create(
             {
@@ -28,6 +29,7 @@ class TestSeasonRegistrationFinance(TransactionCase):
         )
 
     def test_confirm_creates_registration_finance_event(self):
+        """Test that confirm creates registration finance event."""
         registration = self.env["federation.season.registration"].create(
             {
                 "season_id": self.season.id,
@@ -56,6 +58,7 @@ class TestSeasonRegistrationFinance(TransactionCase):
         self.assertEqual(event.event_type, "charge")
 
     def test_reconfirm_does_not_duplicate_registration_finance_event(self):
+        """Test that reconfirm does not duplicate registration finance event."""
         registration = self.env["federation.season.registration"].create(
             {
                 "season_id": self.season.id,
@@ -76,6 +79,7 @@ class TestSeasonRegistrationFinance(TransactionCase):
         self.assertEqual(event_count, 1)
 
     def test_create_confirmed_registration_creates_finance_event(self):
+        """Test that create confirmed registration creates finance event."""
         registration = self.env["federation.season.registration"].create(
             {
                 "season_id": self.season.id,

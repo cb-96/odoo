@@ -16,6 +16,7 @@ class FederationTournamentInherit(models.Model):
     )
 
     def action_apply_template(self):
+        """Execute the apply template action."""
         self.ensure_one()
         if self.template_id:
             self.template_id.action_apply(self)

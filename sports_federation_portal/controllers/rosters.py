@@ -10,6 +10,7 @@ from .main import FederationPortal
 
 class FederationRosterPortal(FederationPortal):
     def _get_portal_roster(self, roster_id):
+        """Return portal roster."""
         Roster = request.env["federation.team.roster"]
         roster = (
             Roster
@@ -24,6 +25,7 @@ class FederationRosterPortal(FederationPortal):
         return roster
 
     def _get_portal_roster_line(self, roster, line_id):
+        """Return portal roster line."""
         line = (
             request.env["federation.team.roster.line"]
             .with_user(request.env.user)
@@ -35,6 +37,7 @@ class FederationRosterPortal(FederationPortal):
         return line
 
     def _redirect_roster(self, roster, success=None, error=None):
+        """Handle redirect roster."""
         url = f"/my/rosters/{roster.id}"
         if success:
             return request.redirect(f"{url}?success={quote_plus(success)}")
@@ -49,6 +52,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_rosters(self, page=1, **kw):
+        """Handle the portal my rosters flow."""
         Roster = request.env["federation.team.roster"].with_user(request.env.user).sudo()
         domain = Roster._portal_get_scope_domain(user=request.env.user)
         if domain == [("id", "=", False)]:
@@ -100,6 +104,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_create(self, registration_id, **kw):
+        """Handle the portal my roster create flow."""
         registration = (
             request.env["federation.season.registration"]
             .with_user(request.env.user)
@@ -131,6 +136,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_roster_detail(self, roster_id, **kw):
+        """Handle the portal my roster detail flow."""
         try:
             roster = self._get_portal_roster(roster_id)
         except AccessError:
@@ -166,6 +172,7 @@ class FederationRosterPortal(FederationPortal):
         methods=["GET"],
     )
     def portal_my_roster_edit(self, roster_id, **kw):
+        """Handle the portal my roster edit flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_assert_manage_access(user=request.env.user)
@@ -193,6 +200,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_update(self, roster_id, **kw):
+        """Handle the portal my roster update flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_update_roster(
@@ -222,6 +230,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_activate(self, roster_id, **kw):
+        """Handle the portal my roster activate flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_activate(user=request.env.user)
@@ -240,6 +249,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_set_draft(self, roster_id, **kw):
+        """Handle the portal my roster set draft flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_set_draft(user=request.env.user)
@@ -258,6 +268,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_close(self, roster_id, **kw):
+        """Handle the portal my roster close flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_close(user=request.env.user)
@@ -275,6 +286,7 @@ class FederationRosterPortal(FederationPortal):
         methods=["GET"],
     )
     def portal_my_roster_line_new(self, roster_id, **kw):
+        """Handle the portal my roster line new flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             roster._portal_assert_manage_access(user=request.env.user)
@@ -314,6 +326,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_line_create(self, roster_id, **kw):
+        """Handle the portal my roster line create flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             request.env["federation.team.roster.line"]._portal_create_line(
@@ -338,6 +351,7 @@ class FederationRosterPortal(FederationPortal):
         methods=["GET"],
     )
     def portal_my_roster_line_edit(self, roster_id, line_id, **kw):
+        """Handle the portal my roster line edit flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             line = self._get_portal_roster_line(roster, line_id)
@@ -383,6 +397,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_line_update(self, roster_id, line_id, **kw):
+        """Handle the portal my roster line update flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             line = self._get_portal_roster_line(roster, line_id)
@@ -405,6 +420,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_roster_line_delete(self, roster_id, line_id, **kw):
+        """Handle the portal my roster line delete flow."""
         try:
             roster = self._get_portal_roster(roster_id)
             line = self._get_portal_roster_line(roster, line_id)
@@ -422,6 +438,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheets(self, page=1, **kw):
+        """Handle the portal my match sheets flow."""
         MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
         domain = MatchSheet._portal_get_domain(user=request.env.user)
         if domain == [("id", "=", False)]:
@@ -457,6 +474,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheet_detail(self, sheet_id, **kw):
+        """Handle the portal my match sheet detail flow."""
         sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
         if not sheet.exists():
             return request.not_found()
@@ -486,6 +504,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_match_sheet_prepare(self, sheet_id, **kw):
+        """Handle the portal my match sheet prepare flow."""
         sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
         if not sheet.exists():
             return request.not_found()
@@ -526,6 +545,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_day(self, page=1, **kw):
+        """Handle the portal my match day flow."""
         MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
         domain = MatchSheet._portal_get_domain(user=request.env.user)
         if domain == [("id", "=", False)]:

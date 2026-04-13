@@ -52,6 +52,7 @@ class FederationSanction(models.Model):
 
     @api.constrains("player_id", "club_id", "referee_id", "case_id")
     def _check_subject(self):
+        """Validate subject."""
         for record in self:
             has_subject = any([
                 record.player_id,

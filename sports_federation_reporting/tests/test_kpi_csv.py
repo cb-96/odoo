@@ -17,6 +17,7 @@ class TestKpiCsvExport(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "KPI Club", "code": "KPIC",

@@ -41,6 +41,7 @@ class FederationClub(models.Model):
 
     @api.depends("representative_ids")
     def _compute_representative_count(self):
+        """Compute representative count."""
         for rec in self:
             rec.representative_count = len(rec.representative_ids)
 
@@ -52,6 +53,7 @@ class FederationClub(models.Model):
         "representative_ids.role_type_id.is_safeguarding_contact",
     )
     def _compute_contact_counts(self):
+        """Compute contact counts."""
         for rec in self:
             reps = rec.representative_ids
             rec.primary_contact_count = len(reps.filtered("is_primary"))

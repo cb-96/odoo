@@ -7,6 +7,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_get_scope_domain(self, user=None):
+        """Handle the portal-specific get scope domain flow."""
         user = user or self.env.user
         club_scope = user.portal_club_scope_ids
         team_scope = user.portal_team_scope_ids
@@ -21,6 +22,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_get_represented_clubs(self, user=None):
+        """Handle the portal-specific get represented clubs flow."""
         user = user or self.env.user
         return (
             self.env["federation.club.representative"]
@@ -31,6 +33,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_get_confirmed_registrations(self, user=None):
+        """Handle the portal-specific get confirmed registrations flow."""
         user = user or self.env.user
         scope_domain = self._portal_get_scope_domain(user=user)
         if scope_domain == [("id", "=", False)]:
@@ -46,6 +49,7 @@ class FederationTeamRoster(models.Model):
         )
 
     def _portal_get_confirmed_registration(self, user=None):
+        """Handle the portal-specific get confirmed registration flow."""
         self.ensure_one()
         user = user or self.env.user
         if self.season_registration_id and self.season_registration_id.state == "confirmed":
@@ -67,6 +71,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_get_preferred_roster_for_tournament(self, tournament, team, user=None):
+        """Handle the portal-specific get preferred roster for tournament flow."""
         user = user or self.env.user
         tournament.ensure_one()
         team.ensure_one()
@@ -84,6 +89,7 @@ class FederationTeamRoster(models.Model):
             return rosters
 
         def _pick(records):
+            """Handle pick."""
             active_records = records.filtered(lambda roster: roster.status == "active")
             return active_records[:1] or records[:1]
 
@@ -100,6 +106,7 @@ class FederationTeamRoster(models.Model):
         return picked or _pick(rosters)
 
     def _portal_assert_manage_access(self, user=None):
+        """Handle the portal-specific assert manage access flow."""
         user = user or self.env.user
         club_scope = user.portal_club_scope_ids
         team_scope = user.portal_team_scope_ids
@@ -129,6 +136,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_get_primary_roster_for_registration(self, season_registration, user=None):
+        """Handle the portal-specific get primary roster for registration flow."""
         user = user or self.env.user
         season_registration.ensure_one()
         roster = (
@@ -158,6 +166,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model
     def _portal_create_roster_for_registration(self, season_registration, user=None):
+        """Handle the portal-specific create roster for registration flow."""
         user = user or self.env.user
         season_registration = season_registration.with_user(user).sudo()
         clubs = self._portal_get_represented_clubs(user=user)
@@ -198,6 +207,7 @@ class FederationTeamRoster(models.Model):
         )
 
     def _portal_update_roster(self, values=None, user=None):
+        """Handle the portal-specific update roster flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
         closed_rosters = self.filtered(lambda roster: roster.status == "closed")
@@ -224,16 +234,19 @@ class FederationTeamRoster(models.Model):
         return self.with_user(user).sudo().write(prepared)
 
     def _portal_action_activate(self, user=None):
+        """Handle the portal-specific action activate flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
         return self.with_user(user).sudo().action_activate()
 
     def _portal_action_set_draft(self, user=None):
+        """Handle the portal-specific action set draft flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
         return self.with_user(user).sudo().action_set_draft()
 
     def _portal_action_close(self, user=None):
+        """Handle the portal-specific action close flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
         return self.with_user(user).sudo().action_close()
@@ -244,6 +257,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.model
     def _portal_get_available_players(self, roster, user=None):
+        """Handle the portal-specific get available players flow."""
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
         if roster.team_id in user.portal_team_scope_ids and roster.club_id not in user.portal_club_scope_ids:
@@ -269,6 +283,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.model
     def _portal_get_available_licenses(self, roster, user=None, player=None):
+        """Handle the portal-specific get available licenses flow."""
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
         domain = [
@@ -286,6 +301,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.model
     def _portal_prepare_line_values(self, roster, values=None, user=None, player=None):
+        """Handle the portal-specific prepare line values flow."""
         user = user or self.env.user
         values = values or {}
         selected_player = not bool(player)
@@ -366,6 +382,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.model
     def _portal_create_line(self, roster, values=None, user=None):
+        """Handle the portal-specific create line flow."""
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
         if roster.status == "closed":
@@ -379,6 +396,7 @@ class FederationTeamRosterLine(models.Model):
         return self.with_user(user).sudo().create(prepared)
 
     def _portal_update_line(self, values=None, user=None):
+        """Handle the portal-specific update line flow."""
         user = user or self.env.user
         self.mapped("roster_id")._portal_assert_manage_access(user=user)
         if any(line.roster_id.status == "closed" for line in self):
@@ -396,6 +414,7 @@ class FederationTeamRosterLine(models.Model):
         return True
 
     def _portal_delete_line(self, user=None):
+        """Handle the portal-specific delete line flow."""
         user = user or self.env.user
         self.mapped("roster_id")._portal_assert_manage_access(user=user)
         if any(line.roster_id.status == "closed" for line in self):

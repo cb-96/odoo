@@ -9,12 +9,25 @@ from odoo.http import request
 
 class FederationCompliancePortal(CustomerPortal):
     def _prepare_compliance_layout_values(self, **extra_values):
+        """Prepare compliance layout values."""
         values = self._prepare_portal_layout_values()
         values.update(extra_values)
         values.setdefault("page_name", "my_compliance")
         return values
 
+    def _redirect_to_workspace(self, message):
+        """Redirect to the compliance workspace with a user-facing message."""
+        return request.redirect(f"/my/compliance?error={quote_plus(message)}")
+
+    def _redirect_to_detail(self, requirement_id, target_model, target_id, message):
+        """Redirect to a compliance detail page with a user-facing message."""
+        return request.redirect(
+            "/my/compliance/%s/%s/%s?error=%s"
+            % (requirement_id, target_model, target_id, quote_plus(message))
+        )
+
     def _get_workspace_entry(self, requirement_id, target_model, target_id):
+        """Return workspace entry."""
         return request.env[
             "federation.document.requirement"
         ]._portal_get_workspace_entry_for_user(
@@ -25,6 +38,7 @@ class FederationCompliancePortal(CustomerPortal):
         )
 
     def _create_submission_attachments(self, submission, uploaded_files):
+        """Handle create submission attachments."""
         attachment_ids = []
         Attachment = request.env["ir.attachment"].with_user(request.env.user).sudo()
         for uploaded_file in uploaded_files:
@@ -52,6 +66,7 @@ class FederationCompliancePortal(CustomerPortal):
 
     @http.route(["/my/compliance"], type="http", auth="user", website=True)
     def portal_my_compliance(self, **kw):
+        """Handle the portal my compliance flow."""
         Requirement = request.env["federation.document.requirement"]
         workspace_entries = Requirement._portal_get_workspace_entries(user=request.env.user)
         values = self._prepare_compliance_layout_values(
@@ -71,15 +86,18 @@ class FederationCompliancePortal(CustomerPortal):
         )
 
     @http.route(
-        ["/my/compliance/<int:requirement_id>/<string:target_model>/<int:target_id>"],
+        ["/my/compliance/<int:requirement_id>/<path:target_model>/<int:target_id>"],
         type="http",
         auth="user",
         website=True,
     )
     def portal_my_compliance_detail(self, requirement_id, target_model, target_id, **kw):
+        """Handle the portal my compliance detail flow."""
         entry = self._get_workspace_entry(requirement_id, target_model, target_id)
         if not entry:
-            return request.not_found()
+            return self._redirect_to_workspace(
+                "This compliance item is no longer available in your workspace."
+            )
 
         values = self._prepare_compliance_layout_values(
             compliance_entry=entry,
@@ -92,17 +110,28 @@ class FederationCompliancePortal(CustomerPortal):
         )
 
     @http.route(
-        ["/my/compliance/<int:requirement_id>/<string:target_model>/<int:target_id>/submit"],
+        ["/my/compliance/<int:requirement_id>/<path:target_model>/<int:target_id>/submit"],
         type="http",
         auth="user",
         website=True,
         methods=["POST"],
-        csrf=True,
+        csrf=False,
     )
     def portal_my_compliance_submit(self, requirement_id, target_model, target_id, **post):
+        """Handle the portal my compliance submit flow."""
+        if not request.validate_csrf(post.get("csrf_token")):
+            return self._redirect_to_detail(
+                requirement_id,
+                target_model,
+                target_id,
+                "Your session expired. Refresh the page and try again.",
+            )
+
         entry = self._get_workspace_entry(requirement_id, target_model, target_id)
         if not entry:
-            return request.not_found()
+            return self._redirect_to_workspace(
+                "This compliance item is no longer available in your workspace."
+            )
 
         redirect_url = entry["detail_url"]
         try:

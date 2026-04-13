@@ -95,6 +95,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.depends("partner_id", "club_id", "team_id", "role_type_id", "is_primary")
     def _compute_display_name(self):
+        """Compute display name."""
         for rec in self:
             parts = []
             if rec.partner_id:
@@ -111,6 +112,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.depends("date_start", "date_end", "active")
     def _compute_is_current(self):
+        """Compute is current."""
         today = fields.Date.context_today(self)
         for rec in self:
             if not rec.active:
@@ -124,6 +126,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.constrains("date_start", "date_end")
     def _check_dates(self):
+        """Validate dates."""
         for rec in self:
             if rec.date_start and rec.date_end and rec.date_start > rec.date_end:
                 raise ValidationError(
@@ -132,6 +135,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.constrains("club_id", "team_id", "role_type_id")
     def _check_team_scope(self):
+        """Validate team scope."""
         for rec in self:
             if rec.team_id and rec.team_id.club_id != rec.club_id:
                 raise ValidationError(
@@ -148,6 +152,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.constrains("partner_id", "club_id", "role_type_id", "team_id")
     def _check_partner_scope_uniqueness(self):
+        """Validate partner scope uniqueness."""
         for rec in self:
             domain = [
                 ("id", "!=", rec.id),
@@ -167,6 +172,7 @@ class FederationClubRepresentative(models.Model):
 
     @api.constrains("user_id", "club_id", "role_type_id", "team_id")
     def _check_user_scope_uniqueness(self):
+        """Validate user scope uniqueness."""
         for rec in self.filtered("user_id"):
             domain = [
                 ("id", "!=", rec.id),
@@ -209,6 +215,7 @@ class FederationClubRepresentative(models.Model):
             self.partner_id = self.user_id.partner_id
 
     def action_view_partner(self):
+        """Execute the view partner action."""
         self.ensure_one()
         return {
             "name": _("Contact"),
@@ -220,6 +227,7 @@ class FederationClubRepresentative(models.Model):
         }
 
     def action_view_user(self):
+        """Execute the view user action."""
         self.ensure_one()
         return {
             "name": _("User"),
@@ -234,7 +242,7 @@ class FederationClubRepresentative(models.Model):
     def _get_club_for_user(self, user=None):
         """Return the first active club for the given user (or current user)."""
         user = user or self.env.user
-        rep = self.search([
+        rep = self.sudo().search([
             ("user_id", "=", user.id),
             ("is_current", "=", True),
         ], limit=1)
@@ -244,7 +252,7 @@ class FederationClubRepresentative(models.Model):
     def _get_clubs_for_user(self, user=None):
         """Return all active clubs the given user represents."""
         user = user or self.env.user
-        reps = self.search([
+        reps = self.sudo().search([
             ("user_id", "=", user.id),
             ("is_current", "=", True),
         ])
@@ -254,7 +262,7 @@ class FederationClubRepresentative(models.Model):
     def _get_club_scope_for_user(self, user=None):
         """Return clubs for whole-club portal roles only."""
         user = user or self.env.user
-        reps = self.search([
+        reps = self.sudo().search([
             ("user_id", "=", user.id),
             ("is_current", "=", True),
             ("team_id", "=", False),
@@ -265,7 +273,7 @@ class FederationClubRepresentative(models.Model):
     def _get_teams_for_user(self, user=None):
         """Return teams explicitly assigned to the given user's portal roles."""
         user = user or self.env.user
-        reps = self.search([
+        reps = self.sudo().search([
             ("user_id", "=", user.id),
             ("is_current", "=", True),
             ("team_id", "!=", False),

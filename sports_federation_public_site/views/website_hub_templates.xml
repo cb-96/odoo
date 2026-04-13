@@ -106,8 +106,8 @@
                     <div class="row align-items-end g-4">
                         <div class="col-lg-8">
                             <p class="text-uppercase small mb-2 opacity-75">Tournament Hub</p>
-                            <h1 class="display-6 mb-3">One home for tournaments, live coverage, and public results</h1>
-                            <p class="mb-0 opacity-75">Published schedules, standings, results, brackets, and team pages now live together in one tournament hub.</p>
+                            <h1 class="display-6 mb-3">One home for tournaments, live updates, and public results</h1>
+                            <p class="mb-0 opacity-75">Schedules, standings, results, brackets, and team pages now live together in one public tournament hub.</p>
                         </div>
                         <div class="col-lg-4">
                             <div class="row g-3 text-center">
@@ -191,7 +191,7 @@
                 <section t-if="live_public_tournaments" class="mb-5">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h4 mb-0">Live Now</h2>
-                        <span class="text-muted small">In-progress tournaments with published coverage</span>
+                        <span class="text-muted small">In-progress tournaments with live public updates</span>
                     </div>
                     <div class="row g-3">
                         <t t-foreach="live_public_tournaments" t-as="tournament">
@@ -202,7 +202,7 @@
                                             <a t-att-href="tournament.get_public_path()" class="h6 text-decoration-none mb-0" t-esc="tournament.name"/>
                                             <span class="badge text-bg-danger">Live</span>
                                         </div>
-                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Currently in progress with public coverage.'"/>
+                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Currently in progress with live public updates.'"/>
                                         <a t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-primary">Latest Results</a>
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@
                 <section id="published" class="mb-5" t-if="featured_public_tournaments">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h4 mb-0">Featured Published Tournaments</h2>
-                        <span class="text-muted small">Editor-curated tournament coverage</span>
+                        <span class="text-muted small">Editor-curated tournament updates</span>
                     </div>
                     <div class="row g-4">
                         <t t-foreach="featured_public_tournaments" t-as="tournament">
@@ -257,7 +257,7 @@
                                             </div>
                                             <span class="badge text-bg-primary">Featured</span>
                                         </div>
-                                        <p class="mb-3" t-esc="tournament.public_editorial_summary or 'Published schedule, results, standings, and bracket coverage available.'"/>
+                                        <p class="mb-3" t-esc="tournament.public_editorial_summary or 'Schedules, results, standings, and bracket updates are available here.'"/>
                                         <div class="d-flex flex-wrap gap-2">
                                             <a t-att-href="tournament.get_public_path()" class="btn btn-primary btn-sm">Overview</a>
                                             <a t-if="tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-outline-secondary btn-sm">Schedule</a>
@@ -274,7 +274,7 @@
                 <section id="published-archive" class="mb-5" t-if="archived_public_tournaments">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h4 mb-0">Past Published Tournaments</h2>
-                        <span class="text-muted small">Archive of completed public coverage</span>
+                        <span class="text-muted small">Completed tournaments with preserved public updates</span>
                     </div>
                     <div class="row g-3">
                         <t t-foreach="archived_public_tournaments" t-as="tournament">
@@ -297,7 +297,7 @@
                 <section>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h4 mb-0">All Tournaments</h2>
-                        <span class="text-muted small">Operational hub for registration and public coverage</span>
+                        <span class="text-muted small">Registration, schedules, and public updates in one place</span>
                     </div>
                     <div class="row g-4">
                         <t t-foreach="tournaments" t-as="tournament">
@@ -317,7 +317,7 @@
                                             <t t-if="tournament.location"> • <span t-esc="tournament.location"/></t>
                                             <t t-if="tournament.max_participants"> • <span t-esc="tournament.participant_count"/> / <span t-esc="tournament.max_participants"/> participants</t>
                                         </div>
-                                        <p class="mb-3 flex-grow-1" t-esc="tournament.public_editorial_summary or tournament.notes or 'Tournament operations, registration, and public coverage live here.'"/>
+                                        <p class="mb-3 flex-grow-1" t-esc="tournament.public_editorial_summary or tournament.notes or 'Registration, schedules, and public updates live here.'"/>
                                         <div class="d-flex flex-wrap gap-2 mt-auto">
                                             <a t-att-href="tournament.get_public_path()" class="btn btn-sm btn-primary">Overview</a>
                                             <a t-if="tournament.can_access_public_detail() and tournament.get_public_schedule_sections()" t-att-href="tournament.get_public_schedule_path()" class="btn btn-sm btn-outline-secondary">Schedule</a>
@@ -328,7 +328,7 @@
                             </div>
                         </t>
                     </div>
-                    <div t-if="not tournaments" class="alert alert-info mt-4">No tournaments match the current filters.</div>
+                    <div t-if="not tournaments" class="alert alert-info mt-4">No tournaments match the current filters. Try widening the season or state filters to discover more events.</div>
                     <t t-call="website.pager" t-if="pager">
                         <t t-set="pager" t-value="pager"/>
                     </t>
@@ -516,7 +516,7 @@
 
                         <section class="mb-4" t-if="not tournament.can_access_public_detail()">
                             <div class="alert alert-info border-0 shadow-sm mb-0">
-                                Public coverage is not published for this tournament yet. Registration and operational details remain available here, but schedule, standings, results, and bracket links will appear once publication is enabled.
+                                Public updates are not published for this tournament yet. Registration details remain available here, and schedules, standings, results, and bracket links will appear once the federation opens public release.
                             </div>
                         </section>
                     </div>
@@ -571,7 +571,7 @@
                                 </form>
 
                                 <div t-elif="not error" class="alert alert-warning mb-0">
-                                    No eligible teams are currently available for this tournament.
+                                    No eligible teams are available right now. Check your team setup or contact federation staff if you expected to register.
                                 </div>
                             </div>
                         </div>
@@ -621,7 +621,7 @@
                                     <t t-if="team.category"> • <span t-esc="dict(team._fields['category'].selection).get(team.category)"/></t>
                                     <t t-if="team.gender"> • <span t-esc="dict(team._fields['gender'].selection).get(team.gender)"/></t>
                                 </p>
-                                <p class="mb-0" t-esc="team.notes or 'This team appears on published tournament coverage and public standings.'"/>
+                                <p class="mb-0" t-esc="team.notes or 'This team appears on published tournament pages, schedules, and standings.'"/>
                             </div>
                         </div>
                     </div>

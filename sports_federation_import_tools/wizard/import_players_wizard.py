@@ -10,9 +10,11 @@ class FederationImportPlayersWizard(models.TransientModel):
     _inherit = "federation.import.wizard.mixin"
 
     def _get_import_target_model(self):
+        """Return import target model."""
         return "federation.player"
 
     def _get_mapping_guide(self):
+        """Return mapping guide."""
         return (
             "Required columns: first_name and last_name. Legacy full-name imports may use name.\n"
             "Recommended columns: birth_date (YYYY-MM-DD), club_code (preferred) or club_name, gender, email, phone, state.\n"
@@ -20,6 +22,7 @@ class FederationImportPlayersWizard(models.TransientModel):
         )
 
     def action_parse_and_import(self):
+        """Execute the parse and import action."""
         self.ensure_one()
         baseline_count = self._prepare_import_execution()
         reader = self._get_csv_reader()

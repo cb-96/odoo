@@ -6,6 +6,7 @@ class WebsiteMenu(models.Model):
 
     @api.model
     def _get_public_site_coverage_menu_values(self):
+        """Return public site coverage menu values."""
         return {
             "name": "Published Coverage",
             "url": "/tournaments#published",
@@ -15,6 +16,7 @@ class WebsiteMenu(models.Model):
 
     @api.model
     def _cleanup_stale_public_site_menus(self):
+        """Handle cleanup stale public site menus."""
         menu_model = self.sudo()
         target_vals = self._get_public_site_coverage_menu_values()
         summary = {

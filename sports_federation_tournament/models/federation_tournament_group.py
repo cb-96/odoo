@@ -29,17 +29,20 @@ class FederationTournamentGroup(models.Model):
 
     @api.depends("participant_ids", "match_ids")
     def _compute_counts(self):
+        """Compute counts."""
         for rec in self:
             rec.participant_count = len(rec.participant_ids)
             rec.match_count = len(rec.match_ids)
 
     def action_view_participants(self):
+        """Execute the view participants action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_tournament_participant_action')
         action['domain'] = [('group_id', '=', self.id)]
         return action
 
     def action_view_matches(self):
+        """Execute the view matches action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_tournament.federation_match_action')
         action['domain'] = [('group_id', '=', self.id)]

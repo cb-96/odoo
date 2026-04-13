@@ -16,6 +16,7 @@ class FederationTournament(models.Model):
 
     @api.depends("standing_ids")
     def _compute_standing_count(self):
+        """Compute standing count."""
         for record in self:
             record.standing_count = len(record.standing_ids)
 

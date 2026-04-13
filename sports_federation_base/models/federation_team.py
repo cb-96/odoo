@@ -47,6 +47,7 @@ class FederationTeam(models.Model):
 
     @api.depends("name", "gender")
     def _compute_display_name(self):
+        """Compute display name."""
         gender_labels = {
             "male": _("Men"),
             "female": _("Women"),
@@ -63,10 +64,12 @@ class FederationTeam(models.Model):
 
     @api.depends("registration_ids")
     def _compute_registration_count(self):
+        """Compute registration count."""
         for rec in self:
             rec.registration_count = len(rec.registration_ids)
 
     def action_view_registrations(self):
+        """Execute the view registrations action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_base.federation_season_registration_action')
         action['domain'] = [('team_id', '=', self.id)]
@@ -74,6 +77,7 @@ class FederationTeam(models.Model):
 
     @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):
+        """Search records by their display-name components."""
         args = args or []
         if name:
             domain = ["|", ("name", operator, name), ("code", operator, name)]
@@ -82,6 +86,7 @@ class FederationTeam(models.Model):
         return super().name_search(name, args, operator, limit)
 
     def action_archive(self):
+        """Execute the archive action."""
         teams_with_active_registrations = self.filtered(
             lambda rec: rec.registration_ids.filtered(lambda registration: registration.state != "cancelled")
         )
@@ -95,5 +100,6 @@ class FederationTeam(models.Model):
         return True
 
     def action_restore(self):
+        """Execute the restore action."""
         self.write({"active": True})
         return True

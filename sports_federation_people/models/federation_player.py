@@ -54,16 +54,19 @@ class FederationPlayer(models.Model):
 
     @api.depends("first_name", "last_name")
     def _compute_name(self):
+        """Compute name."""
         for rec in self:
             parts = [p for p in [rec.first_name, rec.last_name] if p]
             rec.name = " ".join(parts) or "New"
 
     @api.depends("license_ids")
     def _compute_counts(self):
+        """Compute counts."""
         for rec in self:
             rec.license_count = len(rec.license_ids)
 
     def action_view_licenses(self):
+        """Execute the view licenses action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_people.federation_player_license_action')
         action['domain'] = [('player_id', '=', self.id)]
@@ -71,24 +74,29 @@ class FederationPlayer(models.Model):
 
     @api.constrains("birth_date")
     def _check_birth_date(self):
+        """Validate birth date."""
         for rec in self:
             if rec.birth_date and rec.birth_date > date.today():
                 raise ValidationError("Date of birth cannot be in the future.")
 
     def action_activate(self):
+        """Execute the activate action."""
         for rec in self:
             rec.state = "active"
 
     def action_deactivate(self):
+        """Execute the deactivate action."""
         for rec in self:
             rec.state = "inactive"
 
     def action_suspend(self):
+        """Execute the suspend action."""
         for rec in self:
             rec.state = "suspended"
 
     @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):
+        """Search records by their display-name components."""
         args = args or []
         if name:
             domain = [

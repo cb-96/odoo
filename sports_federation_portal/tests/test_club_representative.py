@@ -8,6 +8,7 @@ class TestClubRepresentative(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create a club
         cls.club = cls.env["federation.club"].create({"name": "Test Club"})
@@ -221,6 +222,30 @@ class TestClubRepresentative(TransactionCase):
         self.assertEqual(len(clubs), 2)
         self.assertIn(self.club, clubs)
         self.assertIn(club2, clubs)
+
+    def test_scope_helpers_return_empty_for_non_club_portal_user(self):
+        """Test that scope helpers return empty for non-club portal user."""
+        official_group = self.env.ref(
+            "sports_federation_portal.group_federation_portal_official"
+        )
+        official_user = self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "Non Club Portal User",
+                "login": "non.club.portal.user@example.com",
+                "email": "non.club.portal.user@example.com",
+                "group_ids": [(6, 0, [official_group.id])],
+            }
+        )
+
+        clubs = self.env["federation.club.representative"].with_user(
+            official_user
+        )._get_clubs_for_user()
+        club_scope = self.env["federation.club.representative"].with_user(
+            official_user
+        )._get_club_scope_for_user()
+
+        self.assertFalse(clubs)
+        self.assertFalse(club_scope)
 
     def test_get_primary_contact(self):
         """Test _get_primary_contact helper method."""

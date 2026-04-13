@@ -66,11 +66,11 @@ Reusable service methods callable by any module.
 2. **Comprehensive logging** — Every send/activity creation produces a log entry.
 3. **Multi-recipient email delivery** — `send_email_template()` accepts a single email or a collection of emails and deduplicates them before sending.
 4. **QWeb templates** — Email templates use Odoo 19 QWeb syntax (`<t t-out=""/>`).
-5. **Live workflow coverage** — Season registration confirmation/rejection, tournament publication, participant confirmation, result approval/contest, standing freeze, finance confirmation, and referee assignment all dispatch concrete emails.
+5. **Live workflow coverage** — Season registration confirmation/rejection, tournament publication, participant confirmation, result approval/contest, standing freeze, finance confirmation, referee assignment, and suspension activation all dispatch concrete emails or direct mail deliveries.
 6. **Activity-based operational follow-up** — Result submission creates verifier activities, while overdue referee confirmations and officiating shortages create federation-manager activities.
 7. **Scheduled scan** — Cron logs stale draft registration reminders and triggers the officiating follow-up activities above.
 8. **Failure visibility without transaction rollback** — Missing recipients or template failures create `failed` notification logs instead of blocking the business workflow.
-9. **Remaining gap** — `send_suspension_issued()` is still a stub until the discipline-side template and recipient mapping are finalized.
+9. **Suspension delivery fallback** — `send_suspension_issued()` now sends a direct email and logs the outcome even when no dedicated mail template exists yet.
 
 ## Integration configuration (env)
 

@@ -15,10 +15,12 @@ class FederationPlayer(models.Model):
     )
 
     def _compute_suspension_count(self):
+        """Compute suspension count."""
         for record in self:
             record.suspension_count = len(record.suspension_ids)
 
     def action_view_suspensions(self):
+        """Execute the view suspensions action."""
         self.ensure_one()
         action = self.env.ref(
             "sports_federation_discipline.action_federation_suspension"

@@ -19,10 +19,12 @@ class FederationMatchReferee(models.Model):
 
     @api.model
     def _portal_get_domain(self, user=None):
+        """Handle the portal-specific get domain flow."""
         user = user or self.env.user
         return [("referee_id.user_id", "=", user.id)]
 
     def _portal_assert_access(self, user=None):
+        """Handle the portal-specific assert access flow."""
         user = user or self.env.user
         domain = self._portal_get_domain(user=user)
         for record in self:
@@ -32,6 +34,7 @@ class FederationMatchReferee(models.Model):
         return True
 
     def _portal_action_confirm(self, user=None, response_note=None):
+        """Handle the portal-specific action confirm flow."""
         user = user or self.env.user
         self._portal_assert_access(user=user)
         invalid = self.filtered(lambda assignment: assignment.state != "draft")
@@ -45,6 +48,7 @@ class FederationMatchReferee(models.Model):
         return self.with_user(user).sudo().action_confirm()
 
     def _portal_action_decline(self, user=None, response_note=None):
+        """Handle the portal-specific action decline flow."""
         user = user or self.env.user
         self._portal_assert_access(user=user)
         invalid = self.filtered(lambda assignment: assignment.state != "draft")

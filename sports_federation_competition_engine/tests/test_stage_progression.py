@@ -4,6 +4,7 @@ from odoo.tests.common import TransactionCase
 class TestStageProgressionWorkflow(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create(
             {
@@ -80,6 +81,7 @@ class TestStageProgressionWorkflow(TransactionCase):
         )
 
     def _create_done_match(self, home_team, away_team, home_score, away_score):
+        """Exercise create done match."""
         values = {
             "tournament_id": self.tournament.id,
             "stage_id": self.round_robin_stage.id,
@@ -94,6 +96,7 @@ class TestStageProgressionWorkflow(TransactionCase):
         return self.env["federation.match"].create(values)
 
     def test_freezing_round_robin_standing_auto_advances_top_two(self):
+        """Test that freezing round robin standing auto advances top two."""
         self._create_done_match(self.teams[0], self.teams[1], 3, 0)
         self._create_done_match(self.teams[0], self.teams[2], 2, 0)
         self._create_done_match(self.teams[0], self.teams[3], 1, 0)

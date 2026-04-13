@@ -8,6 +8,7 @@ class TestFederationRuleSet(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.rule_set = cls.env["federation.rule.set"].create({
             "name": "Standard League Rules",

@@ -9,6 +9,7 @@ class TestCompliance(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
 
         cls.portal_club_group = cls.env.ref(
@@ -254,6 +255,7 @@ class TestCompliance(TransactionCase):
         self.assertEqual(expired_checks[0].note, "Document has expired")
 
     def test_compliance_check_history_archives_status_changes(self):
+        """Test that compliance check history archives status changes."""
         checks = self.env["federation.compliance.check"].recompute_checks_for_target(
             self.club, "federation.club"
         )
@@ -325,6 +327,7 @@ class TestCompliance(TransactionCase):
         self.assertFalse(submission3.is_expired)
 
     def test_portal_workspace_entries_follow_club_and_referee_scope(self):
+        """Test that portal workspace entries follow club and referee scope."""
         Requirement = self.env["federation.document.requirement"]
 
         club_entries = Requirement._portal_get_workspace_entries(user=self.club_user)
@@ -343,7 +346,25 @@ class TestCompliance(TransactionCase):
             for entry in club_entries
         ))
 
+    def test_portal_workspace_entry_lookup_resolves_club_detail_entry(self):
+        """Test that portal workspace entry lookup resolves club detail entry."""
+        entry = self.env["federation.document.requirement"].with_user(
+            self.club_user
+        )._portal_get_workspace_entry_for_user(
+            self.requirement.id,
+            "federation.club",
+            self.club.id,
+            user=self.club_user,
+        )
+
+        self.assertTrue(entry)
+        self.assertEqual(
+            entry["detail_url"],
+            f"/my/compliance/{self.requirement.id}/federation.club/{self.club.id}",
+        )
+
     def test_portal_prepare_submission_uses_requesting_user(self):
+        """Test that portal prepare submission uses requesting user."""
         submission = self.env["federation.document.submission"]._portal_prepare_submission(
             self.requirement,
             self.club,
@@ -364,6 +385,7 @@ class TestCompliance(TransactionCase):
         self.assertEqual(submission.status, "submitted")
 
     def test_portal_prepare_submission_blocks_unowned_targets(self):
+        """Test that portal prepare submission blocks unowned targets."""
         other_club = self.env["federation.club"].create({
             "name": "Other Club",
             "code": "OC001",

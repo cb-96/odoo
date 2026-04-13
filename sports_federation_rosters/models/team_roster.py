@@ -3,6 +3,7 @@ from odoo.exceptions import ValidationError
 
 
 def _dedupe_reasons(reasons):
+    """Handle dedupe reasons."""
     unique_reasons = []
     seen = set()
     for reason in reasons:
@@ -121,6 +122,7 @@ class FederationTeamRoster(models.Model):
     )
 
     def _build_generated_name(self, team, season, competition=False):
+        """Build generated name."""
         team_label = team.display_name if team else _("Team")
         season_label = season.display_name if season else _("Season")
         if competition:
@@ -135,6 +137,7 @@ class FederationTeamRoster(models.Model):
         }
 
     def _resolve_scope_for_name(self, vals=None, record=False):
+        """Resolve scope for name."""
         vals = vals or {}
         Team = self.env["federation.team"]
         Season = self.env["federation.season"]
@@ -162,6 +165,7 @@ class FederationTeamRoster(models.Model):
         return team, season, competition
 
     def _get_generated_name(self, vals=None, record=False):
+        """Return generated name."""
         team, season, competition = self._resolve_scope_for_name(vals=vals, record=record)
         if not team or not season:
             return False
@@ -187,6 +191,7 @@ class FederationTeamRoster(models.Model):
 
     @api.onchange("team_id", "season_id", "competition_id")
     def _onchange_scope_fields(self):
+        """Handle onchange scope fields."""
         for record in self:
             generated_name = record._get_generated_name(record=record)
             if generated_name:
@@ -194,11 +199,13 @@ class FederationTeamRoster(models.Model):
 
     @api.depends("line_ids")
     def _compute_line_count(self):
+        """Compute line count."""
         for record in self:
             record.line_count = len(record.line_ids)
 
     @api.depends("match_sheet_ids")
     def _compute_match_sheet_count(self):
+        """Compute match sheet count."""
         for record in self:
             record.match_sheet_count = len(record.match_sheet_ids)
 
@@ -227,6 +234,7 @@ class FederationTeamRoster(models.Model):
         "line_ids.license_id.club_id",
     )
     def _compute_readiness(self):
+        """Compute readiness."""
         for record in self:
             issues = record._get_readiness_issues()
             record.ready_for_activation = not bool(issues)
@@ -239,6 +247,7 @@ class FederationTeamRoster(models.Model):
         "match_sheet_ids.match_id.date_scheduled",
     )
     def _compute_match_day_lock(self):
+        """Compute match day lock."""
         state_labels = dict(self.env["federation.match.sheet"]._fields["state"].selection)
         for record in self:
             locking_sheets = record._get_locking_match_sheets()
@@ -257,6 +266,7 @@ class FederationTeamRoster(models.Model):
 
     @api.constrains("valid_from", "valid_to")
     def _check_valid_dates(self):
+        """Validate valid dates."""
         for record in self:
             if record.valid_from and record.valid_to:
                 if record.valid_to < record.valid_from:
@@ -266,6 +276,7 @@ class FederationTeamRoster(models.Model):
 
     @api.constrains("season_registration_id", "team_id", "season_id")
     def _check_season_registration_consistency(self):
+        """Validate season registration consistency."""
         for record in self:
             if record.season_registration_id:
                 if record.season_registration_id.team_id != record.team_id:
@@ -279,6 +290,7 @@ class FederationTeamRoster(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         for vals in vals_list:
             if not vals.get("rule_set_id") and vals.get("competition_id"):
                 competition = self.env["federation.competition"].browse(
@@ -304,6 +316,7 @@ class FederationTeamRoster(models.Model):
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         self._assert_scope_editable_for_match_day(vals)
         if not vals.get("rule_set_id") and vals.get("competition_id"):
             competition = self.env["federation.competition"].browse(
@@ -351,6 +364,7 @@ class FederationTeamRoster(models.Model):
         return result
 
     def action_view_lines(self):
+        """Execute the view lines action."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
@@ -362,6 +376,7 @@ class FederationTeamRoster(models.Model):
         }
 
     def action_view_match_sheets(self):
+        """Execute the view match sheets action."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
@@ -373,6 +388,7 @@ class FederationTeamRoster(models.Model):
         }
 
     def _get_effective_rule_set(self):
+        """Return effective rule set."""
         self.ensure_one()
         return self.rule_set_id or (
             self.competition_id.rule_set_id
@@ -381,12 +397,14 @@ class FederationTeamRoster(models.Model):
         )
 
     def _get_locking_match_sheets(self):
+        """Return locking match sheets."""
         self.ensure_one()
         return self.match_sheet_ids.filtered(
             lambda sheet: sheet.state in ("submitted", "approved", "locked")
         )
 
     def _log_audit_event(self, event_type, description, player=False, match_sheet=False):
+        """Handle log audit event."""
         Audit = self.env.get("federation.participation.audit")
         if Audit is None:
             return False
@@ -402,6 +420,7 @@ class FederationTeamRoster(models.Model):
         return True
 
     def _assert_scope_editable_for_match_day(self, vals):
+        """Handle assert scope editable for match day."""
         if self.env.context.get("bypass_match_day_lock"):
             return
         protected_fields = {
@@ -432,6 +451,7 @@ class FederationTeamRoster(models.Model):
                 )
 
     def _get_reference_date(self):
+        """Return reference date."""
         self.ensure_one()
         today = fields.Date.context_today(self)
         if self.valid_from and self.valid_from > today:
@@ -441,6 +461,7 @@ class FederationTeamRoster(models.Model):
         return today
 
     def _get_required_player_bounds(self):
+        """Return required player bounds."""
         self.ensure_one()
         rule_set = self._get_effective_rule_set()
         min_required = self.min_players_required or (rule_set.squad_min_size if rule_set else 0)
@@ -448,6 +469,7 @@ class FederationTeamRoster(models.Model):
         return min_required, max_allowed
 
     def _get_readiness_issues(self, reference_date=None):
+        """Return readiness issues."""
         self.ensure_one()
         reference_date = reference_date or self._get_reference_date()
         issues = []
@@ -500,6 +522,7 @@ class FederationTeamRoster(models.Model):
         return issues
 
     def action_set_draft(self):
+        """Execute the set draft action."""
         for record in self:
             if record.match_day_locked:
                 raise ValidationError(
@@ -511,6 +534,7 @@ class FederationTeamRoster(models.Model):
         self.write({"status": "draft"})
 
     def action_activate(self):
+        """Execute the activate action."""
         for record in self:
             issues = record._get_readiness_issues()
             if issues:
@@ -530,6 +554,7 @@ class FederationTeamRoster(models.Model):
             )
 
     def action_close(self):
+        """Execute the close action."""
         self.with_context(bypass_match_day_lock=True).write({"status": "closed"})
         for record in self:
             record._log_audit_event(
@@ -613,6 +638,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         records = super().create(vals_list)
         records._validate_player_eligibility()
         for record in records:
@@ -625,6 +651,7 @@ class FederationTeamRosterLine(models.Model):
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         self._assert_not_locked_for_match_day(vals)
         result = super().write(vals)
         self._validate_player_eligibility()
@@ -655,6 +682,7 @@ class FederationTeamRosterLine(models.Model):
         return result
 
     def unlink(self):
+        """Delete records after applying module-specific safeguards."""
         self._assert_not_locked_for_match_day()
         audit_payloads = [
             (
@@ -697,6 +725,7 @@ class FederationTeamRosterLine(models.Model):
         "roster_id.rule_set_id",
     )
     def _compute_eligible(self):
+        """Compute eligible."""
         for record in self:
             reasons = record._get_eligibility_reasons()
             record.eligible = not bool(reasons)
@@ -704,6 +733,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.constrains("date_from", "date_to")
     def _check_dates(self):
+        """Validate dates."""
         for record in self:
             if record.date_from and record.date_to:
                 if record.date_to < record.date_from:
@@ -713,6 +743,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.constrains("is_captain", "roster_id", "status")
     def _check_single_captain(self):
+        """Validate single captain."""
         for record in self:
             if record.is_captain and record.status == "active":
                 domain = [
@@ -728,6 +759,7 @@ class FederationTeamRosterLine(models.Model):
 
     @api.constrains("is_vice_captain", "roster_id", "status")
     def _check_single_vice_captain(self):
+        """Validate single vice captain."""
         for record in self:
             if record.is_vice_captain and record.status == "active":
                 domain = [
@@ -743,9 +775,11 @@ class FederationTeamRosterLine(models.Model):
 
     @api.constrains("player_id", "roster_id")
     def _check_player_eligibility_rules(self):
+        """Validate player eligibility rules."""
         self._validate_player_eligibility()
 
     def _get_eligibility_context(self, reference_date=None):
+        """Return eligibility context."""
         self.ensure_one()
         roster = self.roster_id
         context = {"match_date": reference_date or roster._get_reference_date()}
@@ -762,6 +796,7 @@ class FederationTeamRosterLine(models.Model):
         return context
 
     def _get_locking_match_sheet_lines(self):
+        """Return locking match sheet lines."""
         self.ensure_one()
         return self.env["federation.match.sheet.line"].search(
             [
@@ -771,6 +806,7 @@ class FederationTeamRosterLine(models.Model):
         )
 
     def _assert_not_locked_for_match_day(self, vals=None):
+        """Handle assert not locked for match day."""
         if self.env.context.get("bypass_match_day_lock"):
             return
         protected_fields = {
@@ -800,6 +836,7 @@ class FederationTeamRosterLine(models.Model):
                 )
 
     def _get_eligibility_reasons(self, reference_date=None):
+        """Return eligibility reasons."""
         self.ensure_one()
         player = self.player_id
         roster = self.roster_id

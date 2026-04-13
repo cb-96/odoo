@@ -10,6 +10,7 @@ class TestImportTools(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         # Create test club
         cls.club = cls.env["federation.club"].create({
@@ -35,6 +36,7 @@ class TestImportTools(TransactionCase):
         return base64.b64encode(content.encode("utf-8"))
 
     def _approve_wizard_import(self, wizard):
+        """Exercise approve wizard import."""
         wizard.dry_run = True
         wizard.action_parse_and_import()
         wizard.action_request_approval()
@@ -43,6 +45,7 @@ class TestImportTools(TransactionCase):
         return wizard
 
     def _create_integration_partner(self, contract):
+        """Exercise create integration partner."""
         partner = self.env["federation.integration.partner"].create({
             "name": f"Partner {contract.code}",
             "code": f"PARTNER_{contract.code.upper()}",
@@ -72,6 +75,7 @@ class TestImportTools(TransactionCase):
         self.assertFalse(self.env["federation.club"].search([("name", "=", "New Club")]))
 
     def test_import_governance_requires_approval_for_live_run(self):
+        """Test that import governance requires approval for live run."""
         csv_content = "name;code;email;phone;city\nGoverned Club;GC001;gov@example.com;123456;City1"
         wizard = self.env["federation.import.clubs.wizard"].create({
             "upload_file": self._create_csv_file(csv_content),
@@ -100,6 +104,7 @@ class TestImportTools(TransactionCase):
         self.assertTrue(self.env["federation.club"].search([("code", "=", "GC001")], limit=1))
 
     def test_import_governance_invalidates_approval_when_file_changes(self):
+        """Test that import governance invalidates approval when file changes."""
         initial_csv = "name;code\nInitial Club;IC001"
         wizard = self.env["federation.import.clubs.wizard"].create({
             "upload_file": self._create_csv_file(initial_csv),
@@ -119,6 +124,7 @@ class TestImportTools(TransactionCase):
             wizard.action_parse_and_import()
 
     def test_partner_authentication_requires_subscription(self):
+        """Test that partner authentication requires subscription."""
         contract = self.env.ref(
             "sports_federation_import_tools.federation_integration_contract_finance_event"
         )
@@ -144,6 +150,7 @@ class TestImportTools(TransactionCase):
             )
 
     def test_inbound_delivery_stages_and_reuses_duplicate_payloads(self):
+        """Test that inbound delivery stages and reuses duplicate payloads."""
         contract = self.env.ref(
             "sports_federation_import_tools.federation_integration_contract_clubs_csv"
         )
@@ -171,6 +178,7 @@ class TestImportTools(TransactionCase):
         self.assertEqual(delivery.import_template_id, contract.import_template_id)
 
     def test_inbound_delivery_links_to_governed_import_flow(self):
+        """Test that inbound delivery links to governed import flow."""
         contract = self.env.ref(
             "sports_federation_import_tools.federation_integration_contract_clubs_csv"
         )
@@ -279,6 +287,7 @@ class TestImportTools(TransactionCase):
         self.assertTrue(self.env["federation.season"].search([("code", "=", "S2026")], limit=1))
 
     def test_import_seasons_supports_planning_targets(self):
+        """Test that import seasons supports planning targets."""
         csv_content = (
             "name,code,date_start,date_end,state,target_club_count,target_team_count,target_tournament_count,target_participant_count\n"
             "Planning Season,SPLAN,2026-01-01,2026-12-31,draft,8,18,4,32"

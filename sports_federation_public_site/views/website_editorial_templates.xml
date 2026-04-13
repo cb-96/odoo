@@ -8,7 +8,7 @@
                 <h3 class="h5 mb-2" t-esc="item.name"/>
                 <p class="small text-muted mb-3" t-if="item.kicker" t-esc="item.kicker"/>
                 <p class="mb-3" t-esc="item.summary"/>
-                <a t-if="item.get_public_target_url()" t-att-href="item.get_public_target_url()" class="btn btn-sm btn-outline-secondary">Open Related Coverage</a>
+                <a t-if="item.get_public_target_url()" t-att-href="item.get_public_target_url()" class="btn btn-sm btn-outline-secondary">Open Related Tournament</a>
             </div>
         </div>
     </template>
@@ -48,8 +48,8 @@
                     <div class="row align-items-end g-4">
                         <div class="col-lg-8">
                             <p class="text-uppercase small mb-2 opacity-75">Season Discovery</p>
-                            <h1 class="display-6 mb-3">Season-wide landing pages for planned public coverage</h1>
-                            <p class="mb-0 opacity-75">Browse published seasons, their featured tournaments, and the scheduled editorial items that frame public communication.</p>
+                            <h1 class="display-6 mb-3">Season pages for published tournaments and federation updates</h1>
+                            <p class="mb-0 opacity-75">Browse published seasons, featured tournaments, and editorial highlights that frame public communication.</p>
                         </div>
                         <div class="col-lg-4 text-center text-lg-end">
                             <div class="display-6" t-esc="len(seasons)"/>
@@ -68,14 +68,14 @@
                                         <t t-if="season.date_start" t-esc="season.date_start" t-options='{"widget": "date"}'/>
                                         <t t-if="season.date_end"> - <t t-esc="season.date_end" t-options='{"widget": "date"}'/></t>
                                     </p>
-                                    <p class="flex-grow-1" t-esc="season.public_summary or season.notes or 'Published season coverage and related tournaments live here.'"/>
+                                    <p class="flex-grow-1" t-esc="season.public_summary or season.notes or 'Published tournaments, updates, and editorial highlights live here.'"/>
                                     <a t-att-href="season.get_public_path()" class="btn btn-primary btn-sm mt-auto">Open Season</a>
                                 </div>
                             </div>
                         </div>
                     </t>
                 </div>
-                <div t-if="not seasons" class="alert alert-info">No seasons are currently published for public discovery.</div>
+                <div t-if="not seasons" class="alert alert-info">No seasons are published yet. Check back when the federation opens public season pages.</div>
             </div>
         </t>
     </template>
@@ -95,10 +95,10 @@
                         <div class="col-lg-8">
                             <p class="text-uppercase small mb-2 opacity-75">Season Landing Page</p>
                             <h1 class="display-6 mb-3" t-esc="season.name"/>
-                            <p class="lead mb-0" t-esc="season.public_summary or 'Season-wide public discovery, editorial highlights, and tournament coverage.'"/>
+                            <p class="lead mb-0" t-esc="season.public_summary or 'Season-wide public discovery, editorial highlights, and tournament updates.'"/>
                         </div>
                         <div class="col-lg-4 text-lg-end">
-                            <div class="small opacity-75">Coverage Window</div>
+                            <div class="small opacity-75">Season Window</div>
                             <strong>
                                 <t t-if="season.date_start" t-esc="season.date_start" t-options='{"widget": "date"}'/>
                                 <t t-if="season.date_end"> - <t t-esc="season.date_end" t-options='{"widget": "date"}'/></t>
@@ -124,7 +124,7 @@
                 <section class="mb-4" t-if="featured_tournaments">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h4 mb-0">Featured Tournaments</h2>
-                        <span class="text-muted small">Published tournament coverage in this season</span>
+                        <span class="text-muted small">Published tournaments in this season</span>
                     </div>
                     <div class="row g-3">
                         <t t-foreach="featured_tournaments" t-as="tournament">
@@ -132,7 +132,7 @@
                                 <div class="card h-100 border-0 shadow-sm">
                                     <div class="card-body d-flex flex-column">
                                         <a t-att-href="tournament.get_public_path()" class="h5 text-decoration-none mb-2" t-esc="tournament.name"/>
-                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Published tournament coverage available.'"/>
+                                        <p class="small text-muted mb-3" t-esc="tournament.public_editorial_summary or 'Tournament hub pages are available.'"/>
                                         <div class="d-flex gap-2 flex-wrap mt-auto">
                                             <a t-att-href="tournament.get_public_path()" class="btn btn-sm btn-primary">Overview</a>
                                             <a t-if="tournament.show_public_results" t-att-href="tournament.get_public_results_path()" class="btn btn-sm btn-outline-secondary">Results</a>
@@ -188,7 +188,7 @@
                         </div>
                     </div>
                 </t>
-                <div t-if="not schedule_sections" class="alert alert-info">No published fixtures are currently available for this team.</div>
+                <div t-if="not schedule_sections" class="alert alert-info">No public fixtures are posted for this team yet.</div>
             </div>
         </t>
     </template>
@@ -220,7 +220,7 @@
                         </div>
                     </div>
                 </t>
-                <div t-if="not result_sections" class="alert alert-info">No approved public results are currently available for this team.</div>
+                <div t-if="not result_sections" class="alert alert-info">No approved public results have been posted for this team yet.</div>
             </div>
         </t>
     </template>
@@ -243,7 +243,7 @@
                             <div class="card h-100 border-0 shadow-sm bg-light">
                                 <div class="card-body d-flex flex-column">
                                     <a t-att-href="season.get_public_path()" class="h5 text-decoration-none mb-2" t-esc="season.name"/>
-                                    <p class="small text-muted flex-grow-1" t-esc="season.public_summary or 'Season-wide published discovery and tournament highlights.'"/>
+                                    <p class="small text-muted flex-grow-1" t-esc="season.public_summary or 'Season landing page with published tournaments and highlights.'"/>
                                     <a t-att-href="season.get_public_path()" class="btn btn-sm btn-outline-secondary mt-auto">Open Season</a>
                                 </div>
                             </div>

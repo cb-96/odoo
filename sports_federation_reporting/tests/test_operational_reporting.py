@@ -9,6 +9,7 @@ class TestOperationalReporting(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Ops Club",
@@ -179,6 +180,7 @@ class TestOperationalReporting(TransactionCase):
         })
 
     def test_operational_report_surfaces_tournament_kpis(self):
+        """Test that operational report surfaces tournament kpis."""
         row = self.env["federation.report.operational"].search([
             ("tournament_id", "=", self.tournament.id),
         ], limit=1)
@@ -193,6 +195,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.readiness_status, "blocked")
 
     def test_standing_reconciliation_flags_missing_participants(self):
+        """Test that standing reconciliation flags missing participants."""
         row = self.env["federation.report.standing.reconciliation"].search([
             ("tournament_id", "=", self.tournament.id),
         ], limit=1)
@@ -204,6 +207,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.reconciliation_status, "attention")
 
     def test_finance_reconciliation_flags_open_items(self):
+        """Test that finance reconciliation flags open items."""
         row = self.env["federation.report.finance.reconciliation"].search([
             ("finance_event_id", "=", self.finance_event.id),
         ], limit=1)
@@ -216,6 +220,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(row.sla_status, ("overdue", "escalated", "due_today", "within_sla"))
 
     def test_notification_exception_report_shows_failed_logs(self):
+        """Test that notification exception report shows failed logs."""
         row = self.env["federation.report.notification.exception"].search([
             ("notification_log_id", "=", self.failed_notification.id),
         ], limit=1)
@@ -227,6 +232,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(row.sla_status, ("overdue", "escalated", "due_today", "within_sla"))
 
     def test_finance_exception_report_shows_missing_sanction_event(self):
+        """Test that finance exception report shows missing sanction event."""
         row = self.env["federation.report.finance.exception"].search([
             ("sanction_id", "=", self.fine_sanction.id),
         ], limit=1)
@@ -237,6 +243,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.player_id, self.player)
 
     def test_workflow_exception_report_surfaces_stalled_result_and_override(self):
+        """Test that workflow exception report surfaces stalled result and override."""
         result_row = self.env["federation.report.workflow.exception"].search([
             ("match_id", "=", self.stale_result_match.id),
         ], limit=1)
@@ -255,6 +262,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(override_row.sla_status, ("overdue", "escalated"))
 
     def test_compliance_remediation_queue_surfaces_pending_submissions(self):
+        """Test that compliance remediation queue surfaces pending submissions."""
         submission = self.env["federation.document.submission"].create({
             "name": "Ops Insurance Submission",
             "requirement_id": self.requirement.id,
@@ -273,6 +281,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(row.sla_status, ("within_sla", "due_today", "overdue", "escalated"))
 
     def test_compliance_remediation_queue_surfaces_expired_approved_submissions(self):
+        """Test that compliance remediation queue surfaces expired approved submissions."""
         submission = self.env["federation.document.submission"].create({
             "name": "Ops Expired Submission",
             "requirement_id": self.requirement.id,
@@ -292,6 +301,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn("renewal", row.remediation_note.lower())
 
     def test_season_checklist_flags_open_work_for_season(self):
+        """Test that season checklist flags open work for season."""
         row = self.env["federation.report.season.checklist"].search([
             ("season_id", "=", self.season.id),
         ], limit=1)
@@ -304,6 +314,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.checklist_status, "blocked")
 
     def test_workflow_exception_schedule_generates_attachment(self):
+        """Test that workflow exception schedule generates attachment."""
         schedule = self.env["federation.report.schedule"].create({
             "name": "Workflow Exceptions",
             "report_type": "workflow_exceptions",
@@ -319,6 +330,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(self.stale_result_match.name, csv_payload)
 
     def test_report_schedule_generates_attachment(self):
+        """Test that report schedule generates attachment."""
         schedule = self.env["federation.report.schedule"].create({
             "name": "Weekly Operations",
             "report_type": "operational",
@@ -337,6 +349,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(self.tournament.name, csv_payload)
 
     def test_snapshot_capture_and_board_pack_generation(self):
+        """Test that snapshot capture and board pack generation."""
         snapshots = self.env["federation.report.snapshot"].capture_snapshot()
 
         self.assertTrue(snapshots)
@@ -355,6 +368,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn("Override Backlog", board_payload)
 
     def test_audit_pack_includes_operational_queues(self):
+        """Test that audit pack includes operational queues."""
         schedule = self.env["federation.report.schedule"].create({
             "name": "Audit Pack",
             "report_type": "audit_pack",
@@ -374,6 +388,7 @@ class TestYearFourReporting(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club_a = cls.env["federation.club"].create({
             "name": "North Club",
@@ -487,6 +502,7 @@ class TestYearFourReporting(TransactionCase):
         })
 
     def test_season_portfolio_report_rolls_up_targets_and_budget(self):
+        """Test that season portfolio report rolls up targets and budget."""
         row = self.env["federation.report.season.portfolio"].search([
             ("season_id", "=", self.season.id),
         ], limit=1)
@@ -504,6 +520,7 @@ class TestYearFourReporting(TransactionCase):
         self.assertIn("compliance", row.planning_note.lower())
 
     def test_club_performance_report_surfaces_finance_and_compliance_status(self):
+        """Test that club performance report surfaces finance and compliance status."""
         north_row = self.env["federation.report.club.performance"].search([
             ("season_id", "=", self.season.id),
             ("club_id", "=", self.club_a.id),
@@ -531,6 +548,7 @@ class TestYearFourReporting(TransactionCase):
         self.assertIn("compliance", south_row.performance_note.lower())
 
     def test_year_four_report_schedules_generate_and_open(self):
+        """Test that year four report schedules generate and open."""
         portfolio_schedule = self.env["federation.report.schedule"].create({
             "name": "Season Portfolio",
             "report_type": "season_portfolio",

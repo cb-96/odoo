@@ -46,6 +46,7 @@ class RoundRobinWizard(models.TransientModel):
 
     @api.depends("stage_id", "group_id")
     def _compute_stage_round_count(self):
+        """Compute stage round count."""
         Round = self.env["federation.tournament.round"]
         for wiz in self:
             if not wiz.stage_id:
@@ -56,6 +57,7 @@ class RoundRobinWizard(models.TransientModel):
             wiz.stage_round_count = Round.search_count(domain)
 
     def _get_round_stats(self, participant_count):
+        """Return round stats."""
         self.ensure_one()
         base_rounds = participant_count - 1 if participant_count % 2 == 0 else participant_count
         rounds_per_cycle = base_rounds * (2 if self.round_type == "double" else 1)
@@ -82,6 +84,7 @@ class RoundRobinWizard(models.TransientModel):
         "start_datetime",
     )
     def _compute_summary(self):
+        """Compute summary."""
         for wiz in self:
             parts = wiz._get_participants()
             n = len(parts)
@@ -135,6 +138,7 @@ class RoundRobinWizard(models.TransientModel):
             wiz.summary = summary
 
     def _get_participants(self):
+        """Return participants."""
         self.ensure_one()
         if self.use_all_participants:
             domain = [("tournament_id", "=", self.tournament_id.id), ("state", "=", "confirmed")]
@@ -146,6 +150,7 @@ class RoundRobinWizard(models.TransientModel):
         return self.participant_ids
 
     def _get_participant_scope_domain(self):
+        """Return participant scope domain."""
         self.ensure_one()
         domain = [("tournament_id", "=", self.tournament_id.id)]
         if self.group_id:
@@ -155,6 +160,7 @@ class RoundRobinWizard(models.TransientModel):
         return domain
 
     def _get_participant_requirement_message(self, participants):
+        """Return participant requirement message."""
         self.ensure_one()
         Participant = self.env["federation.tournament.participant"]
         scope_domain = self._get_participant_scope_domain()
@@ -189,6 +195,7 @@ class RoundRobinWizard(models.TransientModel):
         }
 
     def action_generate(self):
+        """Execute the generate action."""
         self.ensure_one()
         participants = self._get_participants()
         self._validate_generation_request(participants)
@@ -219,6 +226,7 @@ class RoundRobinWizard(models.TransientModel):
         }
 
     def _validate_generation_request(self, participants):
+        """Validate generation request."""
         if self.tournament_id.state not in ("open", "in_progress"):
             raise UserError(_("Tournament must be Open or In Progress to generate matches."))
 

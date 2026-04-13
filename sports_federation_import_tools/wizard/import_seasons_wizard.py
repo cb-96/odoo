@@ -16,9 +16,11 @@ class FederationImportSeasonsWizard(models.TransientModel):
     )
 
     def _get_import_target_model(self):
+        """Return import target model."""
         return "federation.season"
 
     def _get_mapping_guide(self):
+        """Return mapping guide."""
         return (
             "Required columns: name, code, date_start, date_end.\n"
             "Optional columns: state, notes, target_club_count, target_team_count, "
@@ -27,6 +29,7 @@ class FederationImportSeasonsWizard(models.TransientModel):
         )
 
     def action_parse_and_import(self):
+        """Execute the parse and import action."""
         self.ensure_one()
         baseline_count = self._prepare_import_execution()
         reader = self._get_csv_reader()

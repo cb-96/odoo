@@ -43,6 +43,7 @@ class FederationReportSeasonPortfolio(models.Model):
     planning_note = fields.Text(string="Planning Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -178,6 +179,7 @@ class FederationReportClubPerformance(models.Model):
     performance_note = fields.Text(string="Performance Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """

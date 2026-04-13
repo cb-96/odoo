@@ -48,6 +48,7 @@ class FederationReportOperational(models.Model):
     readiness_status = fields.Selection(STATUS_SELECTION, string="Readiness Status", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -185,6 +186,7 @@ class FederationReportStandingReconciliation(models.Model):
     reconciliation_note = fields.Text(string="Reconciliation Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -296,6 +298,7 @@ class FederationReportFinanceReconciliation(models.Model):
     needs_follow_up = fields.Boolean(string="Needs Follow-up", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -400,6 +403,7 @@ class FederationReportNotificationException(models.Model):
     )
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -468,6 +472,7 @@ class FederationReportFinanceException(models.Model):
     issue_note = fields.Text(string="Issue Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -558,6 +563,7 @@ class FederationReportWorkflowException(models.Model):
     exception_note = fields.Text(string="Exception Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -716,6 +722,7 @@ class FederationReportComplianceRemediation(models.Model):
     remediation_note = fields.Text(string="Remediation Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """
@@ -859,6 +866,7 @@ class FederationReportSeasonChecklist(models.Model):
     checklist_note = fields.Text(string="Checklist Note", readonly=True)
 
     def init(self):
+        """Handle init."""
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute(
             """

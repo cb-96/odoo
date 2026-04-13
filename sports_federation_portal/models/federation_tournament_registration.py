@@ -119,6 +119,7 @@ class FederationTournamentRegistration(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         if isinstance(vals_list, dict):
             vals_list = [vals_list]
 
@@ -131,6 +132,7 @@ class FederationTournamentRegistration(models.Model):
 
     @api.depends("tournament_id", "team_id")
     def _compute_team_selection(self):
+        """Compute team selection."""
         Team = self.env["federation.team"]
         for rec in self:
             if not rec.tournament_id:
@@ -149,6 +151,7 @@ class FederationTournamentRegistration(models.Model):
             )
 
     def _get_blocked_team_reason_by_team_id(self):
+        """Return blocked team reason by team ID."""
         self.ensure_one()
         if not self.tournament_id:
             return {}
@@ -168,6 +171,7 @@ class FederationTournamentRegistration(models.Model):
         }
 
     def _render_excluded_team_feedback_html(self, excluded_teams):
+        """Handle render excluded team feedback HTML."""
         if not excluded_teams:
             return False
 
@@ -187,6 +191,7 @@ class FederationTournamentRegistration(models.Model):
         return f"<p>{intro}</p><ul>{items}</ul>"
 
     def _get_team_unavailability_reason(self, team):
+        """Return team unavailability reason."""
         self.ensure_one()
         blocked_reason = self._get_blocked_team_reason_by_team_id().get(team.id)
         if blocked_reason:
@@ -195,6 +200,7 @@ class FederationTournamentRegistration(models.Model):
 
     @api.onchange("tournament_id")
     def _onchange_tournament_id(self):
+        """Handle onchange tournament ID."""
         domain = [("id", "in", self.available_team_ids.ids)]
         if self.team_id and self.tournament_id and self.team_id not in self.available_team_ids:
             warning = {
@@ -296,6 +302,7 @@ class FederationTournamentRegistration(models.Model):
             rec.state = "draft"
 
     def action_view_participant(self):
+        """Execute the view participant action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_tournament.federation_tournament_participant_action"

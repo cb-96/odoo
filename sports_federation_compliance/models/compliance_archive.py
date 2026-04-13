@@ -42,6 +42,7 @@ class FederationComplianceCheckArchive(models.Model):
 
     @api.depends("target_display", "status", "archived_on")
     def _compute_name(self):
+        """Compute name."""
         labels = dict(self._fields["status"].selection)
         for record in self:
             status_label = labels.get(record.status, record.status or "Archive")

@@ -20,6 +20,7 @@ class ResPartner(models.Model):
 
     @api.depends("federation_representative_ids")
     def _compute_federation_representative_count(self):
+        """Compute federation representative count."""
         for rec in self:
             rec.federation_representative_count = len(
                 rec.federation_representative_ids

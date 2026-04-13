@@ -17,10 +17,12 @@ class FederationTeam(models.Model):
     )
 
     def _compute_roster_count(self):
+        """Compute roster count."""
         for record in self:
             record.roster_count = len(record.roster_ids)
 
     def action_view_rosters(self):
+        """Execute the view rosters action."""
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(
             "sports_federation_rosters.action_federation_team_roster"
@@ -38,6 +40,7 @@ class FederationTeam(models.Model):
         return action
 
     def _ensure_tournament_roster(self, tournament):
+        """Handle ensure tournament roster."""
         self.ensure_one()
         Roster = self.env["federation.team.roster"]
         if not tournament or not tournament.season_id:
@@ -61,6 +64,7 @@ class FederationTeam(models.Model):
         return Roster.create(roster_vals)
 
     def _get_preferred_roster(self, season, competition=False, statuses=None):
+        """Return preferred roster."""
         self.ensure_one()
         Roster = self.env["federation.team.roster"]
         if not season:
@@ -91,6 +95,7 @@ class FederationTeam(models.Model):
         )
 
     def _get_tournament_first_match_date(self, tournament):
+        """Return tournament first match date."""
         self.ensure_one()
         if not tournament:
             return False
@@ -112,6 +117,7 @@ class FederationTeam(models.Model):
         return tournament.date_start or False
 
     def _get_tournament_roster_assessment(self, tournament, today=None):
+        """Return tournament roster assessment."""
         self.ensure_one()
         Roster = self.env["federation.team.roster"]
         if not tournament or not tournament.season_id:

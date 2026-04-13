@@ -21,7 +21,6 @@
         "views/website_hub_templates.xml",
         "views/website_editorial_templates.xml",
         "views/website_menu.xml",
-        "views/website_portal_integration_templates.xml",
         "views/season_views_inherit.xml",
         "views/tournament_views_inherit.xml",
         "views/team_views_inherit.xml",

@@ -4,6 +4,7 @@ from odoo.tests.common import TransactionCase
 class TestVenues(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.venue = cls.env["federation.venue"].create(
             {

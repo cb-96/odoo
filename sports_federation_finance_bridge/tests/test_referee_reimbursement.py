@@ -4,6 +4,7 @@ from odoo.tests import TransactionCase
 class TestRefereeReimbursementHooks(TransactionCase):
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club = cls.env["federation.club"].create({
             "name": "Reimbursement Club",
@@ -49,6 +50,7 @@ class TestRefereeReimbursementHooks(TransactionCase):
         })
 
     def test_done_assignment_creates_reimbursement_event(self):
+        """Test that done assignment creates reimbursement event."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,
@@ -72,6 +74,7 @@ class TestRefereeReimbursementHooks(TransactionCase):
         self.assertEqual(event.amount, 60.0)
 
     def test_resetting_assignment_cancels_and_reuses_same_reimbursement_event(self):
+        """Test that resetting assignment cancels and reuses same reimbursement event."""
         assignment = self.env["federation.match.referee"].create({
             "match_id": self.match.id,
             "referee_id": self.referee.id,

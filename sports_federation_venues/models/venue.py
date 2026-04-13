@@ -34,10 +34,12 @@ class FederationVenue(models.Model):
 
     @api.depends("playing_area_ids")
     def _compute_playing_area_count(self):
+        """Compute playing area count."""
         for record in self:
             record.playing_area_count = len(record.playing_area_ids)
 
     def action_view_playing_areas(self):
+        """Execute the view playing areas action."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('sports_federation_venues.action_federation_playing_area')
         action['domain'] = [('venue_id', '=', self.id)]

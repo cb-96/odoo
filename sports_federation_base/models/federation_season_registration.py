@@ -39,6 +39,7 @@ class FederationSeasonRegistration(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         if isinstance(vals_list, dict):
             vals_list = [vals_list]
 
@@ -50,13 +51,16 @@ class FederationSeasonRegistration(models.Model):
         return super().create(vals_list)
 
     def action_confirm(self):
+        """Execute the confirm action."""
         for rec in self:
             rec.state = "confirmed"
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for rec in self:
             rec.state = "cancelled"
 
     def action_draft(self):
+        """Execute the draft action."""
         for rec in self:
             rec.state = "draft"

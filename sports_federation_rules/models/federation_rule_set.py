@@ -91,6 +91,7 @@ class FederationRuleSet(models.Model):
 
     @api.constrains("squad_min_size", "squad_max_size")
     def _check_squad_sizes(self):
+        """Validate squad sizes."""
         for rec in self:
             if (
                 rec.squad_min_size > 0

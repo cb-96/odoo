@@ -54,6 +54,7 @@ class FederationOverrideOutcome(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         prepared_vals_list = []
         for vals in vals_list:
             prepared_vals = dict(vals)
@@ -67,6 +68,7 @@ class FederationOverrideOutcome(models.Model):
 
     @api.depends("request_id", "outcome", "outcome_on")
     def _compute_name(self):
+        """Compute name."""
         labels = dict(self._fields["outcome"].selection)
         for record in self:
             outcome_label = labels.get(record.outcome, record.outcome or "Outcome")

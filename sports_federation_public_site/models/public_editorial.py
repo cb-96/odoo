@@ -31,6 +31,7 @@ class FederationSeason(models.Model):
     )
 
     def _normalize_public_slug_vals(self, vals):
+        """Normalize public slug vals."""
         normalized = dict(vals)
         if "public_slug" in normalized:
             normalized["public_slug"] = (
@@ -41,10 +42,12 @@ class FederationSeason(models.Model):
         return normalized
 
     def _get_public_slug_seed(self):
+        """Return public slug seed."""
         self.ensure_one()
         return self.public_slug or self.name or self.code or "season"
 
     def get_public_slug_value(self):
+        """Return public slug value."""
         self.ensure_one()
         if self.public_slug:
             return self.public_slug
@@ -52,6 +55,7 @@ class FederationSeason(models.Model):
 
     @api.model
     def resolve_public_slug(self, slug_value):
+        """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
@@ -69,15 +73,18 @@ class FederationSeason(models.Model):
         return self.browse([])
 
     def get_public_path(self):
+        """Return public path."""
         self.ensure_one()
         return f"/seasons/{self.get_public_slug_value()}"
 
     def can_access_public_detail(self):
+        """Return whether access public detail is allowed."""
         self.ensure_one()
         return bool(self.website_published)
 
     @api.model
     def get_public_published_seasons(self, limit=None):
+        """Return public published seasons."""
         seasons = self.sudo().search(
             [("website_published", "=", True)],
             order="date_start desc, id desc",
@@ -85,6 +92,7 @@ class FederationSeason(models.Model):
         return seasons[:limit] if limit else seasons
 
     def get_public_tournaments(self, limit=None):
+        """Return public tournaments."""
         self.ensure_one()
         Tournament = self.env["federation.tournament"]
         tournaments = Tournament.get_public_featured_tournaments(
@@ -93,6 +101,7 @@ class FederationSeason(models.Model):
         return tournaments[:limit] if limit else tournaments
 
     def get_public_recent_tournaments(self, limit=None):
+        """Return public recent tournaments."""
         self.ensure_one()
         Tournament = self.env["federation.tournament"]
         tournaments = Tournament.get_public_recent_result_tournaments(
@@ -101,15 +110,18 @@ class FederationSeason(models.Model):
         return tournaments[:limit] if limit else tournaments
 
     def get_public_editorial_items(self, limit=None):
+        """Return public editorial items."""
         self.ensure_one()
         Editorial = self.env["federation.public.editorial.item"]
         return Editorial.get_live_items(season=self, limit=limit)
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         return super().create([self._normalize_public_slug_vals(vals) for vals in vals_list])
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         return super().write(self._normalize_public_slug_vals(vals))
 
 
@@ -154,12 +166,14 @@ class FederationPublicEditorialItem(models.Model):
 
     @api.constrains("publish_start", "publish_end")
     def _check_publish_window(self):
+        """Validate publish window."""
         for record in self:
             if record.publish_start and record.publish_end and record.publish_end < record.publish_start:
                 raise ValidationError("Publish end cannot be earlier than publish start.")
 
     @api.constrains("season_id", "tournament_id", "team_id")
     def _check_public_target_anchor(self):
+        """Validate public target anchor."""
         for record in self:
             if not (record.season_id or record.tournament_id or record.team_id):
                 raise ValidationError(
@@ -167,6 +181,7 @@ class FederationPublicEditorialItem(models.Model):
                 )
 
     def can_access_publicly(self, reference_dt=None):
+        """Return whether access publicly is allowed."""
         self.ensure_one()
         if not self.active or self.publication_state in ("draft", "archived"):
             return False
@@ -179,6 +194,7 @@ class FederationPublicEditorialItem(models.Model):
         return True
 
     def get_public_target_url(self):
+        """Return public target URL."""
         self.ensure_one()
         if self.team_id and self.team_id.can_access_public_profile():
             return self.team_id.get_public_path()
@@ -190,6 +206,7 @@ class FederationPublicEditorialItem(models.Model):
 
     @api.model
     def get_live_items(self, season=None, tournament=None, team=None, limit=None):
+        """Return live items."""
         domain = [
             ("active", "=", True),
             ("publication_state", "in", ("scheduled", "published")),
@@ -211,22 +228,27 @@ class FederationTeamPublicFollow(models.Model):
     _inherit = "federation.team"
 
     def get_public_schedule_path(self):
+        """Return public schedule path."""
         self.ensure_one()
         return f"{self.get_public_path()}/schedule"
 
     def get_public_results_path(self):
+        """Return public results path."""
         self.ensure_one()
         return f"{self.get_public_path()}/results"
 
     def get_public_schedule_ics_path(self):
+        """Return public schedule ICS path."""
         self.ensure_one()
         return f"{self.get_public_path()}/schedule.ics"
 
     def get_public_feed_path(self):
+        """Return public feed path."""
         self.ensure_one()
         return f"/api/v1/teams/{self.get_public_slug_value()}/feed"
 
     def get_public_schedule_sections(self):
+        """Return public schedule sections."""
         self.ensure_one()
         Match = self.env["federation.match"].sudo().browse([])
         sections = []
@@ -258,6 +280,7 @@ class FederationTeamPublicFollow(models.Model):
         return sections
 
     def get_public_result_sections(self):
+        """Return public result sections."""
         self.ensure_one()
         Match = self.env["federation.match"].sudo().browse([])
         sections = []
@@ -289,6 +312,7 @@ class FederationTeamPublicFollow(models.Model):
         return sections
 
     def get_public_schedule_ics(self):
+        """Return public schedule ICS."""
         self.ensure_one()
         events = [
             "BEGIN:VCALENDAR",
@@ -326,6 +350,7 @@ class FederationTeamPublicFollow(models.Model):
         return "\r\n".join(events) + "\r\n"
 
     def get_public_feed_payload(self):
+        """Return public feed payload."""
         self.ensure_one()
         return {
             "api_version": "v1",

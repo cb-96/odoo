@@ -46,11 +46,13 @@ class FederationTournamentRound(models.Model):
 
     @api.depends("match_ids")
     def _compute_match_count(self):
+        """Compute match count."""
         for rec in self:
             rec.match_count = len(rec.match_ids)
 
     @api.model
     def _build_default_name(self, stage, sequence, group=False):
+        """Build default name."""
         if group:
             return _("%(group)s - Round %(sequence)s") % {
                 "group": group.display_name,
@@ -65,6 +67,7 @@ class FederationTournamentRound(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         Group = self.env["federation.tournament.group"]
         Stage = self.env["federation.tournament.stage"]
         prepared_vals_list = []
@@ -82,6 +85,7 @@ class FederationTournamentRound(models.Model):
         return super().create(prepared_vals_list)
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         sync_round_dates = "round_date" in vals
         result = super().write(vals)
         if sync_round_dates:
@@ -89,6 +93,7 @@ class FederationTournamentRound(models.Model):
         return result
 
     def _sync_match_dates_from_round(self):
+        """Synchronize match dates from round."""
         for rec in self.filtered(lambda round_rec: round_rec.round_date):
             for match in rec.match_ids.filtered(
                 lambda round_match: round_match._has_scheduled_time(round_match.scheduled_time)
@@ -102,12 +107,14 @@ class FederationTournamentRound(models.Model):
 
     @api.onchange("stage_id", "group_id", "sequence")
     def _onchange_scope_defaults(self):
+        """Handle onchange scope defaults."""
         for rec in self:
             if not rec.name:
                 rec.name = self._build_default_name(rec.stage_id, rec.sequence or 1, rec.group_id)
 
     @api.constrains("sequence", "stage_id", "group_id")
     def _check_sequence(self):
+        """Validate sequence."""
         for rec in self:
             if rec.sequence < 1:
                 raise ValidationError(_("Round sequence must be a positive number."))
@@ -125,6 +132,7 @@ class FederationTournamentRound(models.Model):
 
     @api.model
     def get_or_create_stage_round(self, stage, sequence, group=False, values=None):
+        """Return or create stage round."""
         group = group or self.env["federation.tournament.group"]
         values = dict(values or {})
         domain = [
@@ -157,9 +165,11 @@ class FederationTournamentRound(models.Model):
         return self.create(create_vals)
 
     def action_schedule(self):
+        """Execute the schedule action."""
         for rec in self:
             rec.state = "scheduled"
 
     def action_complete(self):
+        """Execute the complete action."""
         for rec in self:
             rec.state = "completed"

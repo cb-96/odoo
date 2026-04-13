@@ -47,20 +47,24 @@ class KnockoutService(models.AbstractModel):
         return all_matches
 
     def _validate_inputs(self, tournament, stage, participants, options):
+        """Validate inputs."""
         if tournament.state not in ("open", "in_progress"):
             raise UserError(_("Tournament must be Open or In Progress."))
         if len(participants) < 2:
             raise UserError(_("At least 2 participants required."))
 
     def _check_existing_matches(self, stage):
+        """Validate existing matches."""
         existing = self.env["federation.match"].search([("stage_id", "=", stage.id)])
         if existing:
             raise UserError(_("Existing matches found. Enable overwrite to replace."))
 
     def _clear_existing_matches(self, stage):
+        """Clear existing matches."""
         self.env["federation.match"].search([("stage_id", "=", stage.id)]).unlink()
 
     def _apply_seeding(self, participants, seeding):
+        """Apply seeding."""
         if seeding == "random":
             teams = [p.team_id for p in participants]
             random.shuffle(teams)
@@ -72,11 +76,13 @@ class KnockoutService(models.AbstractModel):
             return [p.team_id for p in participants]
 
     def _determine_bracket_size(self, count, mode):
+        """Handle determine bracket size."""
         if mode == "power_of_two":
             return 2 ** math.ceil(math.log2(count))
         return count
 
     def _build_first_round(self, teams, bracket_size):
+        """Build first round."""
         n_actual = len(teams)
 
         if n_actual >= bracket_size:
@@ -242,6 +248,7 @@ class KnockoutService(models.AbstractModel):
 
     @staticmethod
     def _get_round_names(total_rounds):
+        """Return round names."""
         names = {}
         names[total_rounds] = "Final"
         if total_rounds >= 2:

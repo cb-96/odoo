@@ -38,6 +38,7 @@ class FederationSuspension(models.Model):
 
     @api.constrains("date_start", "date_end")
     def _check_dates(self):
+        """Validate dates."""
         for record in self:
             if record.date_end and record.date_start:
                 if record.date_end < record.date_start:
@@ -46,9 +47,19 @@ class FederationSuspension(models.Model):
                     )
 
     def action_activate(self):
-        for record in self:
-            record.state = "active"
+        """Execute the activate action."""
+        records_to_activate = self.filtered(lambda record: record.state != "active")
+        if not records_to_activate:
+            return
+
+        records_to_activate.write({"state": "active"})
+
+        dispatcher = self.env.get("federation.notification.dispatcher")
+        if dispatcher is not None:
+            for record in records_to_activate:
+                dispatcher.send_suspension_issued(record)
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for record in self:
             record.state = "cancelled"

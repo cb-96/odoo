@@ -21,6 +21,7 @@ class TestEligibilityService(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         if "federation.tournament" not in cls.env:
             raise SkipTest("federation.tournament not available (installed later)")
@@ -57,6 +58,7 @@ class TestEligibilityService(TransactionCase):
     # ------------------------------------------------------------------
 
     def _make_player(self, gender="male", state="active", birth_date=None):
+        """Exercise make player."""
         name_suffix = birth_date or "noBD"
         player = self.env["federation.player"].create({
             "first_name": f"Player {name_suffix}",
@@ -68,6 +70,7 @@ class TestEligibilityService(TransactionCase):
         return player
 
     def _make_rule(self, etype, age_limit=None, allowed_categories=None, placeholder=False):
+        """Exercise make rule."""
         vals = {
             "rule_set_id": self.rule_set.id,
             "name": f"Rule {etype}",

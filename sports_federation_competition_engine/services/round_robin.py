@@ -57,12 +57,14 @@ class RoundRobinService(models.AbstractModel):
         return matches
 
     def _validate_inputs(self, tournament, stage, participants, options):
+        """Validate inputs."""
         if tournament.state not in ("open", "in_progress"):
             raise UserError(_("Tournament must be Open or In Progress to generate matches."))
         if len(participants) < 2:
             raise UserError(_("At least 2 participants are required for round-robin."))
 
     def _check_existing_matches(self, stage, group):
+        """Validate existing matches."""
         domain = [("stage_id", "=", stage.id)]
         if group:
             domain.append(("group_id", "=", group.id))
@@ -74,6 +76,7 @@ class RoundRobinService(models.AbstractModel):
             ))
 
     def _clear_existing_matches(self, stage, group):
+        """Clear existing matches."""
         domain = [("stage_id", "=", stage.id)]
         if group:
             domain.append(("group_id", "=", group.id))
@@ -123,6 +126,7 @@ class RoundRobinService(models.AbstractModel):
         return rounds_list
 
     def _get_stage_rounds(self, stage, group=False):
+        """Return stage rounds."""
         return self.env["federation.tournament.round"].search(
             [
                 ("stage_id", "=", stage.id),
@@ -132,6 +136,7 @@ class RoundRobinService(models.AbstractModel):
         )
 
     def _get_ordered_round_entries(self, round_pairs):
+        """Return ordered round entries."""
         entries = []
         for home, away in round_pairs:
             if not home or not away:
@@ -178,6 +183,7 @@ class RoundRobinService(models.AbstractModel):
         round_interval_hours=24,
         venue_rec=False,
     ):
+        """Return round records."""
         Round = self.env["federation.tournament.round"]
         existing_rounds = {
             round_record.sequence: round_record
@@ -220,6 +226,7 @@ class RoundRobinService(models.AbstractModel):
         schedule_by_round,
         round_interval_hours,
     ):
+        """Return round base datetime."""
         if not start_dt:
             return False
 

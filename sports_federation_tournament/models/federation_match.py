@@ -102,6 +102,7 @@ class FederationMatch(models.Model):
 
     @staticmethod
     def _float_to_time(float_value):
+        """Handle float to time."""
         total_seconds = int(round(float(float_value or 0.0) * 3600))
         hours, remainder = divmod(total_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
@@ -110,6 +111,7 @@ class FederationMatch(models.Model):
 
     @staticmethod
     def _time_to_float(datetime_value):
+        """Handle time to float."""
         return round(
             datetime_value.hour
             + (datetime_value.minute / 60.0)
@@ -119,9 +121,11 @@ class FederationMatch(models.Model):
 
     @staticmethod
     def _has_scheduled_time(value):
+        """Return whether the record has scheduled time."""
         return value is not False and value is not None and value != ""
 
     def _get_schedule_context(self, vals=None, record=False):
+        """Return schedule context."""
         vals = vals or {}
         Round = self.env["federation.tournament.round"]
 
@@ -157,6 +161,7 @@ class FederationMatch(models.Model):
         return round_record, schedule_date, schedule_time, schedule_dt
 
     def _normalize_schedule_vals(self, vals, record=False):
+        """Normalize schedule vals."""
         prepared_vals = dict(vals)
         round_record, schedule_date, schedule_time, schedule_dt = self._get_schedule_context(
             prepared_vals,
@@ -198,6 +203,7 @@ class FederationMatch(models.Model):
         return prepared_vals
 
     def _apply_round_defaults(self, vals):
+        """Apply round defaults."""
         round_id = vals.get("round_id")
         if not round_id:
             return vals
@@ -216,6 +222,7 @@ class FederationMatch(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         prepared_vals_list = [
             self._normalize_schedule_vals(self._apply_round_defaults(dict(vals)))
             for vals in vals_list
@@ -223,6 +230,7 @@ class FederationMatch(models.Model):
         return super().create(prepared_vals_list)
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         prepared_vals = dict(vals)
         if {"round_id", "date_scheduled", "scheduled_time"}.intersection(prepared_vals):
             result = True
@@ -238,6 +246,7 @@ class FederationMatch(models.Model):
 
     @api.depends("date_scheduled", "round_id.round_date")
     def _compute_schedule_fields(self):
+        """Compute schedule fields."""
         for rec in self:
             if rec.round_id and rec.round_id.round_date:
                 rec.scheduled_date = rec.round_id.round_date
@@ -254,6 +263,7 @@ class FederationMatch(models.Model):
                 rec.scheduled_time = False
 
     def _inverse_scheduled_time(self):
+        """Handle inverse scheduled time."""
         if self.env.context.get("skip_scheduled_time_inverse"):
             return
 
@@ -281,6 +291,7 @@ class FederationMatch(models.Model):
 
     @api.depends("home_team_id", "away_team_id")
     def _compute_name(self):
+        """Compute name."""
         for rec in self:
             if rec.home_team_id and rec.away_team_id:
                 rec.name = f"{rec.home_team_id.name} vs {rec.away_team_id.name}"
@@ -289,12 +300,14 @@ class FederationMatch(models.Model):
 
     @api.constrains("home_team_id", "away_team_id")
     def _check_teams(self):
+        """Validate teams."""
         for rec in self:
             if rec.home_team_id and rec.away_team_id and rec.home_team_id == rec.away_team_id:
                 raise ValidationError("Home and away teams cannot be the same.")
 
     @api.onchange("round_id")
     def _onchange_round_id(self):
+        """Handle onchange round ID."""
         if not self.round_id:
             return
         if self.round_id.tournament_id and not self.tournament_id:
@@ -309,6 +322,7 @@ class FederationMatch(models.Model):
 
     @api.constrains("round_id", "tournament_id", "stage_id", "group_id", "date_scheduled")
     def _check_round_scope(self):
+        """Validate round scope."""
         for rec in self:
             if not rec.round_id:
                 continue
@@ -332,6 +346,7 @@ class FederationMatch(models.Model):
                     )
 
     def _compute_next_matches(self):
+        """Compute next matches."""
         for rec in self:
             rec.next_match_ids = self.search([
                 "|",
@@ -353,23 +368,28 @@ class FederationMatch(models.Model):
         return winner if result_type == "winner" else loser
 
     def action_schedule(self):
+        """Execute the schedule action."""
         for rec in self:
             rec.state = "scheduled"
 
     def action_start(self):
+        """Execute the start action."""
         for rec in self:
             rec.state = "in_progress"
 
     def action_done(self):
+        """Execute the done action."""
         for rec in self:
             rec.state = "done"
             rec._advance_bracket_teams()
 
     def action_cancel(self):
+        """Execute the cancel action."""
         for rec in self:
             rec.state = "cancelled"
 
     def action_draft(self):
+        """Execute the draft action."""
         for rec in self:
             rec.state = "draft"
 

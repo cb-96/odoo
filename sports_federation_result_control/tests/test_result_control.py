@@ -7,6 +7,7 @@ class TestResultControl(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set up shared test data for the test case."""
         super().setUpClass()
         cls.club_home = cls.env["federation.club"].create({
             "name": "Home Club",
@@ -89,6 +90,7 @@ class TestResultControl(TransactionCase):
         })
 
     def test_submit_result(self):
+        """Test that submit result."""
         self.assertEqual(self.match.result_state, "draft")
         self.match.with_user(self.submitter_user).action_submit_result()
         self.assertEqual(self.match.result_state, "submitted")
@@ -96,6 +98,7 @@ class TestResultControl(TransactionCase):
         self.assertTrue(self.match.result_submitted_on)
 
     def test_verify_result(self):
+        """Test that verify result."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.assertEqual(self.match.result_state, "verified")
@@ -103,6 +106,7 @@ class TestResultControl(TransactionCase):
         self.assertTrue(self.match.result_verified_on)
 
     def test_approve_result_sets_official_flag(self):
+        """Test that approve result sets official flag."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.assertFalse(self.match.include_in_official_standings)
@@ -116,11 +120,13 @@ class TestResultControl(TransactionCase):
             self.assertIn(self.match, self.standing._get_relevant_matches())
 
     def test_contest_requires_reason(self):
+        """Test that contest requires reason."""
         self.match.with_user(self.submitter_user).action_submit_result()
         with self.assertRaises(ValidationError):
             self.match.action_contest_result()
 
     def test_contest_sets_flags(self):
+        """Test that contest sets flags."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.match.with_user(self.approver_user).action_approve_result()
@@ -132,6 +138,7 @@ class TestResultControl(TransactionCase):
             self.assertNotIn(self.match, self.standing._get_relevant_matches())
 
     def test_correct_requires_reason(self):
+        """Test that correct requires reason."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.result_contest_reason = "Score disputed"
         self.match.action_contest_result()
@@ -139,6 +146,7 @@ class TestResultControl(TransactionCase):
             self.match.action_correct_result()
 
     def test_correct_sets_flags(self):
+        """Test that correct sets flags."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.result_contest_reason = "Score disputed"
         self.match.action_contest_result()
@@ -148,6 +156,7 @@ class TestResultControl(TransactionCase):
         self.assertFalse(self.match.include_in_official_standings)
 
     def test_corrected_result_can_be_resubmitted(self):
+        """Test that corrected result can be resubmitted."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.result_contest_reason = "Score disputed"
         self.match.action_contest_result()
@@ -159,6 +168,7 @@ class TestResultControl(TransactionCase):
         self.assertEqual(self.match.result_state, "submitted")
 
     def test_reset_to_draft(self):
+        """Test that reset to draft."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.match.with_user(self.approver_user).action_approve_result()
@@ -167,6 +177,7 @@ class TestResultControl(TransactionCase):
         self.assertFalse(self.match.include_in_official_standings)
 
     def test_invalid_transition_raises(self):
+        """Test that invalid transition raises."""
         with self.assertRaises(ValidationError):
             self.match.action_verify_result()
         with self.assertRaises(ValidationError):
@@ -176,28 +187,33 @@ class TestResultControl(TransactionCase):
             self.match.action_submit_result()
 
     def test_verify_requires_validator_role(self):
+        """Test that verify requires validator role."""
         self.match.with_user(self.submitter_user).action_submit_result()
         with self.assertRaises(ValidationError):
             self.match.with_user(self.submitter_user).action_verify_result()
 
     def test_approve_requires_approver_role(self):
+        """Test that approve requires approver role."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         with self.assertRaises(ValidationError):
             self.match.with_user(self.verifier_user).action_approve_result()
 
     def test_same_user_cannot_verify_own_submission(self):
+        """Test that same user cannot verify own submission."""
         self.match.with_user(self.verifier_user).action_submit_result()
         with self.assertRaises(ValidationError):
             self.match.with_user(self.verifier_user).action_verify_result()
 
     def test_same_user_cannot_approve_own_verification(self):
+        """Test that same user cannot approve own verification."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.approver_user).action_verify_result()
         with self.assertRaises(ValidationError):
             self.match.with_user(self.approver_user).action_approve_result()
 
     def test_approved_scores_are_immutable(self):
+        """Test that approved scores are immutable."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.match.with_user(self.approver_user).action_approve_result()
@@ -205,6 +221,7 @@ class TestResultControl(TransactionCase):
             self.match.write({"home_score": 5})
 
     def test_result_audit_entries_follow_workflow_transitions(self):
+        """Test that result audit entries follow workflow transitions."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.with_user(self.verifier_user).action_verify_result()
         self.match.with_user(self.approver_user).action_approve_result()
@@ -215,6 +232,7 @@ class TestResultControl(TransactionCase):
         self.assertIn("approved", event_types)
 
     def test_contest_and_correction_reasons_are_audited(self):
+        """Test that contest and correction reasons are audited."""
         self.match.with_user(self.submitter_user).action_submit_result()
         self.match.result_contest_reason = "Score disputed"
         self.match.action_contest_result()

@@ -34,6 +34,7 @@ class FederationTournamentParticipant(models.Model):
         "state",
     )
     def _compute_confirmation_readiness(self):
+        """Compute confirmation readiness."""
         for record in self:
             assessment = record._get_roster_assessment()
             record.ready_for_confirmation = not bool(assessment["blocking_issues"])
@@ -42,6 +43,7 @@ class FederationTournamentParticipant(models.Model):
             record.confirmation_feedback = assessment["feedback"]
 
     def _get_readiness_roster(self):
+        """Return readiness roster."""
         self.ensure_one()
         if not self.team_id or not self.tournament_id:
             return self.env["federation.team.roster"]
@@ -50,6 +52,7 @@ class FederationTournamentParticipant(models.Model):
         ]
 
     def _get_roster_assessment(self, today=None):
+        """Return roster assessment."""
         self.ensure_one()
         if not self.team_id or not self.tournament_id:
             return {
@@ -66,6 +69,7 @@ class FederationTournamentParticipant(models.Model):
         )
 
     def _ensure_linked_roster(self):
+        """Handle ensure linked roster."""
         for record in self.filtered(
             lambda participant: participant.team_id
             and participant.tournament_id
@@ -75,16 +79,19 @@ class FederationTournamentParticipant(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Create records with module-specific defaults and side effects."""
         records = super().create(vals_list)
         records._ensure_linked_roster()
         return records
 
     def write(self, vals):
+        """Update records with module-specific side effects."""
         result = super().write(vals)
         if {"team_id", "tournament_id"}.intersection(vals):
             self._ensure_linked_roster()
         return result
 
     def action_confirm(self):
+        """Execute the confirm action."""
         self._ensure_linked_roster()
         return super().action_confirm()

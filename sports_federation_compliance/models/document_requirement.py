@@ -54,6 +54,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_target_field_map(self):
+        """Handle the portal-specific target field map flow."""
         return {
             "federation.club": "club_id",
             "federation.player": "player_id",
@@ -64,10 +65,12 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_get_target_field_name(self, target_model):
+        """Handle the portal-specific get target field name flow."""
         return self._portal_target_field_map().get(target_model)
 
     @api.model
     def _portal_has_access(self, user=None):
+        """Handle the portal-specific has access flow."""
         user = user or self.env.user
         return any(
             bool(self._portal_get_targets_for_user(target_model, user=user))
@@ -76,6 +79,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_get_targets_for_user(self, target_model, user=None):
+        """Handle the portal-specific get targets for user flow."""
         user = user or self.env.user
         ClubRepresentative = self.env["federation.club.representative"]
 
@@ -84,7 +88,7 @@ class FederationDocumentRequirement(models.Model):
         if target_model == "federation.referee":
             return self.env["federation.referee"]._portal_get_for_user(user=user)
         if target_model == "federation.club.representative":
-            return ClubRepresentative.search(
+            return ClubRepresentative.sudo().search(
                 [
                     ("user_id", "=", user.id),
                     ("is_current", "=", True),
@@ -94,6 +98,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_assert_target_access(self, requirement, target_record, user=None):
+        """Handle the portal-specific assert target access flow."""
         user = user or self.env.user
         if requirement.target_model not in self.PORTAL_TARGET_MODELS:
             raise AccessError("This compliance target is not available in the portal.")
@@ -107,6 +112,7 @@ class FederationDocumentRequirement(models.Model):
         return True
 
     def _portal_get_latest_submission(self, target_record):
+        """Handle the portal-specific get latest submission flow."""
         self.ensure_one()
         field_name = self._portal_get_target_field_name(self.target_model)
         if not field_name:
@@ -121,6 +127,7 @@ class FederationDocumentRequirement(models.Model):
         )
 
     def _portal_get_submission_history(self, target_record):
+        """Handle the portal-specific get submission history flow."""
         self.ensure_one()
         field_name = self._portal_get_target_field_name(self.target_model)
         if not field_name:
@@ -134,6 +141,7 @@ class FederationDocumentRequirement(models.Model):
         )
 
     def _portal_get_remediation_row(self, submission):
+        """Handle the portal-specific get remediation row flow."""
         self.ensure_one()
         if not submission:
             return False
@@ -147,6 +155,7 @@ class FederationDocumentRequirement(models.Model):
         )
 
     def _portal_get_workspace_entry(self, target_record, user=None):
+        """Handle the portal-specific get workspace entry flow."""
         self.ensure_one()
         self._portal_assert_target_access(self, target_record, user=user)
 
@@ -246,6 +255,7 @@ class FederationDocumentRequirement(models.Model):
         target_id,
         user=None,
     ):
+        """Handle the portal-specific get workspace entry for user flow."""
         user = user or self.env.user
         requirement = self.sudo().browse(requirement_id)
         if not requirement.exists() or requirement.target_model != target_model:
@@ -261,6 +271,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_get_workspace_entries(self, user=None):
+        """Handle the portal-specific get workspace entries flow."""
         user = user or self.env.user
         entries = []
         requirements = self.sudo().search(
@@ -280,6 +291,7 @@ class FederationDocumentRequirement(models.Model):
                 entries.append(requirement._portal_get_workspace_entry(target_record, user=user))
 
         def _sort_key(entry):
+            """Handle sort key."""
             renewal_due_date = entry["renewal_due_date"] or fields.Date.to_date("9999-12-31")
             return (
                 0 if entry["requires_attention"] else 1,

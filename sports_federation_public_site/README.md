@@ -102,7 +102,7 @@ Canonical public routes:
 | `GET /api/v1/tournaments/<slug>/feed` | public | Stable v1 JSON tournament feed |
 | `GET /teams/<slug>` | public | Public team profile page |
 | `GET /tournaments/<slug>/register` | user | Website registration form |
-| `POST /tournaments/<slug>/register` | user | Website registration submission |
+| `POST /tournaments/<slug>/register` | user | Website registration submission via `federation.tournament.registration._portal_submit_registration_request()` |
 
 Compatibility routes remain available for older links, including `/competitions`,
 `/competitions/archive`, numeric `/tournament/<id>` paths, numeric register/feed
@@ -136,6 +136,7 @@ Canonical follow and discovery routes:
 11. Backward compatibility: legacy competition routes keep resolving while the visible product language is tournament-first.
 12. Season discovery and editorial planning: published seasons aggregate featured tournaments, recent tournaments, and live editorial items with publication windows.
 13. Automatic menu cleanup: module installs and upgrades normalize stale `/competitions` website menus into the Tournaments submenu and remove leftover duplicates.
+14. Shared privileged-write boundary: website registration POST routes validate HTTP input and then reuse the same tournament registration helper as the portal layer.
 
 ## Publication guards
 

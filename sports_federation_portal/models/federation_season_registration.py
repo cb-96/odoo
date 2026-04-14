@@ -1,5 +1,5 @@
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, ValidationError
 
 
 class FederationSeasonRegistration(models.Model):
@@ -57,6 +57,52 @@ class FederationSeasonRegistration(models.Model):
                     raise ValidationError(
                         "You can only register teams that belong to your club."
                     )
+
+    @api.model
+    def _portal_submit_registration_request(self, season, team, notes=None, user=None):
+        """Create and submit a portal-managed season registration request."""
+        user = user or self.env.user
+        season = season.with_user(user).sudo()
+        team = team.with_user(user).sudo()
+        if not season.exists() or season.state != "open":
+            raise ValidationError(
+                _("The selected season is not open for registrations.")
+            )
+        if not team.exists():
+            raise ValidationError(_("Select a valid team before continuing."))
+
+        clubs = (
+            self.env["federation.club.representative"]
+            .with_user(user)
+            .sudo()
+            ._get_clubs_for_user(user=user)
+        )
+        if team.club_id not in clubs:
+            raise AccessError(_("You can only register your own teams."))
+
+        existing = self.with_user(user).sudo().search(
+            [
+                ("team_id", "=", team.id),
+                ("season_id", "=", season.id),
+                ("state", "!=", "cancelled"),
+            ],
+            limit=1,
+        )
+        if existing:
+            raise ValidationError(
+                _("This team is already registered for this season.")
+            )
+
+        registration = self.with_user(user).sudo().create(
+            {
+                "season_id": season.id,
+                "team_id": team.id,
+                "notes": (notes or "").strip() or False,
+                "user_id": user.id,
+            }
+        )
+        registration.with_user(user).sudo().action_submit()
+        return registration
 
     # ------------------------------------------------------------------
     # Portal actions

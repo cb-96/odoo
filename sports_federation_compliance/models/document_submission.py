@@ -1,3 +1,4 @@
+import base64
 from datetime import timedelta
 
 from odoo import api, fields, models
@@ -307,6 +308,70 @@ class FederationDocumentSubmission(models.Model):
             "reviewed_on": False,
         }
         submission.with_user(user).sudo().write(write_vals)
+        return submission
+
+    @api.model
+    def _portal_create_submission_attachments(
+        self, submission, uploaded_files=None, user=None
+    ):
+        """Create attachment records for a portal submission."""
+        user = user or self.env.user
+        submission = submission.with_user(user).sudo()
+        submission.ensure_one()
+
+        attachment_ids = []
+        Attachment = self.env["ir.attachment"].with_user(user).sudo()
+        for uploaded_file in uploaded_files or []:
+            filename = (getattr(uploaded_file, "filename", "") or "").strip()
+            if not filename:
+                continue
+            payload = uploaded_file.read()
+            if not payload:
+                continue
+            attachment = Attachment.create(
+                {
+                    "name": filename,
+                    "datas": base64.b64encode(payload),
+                    "res_model": submission._name,
+                    "res_id": submission.id,
+                    "mimetype": getattr(uploaded_file, "mimetype", False),
+                }
+            )
+            attachment_ids.append(attachment.id)
+
+        if attachment_ids:
+            submission.with_user(user).sudo().write(
+                {"attachment_ids": [(6, 0, attachment_ids)]}
+            )
+        return submission.attachment_ids
+
+    @api.model
+    def _portal_submit_submission(
+        self,
+        requirement,
+        target_record,
+        values=None,
+        uploaded_files=None,
+        user=None,
+    ):
+        """Prepare, attach, and submit a portal-managed document submission."""
+        user = user or self.env.user
+        submission = self._portal_prepare_submission(
+            requirement,
+            target_record,
+            values=values,
+            user=user,
+        )
+        self._portal_create_submission_attachments(
+            submission,
+            uploaded_files=uploaded_files,
+            user=user,
+        )
+        if not submission.attachment_ids:
+            raise ValidationError(
+                "Upload at least one document attachment before submitting."
+            )
+        submission.with_user(user).sudo().action_submit()
         return submission
 
     @api.constrains("requirement_id", "expiry_date")

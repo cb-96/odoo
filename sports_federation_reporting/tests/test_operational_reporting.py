@@ -1,5 +1,6 @@
 import base64
 from datetime import timedelta
+from unittest.mock import patch
 
 from odoo import fields
 from odoo.tests.common import TransactionCase
@@ -347,6 +348,76 @@ class TestOperationalReporting(TransactionCase):
         csv_payload = base64.b64decode(schedule.generated_file).decode()
         self.assertIn("Operational Summary", csv_payload)
         self.assertIn(self.tournament.name, csv_payload)
+        self.assertEqual(schedule.last_run_status, "success")
+        self.assertEqual(schedule.consecutive_failure_count, 0)
+
+    def test_schedule_failures_are_persisted_and_visible_in_operator_checklist(self):
+        """Test that schedule failures persist and surface in the operator checklist."""
+        schedule = self.env["federation.report.schedule"].create({
+            "name": "Broken Workflow Export",
+            "report_type": "workflow_exceptions",
+            "period_type": "weekly",
+            "season_id": self.season.id,
+        })
+
+        with patch.object(
+            type(self.env["federation.report.schedule"]),
+            "_build_report_payload",
+            autospec=True,
+            side_effect=RuntimeError("Simulated schedule failure"),
+        ):
+            failures = schedule._generate_report()
+            self.assertEqual(len(failures), 1)
+
+        self.env["federation.report.schedule"].flush_model([
+            "last_run_status",
+            "last_failure_on",
+            "last_error_message",
+            "consecutive_failure_count",
+        ])
+        schedule.invalidate_recordset()
+        self.assertEqual(schedule.last_run_status, "failed")
+        self.assertEqual(schedule.consecutive_failure_count, 1)
+        self.assertTrue(schedule.last_failure_on)
+        self.assertIn("Simulated schedule failure", schedule.last_error_message)
+
+        checklist_row = self.env["federation.report.operator.checklist"].search([
+            ("queue_code", "=", "scheduled_report_failures"),
+        ], limit=1)
+        self.assertTrue(checklist_row)
+        self.assertGreaterEqual(checklist_row.open_count, 1)
+        self.assertIn(checklist_row.status, ("attention", "blocked"))
+
+        action = checklist_row.action_open_queue()
+        self.assertEqual(action["res_model"], "federation.report.schedule")
+
+    def test_operator_checklist_surfaces_inbound_delivery_failures(self):
+        """Test that inbound delivery issues appear in the operator checklist."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner = self.env["federation.integration.partner"].create({
+            "name": "Ops Partner",
+            "code": "OPS_PARTNER",
+        })
+        delivery = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="ops-clubs.csv",
+            payload_base64=base64.b64encode(b"name;code\nOps Club;OPSNEW").decode("utf-8"),
+        )
+        delivery.action_mark_failed("Preview checksum failed")
+        self.env["federation.integration.delivery"].flush_model(["state", "result_message"])
+
+        checklist_row = self.env["federation.report.operator.checklist"].search([
+            ("queue_code", "=", "inbound_delivery_failures"),
+        ], limit=1)
+        self.assertTrue(checklist_row)
+        self.assertGreaterEqual(checklist_row.open_count, 1)
+        self.assertEqual(checklist_row.status, "blocked")
+
+        action = checklist_row.action_open_queue()
+        self.assertEqual(action["res_model"], "federation.integration.delivery")
 
     def test_snapshot_capture_and_board_pack_generation(self):
         """Test that snapshot capture and board pack generation."""
@@ -382,6 +453,8 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn("Audit Pack", audit_payload)
         self.assertIn("Workflow Exceptions", audit_payload)
         self.assertIn("Finance Follow-up", audit_payload)
+        self.assertIn("Scheduled Report Failures", audit_payload)
+        self.assertIn("Inbound Delivery Failures", audit_payload)
 
 
 class TestYearFourReporting(TransactionCase):

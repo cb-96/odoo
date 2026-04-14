@@ -1,4 +1,3 @@
-import base64
 from urllib.parse import quote_plus
 
 from odoo import http
@@ -36,33 +35,6 @@ class FederationCompliancePortal(CustomerPortal):
             target_id=target_id,
             user=request.env.user,
         )
-
-    def _create_submission_attachments(self, submission, uploaded_files):
-        """Handle create submission attachments."""
-        attachment_ids = []
-        Attachment = request.env["ir.attachment"].with_user(request.env.user).sudo()
-        for uploaded_file in uploaded_files:
-            filename = (uploaded_file.filename or "").strip()
-            if not filename:
-                continue
-            payload = uploaded_file.read()
-            if not payload:
-                continue
-            attachment = Attachment.create(
-                {
-                    "name": filename,
-                    "datas": base64.b64encode(payload),
-                    "res_model": submission._name,
-                    "res_id": submission.id,
-                    "mimetype": uploaded_file.mimetype,
-                }
-            )
-            attachment_ids.append(attachment.id)
-
-        if attachment_ids:
-            submission.with_user(request.env.user).sudo().write(
-                {"attachment_ids": [(6, 0, attachment_ids)]}
-            )
 
     @http.route(["/my/compliance"], type="http", auth="user", website=True)
     def portal_my_compliance(self, **kw):
@@ -135,7 +107,7 @@ class FederationCompliancePortal(CustomerPortal):
 
         redirect_url = entry["detail_url"]
         try:
-            submission = request.env["federation.document.submission"]._portal_prepare_submission(
+            request.env["federation.document.submission"]._portal_submit_submission(
                 entry["requirement"],
                 entry["target"],
                 values={
@@ -143,17 +115,9 @@ class FederationCompliancePortal(CustomerPortal):
                     "expiry_date": (post.get("expiry_date") or "").strip() or False,
                     "notes": (post.get("notes") or "").strip() or False,
                 },
+                uploaded_files=request.httprequest.files.getlist("attachment"),
                 user=request.env.user,
             )
-            self._create_submission_attachments(
-                submission,
-                request.httprequest.files.getlist("attachment"),
-            )
-            if not submission.attachment_ids:
-                raise ValidationError(
-                    "Upload at least one document attachment before submitting."
-                )
-            submission.with_user(request.env.user).sudo().action_submit()
         except (AccessError, ValidationError) as error:
             return request.redirect(f"{redirect_url}?error={quote_plus(str(error))}")
 

@@ -108,6 +108,9 @@ time.
 7. **Portal submission flow** — Club representatives and referees can upload
     replacement documents and submit renewals directly from the portal detail page
     without backend access.
+   The controller hands the write to
+   `federation.document.submission._portal_submit_submission()` so attachment
+   creation and submission state changes stay inside the model boundary.
 8. **Historical evidence** — compliance checks now append archive rows on create
    and on tracked status changes so operators can review how a target moved from
    missing to compliant over time.
@@ -130,4 +133,5 @@ Portal workspace behaviour:
 - renewal windows are highlighted before expiry so replacement documents can be
    submitted proactively
 - attachment creation preserves the portal user identity while still using
-   controlled elevated writes for the compliance models
+   controlled elevated writes for the compliance models through
+   `_portal_submit_submission()` and `_portal_create_submission_attachments()`

@@ -20,6 +20,7 @@
         "sports_federation_notifications",
         "sports_federation_result_control",
         "sports_federation_governance",
+        "sports_federation_import_tools",
     ],
     "data": [
         "security/ir.model.access.csv",
@@ -30,6 +31,7 @@
         "views/report_compliance_views.xml",
         "views/report_finance_views.xml",
         "views/report_operational_views.xml",
+        "views/report_operator_checklist_views.xml",
         "views/report_planning_views.xml",
         "views/report_snapshot_views.xml",
         "views/report_schedule_views.xml",

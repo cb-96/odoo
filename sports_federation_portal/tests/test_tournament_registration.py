@@ -176,3 +176,40 @@ class TestTournamentRegistration(TransactionCase):
         )
         self.assertEqual(action["domain"], [("tournament_id", "=", self.tournament.id)])
         self.assertEqual(action["context"], {"default_tournament_id": self.tournament.id})
+
+    def test_portal_submit_registration_request_creates_submitted_request(self):
+        """Service helper should create and submit a portal tournament request."""
+        self.tournament.state = "open"
+
+        registration = self.env[
+            "federation.tournament.registration"
+        ]._portal_submit_registration_request(
+            self.tournament,
+            self.eligible_team,
+            notes="Submitted through the portal helper.",
+            user=self.user_a,
+        )
+
+        self.assertEqual(registration.state, "submitted")
+        self.assertEqual(registration.create_uid, self.user_a)
+        self.assertEqual(registration.notes, "Submitted through the portal helper.")
+
+    def test_portal_submit_registration_request_blocks_full_tournament(self):
+        """Service helper should count non-withdrawn participants toward capacity."""
+        self.tournament.write({"state": "open", "max_participants": 1})
+        self.env["federation.tournament.participant"].create(
+            {
+                "tournament_id": self.tournament.id,
+                "team_id": self.other_team.id,
+                "state": "registered",
+            }
+        )
+
+        with self.assertRaises(ValidationError):
+            self.env[
+                "federation.tournament.registration"
+            ]._portal_submit_registration_request(
+                self.tournament,
+                self.eligible_team,
+                user=self.user_a,
+            )

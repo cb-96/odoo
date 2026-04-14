@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from odoo.tests import TransactionCase
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import mute_logger
@@ -398,5 +400,43 @@ class TestCompliance(TransactionCase):
                 values={
                     "expiry_date": date.today() + timedelta(days=365),
                 },
+                user=self.club_user,
+            )
+
+    def test_portal_submit_submission_creates_attachments_and_submits(self):
+        """Test that portal submit helper attaches files and submits the record."""
+        upload = BytesIO(b"club-compliance-payload")
+        upload.filename = "club-insurance.pdf"
+        upload.mimetype = "application/pdf"
+
+        submission = self.env[
+            "federation.document.submission"
+        ]._portal_submit_submission(
+            self.requirement,
+            self.club,
+            values={
+                "issue_date": date.today(),
+                "expiry_date": date.today() + timedelta(days=365),
+                "notes": "Submitted from the portal helper.",
+            },
+            uploaded_files=[upload],
+            user=self.club_user,
+        )
+
+        self.assertEqual(submission.status, "submitted")
+        self.assertEqual(submission.create_uid, self.club_user)
+        self.assertEqual(len(submission.attachment_ids), 1)
+        self.assertEqual(submission.attachment_ids[0].name, "club-insurance.pdf")
+
+    def test_portal_submit_submission_requires_attachment(self):
+        """Test that portal submit helper still rejects attachment-less submissions."""
+        with self.assertRaises(ValidationError):
+            self.env["federation.document.submission"]._portal_submit_submission(
+                self.requirement,
+                self.club,
+                values={
+                    "expiry_date": date.today() + timedelta(days=365),
+                },
+                uploaded_files=[],
                 user=self.club_user,
             )

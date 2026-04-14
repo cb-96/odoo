@@ -25,6 +25,7 @@ CSV snapshots from inside Odoo.
 | `sports_federation_discipline` | Disciplinary data |
 | `sports_federation_compliance` | Compliance data |
 | `sports_federation_finance_bridge` | Finance events |
+| `sports_federation_import_tools` | Inbound delivery failures for operator checklist reporting |
 
 ## Models (all SQL view-backed, `_auto = False`)
 
@@ -208,9 +209,26 @@ Persistent schedule for recurring application-layer report generation.
 | `report_type` | Selection | Operational, reconciliation, compliance, board/audit packs, season portfolio, or club performance |
 | `period_type` | Selection | Weekly or monthly cadence |
 | `season_id` | Many2one | Optional season scope for season-based reports |
-| `next_run_on` / `last_run_on` | Datetime | Scheduling metadata |
+| `next_run_on` / `last_attempt_on` / `last_run_on` | Datetime | Scheduling metadata and last execution attempt |
+| `last_run_status` | Selection | `never`, `success`, or `failed` |
+| `last_failure_on` / `last_error_message` | Datetime / Text | Persisted failure state for the most recent failed generation |
+| `consecutive_failure_count` | Integer | Number of failed generation attempts in a row |
 | `generated_file` | Binary | Last generated CSV snapshot |
 | `last_row_count` | Integer | Number of exported data rows |
+
+### `federation.report.operator.checklist`
+
+Operator-facing queue roll-up that consolidates the release-critical exception
+surfaces into a single reporting menu.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `queue_code` / `queue_name` | Selection / Char | Stable identifier and display name for the queue |
+| `owner_display` | Char | Operational owner for the queue |
+| `open_count` / `escalated_count` | Integer | Queue depth and escalated subset |
+| `oldest_age_days` | Integer | Oldest unresolved item age |
+| `status` | Selection | `healthy`, `attention`, or `blocked` |
+| `summary` | Text | Operator-readable explanation of what the queue means |
 
 ## Key Behaviours
 
@@ -223,6 +241,8 @@ Persistent schedule for recurring application-layer report generation.
 7. **Planning decision support** — Season portfolio and club performance views turn the reporting layer into a planning and delivery-monitoring surface instead of a pure export utility.
 8. **Legacy CSV exports preserved** — The lightweight HTTP CSV endpoints remain available for ad hoc export use.
 9. **Contract-tagged exports** — Authenticated CSV responses now include explicit contract and version headers for downstream consumers.
+10. **Operator checklist** — Notification failures, workflow exceptions, finance follow-up, inbound delivery failures, blocked season readiness, and scheduled report failures now surface in one menu.
+11. **Persistent schedule failure tracking** — Report schedules keep the last failure timestamp, error message, and consecutive failure count so recurring problems survive beyond transient logs.
 
 ## CSV exports
 
@@ -240,3 +260,5 @@ export uses the `finance_event_v1` contract.
 
 For recurring in-application reporting, create records under **Federation → Reporting → Report Schedules**.
 Each schedule stores the last generated CSV snapshot directly on the schedule record.
+Use **Federation → Reporting → Operator Checklist** for the release-readiness
+queue view that links back to the underlying exception surfaces.

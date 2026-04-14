@@ -1,6 +1,6 @@
 # Integration Contracts
 
-Last updated: 2026-04-12
+Last updated: 2026-04-13
 
 This document defines the stable partner-facing contracts currently supported by
 the federation platform and the policy used to version, evolve, and deprecate
@@ -227,6 +227,10 @@ Verification policy:
   silent replacement.
 
 ## Deprecation Policy
+
+The working list of compatibility aliases, owners, review dates, and target
+sunset dates lives in `COMPATIBILITY_INVENTORY.md` and must be updated in the
+same change set as any contract-facing deprecation decision.
 
 - Slug-based public routes are canonical.
 - Numeric public routes remain compatibility shims and should not be used for

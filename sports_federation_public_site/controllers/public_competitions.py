@@ -3,7 +3,7 @@ from urllib.parse import quote_plus
 
 from odoo import http
 from odoo.addons.portal.controllers.portal import pager as portal_pager
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.http import Response, request
 
 
@@ -307,64 +307,16 @@ class PublicTournamentHubController(http.Controller):
                 "Invalid team selection",
             )
 
-        team = request.env["federation.team"].sudo().browse(team_id)
-        clubs = self._get_request_user_clubs()
-        if not clubs:
-            return self._redirect_with_error(
-                tournament.get_public_register_path(),
-                "You are not registered as a club representative. Please contact the federation.",
-            )
-        if team.club_id not in clubs:
-            return self._redirect_with_error(
-                tournament.get_public_register_path(),
-                "You can only register your own teams",
-            )
-
-        eligibility_error = tournament.get_team_eligibility_error(team)
-        if eligibility_error:
-            return self._redirect_with_error(
-                tournament.get_public_register_path(),
-                eligibility_error,
-            )
-
-        existing = request.env["federation.tournament.registration"].sudo().search(
-            [
-                ("tournament_id", "=", tournament.id),
-                ("team_id", "=", team_id),
-                ("state", "!=", "cancelled"),
-            ],
-            limit=1,
-        )
-        if existing:
-            return self._redirect_with_error(
-                tournament.get_public_register_path(),
-                "This team is already registered",
-            )
-
-        if tournament.max_participants > 0:
-            current_count = request.env["federation.tournament.participant"].sudo().search_count(
-                [("tournament_id", "=", tournament.id), ("state", "=", "confirmed")]
-            )
-            pending_count = request.env["federation.tournament.registration"].sudo().search_count(
-                [("tournament_id", "=", tournament.id), ("state", "=", "submitted")]
-            )
-            if current_count + pending_count >= tournament.max_participants:
-                return self._redirect_with_error(
-                    tournament.get_public_register_path(),
-                    "Tournament is full",
-                )
-
         try:
-            registration = request.env["federation.tournament.registration"].sudo().create(
-                {
-                    "tournament_id": tournament.id,
-                    "team_id": team_id,
-                    "notes": notes,
-                    "user_id": request.env.user.id,
-                }
+            request.env[
+                "federation.tournament.registration"
+            ]._portal_submit_registration_request(
+                tournament,
+                request.env["federation.team"].sudo().browse(team_id),
+                notes=notes,
+                user=request.env.user,
             )
-            registration.sudo().action_submit()
-        except ValidationError as error:
+        except (AccessError, ValidationError) as error:
             return self._redirect_with_error(
                 tournament.get_public_register_path(),
                 str(error),

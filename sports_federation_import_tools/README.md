@@ -21,6 +21,8 @@ The import wizards provide a safer operator workflow than direct list-imports:
 - staged inbound deliveries that reuse the same governed preview and approval pipeline
 
 The menu entry is available at Federation > Import Tools.
+The transient import models now live under the standard `wizards/` package to
+match the rest of the repository.
 
 ## Dependencies
 
@@ -42,6 +44,8 @@ All import wizards inherit `federation.import.wizard.mixin`, which provides:
   `success_count`, and `error_count` fields
 - standardized error categories such as `missing_reference`,
   `duplicate_entry`, `format_error`, and `missing_required_field`
+- explicit compatibility handling for legacy CSV aliases tracked in
+  `COMPATIBILITY_INVENTORY.md`
 
 ## Managed Partner Integrations
 
@@ -165,3 +169,5 @@ Validation notes:
 6. Governance jobs store preview totals plus before/after record counts for post-import verification.
 7. Staged partner deliveries can enter the same preview and approval workflow
   without bypassing governance controls.
+8. Delivery failures and partial-import outcomes surface in the reporting
+  operator checklist so inbound issues are visible before partners report them.

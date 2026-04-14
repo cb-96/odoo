@@ -1,7 +1,9 @@
+from urllib.parse import quote_plus
+
 from odoo import http
-from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
+from odoo.http import request
 
 
 class FederationPortal(CustomerPortal):
@@ -112,34 +114,28 @@ class FederationPortal(CustomerPortal):
     )
     def portal_my_teams_create(self, name, club_id, category=None, gender=None, email=None, phone=None, **kw):
         """Handle the portal my teams create flow."""
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
-        team_name = (name or "").strip()
-        category = (category or "").strip()
-        gender = (gender or "").strip()
-        if not team_name:
-            return request.redirect("/my/teams/new?error=Team+name+is+required")
-        if not category:
-            return request.redirect("/my/teams/new?error=Team+category+is+required")
-        if not gender:
-            return request.redirect("/my/teams/new?error=Team+gender+is+required")
         try:
             club_id = int(club_id)
         except (ValueError, TypeError):
             return request.redirect("/my/teams/new?error=Invalid+club+selection")
-        club = request.env["federation.club"].sudo().browse(club_id)
-        if club not in clubs:
-            return request.redirect("/my/teams?error=You+can+only+create+teams+for+your+own+club")
+
         try:
-            request.env["federation.team"].sudo().create({
-                "name": team_name,
-                "club_id": club.id,
-                "category": category,
-                "gender": gender,
-                "email": email.strip() if email else False,
-                "phone": phone.strip() if phone else False,
-            })
-        except Exception as e:
-            return request.redirect("/my/teams/new?error=%s" % (quote_plus(str(e)),))
+            club = request.env["federation.club"].sudo().browse(club_id)
+            request.env["federation.team"]._portal_create_team(
+                club,
+                values={
+                    "name": name,
+                    "category": category,
+                    "gender": gender,
+                    "email": email,
+                    "phone": phone,
+                },
+                user=request.env.user,
+            )
+        except (AccessError, ValidationError) as error:
+            return request.redirect(
+                "/my/teams/new?error=%s" % (quote_plus(str(error)),)
+            )
         return request.redirect("/my/teams?success=Team+created+successfully")
 
     # ------------------------------------------------------------------
@@ -321,7 +317,6 @@ class FederationPortal(CustomerPortal):
     )
     def portal_season_registration_submit(self, team_id, season_id, notes="", **kw):
         """Submit a season registration."""
-        clubs = request.env["federation.club.representative"]._get_clubs_for_user()
         try:
             team_id = int(team_id)
             season_id = int(season_id)
@@ -329,45 +324,18 @@ class FederationPortal(CustomerPortal):
             return request.redirect(
                 "/my/season-registration/new?error=Invalid+selection"
             )
-        team = request.env["federation.team"].sudo().browse(team_id)
-        season = request.env["federation.season"].sudo().browse(season_id)
-        if not season.exists() or season.state != "open":
-            return request.redirect(
-                "/my/season-registration/new?error=The+selected+season+is+not+open+for+registrations"
-            )
-        if team.club_id not in clubs:
-            return request.redirect(
-                "/my/season-registration/new?error=You+can+only+register+your+own+teams"
-            )
-        # Check for duplicate
-        existing = request.env["federation.season.registration"].sudo().search(
-            [
-                ("team_id", "=", team_id),
-                ("season_id", "=", season_id),
-                ("state", "!=", "cancelled"),
-            ],
-            limit=1,
-        )
-        if existing:
-            return request.redirect(
-                "/my/season-registration/new?error=This+team+is+already+registered+for+this+season"
-            )
         try:
-            registration = (
-                request.env["federation.season.registration"]
-                .sudo()
-                .create(
-                    {
-                        "season_id": season_id,
-                        "team_id": team_id,
-                        "notes": notes,
-                        "user_id": request.env.user.id,
-                    }
-                )
+            request.env["federation.season.registration"]._portal_submit_registration_request(
+                request.env["federation.season"].sudo().browse(season_id),
+                request.env["federation.team"].sudo().browse(team_id),
+                notes=notes,
+                user=request.env.user,
             )
-            registration.sudo().action_submit()
-        except ValidationError as e:
-            return request.redirect(f"/my/season-registration/new?error={str(e)}")
+        except (AccessError, ValidationError) as error:
+            return request.redirect(
+                "/my/season-registration/new?error=%s"
+                % quote_plus(str(error))
+            )
         return request.redirect(
             "/my/season-registrations?success=Season+registration+submitted"
         )

@@ -3,5 +3,6 @@ from . import test_http_smoke
 from . import test_officiating_portal_access
 from . import test_roster_portal_access
 from . import test_season_registration
+from . import test_team_portal_access
 from . import test_tournament_registration
 from . import test_tournament_workspace

@@ -96,7 +96,7 @@ Portal users (`group_federation_portal_club`) get these record rules:
 | `federation.participation.audit` | `('team_id.club_id', 'in', ...)` | See only own participation audit events |
 | `federation.match.result.audit` | home/away team club ownership | See only own result dispute and approval history |
 
-Additionally, controllers validate ownership on every write operation as defense-in-depth.
+Additionally, controllers validate ownership on every write operation as defense-in-depth and then delegate the privileged create or submit step into explicit model entry points.
 Official portal users also receive own-record rules for `federation.referee` and
 `federation.match.referee`.
 For season and tournament registrations, the models also enforce that `user_id` can only submit teams for represented clubs.
@@ -124,6 +124,7 @@ sports_federation_portal/
         federation_match_sheet.py
         federation_referee.py
         federation_season_registration.py
+        federation_team.py
         federation_team_roster.py
         federation_tournament.py
         federation_tournament_registration.py
@@ -179,7 +180,7 @@ Every write operation in the controllers:
 1. Resolves the user's clubs via `_get_clubs_for_user()`.
 2. Verifies the target team/registration belongs to those clubs.
 3. Checks for duplicates and capacity limits.
-4. Creates records with `sudo()` after validation passes.
+4. Hands the mutation to a model helper such as `federation.team._portal_create_team()`, `federation.season.registration._portal_submit_registration_request()`, or `federation.tournament.registration._portal_submit_registration_request()`.
 
 The same ownership rules are also enforced in the ORM for portal-managed registration models. That second layer matters whenever data is created from tests, server actions, imports, or future controllers.
 

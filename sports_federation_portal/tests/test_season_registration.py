@@ -1,4 +1,4 @@
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase
 
 
@@ -98,3 +98,29 @@ class TestSeasonRegistrationOwnership(TransactionCase):
 
         registration.action_confirm()
         self.assertEqual(registration.state, "confirmed")
+
+    def test_portal_submit_registration_request_uses_service_boundary(self):
+        """Service helper should create and submit a portal season registration."""
+        self.season.state = "open"
+        registration = self.env[
+            "federation.season.registration"
+        ]._portal_submit_registration_request(
+            self.season,
+            self.team,
+            notes="Submitted through the portal helper.",
+            user=self.user,
+        )
+
+        self.assertEqual(registration.state, "submitted")
+        self.assertEqual(registration.create_uid, self.user)
+        self.assertEqual(registration.notes, "Submitted through the portal helper.")
+
+    def test_portal_submit_registration_request_blocks_unowned_team(self):
+        """Service helper should reject season registrations for other clubs."""
+        self.season.state = "open"
+        with self.assertRaises(AccessError):
+            self.env["federation.season.registration"]._portal_submit_registration_request(
+                self.season,
+                self.other_team,
+                user=self.user,
+            )

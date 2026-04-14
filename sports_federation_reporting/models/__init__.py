@@ -6,3 +6,4 @@ from . import report_operational
 from . import report_planning
 from . import report_snapshot
 from . import report_schedule
+from . import report_operator_checklist

@@ -1,17 +1,29 @@
 import base64
 import csv
 import io
+import logging
 from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
+from odoo.tools import ustr
+
+
+_logger = logging.getLogger(__name__)
 
 
 class FederationReportSchedule(models.Model):
     _name = "federation.report.schedule"
     _description = "Federation Report Schedule"
     _order = "next_run_on, name"
+
+    RUN_STATUS_SELECTION = [
+        ("never", "Never Run"),
+        ("success", "Last Run Succeeded"),
+        ("failed", "Last Run Failed"),
+    ]
 
     REPORT_TYPE_SELECTION = [
         ("operational", "Operational Summary"),
@@ -37,10 +49,15 @@ class FederationReportSchedule(models.Model):
     season_id = fields.Many2one("federation.season", string="Season")
     active = fields.Boolean(default=True)
     next_run_on = fields.Datetime(required=True, default=fields.Datetime.now)
+    last_attempt_on = fields.Datetime(readonly=True)
     last_run_on = fields.Datetime(readonly=True)
+    last_run_status = fields.Selection(RUN_STATUS_SELECTION, readonly=True, default="never")
     last_period_start = fields.Date(readonly=True)
     last_period_end = fields.Date(readonly=True)
     last_row_count = fields.Integer(readonly=True)
+    last_failure_on = fields.Datetime(readonly=True)
+    last_error_message = fields.Text(readonly=True)
+    consecutive_failure_count = fields.Integer(readonly=True)
     generated_file = fields.Binary(string="Last Generated File", attachment=True, readonly=True)
     generated_filename = fields.Char(readonly=True)
     notes = fields.Text()
@@ -482,70 +499,28 @@ class FederationReportSchedule(models.Model):
 
     def _build_audit_pack_rows(self):
         """Build audit pack rows."""
-        workflow_rows = self.env["federation.report.workflow.exception"].search([])
-        finance_rows = self.env["federation.report.finance.reconciliation"].search([
-            ("needs_follow_up", "=", True),
-        ])
-        notification_rows = self.env["federation.report.notification.exception"].search([])
-        compliance_rows = self.env["federation.report.compliance.remediation"].search([])
-        finance_exception_rows = self.env["federation.report.finance.exception"].search([])
-        season_rows = self.env["federation.report.season.checklist"].search([])
-
-        def _escalated_count(records):
-            """Handle escalated count."""
-            return len(records.filtered(lambda row: getattr(row, "sla_status", False) == "escalated"))
-
-        def _oldest_age(records):
-            """Handle oldest age."""
-            ages = [getattr(row, "age_days", 0) or 0 for row in records]
-            return max(ages) if ages else 0
-
-        blocked_seasons = season_rows.filtered(lambda row: row.checklist_status == "blocked")
+        rows = self.env["federation.report.operator.checklist"].search([])
         data = [
             [
-                "Workflow Exceptions",
-                len(workflow_rows),
-                _escalated_count(workflow_rows),
-                _oldest_age(workflow_rows),
-                "Result approval and governance override backlog.",
-            ],
-            [
-                "Compliance Remediation",
-                len(compliance_rows),
-                _escalated_count(compliance_rows),
-                _oldest_age(compliance_rows),
-                "Document submissions waiting for review, replacement, or renewal.",
-            ],
-            [
-                "Finance Follow-up",
-                len(finance_rows),
-                _escalated_count(finance_rows),
-                _oldest_age(finance_rows),
-                "Finance events waiting for settlement or reconciliation references.",
-            ],
-            [
-                "Notification Exceptions",
-                len(notification_rows),
-                _escalated_count(notification_rows),
-                _oldest_age(notification_rows),
-                "Failed outbound notifications that still need operator follow-up.",
-            ],
-            [
-                "Sanction Finance Gaps",
-                len(finance_exception_rows),
-                0,
-                0,
-                "Disciplinary fines without linked finance events.",
-            ],
-            [
-                "Season Readiness",
-                len(blocked_seasons),
-                len(blocked_seasons),
-                0,
-                "Blocked season checklists needing operational intervention.",
-            ],
+                row.queue_name or "",
+                row.status or "",
+                row.owner_display or "",
+                row.open_count,
+                row.escalated_count,
+                row.oldest_age_days,
+                row.summary or "",
+            ]
+            for row in rows
         ]
-        headers = ["Queue", "Open Items", "Escalated Items", "Oldest Age (Days)", "Summary"]
+        headers = [
+            "Queue",
+            "Status",
+            "Owner",
+            "Open Items",
+            "Escalated Items",
+            "Oldest Age (Days)",
+            "Summary",
+        ]
         return headers, data, f"audit_pack_{self.period_type}"
 
     def _build_report_payload(self):
@@ -584,21 +559,52 @@ class FederationReportSchedule(models.Model):
     def _generate_report(self):
         """Handle generate report."""
         run_at = fields.Datetime.now()
+        failures = []
         for schedule in self:
-            payload, filename, row_count, period_start, period_end = schedule._build_report_payload()
-            schedule.write({
-                "last_run_on": run_at,
-                "last_period_start": period_start,
-                "last_period_end": period_end,
-                "last_row_count": row_count,
-                "generated_filename": filename,
-                "generated_file": base64.b64encode(payload),
-                "next_run_on": schedule._get_next_run_on(run_at),
-            })
+            try:
+                payload, filename, row_count, period_start, period_end = schedule._build_report_payload()
+                schedule.write({
+                    "last_attempt_on": run_at,
+                    "last_run_on": run_at,
+                    "last_run_status": "success",
+                    "last_period_start": period_start,
+                    "last_period_end": period_end,
+                    "last_row_count": row_count,
+                    "last_failure_on": False,
+                    "last_error_message": False,
+                    "consecutive_failure_count": 0,
+                    "generated_filename": filename,
+                    "generated_file": base64.b64encode(payload),
+                    "next_run_on": schedule._get_next_run_on(run_at),
+                })
+            except Exception as error:
+                error_message = ustr(error)
+                _logger.exception(
+                    "Scheduled report generation failed for %s (%s)",
+                    schedule.display_name,
+                    schedule.report_type,
+                )
+                schedule.write({
+                    "last_attempt_on": run_at,
+                    "last_run_status": "failed",
+                    "last_failure_on": run_at,
+                    "last_error_message": error_message,
+                    "consecutive_failure_count": schedule.consecutive_failure_count + 1,
+                    "next_run_on": schedule._get_next_run_on(run_at),
+                })
+                failures.append((schedule, error_message))
+        return failures
 
     def action_generate_now(self):
         """Execute the generate now action."""
-        self._generate_report()
+        failures = self._generate_report()
+        if failures:
+            raise UserError(
+                "\n".join(
+                    f"{schedule.display_name}: {message}"
+                    for schedule, message in failures
+                )
+            )
         return True
 
     def action_open_report(self):
@@ -615,7 +621,7 @@ class FederationReportSchedule(models.Model):
             "compliance_summary": "sports_federation_reporting.action_federation_report_compliance",
             "compliance_remediation": "sports_federation_reporting.action_federation_report_compliance_remediation",
             "board_pack": "sports_federation_reporting.action_federation_report_snapshot",
-            "audit_pack": "sports_federation_reporting.action_federation_report_snapshot",
+            "audit_pack": "sports_federation_reporting.action_federation_report_operator_checklist",
         }[self.report_type]
 
         action = self.env["ir.actions.act_window"]._for_xml_id(action_xmlid)

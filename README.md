@@ -19,6 +19,9 @@ Table of contents
 Quick links
 - High-level context: `odoo/CONTEXT.md`
 - Technical notes: `odoo/TECHNICAL_NOTE.md`
+- Route inventory: `odoo/ROUTE_INVENTORY.md`
+- Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
+- Release runbook: `odoo/RELEASE_RUNBOOK.md`
 - Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
 - Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
 - Contributor guide: `CONTRIBUTING.md`
@@ -131,6 +134,8 @@ Contributing & docs
 - Always update repository documentation as part of the same change set.
   Update `odoo/TECHNICAL_NOTE.md`, relevant `odoo/_workflows/*` and the
   affected module `README.md` under `odoo/<module>/`.
+- Treat `ROUTE_INVENTORY.md`, `COMPATIBILITY_INVENTORY.md`, and
+  `RELEASE_RUNBOOK.md` as maintained release documents, not one-off notes.
 - Follow the PR checklist in `.github/copilot-instructions.md` and add tests
   for behavioural changes. If you cannot update docs immediately, add a clear
   TODO in the change and notify maintainers.

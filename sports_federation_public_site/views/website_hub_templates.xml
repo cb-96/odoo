@@ -174,7 +174,7 @@
                             </select>
                         </div>
                         <div class="col-lg-1">
-                            <button class="btn btn-primary w-100" type="submit">Apply</button>
+                            <button class="btn btn-primary w-120" type="submit">Apply</button>
                         </div>
                         <div class="col-lg-3">
                             <label class="form-label" for="hub_venue">Venue</label>

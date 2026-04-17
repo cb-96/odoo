@@ -440,3 +440,67 @@ class TestCompliance(TransactionCase):
                 uploaded_files=[],
                 user=self.club_user,
             )
+
+    def test_portal_submit_submission_rejects_disallowed_attachment_type(self):
+        """Portal submit helper should reject files outside the shared allowlist."""
+        upload = BytesIO(b"club-compliance-payload")
+        upload.filename = "club-insurance.exe"
+        upload.mimetype = "application/octet-stream"
+
+        with self.assertRaises(ValidationError) as error:
+            self.env["federation.document.submission"]._portal_submit_submission(
+                self.requirement,
+                self.club,
+                values={
+                    "expiry_date": date.today() + timedelta(days=365),
+                },
+                uploaded_files=[upload],
+                user=self.club_user,
+            )
+
+        self.assertIn("extensions", str(error.exception))
+
+    def test_portal_submit_submission_rejects_oversized_attachment(self):
+        """Portal submit helper should enforce the shared maximum attachment size."""
+        max_bytes = self.env["federation.attachment.policy"].get_policy(
+            "portal_document"
+        )["max_bytes"]
+        upload = BytesIO(b"x" * (max_bytes + 1))
+        upload.filename = "club-insurance.pdf"
+        upload.mimetype = "application/pdf"
+
+        with self.assertRaises(ValidationError) as error:
+            self.env["federation.document.submission"]._portal_submit_submission(
+                self.requirement,
+                self.club,
+                values={
+                    "expiry_date": date.today() + timedelta(days=365),
+                },
+                uploaded_files=[upload],
+                user=self.club_user,
+            )
+
+        self.assertIn("MiB or smaller", str(error.exception))
+
+    def test_portal_submit_submission_dedupes_duplicate_attachments(self):
+        """Portal submit helper should keep one attachment per checksum."""
+        first_upload = BytesIO(b"duplicate-compliance-payload")
+        first_upload.filename = "club-insurance.pdf"
+        first_upload.mimetype = "application/pdf"
+        second_upload = BytesIO(b"duplicate-compliance-payload")
+        second_upload.filename = "club-insurance-copy.pdf"
+        second_upload.mimetype = "application/pdf"
+
+        submission = self.env[
+            "federation.document.submission"
+        ]._portal_submit_submission(
+            self.requirement,
+            self.club,
+            values={
+                "expiry_date": date.today() + timedelta(days=365),
+            },
+            uploaded_files=[first_upload, second_upload],
+            user=self.club_user,
+        )
+
+        self.assertEqual(len(submission.attachment_ids), 1)

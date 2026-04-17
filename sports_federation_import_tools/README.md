@@ -66,8 +66,8 @@ Core models:
 
 Managed integration behaviour:
 
-1. Partners authenticate with `X-Federation-Partner-Code` and
-   `X-Federation-Partner-Token`.
+1. Partners authenticate with `X-Federation-Partner-Code` plus either
+  `X-Federation-Partner-Token` or `Authorization: Bearer <token>`.
 2. `/integration/v1/contracts` exposes the subscribed contract manifest,
    including database-specific availability and deprecation metadata.
 3. Inbound payloads posted to `/integration/v1/inbound/<contract_code>/deliveries`
@@ -76,6 +76,19 @@ Managed integration behaviour:
    review the preview, request approval, and then run the live import.
 5. Delivery records mirror preview, approval, completion, and failure states so
    the inbound handoff remains auditable.
+
+Credential handling:
+
+- partner secrets are stored hashed at rest; the raw token is never shown again after issuance
+- federation managers issue or rotate a token from the partner form, then copy it from the one-time modal
+- URL query parameters are rejected for partner authentication to avoid leaking secrets into logs, browser history, or proxy traces
+- legacy plaintext tokens are migrated into hashed storage on module load and flagged for mandatory rotation
+
+Inbound delivery guardrails:
+
+- partner uploads must use a `.csv` filename and a `text/csv` content type when declared
+- inbound payloads larger than 5 MiB are rejected before staging
+- duplicate inbound payloads are deduplicated by checksum before a new delivery record or attachment is created
 
 ## Supported Wizards
 

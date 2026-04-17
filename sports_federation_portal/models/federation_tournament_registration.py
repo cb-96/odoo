@@ -202,8 +202,9 @@ class FederationTournamentRegistration(models.Model):
     def _portal_submit_registration_request(self, tournament, team, notes=None, user=None):
         """Create and submit a portal-managed tournament registration request."""
         user = user or self.env.user
-        tournament = tournament.with_user(user).sudo()
-        team = team.with_user(user).sudo()
+        PortalPrivilege = self.env["federation.portal.privilege"]
+        tournament = PortalPrivilege.elevate(tournament, user=user)
+        team = PortalPrivilege.elevate(team, user=user)
         if not tournament.exists() or tournament.state != "open":
             raise ValidationError(
                 _("This tournament is not currently open for registrations.")
@@ -212,10 +213,10 @@ class FederationTournamentRegistration(models.Model):
             raise ValidationError(_("Select a valid team before continuing."))
 
         clubs = (
-            self.env["federation.club.representative"]
-            .with_user(user)
-            .sudo()
-            ._get_clubs_for_user(user=user)
+            PortalPrivilege.elevate(
+                self.env["federation.club.representative"],
+                user=user,
+            )._get_clubs_for_user(user=user)
         )
         if team.club_id not in clubs:
             raise AccessError(_("You can only register your own teams."))
@@ -224,44 +225,50 @@ class FederationTournamentRegistration(models.Model):
         if eligibility_error:
             raise ValidationError(eligibility_error)
 
-        existing = self.with_user(user).sudo().search(
+        existing = PortalPrivilege.portal_search(
+            self,
             [
                 ("tournament_id", "=", tournament.id),
                 ("team_id", "=", team.id),
                 ("state", "!=", "cancelled"),
             ],
             limit=1,
+            user=user,
         )
         if existing:
             raise ValidationError(_("This team is already registered."))
 
         if tournament.max_participants > 0:
-            current_count = self.env["federation.tournament.participant"].with_user(
-                user
-            ).sudo().search_count(
+            current_count = PortalPrivilege.portal_search_count(
+                self.env["federation.tournament.participant"],
                 [
                     ("tournament_id", "=", tournament.id),
                     ("state", "!=", "withdrawn"),
-                ]
+                ],
+                user=user,
             )
-            pending_count = self.with_user(user).sudo().search_count(
+            pending_count = PortalPrivilege.portal_search_count(
+                self,
                 [
                     ("tournament_id", "=", tournament.id),
                     ("state", "=", "submitted"),
-                ]
+                ],
+                user=user,
             )
             if current_count + pending_count >= tournament.max_participants:
                 raise ValidationError(_("Tournament is full"))
 
-        registration = self.with_user(user).sudo().create(
+        registration = PortalPrivilege.portal_create(
+            self,
             {
                 "tournament_id": tournament.id,
                 "team_id": team.id,
                 "notes": (notes or "").strip() or False,
                 "user_id": user.id,
-            }
+            },
+            user=user,
         )
-        registration.with_user(user).sudo().action_submit()
+        PortalPrivilege.portal_call(registration, "action_submit", user=user)
         return registration
 
     @api.onchange("tournament_id")

@@ -98,6 +98,8 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="contact_partner_id" optional="show"/>
+                <field name="auth_token_last4" optional="show"/>
+                <field name="token_rotation_required" optional="show"/>
                 <field name="token_last_rotated_on" optional="show"/>
                 <field name="last_request_on" optional="show"/>
                 <field name="active"/>
@@ -111,9 +113,16 @@
         <field name="arch" type="xml">
             <form string="Integration Partner">
                 <header>
-                    <button name="action_rotate_token" string="Rotate Token" type="object" class="btn-secondary"/>
+                    <button name="action_rotate_token" string="Rotate Token" type="object" class="btn-secondary"
+                            groups="sports_federation_base.group_federation_manager"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-info" role="status" invisible="auth_token">
+                        No integration token has been issued for this partner yet. Federation managers must rotate the token once to provision credentials.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not token_rotation_required">
+                        This token was migrated out of legacy plaintext storage. Rotate it and redistribute the new secret to the partner.
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
@@ -122,7 +131,8 @@
                             <field name="active"/>
                         </group>
                         <group>
-                            <field name="auth_token" readonly="1" password="True"/>
+                            <field name="auth_token_last4" readonly="1"/>
+                            <field name="token_rotation_required" readonly="1"/>
                             <field name="token_last_rotated_on" readonly="1"/>
                             <field name="last_request_on" readonly="1"/>
                         </group>
@@ -157,6 +167,28 @@
                         <field name="notes" widget="text"/>
                     </group>
                 </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_federation_integration_partner_token_wizard_form" model="ir.ui.view">
+        <field name="name">federation.integration.partner.token.wizard.form</field>
+        <field name="model">federation.integration.partner.token.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Partner Token">
+                <sheet>
+                    <div class="alert alert-warning" role="alert">
+                        This token is shown only once. Copy it now and deliver it through your approved secret-sharing channel before closing this window.
+                    </div>
+                    <group>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="issued_token" readonly="1"/>
+                        <field name="token_last_rotated_on" readonly="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Close" special="cancel" class="btn-primary"/>
+                </footer>
             </form>
         </field>
     </record>

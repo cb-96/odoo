@@ -1,4 +1,0 @@
-2026-04-12 18:20:39,236 1 ERROR odoo_ci_test odoo.registry: Failed to load registry 
-2026-04-12 18:20:39,236 1 CRITICAL odoo_ci_test odoo.service.server: Failed to initialize database `odoo_ci_test`. 
-Traceback (most recent call last):
-    raise TypeError(msg % (self, field))

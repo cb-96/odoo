@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-AssertionError: federation.team.roster(6,) is not false
-2026-04-12 19:46:49,916 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
-2026-04-12 19:46:49,953 1 ERROR odoo_ci_test odoo.tests.result: 1 failed, 0 error(s) of 38 tests when loading database 'odoo_ci_test' 

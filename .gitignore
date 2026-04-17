@@ -10,6 +10,6 @@ ci/.env
 ci/odoo-ci.generated.conf
 
 # CI logs (keep .gitkeep, ignore run output)
-ci/logs/*
+ci/logs/
 
 _logs/

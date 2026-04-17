@@ -26,10 +26,12 @@ class FederationMatchSheet(models.Model):
         domain = self._portal_get_domain(user=user)
         if domain == [("id", "=", False)]:
             raise AccessError(_("You do not have portal access to match sheets."))
-        for record in self:
-            allowed = self.with_user(user).sudo().search_count(domain + [("id", "=", record.id)])
-            if not allowed:
-                raise AccessError(_("You can only review match sheets for your assigned teams or club."))
+        self.env["federation.portal.privilege"].portal_assert_in_domain(
+            self,
+            domain,
+            _("You can only review match sheets for your assigned teams or club."),
+            user=user,
+        )
         return True
 
     def _portal_update_preparation(self, values=None, user=None):
@@ -48,7 +50,11 @@ class FederationMatchSheet(models.Model):
         if "notes" in values:
             prepared["notes"] = (values.get("notes") or "").strip() or False
         if prepared:
-            self.with_user(user).sudo().write(prepared)
+            self.env["federation.portal.privilege"].portal_write(
+                self,
+                prepared,
+                user=user,
+            )
         return True
 
     def _portal_action_submit(self, user=None):
@@ -58,4 +64,8 @@ class FederationMatchSheet(models.Model):
         drafts = self.filtered(lambda sheet: sheet.state == "draft")
         if not drafts:
             raise ValidationError(_("Only draft match sheets can be submitted from the portal."))
-        return drafts.with_user(user).sudo().action_submit()
+        return self.env["federation.portal.privilege"].portal_call(
+            drafts,
+            "action_submit",
+            user=user,
+        )

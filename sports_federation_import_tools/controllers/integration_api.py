@@ -16,21 +16,28 @@ class FederationIntegrationApi(http.Controller):
             content_type="application/json; charset=utf-8",
         )
 
+    def _get_bearer_token(self, headers):
+        """Extract a bearer token from the authorization header."""
+        authorization = (headers.get("Authorization") or "").strip()
+        if not authorization:
+            return ""
+
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token.strip():
+            raise AccessError("Authorization headers must use the Bearer scheme.")
+        return token.strip()
+
     def _get_credentials(self):
         """Return credentials."""
         headers = request.httprequest.headers
-        partner_code = (
-            headers.get("X-Federation-Partner-Code")
-            or request.params.get("partner_code")
-            or ""
-        ).strip()
-        token = (
-            headers.get("X-Federation-Partner-Token")
-            or request.params.get("access_token")
-            or ""
-        ).strip()
+        if request.params.get("partner_code") or request.params.get("access_token"):
+            raise AccessError("Partner credentials must be supplied via request headers only.")
+        partner_code = (headers.get("X-Federation-Partner-Code") or "").strip()
+        token = (headers.get("X-Federation-Partner-Token") or "").strip()
+        if not token:
+            token = self._get_bearer_token(headers)
         if not partner_code or not token:
-            raise AccessError("Partner code and token are required.")
+            raise AccessError("Partner code and token are required in request headers.")
         return partner_code, token
 
     def _authenticate(self, contract_code=None):
@@ -134,6 +141,7 @@ class FederationIntegrationApi(http.Controller):
                 contract=subscription.contract_id,
                 filename=(payload.get("filename") or "").strip(),
                 payload_base64=(payload.get("payload_base64") or "").strip(),
+                content_type=(payload.get("content_type") or "").strip() or False,
                 notes=(payload.get("notes") or "").strip() or False,
                 source_reference=(payload.get("source_reference") or "").strip() or False,
             )

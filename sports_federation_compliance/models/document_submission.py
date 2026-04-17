@@ -261,8 +261,12 @@ class FederationDocumentSubmission(models.Model):
         """Handle the portal-specific prepare submission flow."""
         values = values or {}
         user = user or self.env.user
-        Requirement = self.env["federation.document.requirement"]
-        requirement = Requirement.sudo().browse(requirement.id)
+        PortalPrivilege = self.env["federation.portal.privilege"]
+        Requirement = PortalPrivilege.elevate(
+            self.env["federation.document.requirement"],
+            user=user,
+        )
+        requirement = Requirement.browse(requirement.id)
         Requirement._portal_assert_target_access(requirement, target_record, user=user)
 
         latest_submission = requirement._portal_get_latest_submission(target_record)
@@ -284,10 +288,11 @@ class FederationDocumentSubmission(models.Model):
             "rejected",
             "replacement_requested",
         ):
-            submission = latest_submission.with_user(user).sudo()
+            submission = PortalPrivilege.elevate(latest_submission, user=user)
         else:
             target_name = target_record.display_name or getattr(target_record, "name", False) or requirement.name
-            submission = self.with_user(user).sudo().create(
+            submission = PortalPrivilege.portal_create(
+                self,
                 {
                     "name": f"{requirement.name} - {target_name}",
                     "requirement_id": requirement.id,
@@ -296,7 +301,8 @@ class FederationDocumentSubmission(models.Model):
                     "expiry_date": prepared_expiry_date,
                     "notes": prepared_notes,
                     "status": "draft",
-                }
+                },
+                user=user,
             )
 
         write_vals = {
@@ -307,7 +313,7 @@ class FederationDocumentSubmission(models.Model):
             "reviewer_id": False,
             "reviewed_on": False,
         }
-        submission.with_user(user).sudo().write(write_vals)
+        PortalPrivilege.portal_write(submission, write_vals, user=user)
         return submission
 
     @api.model
@@ -316,32 +322,52 @@ class FederationDocumentSubmission(models.Model):
     ):
         """Create attachment records for a portal submission."""
         user = user or self.env.user
-        submission = submission.with_user(user).sudo()
+        PortalPrivilege = self.env["federation.portal.privilege"]
+        AttachmentPolicy = self.env["federation.attachment.policy"]
+        submission = PortalPrivilege.elevate(submission, user=user)
         submission.ensure_one()
 
         attachment_ids = []
-        Attachment = self.env["ir.attachment"].with_user(user).sudo()
-        for uploaded_file in uploaded_files or []:
-            filename = (getattr(uploaded_file, "filename", "") or "").strip()
-            if not filename:
+        existing_attachment_ids = submission.attachment_ids.ids
+        existing_checksums = set()
+        for attachment in submission.attachment_ids:
+            if not attachment.datas:
                 continue
+            existing_checksums.add(
+                AttachmentPolicy.checksum_payload(base64.b64decode(attachment.datas))
+            )
+
+        Attachment = PortalPrivilege.elevate(self.env["ir.attachment"], user=user)
+        for uploaded_file in uploaded_files or []:
             payload = uploaded_file.read()
-            if not payload:
+            filename = getattr(uploaded_file, "filename", False)
+            if not filename and not payload:
+                continue
+            upload = AttachmentPolicy.validate_upload(
+                "portal_document",
+                filename,
+                payload,
+                mimetype=getattr(uploaded_file, "mimetype", False),
+            )
+            if upload["checksum"] in existing_checksums:
                 continue
             attachment = Attachment.create(
                 {
-                    "name": filename,
-                    "datas": base64.b64encode(payload),
+                    "name": upload["filename"],
+                    "datas": base64.b64encode(upload["payload"]),
                     "res_model": submission._name,
                     "res_id": submission.id,
-                    "mimetype": getattr(uploaded_file, "mimetype", False),
+                    "mimetype": upload["mimetype"],
                 }
             )
             attachment_ids.append(attachment.id)
+            existing_checksums.add(upload["checksum"])
 
         if attachment_ids:
-            submission.with_user(user).sudo().write(
-                {"attachment_ids": [(6, 0, attachment_ids)]}
+            PortalPrivilege.portal_write(
+                submission,
+                {"attachment_ids": [(6, 0, existing_attachment_ids + attachment_ids)]},
+                user=user,
             )
         return submission.attachment_ids
 
@@ -371,7 +397,11 @@ class FederationDocumentSubmission(models.Model):
             raise ValidationError(
                 "Upload at least one document attachment before submitting."
             )
-        submission.with_user(user).sudo().action_submit()
+        self.env["federation.portal.privilege"].portal_call(
+            submission,
+            "action_submit",
+            user=user,
+        )
         return submission
 
     @api.constrains("requirement_id", "expiry_date")

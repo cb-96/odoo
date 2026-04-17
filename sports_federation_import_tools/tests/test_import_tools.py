@@ -129,12 +129,13 @@ class TestImportTools(TransactionCase):
             "sports_federation_import_tools.federation_integration_contract_finance_event"
         )
         partner, subscription = self._create_integration_partner(contract)
+        raw_token = partner._issue_auth_token()
 
         auth_partner, auth_subscription = self.env[
             "federation.integration.partner"
         ].authenticate_partner(
             partner.code,
-            partner.auth_token,
+            raw_token,
             contract_code=contract.code,
         )
 
@@ -148,6 +149,67 @@ class TestImportTools(TransactionCase):
                 "wrong-token",
                 contract_code=contract.code,
             )
+
+    def test_partner_token_rotation_hashes_storage_and_returns_usable_secret(self):
+        """Token rotation should persist only the hash and return the raw secret once."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_finance_event"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+
+        self.assertFalse(partner.auth_token)
+        self.assertFalse(partner.auth_token_last4)
+
+        action = partner.action_rotate_token()
+        wizard = self.env[action["res_model"]].browse(action["res_id"])
+        raw_token = wizard.issued_token
+
+        partner.invalidate_recordset()
+
+        self.assertTrue(raw_token)
+        self.assertNotEqual(partner.auth_token, raw_token)
+        self.assertTrue(partner.auth_token.startswith(f"{partner.TOKEN_HASH_PREFIX}$"))
+        self.assertEqual(partner.auth_token_last4, raw_token[-4:])
+        self.assertFalse(partner.token_rotation_required)
+
+        auth_partner, _subscription = self.env[
+            "federation.integration.partner"
+        ].authenticate_partner(partner.code, raw_token)
+        self.assertEqual(auth_partner, partner)
+
+    def test_legacy_plaintext_tokens_are_migrated_and_flagged(self):
+        """Legacy plaintext tokens should be hashed in place and marked for rotation."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_finance_event"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        legacy_token = "legacy-token-1234"
+
+        self.env.cr.execute(
+            """
+            UPDATE federation_integration_partner
+               SET auth_token = %s,
+                   auth_token_last4 = NULL,
+                   token_rotation_required = FALSE,
+                   token_last_rotated_on = NULL
+             WHERE id = %s
+            """,
+            [legacy_token, partner.id],
+        )
+        partner.invalidate_recordset()
+
+        self.env["federation.integration.partner"]._migrate_plaintext_tokens()
+        partner.invalidate_recordset()
+
+        self.assertNotEqual(partner.auth_token, legacy_token)
+        self.assertTrue(partner.auth_token.startswith(f"{partner.TOKEN_HASH_PREFIX}$"))
+        self.assertEqual(partner.auth_token_last4, legacy_token[-4:])
+        self.assertTrue(partner.token_rotation_required)
+
+        auth_partner, _subscription = self.env[
+            "federation.integration.partner"
+        ].authenticate_partner(partner.code, legacy_token)
+        self.assertEqual(auth_partner, partner)
 
     def test_inbound_delivery_stages_and_reuses_duplicate_payloads(self):
         """Test that inbound delivery stages and reuses duplicate payloads."""
@@ -218,6 +280,44 @@ class TestImportTools(TransactionCase):
         self.assertEqual(delivery.governance_job_id.state, "completed")
         self.assertEqual(delivery.success_count, 1)
         self.assertTrue(self.env["federation.club"].search([("code", "=", "DC001")], limit=1))
+
+    def test_inbound_delivery_rejects_disallowed_payload_extension(self):
+        """Inbound staging should reject payloads outside the shared extension allowlist."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+
+        with self.assertRaises(ValidationError) as error:
+            self.env["federation.integration.delivery"].stage_partner_delivery(
+                partner=partner,
+                contract=contract,
+                filename="clubs.json",
+                payload_base64=self._create_csv_file("name;code\nStaged Club;SC001").decode("utf-8"),
+            )
+
+        self.assertIn("extensions", str(error.exception))
+
+    def test_inbound_delivery_rejects_oversized_payload(self):
+        """Inbound staging should enforce the shared maximum payload size."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        max_bytes = self.env["federation.attachment.policy"].get_policy(
+            "integration_inbound_csv"
+        )["max_bytes"]
+        oversized_payload = base64.b64encode(b"x" * (max_bytes + 1)).decode("utf-8")
+
+        with self.assertRaises(ValidationError) as error:
+            self.env["federation.integration.delivery"].stage_partner_delivery(
+                partner=partner,
+                contract=contract,
+                filename="clubs.csv",
+                payload_base64=oversized_payload,
+            )
+
+        self.assertIn("MiB or smaller", str(error.exception))
 
     def test_import_teams_resolves_club_by_code(self):
         """Teams import should resolve parent clubs via club codes and create the record."""

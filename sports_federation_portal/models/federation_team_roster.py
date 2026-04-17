@@ -24,12 +24,10 @@ class FederationTeamRoster(models.Model):
     def _portal_get_represented_clubs(self, user=None):
         """Handle the portal-specific get represented clubs flow."""
         user = user or self.env.user
-        return (
-            self.env["federation.club.representative"]
-            .with_user(user)
-            .sudo()
-            ._get_clubs_for_user(user=user)
-        )
+        return self.env["federation.portal.privilege"].elevate(
+            self.env["federation.club.representative"],
+            user=user,
+        )._get_clubs_for_user(user=user)
 
     @api.model
     def _portal_get_confirmed_registrations(self, user=None):
@@ -168,7 +166,8 @@ class FederationTeamRoster(models.Model):
     def _portal_create_roster_for_registration(self, season_registration, user=None):
         """Handle the portal-specific create roster for registration flow."""
         user = user or self.env.user
-        season_registration = season_registration.with_user(user).sudo()
+        PortalPrivilege = self.env["federation.portal.privilege"]
+        season_registration = PortalPrivilege.elevate(season_registration, user=user)
         clubs = self._portal_get_represented_clubs(user=user)
         if season_registration.club_id not in clubs:
             raise AccessError(
@@ -186,12 +185,16 @@ class FederationTeamRoster(models.Model):
         )
         if roster:
             if not roster.season_registration_id and not roster.match_day_locked:
-                roster.with_user(user).sudo().write(
+                PortalPrivilege.portal_write(
+                    roster,
                     {"season_registration_id": season_registration.id}
+                    ,
+                    user=user,
                 )
             return roster
 
-        return self.with_user(user).sudo().create(
+        return PortalPrivilege.portal_create(
+            self,
             {
                 "name": _("%(team)s - %(season)s Roster")
                 % {
@@ -203,7 +206,8 @@ class FederationTeamRoster(models.Model):
                 "season_registration_id": season_registration.id,
                 "valid_from": season_registration.season_id.date_start or False,
                 "valid_to": season_registration.season_id.date_end or False,
-            }
+            },
+            user=user,
         )
 
     def _portal_update_roster(self, values=None, user=None):
@@ -231,25 +235,41 @@ class FederationTeamRoster(models.Model):
             prepared["notes"] = (values.get("notes") or "").strip() or False
         if not prepared:
             return False
-        return self.with_user(user).sudo().write(prepared)
+        return self.env["federation.portal.privilege"].portal_write(
+            self,
+            prepared,
+            user=user,
+        )
 
     def _portal_action_activate(self, user=None):
         """Handle the portal-specific action activate flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
-        return self.with_user(user).sudo().action_activate()
+        return self.env["federation.portal.privilege"].portal_call(
+            self,
+            "action_activate",
+            user=user,
+        )
 
     def _portal_action_set_draft(self, user=None):
         """Handle the portal-specific action set draft flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
-        return self.with_user(user).sudo().action_set_draft()
+        return self.env["federation.portal.privilege"].portal_call(
+            self,
+            "action_set_draft",
+            user=user,
+        )
 
     def _portal_action_close(self, user=None):
         """Handle the portal-specific action close flow."""
         user = user or self.env.user
         self._portal_assert_manage_access(user=user)
-        return self.with_user(user).sudo().action_close()
+        return self.env["federation.portal.privilege"].portal_call(
+            self,
+            "action_close",
+            user=user,
+        )
 
 
 class FederationTeamRosterLine(models.Model):
@@ -393,7 +413,11 @@ class FederationTeamRosterLine(models.Model):
             roster, values=values, user=user
         )
         prepared["roster_id"] = roster.id
-        return self.with_user(user).sudo().create(prepared)
+        return self.env["federation.portal.privilege"].portal_create(
+            self,
+            prepared,
+            user=user,
+        )
 
     def _portal_update_line(self, values=None, user=None):
         """Handle the portal-specific update line flow."""
@@ -410,7 +434,11 @@ class FederationTeamRosterLine(models.Model):
                 user=user,
                 player=line.player_id,
             )
-            line.with_user(user).sudo().write(prepared)
+            self.env["federation.portal.privilege"].portal_write(
+                line,
+                prepared,
+                user=user,
+            )
         return True
 
     def _portal_delete_line(self, user=None):
@@ -421,4 +449,8 @@ class FederationTeamRosterLine(models.Model):
             raise ValidationError(
                 _("Closed rosters cannot be edited in the portal.")
             )
-        return self.with_user(user).sudo().unlink()
+        return self.env["federation.portal.privilege"].portal_call(
+            self,
+            "unlink",
+            user=user,
+        )

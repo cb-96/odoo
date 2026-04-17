@@ -1,6 +1,0 @@
- Container sf_ci-ci-db-1  Running
-Running as user 'root' is a security risk.
-Usage: odoo [--addons-path=PATH,...] server [options]
-
-odoo [--addons-path=PATH,...] server: error: unrecognized parameters: --database=odoo_ci_test -i sports_federation_base
-

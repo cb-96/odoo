@@ -9,16 +9,17 @@ class FederationTeam(models.Model):
     def _portal_create_team(self, club, values=None, user=None):
         """Create a club-owned team through the portal service boundary."""
         user = user or self.env.user
+        PortalPrivilege = self.env["federation.portal.privilege"]
         values = values or {}
-        club = club.with_user(user).sudo()
+        club = PortalPrivilege.elevate(club, user=user)
         if not club.exists():
             raise ValidationError(_("Select a valid club before creating a team."))
 
         represented_clubs = (
-            self.env["federation.club.representative"]
-            .with_user(user)
-            .sudo()
-            ._get_clubs_for_user(user=user)
+            PortalPrivilege.elevate(
+                self.env["federation.club.representative"],
+                user=user,
+            )._get_clubs_for_user(user=user)
         )
         if club not in represented_clubs:
             raise AccessError(_("You can only create teams for your own club."))
@@ -33,7 +34,8 @@ class FederationTeam(models.Model):
         if gender not in dict(self._fields["gender"].selection):
             raise ValidationError(_("Choose a valid team gender."))
 
-        return self.with_user(user).sudo().create(
+        return PortalPrivilege.portal_create(
+            self,
             {
                 "name": name,
                 "club_id": club.id,
@@ -41,5 +43,6 @@ class FederationTeam(models.Model):
                 "gender": gender,
                 "email": (values.get("email") or "").strip() or False,
                 "phone": (values.get("phone") or "").strip() or False,
-            }
+            },
+            user=user,
         )

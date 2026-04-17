@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-    raise UserError(_("Menus cannot have more than two levels of hierarchy."))
-Traceback (most recent call last):
-    raise UserError(_("Menus cannot have more than two levels of hierarchy."))
-ERROR: duplicate key value violates unique constraint "federation_tournament_public_slug_unique"
-2026-04-12 17:01:18,514 1 ERROR odoo_ci_test odoo.modules.loading: At least one test failed when loading the modules. 
-2026-04-12 17:01:18,552 1 ERROR odoo_ci_test odoo.tests.result: 0 failed, 2 error(s) of 31 tests when loading database 'odoo_ci_test' 

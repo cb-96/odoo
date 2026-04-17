@@ -1,113 +1,137 @@
-# ROADMAP — Next Operating Period
+# ROADMAP — 2026-04-17 Improvement Program
 
-Last updated: 2026-04-13
+Last updated: 2026-04-17
 
-The multi-year build roadmap is complete and archived in `ROADMAP_archive_2026-04-13.md`.
-This roadmap covers the next delivery period and shifts the repository from
-feature expansion to workflow polish, stale-code retirement, and release
-readiness.
+The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-17.md`.
+This roadmap is driven by the 2026-04-17 code review and shifts the focus from
+feature completion to hardening, simplification, and long-term operability.
 
 ## Period Goal
 
-Move the platform from feature-complete and internally verified to
-operator-friendly, browser-safe, and production-ready.
+Lower trust-boundary risk and reduce the cost of change across portal,
+reporting, compliance, and integration workflows.
 
-## Operating Principles
+## Review Baseline
 
-- Prefer workflow simplification over feature breadth.
-- Remove or retire shadowed implementations instead of maintaining duplicates.
-- Treat browser journeys as first-class acceptance criteria.
-- Keep controller security, tests, documentation, and migration notes coupled to every workflow change.
-- Make release and rollback procedures reproducible before calling a feature done.
+- 19 custom addons, 252 Python files, 132 XML files, and 66 test files.
+- 178 `sudo()` usages, 51 `with_user(user).sudo()` patterns, 24 public route declarations, and 7 `csrf=False` declarations.
+- The highest complexity is concentrated in reporting, roster workflows, public competition routes, and compliance target handling.
+- CI exists and is useful, but lint coverage is still scoped to a hand-picked subset of files.
+- Migration handling exists, but only one explicit migration script was found despite recent cross-module structural churn.
 
-## Current Baseline
+## Guiding Principles
 
-- Years 1 through 4 of the original product roadmap are complete.
-- Core federation workflows, portal surfaces, public tournament coverage, compliance self-service, reporting, finance automation, and partner contracts exist in code.
-- The next bottleneck is not feature breadth; it is UX consistency, stale-code cleanup, and operational confidence.
+- Prefer shrinking risky surfaces over shipping additional breadth.
+- Replace repeated trust-boundary code with shared, testable abstractions.
+- Split files when one concern can no longer be reviewed comfortably in one sitting.
+- Archive time-sensitive documents when they are superseded.
+- Tie every security or workflow change to focused regression tests.
 
-## Workstreams
+## Phase 1 — First 2 Weeks: Trust Boundary Hardening
 
-### Priority 0 — Browser Workflow Hardening
+1. [x] Harden partner authentication.
+Modules: `sports_federation_import_tools`.
+Work: remove query-string credentials, accept secrets only from headers or authorization metadata, hash tokens at rest, and document/execute a rotation plan for existing tokens.
+Done when: no controller accepts `access_token` or `partner_code` from request params, and operator guidance exists for rotating previously issued tokens.
 
-1. Done (2026-04-13): Repair browser journeys that currently fail with raw technical pages.
-Modules: `sports_federation_compliance`, `sports_federation_portal`, `sports_federation_public_site`.
-Work landed: compliance workspace detail links now resolve correctly for dotted target models, the login flow recovers from stale CSRF submissions with a guided retry message, and wrong-role tournament registration attempts now render readable feedback instead of raw ACL failures. The batch was verified with targeted live browser checks and focused CI.
-Done when: closed in this execution batch.
+2. [x] Add upload and payload guardrails.
+Modules: `sports_federation_import_tools`, `sports_federation_compliance`, shared attachment policies.
+Work: enforce maximum payload size, allowlisted MIME and extension rules, checksum dedupe, and consistent user-facing validation messages.
+Done when: oversized or disallowed files are rejected consistently in partner and portal flows with automated tests.
 
-2. Done (2026-04-13): Improve action clarity and empty states on self-service pages.
-Modules: `sports_federation_portal`, `sports_federation_compliance`, `sports_federation_officiating`, `sports_federation_public_site`.
-Work landed: self-service registration, compliance, officiating, and public tournament pages now explain the next action more clearly, surface readable status feedback, and replace the most visible dead-end empty states with guided messages. The expanded browser smoke suite exercises the primary happy-path and unhappy-path flows.
-Done when: closed in this execution batch.
+3. [x] Centralize privileged portal writes.
+Modules: `sports_federation_portal`, `sports_federation_compliance`, `sports_federation_public_site`.
+Work: introduce one shared portal privilege boundary helper for access checks and elevated writes, then refactor current helpers to use it.
+Done when: new privileged portal writes go through one shared abstraction and legacy helpers have contract tests around ownership and state transitions.
 
-3. Done (2026-04-13): Replace leftover website boilerplate with federation-specific copy.
-Modules: `sports_federation_public_site`, `sports_federation_portal`, website configuration.
-Work landed: public tournament and season pages now use tournament-hub language instead of leftover generic coverage boilerplate, legacy public templates were retired or aligned, the website cleanup hook now removes stock shell menus and footer/company placeholders on install and upgrade, and the broader `release_surfaces` suite keeps the public and portal smoke flows in nightly/manual coverage.
-Done when: closed in this execution batch.
+## Phase 2 — Weeks 3 To 5: Complexity Extraction
 
-### Priority 1 — Stale-Code Retirement and Route Simplification
+1. Split reporting SQL monoliths.
+Modules: `sports_federation_reporting`.
+Work: separate `report_operational.py` into report-specific files, add named SQL block headers, and add report-specific invariants in tests.
+Done when: no single reporting model file exceeds roughly 400 lines without a clear reason.
 
-1. Done (2026-04-13): Remove or quarantine superseded public tournament pages in the portal module.
-Modules: `sports_federation_portal`, `sports_federation_public_site`.
-Work landed: duplicate portal-owned public tournament controllers and their stale website templates were removed from active loading, leaving `sports_federation_public_site` as the canonical owner of the public tournament surface.
-Done when: closed in this execution batch.
+2. Break down roster and portal controller monoliths.
+Modules: `sports_federation_portal`, `sports_federation_rosters`.
+Work: split `controllers/rosters.py` and the broad portal controller into narrower workflow files, and factor redirect, scope-loading, and form-error patterns into shared helpers.
+Done when: primary portal controllers are materially smaller and route behavior remains covered by smoke and service tests.
 
-2. Done (2026-04-13): Finish or remove stubbed workflow branches.
-Modules: `sports_federation_notifications`, `sports_federation_discipline`, `sports_federation_compliance`.
-Work landed: suspension activation now drives a real direct-email notification path with outcome logging instead of emitting a false-positive stub success entry.
-Done when: closed in this execution batch.
+3. Simplify compliance target resolution.
+Modules: `sports_federation_compliance`.
+Work: extract shared target field maps and target resolution into one reusable layer.
+Done when: adding a new compliance target type requires one obvious extension point rather than synchronized edits in multiple classes.
 
-3. Done (2026-04-13): Review compatibility layers and legacy inputs with owners and exit dates.
-Modules: `sports_federation_public_site`, `sports_federation_import_tools`, integration surfaces.
-Work landed: added `COMPATIBILITY_INVENTORY.md` to document retained legacy routes, aliases, and inbound data shapes with owners, review checkpoints, and explicit exit timing.
-Done when: closed in this execution batch.
+## Phase 3 — Weeks 6 To 8: Readability And Engineering Discipline
 
-### Priority 1 — Code Quality and Maintainability
-
-1. Done (2026-04-13): Centralize privileged writes inside model or service entry points.
-Modules: `sports_federation_portal`, `sports_federation_public_site`, `sports_federation_compliance`, `sports_federation_import_tools`.
-Work landed: team creation, season registration, tournament registration, and compliance submissions now route through model-owned portal helpers that preserve request-user ownership while keeping elevated writes explicit and testable. Backend tests and `HttpCase` smoke coverage were added for those service boundaries.
-Done when: closed in this execution batch.
-
-2. Done (2026-04-13): Keep repository-wide developer documentation current.
+1. Improve docstring and method-shape standards.
 Modules: repository-wide.
-Work landed: added `ROUTE_INVENTORY.md`, refreshed `INTEGRATION_CONTRACTS.md`, updated the root README and affected module READMEs, and documented the release path in `RELEASE_RUNBOOK.md`.
-Done when: closed in this execution batch.
+Work: replace low-signal `Handle X flow` docstrings in hotspots with invariants, side effects, and security assumptions, and continue breaking up methods with more than one clear responsibility.
+Done when: portal, compliance, and reporting hotspots explain why and under which assumptions they operate.
 
-3. Done (2026-04-13): Normalize naming and file-layout conventions.
+2. Expand CI quality gates beyond a hand-picked file list.
+Modules: repository-wide, `ci`.
+Work: widen Black and Flake8 coverage in stages, starting with a non-blocking full-repo lint job and then gating after debt is reduced.
+Done when: the repository no longer depends on narrow `BLACK_PATHS` and `FLAKE8_PATHS` allowlists for normal maintenance.
+
+3. Add documentation freshness rules.
 Modules: repository-wide.
-Work landed: normalized the import-tools package layout from `wizard/` to `wizards/` and aligned affected imports/documentation so the module structure is predictable across the suite.
-Done when: closed in this execution batch.
+Work: add owner/date metadata to review, roadmap, and architecture documents and make them part of release preparation.
+Done when: time-sensitive documents are archived or refreshed during the release cadence instead of drifting.
 
-### Priority 2 — Release Operations and Observability
+## Phase 4 — Weeks 9 To 12: Operability, Performance, And Upgrade Safety
 
-1. Done (2026-04-13): Build a repeatable browser-first verification suite.
-Modules: `ci`, `sports_federation_portal`, `sports_federation_public_site`, `sports_federation_compliance`, `sports_federation_reporting`.
-Work landed: expanded Odoo `HttpCase` smoke coverage for stale login recovery, team creation, season registration, compliance detail routing, officiating responses, representative public registration, wrong-role feedback, and full-tournament unhappy paths; kept them in the broader `release_surfaces` suite for nightly/manual execution.
-Done when: closed in this execution batch.
+1. Add performance baselines for public and reporting hotspots.
+Modules: `sports_federation_public_site`, `sports_federation_reporting`, `sports_federation_portal`.
+Work: baseline expensive public routes and large SQL reports, capturing query counts and slow operators.
+Done when: the slowest public and reporting endpoints have known budgets and regressions can be detected early.
 
-2. Done (2026-04-13): Prepare production rollout runbooks.
+2. Tighten migration discipline.
 Modules: repository-wide.
-Work landed: added `RELEASE_RUNBOOK.md` covering pre-release verification, dry runs, backups, upgrades, rollback, and post-upgrade operator checks for the Dockerized Odoo stack.
-Done when: closed in this execution batch.
+Work: require migration impact review for model, view, and route ownership changes and add module-local migration scripts where needed.
+Done when: upgrade-sensitive changes are not shipped without explicit migration handling or release notes.
 
-3. Done (2026-04-13): Strengthen operational observability.
-Modules: `sports_federation_reporting`, `sports_federation_notifications`, `sports_federation_import_tools`, `sports_federation_finance_bridge`.
-Work landed: added the reporting operator checklist surface, linked report schedules to persisted failure state, folded scheduled-report failures into the checklist/audit pack, and covered inbound delivery/reporting visibility with focused tests.
-Done when: closed in this execution batch.
+3. Improve failure typing and operator feedback.
+Modules: `sports_federation_notifications`, `sports_federation_reporting`, `sports_federation_import_tools`.
+Work: replace broad exception storage with typed failure categories and sanitized operator messages.
+Done when: retryable delivery, import, and report failures are distinguishable from developer defects.
 
 ## Suggested Sequence
 
-1. Browser error-state fixes and compliance/tournament workflow polish.
-2. Duplicate route retirement planning and notification stub cleanup.
-3. Controller/service cleanup plus naming and structure normalization.
-4. Browser smoke-suite expansion and rollout runbook preparation.
-5. Observability improvements and final production-readiness review.
+1. Integration credential hardening and upload guardrails.
+2. Shared portal privilege abstraction.
+3. Reporting file split and compliance target resolver.
+4. Portal controller decomposition.
+5. CI and documentation freshness expansion.
+6. Performance baselines, migration discipline, and typed failure handling.
 
-## Exit Criteria For This Period
+## Exit Criteria
 
-- No raw 400, 403, or 404 technical pages remain in primary user workflows.
-- No shadowed public-route implementation remains without an explicit compatibility plan.
-- No notification path reports `sent` unless something was actually delivered or intentionally queued.
-- Browser flows and privileged writes have regression coverage.
-- Release, rollback, and smoke verification are documented and reproducible.
+- No secret-bearing integration flow accepts credentials via query string.
+- No public or portal upload path lacks file-size and file-type validation.
+- New privileged portal writes use one shared abstraction with tests.
+- Reporting and portal hotspot files are materially smaller and easier to review.
+- Time-sensitive roadmap and review documents stop drifting beyond one operating period.
+- Upgrade-sensitive changes have explicit migration handling.
+
+## Twenty Additional Improvements
+
+1. Publish an OpenAPI-style contract document for partner integration routes and payloads.
+2. Introduce one-time token reveal plus last-four-character token display in the back office.
+3. Add rate limiting or throttling for public JSON and partner integration endpoints.
+4. Add attachment antivirus or external malware-scanning hooks for uploaded files.
+5. Implement pagination or incremental cursors for finance event exports.
+6. Add idempotency keys for inbound delivery submissions.
+7. Add architecture decision records for portal trust boundaries, reporting SQL views, and public route ownership.
+8. Add a repo-wide dead-link and stale-doc check in CI.
+9. Add smoke tests that verify every public route listed in `ROUTE_INVENTORY.md` still resolves.
+10. Add per-module ownership metadata to manifests or a central owner registry.
+11. Add data-retention policies for logs, staged deliveries, and generated report files.
+12. Add a backup-restore drill script and a periodic restore verification checklist.
+13. Add slow-query logging and `EXPLAIN` snapshots for the largest SQL views.
+14. Add accessibility review passes for portal and public templates.
+15. Add mobile-specific template checks for the largest portal workflows.
+16. Add a deterministic demo-data pack for end-to-end federation walkthroughs.
+17. Add audit dashboards for privileged portal actions and token rotations.
+18. Add import wizard base classes for row parsing, duplicate detection, and reusable error taxonomy.
+19. Add shared enums or helper predicates for cross-module workflow states where semantics are reused.
+20. Add a release train and versioning convention so roadmap, migrations, and runbooks share one cadence.

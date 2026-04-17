@@ -1,105 +1,342 @@
-Progress: Completed a full repo scan (manifests, READMEs, security, controllers, views, workflows, and tests). Below is the structured report.
+# CODE REVIEW REPORT — 2026-04-17
 
-**Summary**
-- **Status**: Well-structured Odoo 19 addon collection with focused modules and good inline documentation.
-- **Tests**: Many modules include unit/integration tests, but there is no CI to run them automatically.
-- **Overall risk**: **Medium** — code quality and docs are good; primary risks are missing CI/packaging, a few controller/template security patterns (`sudo()` usage, `t-raw`), and a documentation/packaging mismatch (`requirements.txt` referenced but missing).
+Last reviewed: 2026-04-17
 
-**Module Inventory**
-- **sports_federation_base**: Base models (clubs, teams, seasons). Has: **models**, **views**, **security**, **data**. Tests: **no** tests/ dir. Manifest includes sequences and view files.  
-- **sports_federation_competition_engine**: Scheduling wizards & services. Has: **models**, **wizards**, **services**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_compliance**: Document requirements/submissions. Has: **models**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_discipline**: Incidents and sanctions. Has: **models**, **views**, **security**, **data**, **tests**. Tests: **present**.  
-- **sports_federation_finance_bridge**: Finance-event bridge. Has: **models**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_governance**: Override requests & audit. Has: **models**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_import_tools**: CSV import wizards. Has: **views**, **security**, **tests**, `wizard/` (singular) folder (note: naming inconsistency vs `wizards/`). Tests: **present**.  
-- **sports_federation_notifications**: Notification service, templates, crons. Has: **models**, **views**, **data**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_officiating**: Referee registry & assignments. Has: **models**, **views**, **security**. Tests: **absent** (no tests/ dir observed).  
-- **sports_federation_people**: Player master & licenses. Has: **models**, **views**, **data**, **security**. Tests: **absent**.  
-- **sports_federation_portal**: Portal controllers + portal extensions. Has: **controllers**, **models**, **views**, **data**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_public_site**: Public website controllers/templates. Has: **controllers**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_reporting**: SQL-view based reports and CSV exports. Has: **controllers**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_result_control**: Result submit/verify/approve workflow. Has: **controllers**, **models**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_rosters**: Team rosters and match sheets. Has: **models**, **views**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_rules**: Rule sets, tie-breaks, eligibility. Has: **models**, **views**, **security**. Tests: **absent** (no tests/ dir observed).  
-- **sports_federation_standings**: Standings computation and tie-break notes. Has: **models**, **views**, **security**, **tests**. Tests: **present** (good coverage for tie-break logic).  
-- **sports_federation_tournament**: Tournaments, stages, matches (central hub). Has: **models**, **views**, **services**, **security**, **tests**. Tests: **present**.  
-- **sports_federation_venues**: Venues and `gameday`. Has: **models**, **views**, **security**, **tests**. Tests: **present**.
+This report supersedes the earlier snapshot and reflects the repository as it
+exists today. The previous report had drifted from the codebase in a few
+important places, especially around CI, requirements, and test coverage. That
+documentation drift is itself part of the maintainability review below.
 
-(Notes: all modules have a `security/ir.model.access.csv` file present in their `security/` folder.)
+## Scope
 
-**Key top-level files**
-- **CONTEXT.md**: [CONTEXT.md](CONTEXT.md#L1-L20) — concise overview; references workflows and modules; updated with 2026-04-07 additions.
-- **TECHNICAL_NOTE.md**: [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md#L1-L20) — detailed architecture + explicit “Last updated: 2026-04-07”; contains migration & testing guidance.
-- **_workflows/**: [odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md](_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md#L1-L10) and related workflow files — authoritative behaviour specs.
-- **ROADMAP.md**: [ROADMAP.md](ROADMAP.md#L1-L20) — project roadmap linked to modules and test tasks.
-- **README.md**: [README.md](README.md#L1-L40) — local quickstart references `requirements.txt` (this file is missing; see Issues).
+- Focus areas: maintainability, readability, and security.
+- Review method: static review of repository structure, representative high-complexity files, controller and model trust boundaries, CI and developer tooling, and existing test coverage.
+- Not included: full suite execution, live browser validation, load testing, or a dedicated penetration test.
 
-All top-level docs appear up-to-date (edits dated 2026-04-07). The workflow docs are the canonical behavioural spec.
+## Executive Summary
 
-**Issues & Risks**
-- **Missing pinned dependencies**: README references `requirements.txt` but that file is not present (no `requirements.txt` in repo). This blocks reproducible dev/test environments and CI.  
-- **No CI / automation**: No `.github/workflows` detected (no automatic test/lint runs). Tests exist but are not executed by CI; risk of regressions.  
-- **Controller `sudo()` usage**: Public/portal controllers use `sudo()` repeatedly (reads and also writes via `sudo().create()` and `sudo().action_submit()`) — see [sports_federation_portal/controllers/main.py](sports_federation_portal/controllers/main.py#L1-L200) and [sports_federation_public_site/controllers/public_competitions.py](sports_federation_public_site/controllers/public_competitions.py#L1-L120). Writes executed under `sudo()` bypass ACLs; audit is required to ensure thorough server-side validation and to limit fields created/returned.  
-- **Template XSS surface**: templates render `public_description` with `t-raw` in [sports_federation_public_site/views/website_templates.xml](sports_federation_public_site/views/website_templates.xml#L31) and (#L90) — if `public_description` can be populated by non-admins this is an XSS risk.  
-- **Inconsistent folder naming**: `sports_federation_import_tools` uses `wizard/` (singular) while other modules use `wizards/` — a maintenance/inconsistency issue (not functional but confusing). See [sports_federation_import_tools/README.md](sports_federation_import_tools/README.md#L1-L20).  
-- **Upgrade/migration risk**: New models/fields (gameday, bracket fields, stage.progression, tournament.round) were added recently (see `TECHNICAL_NOTE.md`); these changes may require DB migration scripts for production upgrades.  
-- **Packaging / release gaps**: No `pyproject.toml` / `setup.cfg` / `requirements.txt` / pre-commit config found; recommend adding packaging + lint config.  
-- **Tests not run in CI**: Many modules include tests (good), but without CI they are not regularly validated.
+The project is in materially better shape than the previous review suggested.
+It has a strong documentation culture, broad test coverage, a working CI
+pipeline, and clear module boundaries. The main risk is no longer missing basic
+engineering hygiene. The main risk is that complexity and trust-boundary logic
+are now concentrated in a small set of files and patterns:
 
-**CI / DevOps**
-- **CI presence**: None detected (no `.github/workflows/` or other CI config).
-- **Lint / format**: No `.flake8`, `.pylintrc`, `pyproject.toml`, or `pre-commit` config found.
-- **Requirements**: No `requirements.txt` or `pyproject.toml` — README refers to `pip install -r requirements.txt`, but file is missing.
-- **Test runner**: Tests are written as Odoo module tests. To run locally (example):
-```bash
-python odoo-bin -d test_db -i sports_federation_competition_engine --test-enable --stop-after-init
-```
-(Replace `sports_federation_competition_engine` with any module name.)
+- reporting logic is packed into a few very large SQL-view and report-scheduling files;
+- portal and compliance flows depend on repeated `with_user(user).sudo()` patterns plus hand-written ownership checks;
+- integration endpoints accept credentials and payloads in ways that are functional but not hardened enough for long-term exposure.
 
-**Prioritized recommendations (top 5)**
-- **CI + Test Automation**: Add GitHub Actions pipeline that installs dependencies, runs `odoo` module tests, and runs linters (urgent — reduces regression risk). Rationale: tests exist but not executed automatically.
-- **Add pinned dependencies**: Add a `requirements.txt` or `pyproject.toml` (with pinned versions) referenced by README and CI. Rationale: reproducible dev/test builds and deterministic CI runs.
-- **Security audit of controllers & templates**: Review all `auth="public"` and `auth="user"` controllers for `sudo()` usage and replace unsafe write patterns; sanitize `t-raw` usage or restrict who can edit HTML fields. Rationale: prevents ACL bypass and XSS.
-- **State/ownership matrix + tests**: Create `STATE_AND_OWNERSHIP_MATRIX.md` and add tests that assert standings exclude contested/unapproved results (as recommended in roadmap). Rationale: reduces logical regressions in progression/standing computations.
-- **Add CI lint + pre-commit**: Add `pre-commit` and basic `flake8/black` config; run these in CI. Rationale: enforces consistent style and catches obvious issues early.
+Overall assessment:
 
-**Candidate roadmap items (6–10)**
-- Add GitHub Actions for test/lint/manifest validation.
-- Add pinned dependencies and reproducible dev environment (`requirements.txt`/`pyproject.toml`).
-- Audit & harden public/portal controllers (security sprint).
-- Add migration/upgrade scripts and release notes for recent model changes (gameday, bracket fields).
-- Expand test coverage for scheduling (round-robin/knockout), progression, and gameday constraints.
-- Implement eligibility service (centralized eligibility checks) per roadmap.
-- Add public API rate limits and monitoring for `public_site` endpoints.
-- Add KPI dashboards & CSV endpoints in `reporting` and wire export tests.
-- Add pre-commit and CI gate for manifest/data consistency.
+- Maintainability: medium risk.
+- Readability: medium risk.
+- Security: medium-high risk on a small number of specific surfaces.
+- Delivery readiness: good foundation, but the next operating period should prioritize hardening and simplification over feature expansion.
 
-**Files needing immediate attention**
-- **README / missing deps**: README.md references `requirements.txt` but the file is missing — [README.md](README.md#L60-L80). Action: add pinned `requirements.txt` or update docs.
-- **Portal controller writes via sudo**: [sports_federation_portal/controllers/main.py](sports_federation_portal/controllers/main.py#L120-L160) — creates registrations with `sudo().create()` and immediately calls `sudo().action_submit()`; audit validation and avoid ACL bypass on writes.
-- **Public template raw HTML**: [sports_federation_public_site/views/website_templates.xml](sports_federation_public_site/views/website_templates.xml#L31) — `t-raw="tournament.public_description[:150]"`, and [sports_federation_public_site/views/website_templates.xml](sports_federation_public_site/views/website_templates.xml#L90) — full description rendered raw; ensure HTML originates from trusted users or sanitize.
-- **Import tools folder naming**: `sports_federation_import_tools` uses `wizard/` (singular) (see [sports_federation_import_tools/README.md](sports_federation_import_tools/README.md#L1-L20)); consider standardizing to `wizards/`.
-- **No CI manifests**: Add a `.github/workflows` CI pipeline (no link — folder missing). Action: create CI workflow to run tests + lint.
-- **Migration/upgrade notes**: `TECHNICAL_NOTE.md` documents new models (2026-04-07); ensure DB migration scripts exist (see [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md#L1-L10)).
+## Current Strengths
 
-**TODO / FIXME occurrences (found)**
-- [README.md](README.md#L112): context mentions adding TODO in PR process ("TODO in the change and notify maintainers."). (Doc-level.)
-- [.github/copilot-instructions.md](.github/copilot-instructions.md#L57): guidance references leaving a TODO if docs cannot be updated. (Doc-level.)
-- [sports_federation_notifications/models/notification_service.py](sports_federation_notifications/models/notification_service.py#L73-L81): string usage includes `mail.mail_activity_data_todo` / "todo" (not a code TODO but a default activity type). (Not action-critical.)
+- All 19 custom addons currently have automated tests in the repository.
+- The repository has strong operational and workflow documentation, including `CONTEXT.md`, `TECHNICAL_NOTE.md`, inventories, and runbooks.
+- CI exists under `.github/workflows/ci.yml` and already runs lint plus multiple Odoo test suites.
+- The codebase already moved several privileged controller writes into model-level portal helpers, which is the right architectural direction.
+- Public tournament description rendering appears to have moved away from the older raw-HTML pattern; the current templates use `t-field` rather than `t-raw`.
 
-(Overall: no large number of inline TODO/FIXME markers in code — mostly documentation notes.)
+## Review Signals
 
-How to verify things I couldn’t (tests/CI)
-- To run module tests locally (replace module name as needed):
-```bash
-python odoo-bin -d test_db -i <module_name> --test-enable --stop-after-init
-```
-- To validate CI: add a minimal GitHub Actions workflow that sets up Python/postgres, installs pinned deps, and runs the above test command for each module. I can scaffold this for you.
+- 19 custom addons.
+- 252 Python files.
+- 132 XML files.
+- 66 test files.
+- 14 controller files.
+- 178 `sudo()` usages in Python.
+- 51 `with_user(user).sudo()` patterns.
+- 24 `auth="public"` route declarations.
+- 7 `csrf=False` declarations.
+- 10 `except Exception` occurrences.
 
-Next steps I can take (pick one)
-- Scaffold a GitHub Actions CI workflow that runs tests + flake8 and push as a draft PR.
-- Create a `requirements.txt` / `pyproject.toml` (I can propose pinned versions) and update README.
-- Run a focused code audit patch that replaces unsafe `sudo()` writes in portal controllers with safe ORM operations and tighter validation (I can prepare a patch and tests).
+Largest complexity hotspots by line count:
 
-Which of the next steps would you like me to do first?
+- [sports_federation_reporting/models/report_operational.py](sports_federation_reporting/models/report_operational.py) — 968 lines.
+- [sports_federation_rosters/models/team_roster.py](sports_federation_rosters/models/team_roster.py) — 907 lines.
+- [sports_federation_public_site/models/public_flags.py](sports_federation_public_site/models/public_flags.py) — 747 lines.
+- [sports_federation_reporting/models/report_schedule.py](sports_federation_reporting/models/report_schedule.py) — 648 lines.
+- [sports_federation_portal/controllers/rosters.py](sports_federation_portal/controllers/rosters.py) — 575 lines.
+- [sports_federation_public_site/controllers/public_competitions.py](sports_federation_public_site/controllers/public_competitions.py) — 517 lines.
+
+## Findings
+
+### High Severity
+
+1. Integration credentials can be transported via query parameters.
+
+Evidence:
+
+- [sports_federation_import_tools/controllers/integration_api.py](sports_federation_import_tools/controllers/integration_api.py) reads `partner_code` and `access_token` from `request.params` when headers are absent.
+
+Why it matters:
+
+- Query parameters leak into reverse-proxy logs, browser history, analytics systems, support screenshots, and copied URLs.
+- This is an avoidable exposure for long-lived partner credentials.
+
+Recommendation:
+
+- Accept credentials only from headers or an authorization scheme.
+- Reject query-string tokens outright.
+- Rotate existing partner tokens after the change.
+
+2. Partner API tokens are stored and compared as plaintext application secrets.
+
+Evidence:
+
+- [sports_federation_import_tools/models/integration_gateway.py](sports_federation_import_tools/models/integration_gateway.py) stores `auth_token` in a plain `fields.Char` and compares it directly in `authenticate_partner()`.
+- [sports_federation_import_tools/views/integration_partner_views.xml](sports_federation_import_tools/views/integration_partner_views.xml) masks the field in the form, but masking in the UI does not change storage semantics.
+
+Why it matters:
+
+- A database export or administrative mistake exposes live credentials immediately.
+- It prevents one-way verification and safe audit display patterns.
+
+Recommendation:
+
+- Store token hashes, not raw tokens.
+- Reveal generated tokens only once.
+- Show only non-sensitive metadata such as creation time, rotation time, and last four characters.
+
+3. Inbound delivery and portal upload flows do not enforce payload size or file-type guardrails.
+
+Evidence:
+
+- [sports_federation_import_tools/models/integration_gateway.py](sports_federation_import_tools/models/integration_gateway.py) decodes arbitrary base64 input and stores it as an attachment without a size check.
+- [sports_federation_compliance/models/document_submission.py](sports_federation_compliance/models/document_submission.py) accepts uploaded files and creates attachments without size, MIME, or extension validation.
+
+Why it matters:
+
+- These paths are exposed to partner systems and portal users.
+- They create storage and memory denial-of-service risk, malware carriage risk, and retention cost growth.
+
+Recommendation:
+
+- Introduce one shared upload policy with maximum size, MIME and extension allowlists, checksum dedupe, and optional antivirus integration.
+- Add explicit user-facing validation messages and tests for rejected content.
+
+4. Elevated portal writes rely on distributed ownership checks rather than one consistent boundary.
+
+Evidence:
+
+- 51 `with_user(user).sudo()` patterns appear across portal and compliance helpers.
+- Representative examples are in [sports_federation_portal/models/federation_tournament_registration.py](sports_federation_portal/models/federation_tournament_registration.py), [sports_federation_portal/models/federation_match_referee.py](sports_federation_portal/models/federation_match_referee.py), [sports_federation_portal/models/federation_team_roster.py](sports_federation_portal/models/federation_team_roster.py), and [sports_federation_compliance/models/document_submission.py](sports_federation_compliance/models/document_submission.py).
+
+Why it matters:
+
+- The current code is mostly careful, but the pattern is fragile.
+- One future helper that forgets an ownership or state check becomes a real authorization defect.
+
+Recommendation:
+
+- Create a shared portal privilege boundary abstraction with standard access assertions and elevated-write helpers.
+- Keep ownership and state contract tests close to that abstraction.
+
+### Medium Severity
+
+5. Reporting SQL is too concentrated in one file and one abstraction layer.
+
+Evidence:
+
+- [sports_federation_reporting/models/report_operational.py](sports_federation_reporting/models/report_operational.py) is 968 lines and defines multiple SQL-backed reports in one place.
+
+Why it matters:
+
+- Schema changes, performance tuning, and review become slow and error-prone.
+- Regression analysis is harder because unrelated report logic shares one large file.
+
+Recommendation:
+
+- Split report models by report domain.
+- Add named SQL block headers and explicit invariants per report in tests.
+
+6. Report scheduling mixes orchestration, rendering, persistence, and failure handling.
+
+Evidence:
+
+- [sports_federation_reporting/models/report_schedule.py](sports_federation_reporting/models/report_schedule.py) builds report payloads, serializes CSV, stores generated files, updates scheduling metadata, and handles failures.
+
+Why it matters:
+
+- It is hard to extend one report type without touching shared scheduling behavior.
+- Failure handling cannot be improved cleanly while the model owns too many concerns.
+
+Recommendation:
+
+- Introduce report builder classes or registry functions.
+- Keep the model focused on orchestration and persistence.
+
+7. Portal roster flows are large and repetitive.
+
+Evidence:
+
+- [sports_federation_portal/controllers/rosters.py](sports_federation_portal/controllers/rosters.py) and [sports_federation_portal/models/federation_team_roster.py](sports_federation_portal/models/federation_team_roster.py) repeat scope loading, redirect handling, and action gating patterns.
+
+Why it matters:
+
+- Each UX change touches several repeated controller branches.
+- This slows down maintenance and makes security review more tedious.
+
+Recommendation:
+
+- Split roster controllers by workflow segment.
+- Factor redirect, scope lookup, and form error patterns into shared controller or service helpers.
+
+8. Compliance target modelling is repeated across multiple models.
+
+Evidence:
+
+- [sports_federation_compliance/models/compliance_check.py](sports_federation_compliance/models/compliance_check.py), [sports_federation_compliance/models/document_submission.py](sports_federation_compliance/models/document_submission.py), and [sports_federation_compliance/models/document_requirement.py](sports_federation_compliance/models/document_requirement.py) all repeat target selections, target-field maps, and target-specific branching.
+
+Why it matters:
+
+- Adding a new target model requires synchronized edits in multiple places.
+- Drift between these maps is an eventual bug source.
+
+Recommendation:
+
+- Extract one shared compliance target resolver or mixin.
+- Make new target types extend that layer rather than editing each model independently.
+
+9. Broad exception handling hides failure types and risks leaking internals.
+
+Evidence:
+
+- [sports_federation_notifications/models/notification_service.py](sports_federation_notifications/models/notification_service.py) catches broad exceptions and stores raw exception text in notification logs.
+- [sports_federation_reporting/models/report_schedule.py](sports_federation_reporting/models/report_schedule.py) catches broad exceptions during report generation.
+- Import wizards such as [sports_federation_import_tools/wizards/import_clubs_wizard.py](sports_federation_import_tools/wizards/import_clubs_wizard.py) convert arbitrary exceptions into row-level errors.
+
+Why it matters:
+
+- Operators receive inconsistent messages.
+- Retryable infrastructure failures and developer defects are treated the same way.
+- Raw exception text can disclose implementation details.
+
+Recommendation:
+
+- Use typed exceptions and categorized failure codes.
+- Store sanitized operator messages while keeping full stack traces in server logs.
+
+10. Migration discipline exists but is not systematic.
+
+Evidence:
+
+- Only one explicit migration script was found under [sports_federation_public_site/migrations/0.0.0/post-cleanup_website_menus.py](sports_federation_public_site/migrations/0.0.0/post-cleanup_website_menus.py).
+
+Why it matters:
+
+- Recent cross-module structural changes increase the chance of manual production repair steps.
+- Upgrade confidence depends on consistent migration handling, not just fresh-install correctness.
+
+Recommendation:
+
+- Require migration impact review for model, view, and route ownership changes.
+- Add per-module migration directories when upgrade behavior changes.
+
+11. CI quality gates are useful but still narrow.
+
+Evidence:
+
+- [addons/.github/workflows/ci.yml](.github/workflows/ci.yml) limits Black and Flake8 runs through `BLACK_PATHS` and `FLAKE8_PATHS` environment lists.
+- [addons/.flake8](.flake8) exists, and [addons/requirements.txt](requirements.txt) pins tooling, but only a subset of files is currently under lint automation.
+
+Why it matters:
+
+- Style drift and trivial lint defects can accumulate outside the allowlist.
+- Developers get inconsistent quality feedback depending on which files they touched.
+
+Recommendation:
+
+- Expand lint coverage gradually to the whole repository.
+- Start with a non-blocking repo-wide lint report, then gate after debt is reduced.
+
+12. The repository has a documentation freshness problem for point-in-time reports.
+
+Evidence:
+
+- The previous `CODE_REVIEW_REPORT.md` and roadmap no longer matched the repository on CI, requirements, and test coverage.
+
+Why it matters:
+
+- Stale guidance slows triage and misleads contributors.
+- This is a maintainability issue because engineers often trust reports before code.
+
+Recommendation:
+
+- Treat review and roadmap documents as dated artifacts.
+- Archive them aggressively when superseded and add owner/date metadata.
+
+### Low Severity And Readability Concerns
+
+13. Many docstrings are mechanically descriptive rather than informative.
+
+Evidence:
+
+- Portal and compliance code contains many `Handle X flow` docstrings that restate the method name rather than the business rule or trust assumption.
+
+Why it matters:
+
+- It adds noise without helping the reader understand invariants or side effects.
+
+Recommendation:
+
+- Use docstrings mainly for assumptions, side effects, and failure semantics.
+
+14. Presentation logic leaks into Python models.
+
+Evidence:
+
+- [sports_federation_portal/models/federation_tournament_registration.py](sports_federation_portal/models/federation_tournament_registration.py) builds excluded-team HTML in `_render_excluded_team_feedback_html()`.
+
+Why it matters:
+
+- Rendering logic is harder to test and reason about inside model code.
+- It blurs the line between data preparation and UI generation.
+
+Recommendation:
+
+- Return structured data and let QWeb templates render the markup.
+
+15. Cross-module workflow states are heavily string-driven.
+
+Evidence:
+
+- Literal values such as `draft`, `submitted`, `confirmed`, `expired`, and `closed` are repeated across multiple modules and helpers.
+
+Why it matters:
+
+- Refactors become grep-driven and therefore brittle.
+
+Recommendation:
+
+- Centralize frequently shared state semantics through helper predicates or shared enums where the semantics really are common.
+
+## Maintainability And Readability By Subsystem
+
+- Portal: good direction on service boundaries and tests, but still the largest concentration of repeated privileged flows and controller sprawl.
+- Reporting: valuable operational coverage, but SQL and scheduling complexity are now structural concerns rather than style concerns.
+- Compliance: strong functional coverage and good portal tests; internal target modelling is the main pain point.
+- Import and Integrations: useful partner contract model and staging pipeline; security hardening is the top priority.
+- Notifications: service abstraction is clear; exception handling and delivery semantics need stronger typing.
+- Public Site: large public surface, but templates and controllers are reasonably organized and test-backed. The main concern is exposure management, not chaos.
+
+## Recommended Near-Term Priorities
+
+1. Harden integration credentials and upload boundaries.
+2. Create a shared portal privilege boundary abstraction.
+3. Split reporting monolith files and add report-specific invariants.
+4. Simplify compliance target resolution.
+5. Expand CI lint coverage and add documentation freshness checks.
+
+## Roadmap Link
+
+The replacement operating-period roadmap is in [ROADMAP.md](ROADMAP.md).
+The prior roadmap has been archived in [ROADMAP_archive_2026-04-17.md](ROADMAP_archive_2026-04-17.md).
+
+## Review Limits
+
+- This was a static review. I did not run the full Odoo test matrix or perform load testing in this pass.
+- Security observations focus on evident trust boundaries and exposure patterns, not a full adversarial assessment.

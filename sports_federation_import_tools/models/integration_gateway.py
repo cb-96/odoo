@@ -1,6 +1,7 @@
 import base64
 import binascii
 import hashlib
+import hmac
 import secrets
 
 from odoo import api, fields, models
@@ -108,11 +109,17 @@ class FederationIntegrationPartner(models.Model):
     _description = "Federation Integration Partner"
     _order = "name"
 
+    TOKEN_HASH_PREFIX = "pbkdf2_sha256"
+    TOKEN_HASH_ROUNDS = 390000
+    TOKEN_SALT_BYTES = 16
+
     name = fields.Char(required=True)
     code = fields.Char(required=True)
     contact_partner_id = fields.Many2one("res.partner", ondelete="set null")
-    auth_token = fields.Char(required=True, copy=False, readonly=True)
+    auth_token = fields.Char(copy=False, readonly=True)
+    auth_token_last4 = fields.Char(readonly=True, copy=False)
     token_last_rotated_on = fields.Datetime(readonly=True)
+    token_rotation_required = fields.Boolean(readonly=True, default=False, copy=False)
     last_request_on = fields.Datetime(readonly=True)
     active = fields.Boolean(default=True)
     notes = fields.Text()
@@ -130,28 +137,156 @@ class FederationIntegrationPartner(models.Model):
         "Integration partner codes must be unique.",
     )
 
+    def _register_hook(self):
+        """Migrate legacy plaintext tokens into hashed storage."""
+        result = super()._register_hook()
+        self._migrate_plaintext_tokens()
+        return result
+
     @api.model
     def _generate_auth_token(self):
         """Handle generate auth token."""
         return secrets.token_urlsafe(24)
 
+    @api.model
+    def _auth_token_is_hashed(self, stored_token):
+        """Return whether a stored token already uses the hash format."""
+        return bool(stored_token and stored_token.startswith(f"{self.TOKEN_HASH_PREFIX}$"))
+
+    @api.model
+    def _hash_auth_token(self, token, salt=None, rounds=None):
+        """Hash a raw token before persisting it."""
+        if not token:
+            raise ValidationError("Integration tokens cannot be empty.")
+        salt = salt or secrets.token_hex(self.TOKEN_SALT_BYTES)
+        rounds = rounds or self.TOKEN_HASH_ROUNDS
+        digest = hashlib.pbkdf2_hmac(
+            "sha256",
+            token.encode("utf-8"),
+            salt.encode("utf-8"),
+            rounds,
+        )
+        encoded_digest = base64.urlsafe_b64encode(digest).decode("ascii")
+        return f"{self.TOKEN_HASH_PREFIX}${rounds}${salt}${encoded_digest}"
+
+    @api.model
+    def _verify_stored_auth_token(self, stored_token, candidate_token):
+        """Verify a candidate token against the stored representation."""
+        if not stored_token or not candidate_token:
+            return False
+        if not self._auth_token_is_hashed(stored_token):
+            return hmac.compare_digest(stored_token, candidate_token)
+
+        try:
+            _prefix, rounds, salt, encoded_digest = stored_token.split("$", 3)
+            rounds = int(rounds)
+        except (TypeError, ValueError):
+            return False
+
+        digest = hashlib.pbkdf2_hmac(
+            "sha256",
+            candidate_token.encode("utf-8"),
+            salt.encode("utf-8"),
+            rounds,
+        )
+        candidate_digest = base64.urlsafe_b64encode(digest).decode("ascii")
+        return hmac.compare_digest(candidate_digest, encoded_digest)
+
+    @api.model
+    def _prepare_auth_token_values(self, token, rotation_required=False, mark_rotated=True):
+        """Build storage values for a raw token."""
+        values = {
+            "auth_token": self._hash_auth_token(token),
+            "auth_token_last4": token[-4:] if len(token) >= 4 else token,
+            "token_rotation_required": rotation_required,
+        }
+        if mark_rotated:
+            values["token_last_rotated_on"] = fields.Datetime.now()
+        return values
+
+    def _issue_auth_token(self, rotation_required=False):
+        """Generate, hash, persist, and return a new raw token."""
+        self.ensure_one()
+        raw_token = self._generate_auth_token()
+        self.write(
+            self._prepare_auth_token_values(
+                raw_token,
+                rotation_required=rotation_required,
+                mark_rotated=True,
+            )
+        )
+        return raw_token
+
+    @api.model
+    def _migrate_plaintext_tokens(self):
+        """Hash legacy plaintext tokens and flag them for scheduled rotation."""
+        partners = self.sudo().with_context(active_test=False).search([
+            ("auth_token", "!=", False),
+        ])
+        for partner in partners:
+            if partner._auth_token_is_hashed(partner.auth_token):
+                continue
+            partner.write(
+                partner._prepare_auth_token_values(
+                    partner.auth_token,
+                    rotation_required=True,
+                    mark_rotated=False,
+                )
+            )
+
     @api.model_create_multi
     def create(self, vals_list):
         """Create records with module-specific defaults and side effects."""
+        prepared_vals_list = []
         for vals in vals_list:
-            vals.setdefault("auth_token", self._generate_auth_token())
-            vals.setdefault("token_last_rotated_on", fields.Datetime.now())
-        return super().create(vals_list)
+            prepared_vals = dict(vals)
+            raw_token = prepared_vals.get("auth_token")
+            if raw_token and not self._auth_token_is_hashed(raw_token):
+                prepared_vals.update(
+                    self._prepare_auth_token_values(
+                        raw_token,
+                        rotation_required=bool(prepared_vals.get("token_rotation_required", False)),
+                        mark_rotated=True,
+                    )
+                )
+            prepared_vals_list.append(prepared_vals)
+        return super().create(prepared_vals_list)
+
+    def write(self, vals):
+        """Hash any raw tokens before they are persisted."""
+        prepared_vals = dict(vals)
+        raw_token = prepared_vals.get("auth_token")
+        if raw_token and not self._auth_token_is_hashed(raw_token):
+            prepared_vals.update(
+                self._prepare_auth_token_values(
+                    raw_token,
+                    rotation_required=bool(prepared_vals.get("token_rotation_required", False)),
+                    mark_rotated=True,
+                )
+            )
+        return super().write(prepared_vals)
 
     def action_rotate_token(self):
         """Execute the rotate token action."""
-        for record in self:
-            record.write(
-                {
-                    "auth_token": self._generate_auth_token(),
-                    "token_last_rotated_on": fields.Datetime.now(),
-                }
-            )
+        self.ensure_one()
+        if not self.env.user.has_group("sports_federation_base.group_federation_manager"):
+            raise AccessError("Only federation managers can rotate integration tokens.")
+
+        raw_token = self._issue_auth_token(rotation_required=False)
+        wizard = self.env["federation.integration.partner.token.wizard"].create(
+            {
+                "partner_id": self.id,
+                "issued_token": raw_token,
+            }
+        )
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Partner Token",
+            "res_model": wizard._name,
+            "res_id": wizard.id,
+            "view_mode": "form",
+            "target": "new",
+        }
 
     def _get_subscription(self, contract_code):
         """Return subscription."""
@@ -170,7 +305,7 @@ class FederationIntegrationPartner(models.Model):
             ],
             limit=1,
         )
-        if not partner or partner.auth_token != token:
+        if not partner or not partner._verify_stored_auth_token(partner.auth_token, token):
             raise AccessError("Invalid partner credentials.")
 
         partner.write({"last_request_on": fields.Datetime.now()})
@@ -306,7 +441,16 @@ class FederationIntegrationDelivery(models.Model):
                 raise ValidationError("Inbound contracts must be linked to an import template.")
 
     @api.model
-    def stage_partner_delivery(self, partner, contract, filename, payload_base64, notes=None, source_reference=None):
+    def stage_partner_delivery(
+        self,
+        partner,
+        contract,
+        filename,
+        payload_base64,
+        content_type=None,
+        notes=None,
+        source_reference=None,
+    ):
         """Handle stage partner delivery."""
         if not partner:
             raise ValidationError("Select a partner before staging an inbound delivery.")
@@ -322,7 +466,13 @@ class FederationIntegrationDelivery(models.Model):
         except (binascii.Error, ValueError) as error:
             raise ValidationError("Inbound payload must be valid base64-encoded content.") from error
 
-        checksum = hashlib.sha256(payload).hexdigest()
+        upload = self.env["federation.attachment.policy"].validate_upload(
+            "integration_inbound_csv",
+            filename,
+            payload,
+            mimetype=content_type,
+        )
+        checksum = upload["checksum"]
         existing = self.sudo().search(
             [
                 ("partner_id", "=", partner.id),
@@ -347,11 +497,11 @@ class FederationIntegrationDelivery(models.Model):
         )
         attachment = self.env["ir.attachment"].sudo().create(
             {
-                "name": filename,
+                "name": upload["filename"],
                 "datas": payload_base64,
                 "res_model": delivery._name,
                 "res_id": delivery.id,
-                "mimetype": "text/csv",
+                "mimetype": upload["mimetype"],
             }
         )
         delivery.write({"attachment_id": attachment.id})

@@ -12,6 +12,41 @@ class FederationNotificationService(models.AbstractModel):
     _name = "federation.notification.service"
     _description = "Federation Notification Service"
 
+    def _create_notification_log(self, log_vals):
+        """Create a notification log record as sudo for consistent audit entries."""
+        return self.env["federation.notification.log"].sudo().create(log_vals)
+
+    def _build_base_log_vals(self, record, notification_type, log_name):
+        return {
+            "name": log_name,
+            "target_model": record._name,
+            "target_res_id": record.id,
+            "notification_type": notification_type,
+            "state": "pending",
+        }
+
+    def _build_system_log_vals(
+        self,
+        name,
+        notification_type,
+        state="sent",
+        message=None,
+        target_model=False,
+        target_res_id=False,
+    ):
+        vals = {
+            "name": name,
+            "notification_type": notification_type,
+            "state": state,
+        }
+        if message is not None:
+            vals["message"] = message
+        if target_model:
+            vals["target_model"] = target_model
+        if target_res_id:
+            vals["target_res_id"] = target_res_id
+        return vals
+
     def send_email_template(self, record, template_xmlid, partner=None, email_to=None, log_name=None):
         """Send an email using a mail.template and create a log entry.
 
@@ -25,25 +60,22 @@ class FederationNotificationService(models.AbstractModel):
         Returns:
             The created notification log record.
         """
-        Log = self.env["federation.notification.log"].sudo()
         if isinstance(email_to, (list, tuple, set)):
             email_to = ",".join(dict.fromkeys(email for email in email_to if email))
 
-        log_vals = {
-            "name": log_name or f"Email: {template_xmlid}",
-            "target_model": record._name,
-            "target_res_id": record.id,
-            "notification_type": "email",
-            "template_xmlid": template_xmlid,
-            "state": "pending",
-        }
+        log_vals = self._build_base_log_vals(
+            record,
+            "email",
+            log_name or f"Email: {template_xmlid}",
+        )
+        log_vals["template_xmlid"] = template_xmlid
         if partner:
             log_vals["recipient_partner_id"] = partner.id
             log_vals["recipient_email"] = partner.email
         elif email_to:
             log_vals["recipient_email"] = email_to
 
-        log = Log.create(log_vals)
+        log = self._create_notification_log(log_vals)
 
         try:
             template = self.env.ref(template_xmlid, raise_if_not_found=False)
@@ -56,9 +88,17 @@ class FederationNotificationService(models.AbstractModel):
             template = template.sudo()
 
             if partner:
-                template.send_mail(record.id, force_send=True, email_values={"recipient_ids": [(6, 0, [partner.id])]})
+                template.send_mail(
+                    record.id,
+                    force_send=True,
+                    email_values={"recipient_ids": [(6, 0, [partner.id])]},
+                )
             elif email_to:
-                template.send_mail(record.id, force_send=True, email_values={"email_to": email_to})
+                template.send_mail(
+                    record.id,
+                    force_send=True,
+                    email_values={"email_to": email_to},
+                )
             else:
                 template.send_mail(record.id, force_send=True)
 
@@ -87,18 +127,10 @@ class FederationNotificationService(models.AbstractModel):
         Returns:
             The created notification log record.
         """
-        Log = self.env["federation.notification.log"].sudo()
         activity_type = self.env.ref(activity_type_xmlid, raise_if_not_found=False)
 
-        log_vals = {
-            "name": summary,
-            "target_model": record._name,
-            "target_res_id": record.id,
-            "notification_type": "activity",
-            "state": "pending",
-        }
-
-        log = Log.create(log_vals)
+        log_vals = self._build_base_log_vals(record, "activity", summary)
+        log = self._create_notification_log(log_vals)
 
         try:
             self.env["mail.activity"].sudo().create({
@@ -133,13 +165,13 @@ class FederationNotificationService(models.AbstractModel):
         Registration = self.env.get("federation.season.registration")
 
         if not Registration:
-            Log.create({
-                "name": "Cron: Notification Scan",
-                "notification_type": "other",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "No federation.season.registration model found. No action configured.",
-            })
+            self._create_notification_log(
+                self._build_system_log_vals(
+                    "Cron: Notification Scan",
+                    "other",
+                    message="No federation.season.registration model found. No action configured.",
+                )
+            )
             return
 
         # Search for draft registrations older than 7 days
@@ -152,23 +184,25 @@ class FederationNotificationService(models.AbstractModel):
 
         if old_drafts:
             for reg in old_drafts:
-                Log.create({
-                    "name": f"Draft registration reminder: {reg.name or reg.id}",
-                    "target_model": "federation.season.registration",
-                    "target_res_id": reg.id,
-                    "notification_type": "other",
-                    "state": "sent",
-                    "sent_on": fields.Datetime.now(),
-                    "message": f"Season registration '{reg.name}' has been in draft state for more than 7 days.",
-                })
+                self._create_notification_log(
+                    self._build_system_log_vals(
+                        f"Draft registration reminder: {reg.name or reg.id}",
+                        "other",
+                        target_model="federation.season.registration",
+                        target_res_id=reg.id,
+                        message=(
+                            f"Season registration '{reg.name}' has been in draft state for more than 7 days."
+                        ),
+                    )
+                )
         else:
-            Log.create({
-                "name": "Cron: Notification Scan",
-                "notification_type": "other",
-                "state": "sent",
-                "sent_on": fields.Datetime.now(),
-                "message": "No draft registrations older than 7 days found.",
-            })
+            self._create_notification_log(
+                self._build_system_log_vals(
+                    "Cron: Notification Scan",
+                    "other",
+                    message="No draft registrations older than 7 days found.",
+                )
+            )
 
         Dispatcher = self.env.get("federation.notification.dispatcher")
         MatchReferee = self.env.get("federation.match.referee")

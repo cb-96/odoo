@@ -73,11 +73,21 @@ class FederationImportWizardMixin(models.AbstractModel):
     def _get_import_target_model(self):
         return ""
 
-    def _current_upload_checksum(self):
+    def _decode_upload_file(self):
         self.ensure_one()
         if not self.upload_file:
             raise ValidationError("Please upload a CSV file.")
-        return hashlib.sha256(base64.b64decode(self.upload_file)).hexdigest()
+        return base64.b64decode(self.upload_file)
+
+    def _get_csv_dialect(self, content_str):
+        sample = content_str[:2048]
+        try:
+            return csv.Sniffer().sniff(sample, delimiters=",;")
+        except csv.Error:
+            return csv.excel
+
+    def _current_upload_checksum(self):
+        return hashlib.sha256(self._decode_upload_file()).hexdigest()
 
     def _get_target_record_count(self):
         self.ensure_one()
@@ -86,31 +96,42 @@ class FederationImportWizardMixin(models.AbstractModel):
             return 0
         return self.env[target_model].search_count([])
 
-    def _build_preview_verification_summary(self):
+    def _build_verification_summary(self, header_lines, footer_lines):
         self.ensure_one()
-        return "\n".join(
+        summary = [
+            f"Template: {self.template_id.display_name if self.template_id else self._name}",
+            f"Contract version: {self.template_id.contract_version if self.template_id else 'n/a'}",
+            *header_lines,
+            f"Current target record count: {self._get_target_record_count()}"
+            if not footer_lines
+            else None,
+        ]
+        summary = [line for line in summary if line is not None]
+        summary.extend(footer_lines)
+        return "\n".join(summary)
+
+    def _build_preview_verification_summary(self):
+        return self._build_verification_summary(
             [
-                f"Template: {self.template_id.display_name if self.template_id else self._name}",
-                f"Contract version: {self.template_id.contract_version if self.template_id else 'n/a'}",
                 f"Requested by: {self.env.user.display_name}",
                 f"Preview totals: {self.line_count} lines, {self.success_count} successful, {self.error_count} errors",
-                f"Current target record count: {self._get_target_record_count()}",
-            ]
+            ],
+            [],
         )
 
     def _build_execution_verification_summary(self, baseline_count):
-        self.ensure_one()
         after_count = self._get_target_record_count()
         net_new = after_count - (baseline_count or 0)
-        return "\n".join(
+        return self._build_verification_summary(
             [
-                f"Template: {self.template_id.display_name if self.template_id else self._name}",
                 f"Executed by: {self.env.user.display_name}",
                 f"Execution totals: {self.line_count} lines, {self.success_count} successful, {self.error_count} errors",
+            ],
+            [
                 f"Target records before import: {baseline_count or 0}",
                 f"Target records after import: {after_count}",
                 f"Net new target records: {net_new}",
-            ]
+            ],
         )
 
     def _ensure_live_import_approved(self):
@@ -268,16 +289,9 @@ class FederationImportWizardMixin(models.AbstractModel):
 
     def _get_csv_reader(self):
         self.ensure_one()
-        if not self.upload_file:
-            raise ValidationError("Please upload a CSV file.")
-
-        content = base64.b64decode(self.upload_file)
+        content = self._decode_upload_file()
         content_str = content.decode("utf-8-sig")
-        sample = content_str[:2048]
-        try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=",;")
-        except csv.Error:
-            dialect = csv.excel
+        dialect = self._get_csv_dialect(content_str)
 
         reader = csv.DictReader(io.StringIO(content_str), dialect=dialect)
         if not reader.fieldnames:

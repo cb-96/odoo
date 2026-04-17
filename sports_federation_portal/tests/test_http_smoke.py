@@ -228,6 +228,143 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
         cls.assignment_match = cls.env["federation.match"].browse(assignment_match.id)
         cls.assignment = cls.env["federation.match.referee"].browse(assignment.id)
 
+    def _create_roster_workspace_smoke_data(self):
+        """Create committed data used by the split portal controller smoke test."""
+        with self.registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+
+            roster_create_team = env["federation.team"].create(
+                {
+                    "name": "Portal Smoke Roster Opportunity",
+                    "club_id": self.season_club.id,
+                    "code": "PSRO",
+                    "category": "senior",
+                    "gender": "male",
+                }
+            )
+            roster_create_registration = env["federation.season.registration"].create(
+                {
+                    "season_id": self.open_season.id,
+                    "team_id": roster_create_team.id,
+                    "user_id": self.season_user.id,
+                }
+            )
+            roster_create_registration.action_confirm()
+
+            workspace_team = env["federation.team"].create(
+                {
+                    "name": "Portal Smoke Workspace Team",
+                    "club_id": self.season_club.id,
+                    "code": "PSWT",
+                    "category": "senior",
+                    "gender": "male",
+                }
+            )
+            workspace_registration = env["federation.season.registration"].create(
+                {
+                    "season_id": self.open_season.id,
+                    "team_id": workspace_team.id,
+                    "user_id": self.season_user.id,
+                }
+            )
+            workspace_registration.action_confirm()
+
+            live_tournament = env["federation.tournament"].create(
+                {
+                    "name": "Portal Smoke Workspace Tournament",
+                    "code": "PSWTN",
+                    "season_id": self.open_season.id,
+                    "date_start": "2026-06-15",
+                    "state": "in_progress",
+                    "category": "senior",
+                    "gender": "male",
+                }
+            )
+            tournament_registration = env["federation.tournament.registration"].create(
+                {
+                    "tournament_id": live_tournament.id,
+                    "team_id": workspace_team.id,
+                    "user_id": self.season_user.id,
+                }
+            )
+            tournament_registration.action_submit()
+            tournament_registration.action_confirm()
+            if tournament_registration.participant_id:
+                tournament_registration.participant_id.action_confirm()
+
+            player = env["federation.player"].create(
+                {
+                    "first_name": "Portal",
+                    "last_name": "Smoke Roster",
+                    "gender": "male",
+                    "club_id": self.season_club.id,
+                    "team_ids": [(4, workspace_team.id)],
+                }
+            )
+            roster = env["federation.team.roster"].create(
+                {
+                    "name": "Portal Smoke Active Roster",
+                    "team_id": workspace_team.id,
+                    "season_id": self.open_season.id,
+                    "season_registration_id": workspace_registration.id,
+                }
+            )
+            roster_line = env["federation.team.roster.line"].create(
+                {
+                    "roster_id": roster.id,
+                    "player_id": player.id,
+                }
+            )
+            roster.action_activate()
+
+            opponent_club = env["federation.club"].create(
+                {
+                    "name": "Portal Smoke Opponent Club",
+                    "code": "PSOC",
+                }
+            )
+            opponent_team = env["federation.team"].create(
+                {
+                    "name": "Portal Smoke Opponent Team",
+                    "club_id": opponent_club.id,
+                    "code": "PSOT",
+                }
+            )
+            match = env["federation.match"].create(
+                {
+                    "tournament_id": live_tournament.id,
+                    "home_team_id": workspace_team.id,
+                    "away_team_id": opponent_team.id,
+                    "date_scheduled": "2026-06-20 18:00:00",
+                    "state": "scheduled",
+                }
+            )
+            sheet = env["federation.match.sheet"].create(
+                {
+                    "name": "Portal Smoke Match Sheet",
+                    "match_id": match.id,
+                    "team_id": workspace_team.id,
+                    "roster_id": roster.id,
+                    "side": "home",
+                }
+            )
+            env["federation.match.sheet.line"].create(
+                {
+                    "match_sheet_id": sheet.id,
+                    "player_id": player.id,
+                    "roster_line_id": roster_line.id,
+                    "is_starter": True,
+                }
+            )
+            cr.commit()
+
+        return {
+            "create_registration_id": roster_create_registration.id,
+            "workspace_team_id": workspace_team.id,
+            "tournament_id": live_tournament.id,
+            "sheet_id": sheet.id,
+        }
+
     def test_my_teams_empty_state_and_create_flow(self):
         self.authenticate(self.team_user.login, "ignored")
 
@@ -298,3 +435,62 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
         self.assertEqual(submit_response.status_code, 200)
         self.assertIn("Assignment confirmed.", submit_response.text)
         self.assertIn("Confirmed from smoke test.", submit_response.text)
+
+    def test_roster_workspace_and_match_day_routes_render_successfully(self):
+        data = self._create_roster_workspace_smoke_data()
+
+        self.authenticate(self.season_user.login, "ignored")
+
+        roster_list_response = self.url_open("/my/rosters")
+        self.assertEqual(roster_list_response.status_code, 200)
+        self.assertIn("Portal Smoke Active Roster", roster_list_response.text)
+        self.assertIn("Portal Smoke Roster Opportunity", roster_list_response.text)
+
+        roster_create_response = self.url_open(
+            f"/my/rosters/create/{data['create_registration_id']}",
+            data={
+                "csrf_token": _extract_csrf_token(roster_list_response.text),
+            },
+            allow_redirects=True,
+        )
+        self.assertEqual(roster_create_response.status_code, 200)
+        self.assertIn("Roster ready for editing in the portal.", roster_create_response.text)
+        self.assertIn("Portal Smoke Roster Opportunity", roster_create_response.text)
+
+        workspace_list_response = self.url_open("/my/tournament-workspaces")
+        self.assertEqual(workspace_list_response.status_code, 200)
+        self.assertIn("Portal Smoke Workspace Tournament", workspace_list_response.text)
+
+        workspace_detail_response = self.url_open(
+            f"/my/tournament-workspaces/{data['tournament_id']}/{data['workspace_team_id']}"
+        )
+        self.assertEqual(workspace_detail_response.status_code, 200)
+        self.assertIn("Portal Smoke Workspace Team", workspace_detail_response.text)
+
+        match_sheet_list_response = self.url_open("/my/match-sheets")
+        self.assertEqual(match_sheet_list_response.status_code, 200)
+        self.assertIn("Portal Smoke Match Sheet", match_sheet_list_response.text)
+
+        match_sheet_detail_response = self.url_open(
+            f"/my/match-sheets/{data['sheet_id']}"
+        )
+        match_sheet_prepare_response = self.url_open(
+            f"/my/match-sheets/{data['sheet_id']}/prep",
+            data={
+                "csrf_token": _extract_csrf_token(match_sheet_detail_response.text),
+                "coach_name": "Portal Smoke Coach",
+                "manager_name": "Portal Smoke Manager",
+                "notes": "Prepared through split controller smoke coverage.",
+            },
+            allow_redirects=True,
+        )
+        self.assertEqual(match_sheet_prepare_response.status_code, 200)
+        self.assertIn("Match-day preparation saved.", match_sheet_prepare_response.text)
+
+        match_day_response = self.url_open("/my/match-day")
+        self.assertEqual(match_day_response.status_code, 200)
+        self.assertIn(
+            "Portal Smoke Workspace Team vs Portal Smoke Opponent Team",
+            match_day_response.text,
+        )
+        self.assertIn("Open Sheet", match_day_response.text)

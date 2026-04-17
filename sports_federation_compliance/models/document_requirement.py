@@ -7,6 +7,7 @@ from odoo.exceptions import AccessError
 class FederationDocumentRequirement(models.Model):
     _name = "federation.document.requirement"
     _description = "Federation Document Requirement"
+    _inherit = ["federation.compliance.target.mixin"]
     _order = "target_model, name"
 
     PORTAL_TARGET_MODELS = {
@@ -16,18 +17,10 @@ class FederationDocumentRequirement(models.Model):
     }
     PORTAL_RENEWAL_WARNING_DAYS = 30
 
-    TARGET_MODEL_SELECTION = [
-        ("federation.club", "Club"),
-        ("federation.player", "Player"),
-        ("federation.referee", "Referee"),
-        ("federation.venue", "Venue"),
-        ("federation.club.representative", "Club Representative"),
-    ]
-
     name = fields.Char(string="Name", required=True)
     code = fields.Char(string="Code", required=True)
     target_model = fields.Selection(
-        selection=TARGET_MODEL_SELECTION,
+        selection="_compliance_target_model_selection",
         string="Target Model",
         required=True,
     )
@@ -54,23 +47,17 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_target_field_map(self):
-        """Handle the portal-specific target field map flow."""
-        return {
-            "federation.club": "club_id",
-            "federation.player": "player_id",
-            "federation.referee": "referee_id",
-            "federation.venue": "venue_id",
-            "federation.club.representative": "club_representative_id",
-        }
+        """Expose the shared target-field map under the legacy portal helper name."""
+        return self._compliance_target_field_map()
 
     @api.model
     def _portal_get_target_field_name(self, target_model):
-        """Handle the portal-specific get target field name flow."""
-        return self._portal_target_field_map().get(target_model)
+        """Return the target field used to bind a requirement to a portal record."""
+        return self._compliance_get_target_field_name(target_model)
 
     @api.model
     def _portal_has_access(self, user=None):
-        """Handle the portal-specific has access flow."""
+        """Return whether the portal user can see at least one compliance workspace."""
         user = user or self.env.user
         return any(
             bool(self._portal_get_targets_for_user(target_model, user=user))
@@ -79,7 +66,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_get_targets_for_user(self, target_model, user=None):
-        """Handle the portal-specific get targets for user flow."""
+        """Resolve only the compliance targets the portal user is allowed to manage."""
         user = user or self.env.user
         ClubRepresentative = self.env["federation.club.representative"]
 
@@ -98,7 +85,7 @@ class FederationDocumentRequirement(models.Model):
 
     @api.model
     def _portal_assert_target_access(self, requirement, target_record, user=None):
-        """Handle the portal-specific assert target access flow."""
+        """Reject portal access unless the requirement and target stay in scope."""
         user = user or self.env.user
         if requirement.target_model not in self.PORTAL_TARGET_MODELS:
             raise AccessError("This compliance target is not available in the portal.")
@@ -112,7 +99,7 @@ class FederationDocumentRequirement(models.Model):
         return True
 
     def _portal_get_latest_submission(self, target_record):
-        """Handle the portal-specific get latest submission flow."""
+        """Return the newest submission that currently defines portal status."""
         self.ensure_one()
         field_name = self._portal_get_target_field_name(self.target_model)
         if not field_name:
@@ -127,7 +114,7 @@ class FederationDocumentRequirement(models.Model):
         )
 
     def _portal_get_submission_history(self, target_record):
-        """Handle the portal-specific get submission history flow."""
+        """Return the full submission history shown on the compliance detail page."""
         self.ensure_one()
         field_name = self._portal_get_target_field_name(self.target_model)
         if not field_name:
@@ -141,7 +128,7 @@ class FederationDocumentRequirement(models.Model):
         )
 
     def _portal_get_remediation_row(self, submission):
-        """Handle the portal-specific get remediation row flow."""
+        """Return the remediation queue row that explains the latest operator action."""
         self.ensure_one()
         if not submission:
             return False
@@ -154,15 +141,14 @@ class FederationDocumentRequirement(models.Model):
             limit=1,
         )
 
-    def _portal_get_workspace_entry(self, target_record, user=None):
-        """Handle the portal-specific get workspace entry flow."""
-        self.ensure_one()
-        self._portal_assert_target_access(self, target_record, user=user)
+    def _portal_get_workspace_status(self, latest_submission, today=None):
+        """Return normalized status facts used by both workspace and detail views.
 
-        today = fields.Date.context_today(self)
-        latest_submission = self._portal_get_latest_submission(target_record)
-        submission_history = self._portal_get_submission_history(target_record)
-        remediation_row = self._portal_get_remediation_row(latest_submission)
+        Keeping urgency and renewal calculations in one helper prevents the list
+        and detail pages from drifting when compliance status rules evolve.
+        """
+        self.ensure_one()
+        today = today or fields.Date.context_today(self)
         effective_status = (
             latest_submission._portal_get_effective_status()
             if latest_submission
@@ -174,7 +160,6 @@ class FederationDocumentRequirement(models.Model):
             effective_status,
             latest_submission=latest_submission,
         )
-
         renewal_due_date = latest_submission.expiry_date if latest_submission else False
         renewal_due_soon = bool(
             renewal_due_date
@@ -189,7 +174,31 @@ class FederationDocumentRequirement(models.Model):
             "replacement_requested",
             "expired",
         } or renewal_due_soon
+        return {
+            "key": effective_status,
+            "label": status_meta["label"],
+            "tone": status_meta["tone"],
+            "renewal_due_date": renewal_due_date,
+            "renewal_due_soon": renewal_due_soon,
+            "requires_attention": requires_attention,
+        }
 
+    def _portal_build_status_summary(
+        self,
+        effective_status,
+        renewal_due_date,
+        renewal_due_soon,
+        remediation_row=False,
+        today=None,
+    ):
+        """Summarize compliance state without duplicating portal status rules.
+
+        The summary explains why the entry is visible and what the next operator
+        action should be, which keeps the workspace readable even before opening
+        the detail page.
+        """
+        self.ensure_one()
+        today = today or fields.Date.context_today(self)
         summary_parts = []
         if remediation_row and remediation_row.remediation_note:
             summary_parts.append(remediation_row.remediation_note)
@@ -222,6 +231,26 @@ class FederationDocumentRequirement(models.Model):
                     f"Current approval remains valid until {fields.Date.to_string(renewal_due_date)}."
                 )
 
+        return " ".join(summary_parts)
+
+    def _portal_get_workspace_entry(self, target_record, user=None):
+        """Build the portal workspace row for one requirement and visible target.
+
+        Access is re-checked here so both list and detail routes can safely call
+        the same helper without trusting stale target identifiers.
+        """
+        self.ensure_one()
+        self._portal_assert_target_access(self, target_record, user=user)
+
+        today = fields.Date.context_today(self)
+        latest_submission = self._portal_get_latest_submission(target_record)
+        submission_history = self._portal_get_submission_history(target_record)
+        remediation_row = self._portal_get_remediation_row(latest_submission)
+        status = self._portal_get_workspace_status(
+            latest_submission,
+            today=today,
+        )
+
         detail_url = "/my/compliance/%s/%s/%s" % (
             self.id,
             self.target_model,
@@ -232,17 +261,23 @@ class FederationDocumentRequirement(models.Model):
             "target": target_record,
             "target_model": self.target_model,
             "target_field_name": self._portal_get_target_field_name(self.target_model),
-            "target_label": dict(self.TARGET_MODEL_SELECTION).get(self.target_model),
+            "target_label": self._compliance_target_label_map().get(self.target_model),
             "latest_submission": latest_submission,
             "submission_history": submission_history,
             "remediation_row": remediation_row,
-            "status_key": effective_status,
-            "status_label": status_meta["label"],
-            "status_tone": status_meta["tone"],
-            "status_summary": " ".join(summary_parts),
-            "renewal_due_date": renewal_due_date,
-            "renewal_due_soon": renewal_due_soon,
-            "requires_attention": requires_attention,
+            "status_key": status["key"],
+            "status_label": status["label"],
+            "status_tone": status["tone"],
+            "status_summary": self._portal_build_status_summary(
+                status["key"],
+                status["renewal_due_date"],
+                status["renewal_due_soon"],
+                remediation_row=remediation_row,
+                today=today,
+            ),
+            "renewal_due_date": status["renewal_due_date"],
+            "renewal_due_soon": status["renewal_due_soon"],
+            "requires_attention": status["requires_attention"],
             "can_submit": not latest_submission or latest_submission.status != "submitted",
             "detail_url": detail_url,
         }
@@ -255,7 +290,7 @@ class FederationDocumentRequirement(models.Model):
         target_id,
         user=None,
     ):
-        """Handle the portal-specific get workspace entry for user flow."""
+        """Return one workspace entry only if the target is still user-visible."""
         user = user or self.env.user
         requirement = self.sudo().browse(requirement_id)
         if not requirement.exists() or requirement.target_model != target_model:
@@ -270,8 +305,20 @@ class FederationDocumentRequirement(models.Model):
         return requirement._portal_get_workspace_entry(target_record, user=user)
 
     @api.model
+    def _portal_workspace_sort_key(self, entry):
+        """Sort attention items first, then nearest renewals, then stable names."""
+        renewal_due_date = entry["renewal_due_date"] or fields.Date.to_date("9999-12-31")
+        return (
+            0 if entry["requires_attention"] else 1,
+            renewal_due_date,
+            entry["target_label"] or "",
+            entry["target"].display_name,
+            entry["requirement"].name,
+        )
+
+    @api.model
     def _portal_get_workspace_entries(self, user=None):
-        """Handle the portal-specific get workspace entries flow."""
+        """Return all active compliance workspace entries visible to the user."""
         user = user or self.env.user
         entries = []
         requirements = self.sudo().search(
@@ -290,15 +337,4 @@ class FederationDocumentRequirement(models.Model):
             for target_record in targets:
                 entries.append(requirement._portal_get_workspace_entry(target_record, user=user))
 
-        def _sort_key(entry):
-            """Handle sort key."""
-            renewal_due_date = entry["renewal_due_date"] or fields.Date.to_date("9999-12-31")
-            return (
-                0 if entry["requires_attention"] else 1,
-                renewal_due_date,
-                entry["target_label"] or "",
-                entry["target"].display_name,
-                entry["requirement"].name,
-            )
-
-        return sorted(entries, key=_sort_key)
+        return sorted(entries, key=self._portal_workspace_sort_key)

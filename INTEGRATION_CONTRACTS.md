@@ -1,6 +1,9 @@
 # Integration Contracts
 
 Last updated: 2026-04-13
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
 
 This document defines the stable partner-facing contracts currently supported by
 the federation platform and the policy used to version, evolve, and deprecate

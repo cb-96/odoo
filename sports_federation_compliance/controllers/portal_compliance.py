@@ -8,7 +8,7 @@ from odoo.http import request
 
 class FederationCompliancePortal(CustomerPortal):
     def _prepare_compliance_layout_values(self, **extra_values):
-        """Prepare compliance layout values."""
+        """Build compliance template values on top of the shared portal layout."""
         values = self._prepare_portal_layout_values()
         values.update(extra_values)
         values.setdefault("page_name", "my_compliance")
@@ -26,7 +26,7 @@ class FederationCompliancePortal(CustomerPortal):
         )
 
     def _get_workspace_entry(self, requirement_id, target_model, target_id):
-        """Return workspace entry."""
+        """Resolve one workspace entry only if it is still visible to the caller."""
         return request.env[
             "federation.document.requirement"
         ]._portal_get_workspace_entry_for_user(
@@ -38,7 +38,7 @@ class FederationCompliancePortal(CustomerPortal):
 
     @http.route(["/my/compliance"], type="http", auth="user", website=True)
     def portal_my_compliance(self, **kw):
-        """Handle the portal my compliance flow."""
+        """Render the compliance workspace from the shared requirement status rules."""
         Requirement = request.env["federation.document.requirement"]
         workspace_entries = Requirement._portal_get_workspace_entries(user=request.env.user)
         values = self._prepare_compliance_layout_values(
@@ -64,7 +64,7 @@ class FederationCompliancePortal(CustomerPortal):
         website=True,
     )
     def portal_my_compliance_detail(self, requirement_id, target_model, target_id, **kw):
-        """Handle the portal my compliance detail flow."""
+        """Render detail only while the requirement and target stay in user scope."""
         entry = self._get_workspace_entry(requirement_id, target_model, target_id)
         if not entry:
             return self._redirect_to_workspace(
@@ -90,7 +90,12 @@ class FederationCompliancePortal(CustomerPortal):
         csrf=False,
     )
     def portal_my_compliance_submit(self, requirement_id, target_model, target_id, **post):
-        """Handle the portal my compliance submit flow."""
+        """Validate CSRF manually and submit a multipart compliance upload safely.
+
+        The route keeps `csrf=False` only because the payload is multipart; it
+        still requires an explicit CSRF token before delegating to the model
+        service that re-checks ownership and upload policy.
+        """
         if not request.validate_csrf(post.get("csrf_token")):
             return self._redirect_to_detail(
                 requirement_id,

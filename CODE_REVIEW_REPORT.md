@@ -1,6 +1,8 @@
 # CODE REVIEW REPORT — 2026-04-17
 
+Owner: Federation Platform Team
 Last reviewed: 2026-04-17
+Review cadence: Every release
 
 This report supersedes the earlier snapshot and reflects the repository as it
 exists today. The previous report had drifted from the codebase in a few

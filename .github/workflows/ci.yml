@@ -16,32 +16,10 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BLACK_PATHS: >-
-    sports_federation_public_site/models/public_flags.py
-    sports_federation_public_site/controllers/public_competitions.py
-    sports_federation_public_site/tests/test_public_site.py
-    sports_federation_portal/models/federation_season_registration.py
-    sports_federation_portal/controllers/main.py
-    sports_federation_portal/tests/test_season_registration.py
-    sports_federation_portal/tests/test_tournament_registration.py
-    sports_federation_standings/tests/test_standings_result_filter.py
-    sports_federation_venues/tests/test_gameday.py
-  FLAKE8_PATHS: >-
-    sports_federation_public_site/models/public_flags.py
-    sports_federation_public_site/controllers/public_competitions.py
-    sports_federation_public_site/tests/test_public_site.py
-    sports_federation_portal/models/federation_season_registration.py
-    sports_federation_portal/controllers/main.py
-    sports_federation_portal/tests/test_season_registration.py
-    sports_federation_portal/tests/test_tournament_registration.py
-    sports_federation_standings/tests/test_standings_result_filter.py
-    sports_federation_venues/tests/test_gameday.py
-
 jobs:
   lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -59,11 +37,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Check formatting with Black
-        run: black --check $BLACK_PATHS
+      - name: Run repository-wide lint report
+        run: bash ci/run_repo_lint.sh --report
 
-      - name: Run Flake8
-        run: flake8 $FLAKE8_PATHS
+      - name: Check documentation freshness metadata
+        run: python ci/check_doc_freshness.py
 
       - name: Validate CI shell scripts
         run: |

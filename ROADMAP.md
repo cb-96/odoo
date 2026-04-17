@@ -1,6 +1,9 @@
 # ROADMAP — 2026-04-17 Improvement Program
 
 Last updated: 2026-04-17
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
 
 The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-17.md`.
 This roadmap is driven by the 2026-04-17 code review and shifts the focus from
@@ -46,34 +49,34 @@ Done when: new privileged portal writes go through one shared abstraction and le
 
 ## Phase 2 — Weeks 3 To 5: Complexity Extraction
 
-1. Split reporting SQL monoliths.
+1. [x] Split reporting SQL monoliths.
 Modules: `sports_federation_reporting`.
 Work: separate `report_operational.py` into report-specific files, add named SQL block headers, and add report-specific invariants in tests.
 Done when: no single reporting model file exceeds roughly 400 lines without a clear reason.
 
-2. Break down roster and portal controller monoliths.
+2. [x] Break down roster and portal controller monoliths.
 Modules: `sports_federation_portal`, `sports_federation_rosters`.
 Work: split `controllers/rosters.py` and the broad portal controller into narrower workflow files, and factor redirect, scope-loading, and form-error patterns into shared helpers.
 Done when: primary portal controllers are materially smaller and route behavior remains covered by smoke and service tests.
 
-3. Simplify compliance target resolution.
+3. [x] Simplify compliance target resolution.
 Modules: `sports_federation_compliance`.
 Work: extract shared target field maps and target resolution into one reusable layer.
 Done when: adding a new compliance target type requires one obvious extension point rather than synchronized edits in multiple classes.
 
 ## Phase 3 — Weeks 6 To 8: Readability And Engineering Discipline
 
-1. Improve docstring and method-shape standards.
+1. [x] Improve docstring and method-shape standards.
 Modules: repository-wide.
 Work: replace low-signal `Handle X flow` docstrings in hotspots with invariants, side effects, and security assumptions, and continue breaking up methods with more than one clear responsibility.
 Done when: portal, compliance, and reporting hotspots explain why and under which assumptions they operate.
 
-2. Expand CI quality gates beyond a hand-picked file list.
+2. [x] Expand CI quality gates beyond a hand-picked file list.
 Modules: repository-wide, `ci`.
 Work: widen Black and Flake8 coverage in stages, starting with a non-blocking full-repo lint job and then gating after debt is reduced.
 Done when: the repository no longer depends on narrow `BLACK_PATHS` and `FLAKE8_PATHS` allowlists for normal maintenance.
 
-3. Add documentation freshness rules.
+3. [x] Add documentation freshness rules.
 Modules: repository-wide.
 Work: add owner/date metadata to review, roadmap, and architecture documents and make them part of release preparation.
 Done when: time-sensitive documents are archived or refreshed during the release cadence instead of drifting.

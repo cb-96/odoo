@@ -1,5 +1,9 @@
 # State And Ownership Matrix
 
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
+
 This document records the canonical lifecycle states and ownership boundaries
 for the federation records called out in the roadmap. It is intended to keep
 controllers, record rules, tests, and workflow docs aligned with the code.

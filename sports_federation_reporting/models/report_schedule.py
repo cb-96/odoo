@@ -63,7 +63,7 @@ class FederationReportSchedule(models.Model):
     notes = fields.Text()
 
     def _get_reporting_window(self):
-        """Return reporting window."""
+        """Return the inclusive date window for the selected reporting cadence."""
         self.ensure_one()
         period_end = fields.Date.context_today(self)
         if self.period_type == "monthly":
@@ -73,7 +73,7 @@ class FederationReportSchedule(models.Model):
         return period_start, period_end
 
     def _get_next_run_on(self, reference_dt=None):
-        """Return next run on."""
+        """Return the next scheduled execution anchored to the latest attempt."""
         self.ensure_one()
         reference_dt = fields.Datetime.to_datetime(reference_dt or fields.Datetime.now())
         if self.period_type == "monthly":
@@ -81,11 +81,31 @@ class FederationReportSchedule(models.Model):
         return fields.Datetime.to_string(reference_dt + timedelta(days=7))
 
     def _get_effective_season(self):
-        """Return effective season."""
+        """Return the explicit season or fall back to the active season snapshot."""
         self.ensure_one()
         return self.season_id or self.env["federation.season"].search([
             ("active", "=", True),
         ], limit=1)
+
+    def _render_report_csv(self, headers, rows, period_start, period_end):
+        """Serialize one scheduled report to the stored CSV contract.
+
+        Every generated file carries the same metadata preamble so operators can
+        audit cadence and window boundaries even after downloading it outside
+        Odoo.
+        """
+        self.ensure_one()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Report", dict(self._fields["report_type"].selection).get(self.report_type, self.report_type)])
+        writer.writerow(["Cadence", dict(self._fields["period_type"].selection).get(self.period_type, self.period_type)])
+        writer.writerow(["Period Start", period_start])
+        writer.writerow(["Period End", period_end])
+        writer.writerow([])
+        writer.writerow(headers)
+        for row in rows:
+            writer.writerow(row)
+        return output.getvalue().encode()
 
     def _build_operational_rows(self):
         """Build operational rows."""
@@ -524,7 +544,7 @@ class FederationReportSchedule(models.Model):
         return headers, data, f"audit_pack_{self.period_type}"
 
     def _build_report_payload(self):
-        """Build report payload."""
+        """Resolve the correct builder and serialize the operator-facing CSV output."""
         self.ensure_one()
         builders = {
             "operational": self._build_operational_rows,
@@ -542,56 +562,59 @@ class FederationReportSchedule(models.Model):
         headers, rows, slug = builders[self.report_type]()
 
         period_start, period_end = self._get_reporting_window()
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["Report", dict(self._fields["report_type"].selection).get(self.report_type, self.report_type)])
-        writer.writerow(["Cadence", dict(self._fields["period_type"].selection).get(self.period_type, self.period_type)])
-        writer.writerow(["Period Start", period_start])
-        writer.writerow(["Period End", period_end])
-        writer.writerow([])
-        writer.writerow(headers)
-        for row in rows:
-            writer.writerow(row)
-
         filename = f"{slug}_{period_start}_{period_end}.csv"
-        return output.getvalue().encode(), filename, len(rows), period_start, period_end
+        payload = self._render_report_csv(headers, rows, period_start, period_end)
+        return payload, filename, len(rows), period_start, period_end
+
+    def _generate_single_report(self, run_at=None):
+        """Generate one schedule and persist either a success snapshot or failure trail.
+
+        Failures are recorded on the schedule instead of bubbling immediately so
+        cron runs can continue processing the remaining due work.
+        """
+        self.ensure_one()
+        run_at = run_at or fields.Datetime.now()
+        try:
+            payload, filename, row_count, period_start, period_end = self._build_report_payload()
+            self.write({
+                "last_attempt_on": run_at,
+                "last_run_on": run_at,
+                "last_run_status": "success",
+                "last_period_start": period_start,
+                "last_period_end": period_end,
+                "last_row_count": row_count,
+                "last_failure_on": False,
+                "last_error_message": False,
+                "consecutive_failure_count": 0,
+                "generated_filename": filename,
+                "generated_file": base64.b64encode(payload),
+                "next_run_on": self._get_next_run_on(run_at),
+            })
+            return False
+        except Exception as error:
+            error_message = ustr(error)
+            _logger.exception(
+                "Scheduled report generation failed for %s (%s)",
+                self.display_name,
+                self.report_type,
+            )
+            self.write({
+                "last_attempt_on": run_at,
+                "last_run_status": "failed",
+                "last_failure_on": run_at,
+                "last_error_message": error_message,
+                "consecutive_failure_count": self.consecutive_failure_count + 1,
+                "next_run_on": self._get_next_run_on(run_at),
+            })
+            return error_message
 
     def _generate_report(self):
-        """Handle generate report."""
+        """Generate each selected report and return operator-readable failures."""
         run_at = fields.Datetime.now()
         failures = []
         for schedule in self:
-            try:
-                payload, filename, row_count, period_start, period_end = schedule._build_report_payload()
-                schedule.write({
-                    "last_attempt_on": run_at,
-                    "last_run_on": run_at,
-                    "last_run_status": "success",
-                    "last_period_start": period_start,
-                    "last_period_end": period_end,
-                    "last_row_count": row_count,
-                    "last_failure_on": False,
-                    "last_error_message": False,
-                    "consecutive_failure_count": 0,
-                    "generated_filename": filename,
-                    "generated_file": base64.b64encode(payload),
-                    "next_run_on": schedule._get_next_run_on(run_at),
-                })
-            except Exception as error:
-                error_message = ustr(error)
-                _logger.exception(
-                    "Scheduled report generation failed for %s (%s)",
-                    schedule.display_name,
-                    schedule.report_type,
-                )
-                schedule.write({
-                    "last_attempt_on": run_at,
-                    "last_run_status": "failed",
-                    "last_failure_on": run_at,
-                    "last_error_message": error_message,
-                    "consecutive_failure_count": schedule.consecutive_failure_count + 1,
-                    "next_run_on": schedule._get_next_run_on(run_at),
-                })
+            error_message = schedule._generate_single_report(run_at=run_at)
+            if error_message:
                 failures.append((schedule, error_message))
         return failures
 
@@ -640,7 +663,7 @@ class FederationReportSchedule(models.Model):
 
     @api.model
     def _cron_generate_scheduled_reports(self):
-        """Handle cron generate scheduled reports."""
+        """Process a bounded batch of due schedules so cron stays catch-up friendly."""
         schedules = self.search([
             ("active", "=", True),
             ("next_run_on", "!=", False),

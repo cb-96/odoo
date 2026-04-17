@@ -1,5 +1,9 @@
 # Integration env variables and how to apply them
 
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
+
 This repository standardises external-integration configuration (SMTP, OAuth, API keys, webhooks, S3) as environment variables.
 
 Quick steps

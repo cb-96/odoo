@@ -8,16 +8,8 @@ from odoo.exceptions import ValidationError
 class FederationDocumentSubmission(models.Model):
     _name = "federation.document.submission"
     _description = "Federation Document Submission"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["federation.compliance.target.mixin", "mail.thread", "mail.activity.mixin"]
     _order = "create_date desc"
-
-    TARGET_MODEL_SELECTION = [
-        ("federation.club", "Club"),
-        ("federation.player", "Player"),
-        ("federation.referee", "Referee"),
-        ("federation.venue", "Venue"),
-        ("federation.club.representative", "Club Representative"),
-    ]
 
     STATUS_SELECTION = [
         ("draft", "Draft"),
@@ -112,20 +104,9 @@ class FederationDocumentSubmission(models.Model):
         "club_representative_id",
     )
     def _compute_target_display(self):
-        """Compute target display."""
+        """Store a normalized target label for list views and SQL-backed reports."""
         for rec in self:
-            if rec.club_id:
-                rec.target_display = rec.club_id.name
-            elif rec.player_id:
-                rec.target_display = rec.player_id.name
-            elif rec.referee_id:
-                rec.target_display = rec.referee_id.name
-            elif rec.venue_id:
-                rec.target_display = rec.venue_id.name
-            elif rec.club_representative_id:
-                rec.target_display = rec.club_representative_id.display_name
-            else:
-                rec.target_display = "Not set"
+            rec.target_display = rec._compliance_get_target_display(target_model=rec.target_model)
 
     @api.constrains(
         "club_id",
@@ -160,14 +141,9 @@ class FederationDocumentSubmission(models.Model):
         for rec in self:
             if not rec.requirement_id:
                 continue
-            target_fields_map = {
-                "federation.club": rec.club_id,
-                "federation.player": rec.player_id,
-                "federation.referee": rec.referee_id,
-                "federation.venue": rec.venue_id,
-                "federation.club.representative": rec.club_representative_id,
-            }
-            expected_target = target_fields_map.get(rec.requirement_id.target_model)
+            expected_target = rec._compliance_get_target_record(
+                target_model=rec.requirement_id.target_model,
+            )
             if not expected_target:
                 raise ValidationError(
                     f"Target entity does not match requirement model "
@@ -192,31 +168,28 @@ class FederationDocumentSubmission(models.Model):
 
     @api.depends("expiry_date")
     def _compute_is_expired(self):
-        """Compute is expired."""
+        """Flag expired submissions so portal status logic can stay queryable."""
         today = fields.Date.context_today(self)
         for rec in self:
             rec.is_expired = bool(rec.expiry_date and rec.expiry_date < today)
 
     def _search_is_expired(self, operator, value):
-        """Handle search is expired."""
+        """Translate the boolean expiry filter into a date-domain safe for search()."""
         today = fields.Date.context_today(self)
         if (operator == "=" and value) or (operator == "!=" and not value):
             return [("expiry_date", "<", today), ("expiry_date", "!=", False)]
         return ["|", ("expiry_date", ">=", today), ("expiry_date", "=", False)]
 
     def _get_target_record(self):
-        """Return target record."""
+        """Return the concrete target record bound to this submission."""
         self.ensure_one()
         return (
-            self.club_id
-            or self.player_id
-            or self.referee_id
-            or self.venue_id
-            or self.club_representative_id
+            self._compliance_get_target_record(target_model=self.target_model)
+            or self._compliance_get_target_record()
         )
 
     def _portal_get_effective_status(self):
-        """Handle the portal-specific get effective status flow."""
+        """Collapse approved-plus-expired submissions into the portal expiry state."""
         self.ensure_one()
         if self.status == "approved" and self.is_expired:
             return "expired"
@@ -224,7 +197,7 @@ class FederationDocumentSubmission(models.Model):
 
     @api.model
     def _portal_get_status_metadata(self, status_key, latest_submission=None):
-        """Handle the portal-specific get status metadata flow."""
+        """Return the presentation contract used by portal compliance badges."""
         metadata = {
             "missing": {"label": "Missing", "tone": "danger"},
             "draft": {"label": "Draft", "tone": "secondary"},
@@ -249,7 +222,7 @@ class FederationDocumentSubmission(models.Model):
         return meta
 
     def _recompute_related_checks(self):
-        """Handle recompute related checks."""
+        """Refresh compliance checks after a submission changes durable state."""
         Check = self.env["federation.compliance.check"]
         for record in self:
             target_record = record._get_target_record()
@@ -257,9 +230,23 @@ class FederationDocumentSubmission(models.Model):
                 Check.recompute_checks_for_target(target_record, record.target_model)
 
     @api.model
-    def _portal_prepare_submission(self, requirement, target_record, values=None, user=None):
-        """Handle the portal-specific prepare submission flow."""
+    def _portal_prepare_submission_write_values(self, values=None):
+        """Normalize portal-submitted fields before a draft is reused or created."""
         values = values or {}
+        return {
+            "issue_date": values.get("issue_date") or False,
+            "expiry_date": values.get("expiry_date") or False,
+            "notes": values.get("notes") or False,
+        }
+
+    @api.model
+    def _portal_prepare_submission(self, requirement, target_record, values=None, user=None):
+        """Reuse or create the draft submission that a portal upload will submit.
+
+        Access is re-checked through the elevated requirement service so stale
+        portal links cannot create submissions for targets the caller no longer
+        owns.
+        """
         user = user or self.env.user
         PortalPrivilege = self.env["federation.portal.privilege"]
         Requirement = PortalPrivilege.elevate(
@@ -279,9 +266,7 @@ class FederationDocumentSubmission(models.Model):
         if not target_field_name:
             raise ValidationError("This requirement target cannot be handled through the portal.")
 
-        prepared_issue_date = values.get("issue_date") or False
-        prepared_expiry_date = values.get("expiry_date") or False
-        prepared_notes = values.get("notes") or False
+        prepared_values = self._portal_prepare_submission_write_values(values=values)
 
         if latest_submission and latest_submission.status in (
             "draft",
@@ -297,18 +282,14 @@ class FederationDocumentSubmission(models.Model):
                     "name": f"{requirement.name} - {target_name}",
                     "requirement_id": requirement.id,
                     target_field_name: target_record.id,
-                    "issue_date": prepared_issue_date,
-                    "expiry_date": prepared_expiry_date,
-                    "notes": prepared_notes,
                     "status": "draft",
+                    **prepared_values,
                 },
                 user=user,
             )
 
         write_vals = {
-            "issue_date": prepared_issue_date,
-            "expiry_date": prepared_expiry_date,
-            "notes": prepared_notes,
+            **prepared_values,
             "status": "draft",
             "reviewer_id": False,
             "reviewed_on": False,
@@ -320,7 +301,7 @@ class FederationDocumentSubmission(models.Model):
     def _portal_create_submission_attachments(
         self, submission, uploaded_files=None, user=None
     ):
-        """Create attachment records for a portal submission."""
+        """Create deduplicated attachments that satisfy the shared upload policy."""
         user = user or self.env.user
         PortalPrivilege = self.env["federation.portal.privilege"]
         AttachmentPolicy = self.env["federation.attachment.policy"]
@@ -380,7 +361,12 @@ class FederationDocumentSubmission(models.Model):
         uploaded_files=None,
         user=None,
     ):
-        """Prepare, attach, and submit a portal-managed document submission."""
+        """Execute the full portal submission flow as one validated service call.
+
+        The draft is prepared first, attachments are policy-checked and
+        deduplicated, and submission is blocked unless at least one attachment
+        survives validation.
+        """
         user = user or self.env.user
         submission = self._portal_prepare_submission(
             requirement,

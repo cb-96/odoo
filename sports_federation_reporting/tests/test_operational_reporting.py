@@ -189,9 +189,12 @@ class TestOperationalReporting(TransactionCase):
         self.assertTrue(row)
         self.assertEqual(row.participant_count, 2)
         self.assertEqual(row.confirmed_participant_count, 2)
+        self.assertEqual(row.participant_confirmation_rate, 100.0)
         self.assertEqual(row.completed_match_count, 2)
+        self.assertEqual(row.match_completion_rate, 100.0)
         self.assertEqual(row.standing_line_coverage, 1)
         self.assertEqual(row.pending_finance_event_count, 1)
+        self.assertEqual(row.pending_finance_amount, 55.0)
         self.assertEqual(row.open_club_compliance_count, 1)
         self.assertEqual(row.readiness_status, "blocked")
 
@@ -206,6 +209,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.covered_participant_count, 1)
         self.assertEqual(row.missing_participant_count, 1)
         self.assertEqual(row.reconciliation_status, "attention")
+        self.assertIn("standing coverage", row.reconciliation_note.lower())
 
     def test_finance_reconciliation_flags_open_items(self):
         """Test that finance reconciliation flags open items."""
@@ -313,6 +317,7 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.unpublished_tournament_count, 1)
         self.assertGreaterEqual(row.workflow_exception_count, 1)
         self.assertEqual(row.checklist_status, "blocked")
+        self.assertIn("season registrations are waiting for staff review", row.checklist_note.lower())
 
     def test_workflow_exception_schedule_generates_attachment(self):
         """Test that workflow exception schedule generates attachment."""

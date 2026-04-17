@@ -5,15 +5,8 @@ from odoo.exceptions import ValidationError
 class FederationComplianceCheck(models.Model):
     _name = "federation.compliance.check"
     _description = "Federation Compliance Check"
+    _inherit = ["federation.compliance.target.mixin"]
     _order = "create_date desc"
-
-    TARGET_MODEL_SELECTION = [
-        ("federation.club", "Club"),
-        ("federation.player", "Player"),
-        ("federation.referee", "Referee"),
-        ("federation.venue", "Venue"),
-        ("federation.club.representative", "Club Representative"),
-    ]
 
     STATUS_SELECTION = [
         ("compliant", "Compliant"),
@@ -25,7 +18,7 @@ class FederationComplianceCheck(models.Model):
 
     name = fields.Char(string="Name", required=True)
     target_model = fields.Selection(
-        selection=TARGET_MODEL_SELECTION,
+        selection="_compliance_target_model_selection",
         string="Target Model",
         required=True,
         index=True,
@@ -92,14 +85,7 @@ class FederationComplianceCheck(models.Model):
     def _get_target_res_id(self):
         """Return target res ID."""
         self.ensure_one()
-        target_fields_map = {
-            "federation.club": self.club_id,
-            "federation.player": self.player_id,
-            "federation.referee": self.referee_id,
-            "federation.venue": self.venue_id,
-            "federation.club.representative": self.club_representative_id,
-        }
-        target_record = target_fields_map.get(self.target_model)
+        target_record = self._compliance_get_target_record(target_model=self.target_model)
         return target_record.id if target_record else 0
 
     def _archive_current_state(self):
@@ -160,18 +146,7 @@ class FederationComplianceCheck(models.Model):
     def _compute_target_display(self):
         """Compute target display."""
         for rec in self:
-            if rec.club_id:
-                rec.target_display = rec.club_id.name
-            elif rec.player_id:
-                rec.target_display = rec.player_id.name
-            elif rec.referee_id:
-                rec.target_display = rec.referee_id.name
-            elif rec.venue_id:
-                rec.target_display = rec.venue_id.name
-            elif rec.club_representative_id:
-                rec.target_display = rec.club_representative_id.display_name
-            else:
-                rec.target_display = "Not set"
+            rec.target_display = rec._compliance_get_target_display(target_model=rec.target_model)
 
     @api.constrains(
         "club_id",
@@ -205,14 +180,7 @@ class FederationComplianceCheck(models.Model):
     def _check_target_matches_model(self):
         """Ensure target matches target_model."""
         for rec in self:
-            target_fields_map = {
-                "federation.club": rec.club_id,
-                "federation.player": rec.player_id,
-                "federation.referee": rec.referee_id,
-                "federation.venue": rec.venue_id,
-                "federation.club.representative": rec.club_representative_id,
-            }
-            expected_target = target_fields_map.get(rec.target_model)
+            expected_target = rec._compliance_get_target_record(target_model=rec.target_model)
             if not expected_target:
                 raise ValidationError(
                     f"Target entity does not match target model '{rec.target_model}'."
@@ -221,14 +189,7 @@ class FederationComplianceCheck(models.Model):
     @api.model
     def _get_target_field_value(self, record, target_model):
         """Get the target field value for a given record and target model."""
-        target_fields_map = {
-            "federation.club": record.club_id,
-            "federation.player": record.player_id,
-            "federation.referee": record.referee_id,
-            "federation.venue": record.venue_id,
-            "federation.club.representative": record.club_representative_id,
-        }
-        return target_fields_map.get(target_model)
+        return record._compliance_get_target_record(target_model=target_model)
 
     @api.model
     def recompute_checks_for_target(self, target_record, target_model):
@@ -255,20 +216,14 @@ class FederationComplianceCheck(models.Model):
 
         for requirement in requirements:
             # Find existing submission for this requirement and target
+            field_name = self._compliance_get_target_field_name(target_model)
+            if not field_name:
+                raise ValidationError(f"Unsupported compliance target model '{target_model}'.")
+
             domain = [
                 ("requirement_id", "=", requirement.id),
             ]
-            # Add target field filter
-            target_field_map = {
-                "federation.club": "club_id",
-                "federation.player": "player_id",
-                "federation.referee": "referee_id",
-                "federation.venue": "venue_id",
-                "federation.club.representative": "club_representative_id",
-            }
-            field_name = target_field_map.get(target_model)
-            if field_name:
-                domain.append((field_name, "=", target_record.id))
+            domain.append((field_name, "=", target_record.id))
 
             submission = self.env["federation.document.submission"].search(
                 domain, limit=1, order="create_date desc"
@@ -306,12 +261,12 @@ class FederationComplianceCheck(models.Model):
             check_domain = [
                 ("requirement_id", "=", requirement.id),
                 (field_name, "=", target_record.id),
-            ] if field_name else [("requirement_id", "=", requirement.id)]
+            ]
 
             check = self.search(check_domain, limit=1)
 
             check_values = {
-                "name": f"{requirement.name} - {target_record.name}",
+                "name": f"{requirement.name} - {target_record.display_name}",
                 "target_model": target_model,
                 "status": status,
                 "requirement_id": requirement.id,
@@ -319,9 +274,7 @@ class FederationComplianceCheck(models.Model):
                 "checked_on": fields.Datetime.now(),
                 "note": note,
             }
-            # Set target field
-            if field_name:
-                check_values[field_name] = target_record.id
+            check_values[field_name] = target_record.id
 
             if check:
                 check.write(check_values)

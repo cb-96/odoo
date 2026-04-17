@@ -1,6 +1,9 @@
 # Release Runbook
 
-Last updated: 2026-04-13
+Last updated: 2026-04-17
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
 
 This runbook is the canonical operator checklist for promoting the federation
 stack with repeatable verification, upgrade, and rollback steps.
@@ -12,6 +15,19 @@ stack with repeatable verification, upgrade, and rollback steps.
 2. Confirm Docker services are healthy with the production compose file.
 3. Confirm enough disk space exists for both a PostgreSQL dump and a filestore
    archive under `./backups/`.
+
+## Documentation Freshness
+
+Before cutting a release, verify that the freshness-tracked docs still match the
+change set whenever route ownership, architecture, CI policy, or operational
+guidance changed:
+
+```bash
+python3 addons/ci/check_doc_freshness.py
+```
+
+If the release changed any tracked surface, update the affected document or
+archive it in the same release branch before proceeding.
 
 ## Pre-Release Verification
 

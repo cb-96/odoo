@@ -1,5 +1,9 @@
 # Odoo 19 — Sports Federation Addons (quick context)
 
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
+
 Purpose
 
 This workspace contains a collection of Odoo 19 custom addons that implement a sports federation management system: clubs, teams, seasons, tournaments, rules, refereeing, rosters, results verification, standings, portal and public website integration, and reporting.

@@ -1,6 +1,9 @@
 # Sports Federation — Technical Note
 
 Last updated: 2026-04-10
+Owner: Federation Platform Team
+Last reviewed: 2026-04-17
+Review cadence: Every release
 
 ## Import safety hardening (2026-04-10)
 

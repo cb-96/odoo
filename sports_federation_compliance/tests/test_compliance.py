@@ -112,6 +112,47 @@ class TestCompliance(TransactionCase):
                 "target_model": "federation.club",  # Same target_model
             })
 
+    def test_shared_target_field_resolver_is_consistent(self):
+        """Test that compliance models share the same target field resolver."""
+        expected_map = {
+            "federation.club": "club_id",
+            "federation.player": "player_id",
+            "federation.referee": "referee_id",
+            "federation.venue": "venue_id",
+            "federation.club.representative": "club_representative_id",
+        }
+
+        requirement_model = self.env["federation.document.requirement"]
+        check_model = self.env["federation.compliance.check"]
+        submission_model = self.env["federation.document.submission"]
+
+        self.assertEqual(requirement_model._portal_target_field_map(), expected_map)
+        for target_model, field_name in expected_map.items():
+            self.assertEqual(requirement_model._portal_get_target_field_name(target_model), field_name)
+            self.assertEqual(check_model._compliance_get_target_field_name(target_model), field_name)
+            self.assertEqual(submission_model._compliance_get_target_field_name(target_model), field_name)
+
+    def test_shared_target_record_resolution_sets_display(self):
+        """Test shared target resolution on submissions and checks."""
+        submission = self.env["federation.document.submission"].create({
+            "name": "Resolver Submission",
+            "requirement_id": self.requirement.id,
+            "club_id": self.club.id,
+            "expiry_date": date.today() + timedelta(days=365),
+        })
+        check = self.env["federation.compliance.check"].create({
+            "name": "Resolver Check",
+            "target_model": "federation.club",
+            "club_id": self.club.id,
+            "status": "missing",
+            "requirement_id": self.requirement.id,
+        })
+
+        self.assertEqual(submission._get_target_record(), self.club)
+        self.assertEqual(submission.target_display, self.club.display_name)
+        self.assertEqual(check._get_target_field_value(check, "federation.club"), self.club)
+        self.assertEqual(check.target_display, self.club.display_name)
+
     def test_submission_requires_single_target(self):
         """Test that exactly one target entity must be set."""
         # No target set

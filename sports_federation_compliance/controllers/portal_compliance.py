@@ -26,7 +26,7 @@ class FederationCompliancePortal(CustomerPortal):
 
     def _create_submission_attachments(self, submission, uploaded_files):
         attachment_ids = []
-        Attachment = request.env["ir.attachment"].with_user(request.env.user).sudo()
+        Attachment = request.env["ir.attachment"].with_user(request.env.user)
         for uploaded_file in uploaded_files:
             filename = (uploaded_file.filename or "").strip()
             if not filename:
@@ -46,7 +46,7 @@ class FederationCompliancePortal(CustomerPortal):
             attachment_ids.append(attachment.id)
 
         if attachment_ids:
-            submission.with_user(request.env.user).sudo().write(
+            submission.with_user(request.env.user).write(
                 {"attachment_ids": [(6, 0, attachment_ids)]}
             )
 
@@ -124,7 +124,7 @@ class FederationCompliancePortal(CustomerPortal):
                 raise ValidationError(
                     "Upload at least one document attachment before submitting."
                 )
-            submission.with_user(request.env.user).sudo().action_submit()
+            submission.with_user(request.env.user).action_submit()
         except (AccessError, ValidationError) as error:
             return request.redirect(f"{redirect_url}?error={quote_plus(str(error))}")
 

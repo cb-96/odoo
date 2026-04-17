@@ -10,7 +10,7 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
     def _resolve_season(self, season_slug=None, season_id=None):
         Season = request.env["federation.season"]
         if season_id:
-            return Season.sudo().browse(int(season_id))
+            return Season.browse(int(season_id))
         if season_slug:
             return Season.resolve_public_slug(season_slug)
         return Season.browse([])

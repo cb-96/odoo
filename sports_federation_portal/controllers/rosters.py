@@ -14,10 +14,9 @@ class FederationRosterPortal(FederationPortal):
         roster = (
             Roster
             .with_user(request.env.user)
-            .sudo()
             .browse(roster_id)
         )
-        if not roster.exists() or not Roster.with_user(request.env.user).sudo().search_count(
+        if not roster.exists() or not Roster.with_user(request.env.user).search_count(
             Roster._portal_get_scope_domain(user=request.env.user) + [("id", "=", roster.id)]
         ):
             raise AccessError("Roster not found")
@@ -27,7 +26,6 @@ class FederationRosterPortal(FederationPortal):
         line = (
             request.env["federation.team.roster.line"]
             .with_user(request.env.user)
-            .sudo()
             .browse(line_id)
         )
         if not line.exists() or line.roster_id != roster:
@@ -49,7 +47,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_rosters(self, page=1, **kw):
-        Roster = request.env["federation.team.roster"].with_user(request.env.user).sudo()
+        Roster = request.env["federation.team.roster"].with_user(request.env.user)
         domain = Roster._portal_get_scope_domain(user=request.env.user)
         if domain == [("id", "=", False)]:
             return request.redirect("/my/club")
@@ -103,7 +101,6 @@ class FederationRosterPortal(FederationPortal):
         registration = (
             request.env["federation.season.registration"]
             .with_user(request.env.user)
-            .sudo()
             .browse(registration_id)
         )
         if not registration.exists():
@@ -422,7 +419,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheets(self, page=1, **kw):
-        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
+        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user)
         domain = MatchSheet._portal_get_domain(user=request.env.user)
         if domain == [("id", "=", False)]:
             return request.redirect("/my/club")
@@ -457,7 +454,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_sheet_detail(self, sheet_id, **kw):
-        sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
+        sheet = request.env["federation.match.sheet"].with_user(request.env.user).browse(sheet_id)
         if not sheet.exists():
             return request.not_found()
         try:
@@ -486,7 +483,7 @@ class FederationRosterPortal(FederationPortal):
         csrf=True,
     )
     def portal_my_match_sheet_prepare(self, sheet_id, **kw):
-        sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
+        sheet = request.env["federation.match.sheet"].with_user(request.env.user).browse(sheet_id)
         if not sheet.exists():
             return request.not_found()
         try:
@@ -526,7 +523,7 @@ class FederationRosterPortal(FederationPortal):
         website=True,
     )
     def portal_my_match_day(self, page=1, **kw):
-        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user).sudo()
+        MatchSheet = request.env["federation.match.sheet"].with_user(request.env.user)
         domain = MatchSheet._portal_get_domain(user=request.env.user)
         if domain == [("id", "=", False)]:
             return request.redirect("/my/club")

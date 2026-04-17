@@ -253,7 +253,6 @@ class FederationDocumentSubmission(models.Model):
         values = values or {}
         user = user or self.env.user
         Requirement = self.env["federation.document.requirement"]
-        requirement = Requirement.sudo().browse(requirement.id)
         Requirement._portal_assert_target_access(requirement, target_record, user=user)
 
         latest_submission = requirement._portal_get_latest_submission(target_record)
@@ -266,9 +265,11 @@ class FederationDocumentSubmission(models.Model):
         if not target_field_name:
             raise ValidationError("This requirement target cannot be handled through the portal.")
 
-        prepared_issue_date = values.get("issue_date") or False
-        prepared_expiry_date = values.get("expiry_date") or False
-        prepared_notes = values.get("notes") or False
+        prepared_values = {
+            "issue_date": values.get("issue_date") or False,
+            "expiry_date": values.get("expiry_date") or False,
+            "notes": values.get("notes") or False,
+        }
 
         if latest_submission and latest_submission.status in (
             "draft",
@@ -277,28 +278,29 @@ class FederationDocumentSubmission(models.Model):
         ):
             submission = latest_submission.with_user(user).sudo()
         else:
-            target_name = target_record.display_name or getattr(target_record, "name", False) or requirement.name
+            target_name = target_record.display_name or getattr(
+                target_record,
+                "name",
+                False,
+            ) or requirement.name
             submission = self.with_user(user).sudo().create(
                 {
                     "name": f"{requirement.name} - {target_name}",
                     "requirement_id": requirement.id,
                     target_field_name: target_record.id,
-                    "issue_date": prepared_issue_date,
-                    "expiry_date": prepared_expiry_date,
-                    "notes": prepared_notes,
+                    **prepared_values,
                     "status": "draft",
                 }
             )
 
-        write_vals = {
-            "issue_date": prepared_issue_date,
-            "expiry_date": prepared_expiry_date,
-            "notes": prepared_notes,
-            "status": "draft",
-            "reviewer_id": False,
-            "reviewed_on": False,
-        }
-        submission.with_user(user).sudo().write(write_vals)
+        submission.with_user(user).sudo().write(
+            {
+                **prepared_values,
+                "status": "draft",
+                "reviewer_id": False,
+                "reviewed_on": False,
+            }
+        )
         return submission
 
     @api.constrains("requirement_id", "expiry_date")

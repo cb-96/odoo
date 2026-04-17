@@ -63,16 +63,16 @@ class PublicTournamentHubController(FederationWebsite):
             "category_options": category_options,
             "gender_options": gender_options,
             "state_options": state_options,
-            "seasons": request.env["federation.season"].sudo().search([], order="date_start desc, id desc"),
-            "venues": request.env["federation.venue"].sudo().search([], order="name asc") if "venue_id" in Tournament._fields else request.env["federation.venue"].browse([]),
+            "seasons": request.env["federation.season"].search([], order="date_start desc, id desc"),
+            "venues": request.env["federation.venue"].search([], order="name asc") if "venue_id" in Tournament._fields else request.env["federation.venue"].browse([]),
         }
 
     def _resolve_tournament(self, tournament_slug=None, tournament_id=None, tournament=False):
         Tournament = request.env["federation.tournament"]
         if tournament:
-            return tournament.sudo()
+            return tournament
         if tournament_id:
-            return Tournament.sudo().browse(int(tournament_id))
+            return Tournament.browse(int(tournament_id))
         if tournament_slug:
             return Tournament.resolve_public_slug(tournament_slug)
         return Tournament.browse([])
@@ -115,7 +115,7 @@ class PublicTournamentHubController(FederationWebsite):
     @http.route(["/tournaments", "/tournaments/page/<int:page>"], type="http", auth="public", website=True)
     def tournaments_list(self, page=1, search="", **kw):
         filters = self._build_filters(search=search, **kw)
-        Tournament = request.env["federation.tournament"].sudo()
+        Tournament = request.env["federation.tournament"]
 
         main_domain = self._build_main_tournament_domain(filters)
         total = Tournament.search_count(main_domain)
@@ -191,7 +191,7 @@ class PublicTournamentHubController(FederationWebsite):
         else:
             return request.redirect(tournament.get_public_path())
 
-        participants = request.env["federation.tournament.participant"].sudo().search(
+        participants = request.env["federation.tournament.participant"].search(
             [("tournament_id", "=", tournament.id), ("state", "!=", "withdrawn")],
             order="state asc, seed asc, team_id asc",
         )
@@ -222,7 +222,7 @@ class PublicTournamentHubController(FederationWebsite):
             }
             return request.render("sports_federation_public_site.page_tournament_register", values)
 
-        existing = request.env["federation.tournament.registration"].sudo().search(
+        existing = request.env["federation.tournament.registration"].search(
             [
                 ("tournament_id", "=", tournament.id),
                 ("team_id.club_id", "in", clubs.ids),
@@ -233,7 +233,7 @@ class PublicTournamentHubController(FederationWebsite):
             team.id: "Already registered or currently awaiting review."
             for team in existing.mapped("team_id")
         }
-        selection_snapshot = tournament.sudo().get_team_selection_snapshot(
+        selection_snapshot = tournament.get_team_selection_snapshot(
             extra_domain=[("club_id", "in", clubs.ids)],
             blocked_reason_by_team_id=blocked_reason_by_team_id,
         )
@@ -272,7 +272,7 @@ class PublicTournamentHubController(FederationWebsite):
         except (ValueError, TypeError):
             return request.redirect(f"{tournament.get_public_register_path()}?error=Invalid+team+selection")
 
-        team = request.env["federation.team"].sudo().browse(team_id)
+        team = request.env["federation.team"].browse(team_id)
         clubs = request.env["federation.club.representative"]._get_clubs_for_user()
         if team.club_id not in clubs:
             return request.redirect(f"{tournament.get_public_register_path()}?error=You+can+only+register+your+own+teams")
@@ -281,7 +281,7 @@ class PublicTournamentHubController(FederationWebsite):
         if eligibility_error:
             return request.redirect(f"{tournament.get_public_register_path()}?error={quote_plus(eligibility_error)}")
 
-        existing = request.env["federation.tournament.registration"].sudo().search(
+        existing = request.env["federation.tournament.registration"].search(
             [
                 ("tournament_id", "=", tournament.id),
                 ("team_id", "=", team_id),
@@ -293,17 +293,17 @@ class PublicTournamentHubController(FederationWebsite):
             return request.redirect(f"{tournament.get_public_register_path()}?error=This+team+is+already+registered")
 
         if tournament.max_participants > 0:
-            current_count = request.env["federation.tournament.participant"].sudo().search_count(
+            current_count = request.env["federation.tournament.participant"].search_count(
                 [("tournament_id", "=", tournament.id), ("state", "=", "confirmed")]
             )
-            pending_count = request.env["federation.tournament.registration"].sudo().search_count(
+            pending_count = request.env["federation.tournament.registration"].search_count(
                 [("tournament_id", "=", tournament.id), ("state", "=", "submitted")]
             )
             if current_count + pending_count >= tournament.max_participants:
                 return request.redirect(f"{tournament.get_public_register_path()}?error=Tournament+is+full")
 
         try:
-            registration = request.env["federation.tournament.registration"].sudo().create(
+            registration = request.env["federation.tournament.registration"].create(
                 {
                     "tournament_id": tournament.id,
                     "team_id": team_id,
@@ -311,7 +311,7 @@ class PublicTournamentHubController(FederationWebsite):
                     "user_id": request.env.user.id,
                 }
             )
-            registration.sudo().action_submit()
+            registration.action_submit()
         except ValidationError as error:
             return request.redirect(f"{tournament.get_public_register_path()}?error={quote_plus(str(error))}")
 

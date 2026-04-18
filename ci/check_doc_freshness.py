@@ -18,6 +18,7 @@ TRACKED_DOCS = [
     "ROUTE_INVENTORY.md",
     "STATE_AND_OWNERSHIP_MATRIX.md",
     "RELEASE_RUNBOOK.md",
+    "RELEASE_TRAIN.md",
     "adr/README.md",
     "adr/0001-portal-trust-boundaries.md",
     "adr/0002-reporting-sql-views.md",

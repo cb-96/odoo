@@ -51,6 +51,9 @@ jobs:
       - name: Check module owner registry
         run: python ci/check_module_owners.py
 
+      - name: Check release train metadata
+        run: python ci/check_release_train.py
+
       - name: Check migration review coverage
         run: python ci/check_migration_review.py --base-ref origin/${{ github.base_ref || 'main' }}
 

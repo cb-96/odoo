@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 GLOBAL_REVIEW_FILES = {
     "TECHNICAL_NOTE.md",
     "RELEASE_RUNBOOK.md",
+    "RELEASE_TRAIN.md",
 }
 ROUTE_REVIEW_FILES = {
     "ROUTE_INVENTORY.md",
@@ -114,7 +115,7 @@ def main() -> int:
         surface_labels = ", ".join(SENSITIVE_SURFACES[surface] for surface in sorted(surfaces))
         failures.append(
             f"- {module_name}: changed {surface_labels} without touching a migration script, module README, "
-            "TECHNICAL_NOTE.md, RELEASE_RUNBOOK.md, or the route inventory docs."
+            "TECHNICAL_NOTE.md, RELEASE_RUNBOOK.md, RELEASE_TRAIN.md, or the route inventory docs."
         )
 
     if failures:

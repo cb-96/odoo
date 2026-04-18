@@ -51,6 +51,7 @@ python3 ci/check_doc_freshness.py
 python3 ci/check_markdown_links.py
 python3 ci/check_module_owners.py
 python3 ci/check_openapi_contracts.py
+python3 ci/check_release_train.py
 ```
 
 ## Documentation expectations
@@ -59,4 +60,5 @@ python3 ci/check_openapi_contracts.py
 - Update the matching workflow under `_workflows/` when business behavior changes.
 - Keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, `INTEGRATIONS.md`, and `STATE_AND_OWNERSHIP_MATRIX.md` aligned when the change affects their scope.
 - Update `MODULE_OWNERS.yaml` whenever a new addon is introduced or primary module ownership changes.
+- Update `RELEASE_TRAIN.md` when a change starts a new release window or needs train-level migration coordination.
 - Update the relevant record under `adr/` when a change revises portal trust boundaries, reporting SQL-view policy, or public route ownership.

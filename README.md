@@ -23,6 +23,7 @@ Quick links
 - Route inventory: `odoo/ROUTE_INVENTORY.md`
 - Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
 - Release runbook: `odoo/RELEASE_RUNBOOK.md`
+- Release train: `odoo/RELEASE_TRAIN.md`
 - Module owners: `odoo/MODULE_OWNERS.yaml`
 - Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
 - Managed integration OpenAPI: `odoo/openapi/integration_v1.yaml`

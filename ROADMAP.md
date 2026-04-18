@@ -4,6 +4,7 @@ Last updated: 2026-04-18
 Owner: Federation Platform Team
 Last reviewed: 2026-04-18
 Review cadence: Every release
+Release train: 2026.04
 
 The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-17.md`.
 This roadmap is driven by the 2026-04-17 code review and shifts the focus from
@@ -137,4 +138,4 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 17. Add audit dashboards for privileged portal actions and token rotations.
 18. [x] Add import wizard base classes for row parsing, duplicate detection, and reusable error taxonomy.
 19. Add shared enums or helper predicates for cross-module workflow states where semantics are reused.
-20. Add a release train and versioning convention so roadmap, migrations, and runbooks share one cadence.
+20. [x] Add a release train and versioning convention so roadmap, migrations, and runbooks share one cadence.

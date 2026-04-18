@@ -1,5 +1,13 @@
 from odoo import api, fields, models
 from odoo.addons.sports_federation_base.models.failure_feedback import FAILURE_CATEGORY_SELECTION
+from odoo.addons.sports_federation_import_tools.workflow_states import (
+    IMPORT_JOB_REJECTABLE_STATES,
+    IMPORT_JOB_RESUBMITTABLE_STATES,
+    IMPORT_JOB_STATE_APPROVED,
+    IMPORT_JOB_STATE_AWAITING_APPROVAL,
+    IMPORT_JOB_STATE_REJECTED,
+    IMPORT_JOB_STATE_SELECTION,
+)
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -45,14 +53,7 @@ class FederationImportJob(models.Model):
     _description = "Federation Import Governance Job"
     _order = "create_date desc, id desc"
 
-    STATE_SELECTION = [
-        ("draft", "Draft"),
-        ("awaiting_approval", "Awaiting Approval"),
-        ("approved", "Approved"),
-        ("completed", "Completed"),
-        ("completed_with_errors", "Completed With Errors"),
-        ("rejected", "Rejected"),
-    ]
+    STATE_SELECTION = IMPORT_JOB_STATE_SELECTION
 
     name = fields.Char(required=True)
     template_id = fields.Many2one("federation.import.template", required=True, ondelete="restrict")
@@ -109,11 +110,11 @@ class FederationImportJob(models.Model):
     def action_submit_for_approval(self):
         """Execute the submit for approval action."""
         for record in self:
-            if record.state not in ("draft", "rejected"):
+            if record.state not in IMPORT_JOB_RESUBMITTABLE_STATES:
                 raise ValidationError("Only draft or rejected jobs can be submitted for approval.")
             record.write(
                 {
-                    "state": "awaiting_approval",
+                    "state": IMPORT_JOB_STATE_AWAITING_APPROVAL,
                     "requested_by_id": self.env.user.id,
                     "requested_on": fields.Datetime.now(),
                     "approved_by_id": False,
@@ -132,11 +133,11 @@ class FederationImportJob(models.Model):
         """Execute the approve action."""
         self._require_manager()
         for record in self:
-            if record.state != "awaiting_approval":
+            if record.state != IMPORT_JOB_STATE_AWAITING_APPROVAL:
                 raise ValidationError("Only jobs awaiting approval can be approved.")
             record.write(
                 {
-                    "state": "approved",
+                    "state": IMPORT_JOB_STATE_APPROVED,
                     "approved_by_id": self.env.user.id,
                     "approved_on": fields.Datetime.now(),
                     "rejected_by_id": False,
@@ -153,11 +154,11 @@ class FederationImportJob(models.Model):
         """Execute the reject action."""
         self._require_manager()
         for record in self:
-            if record.state not in ("awaiting_approval", "approved"):
+            if record.state not in IMPORT_JOB_REJECTABLE_STATES:
                 raise ValidationError("Only awaiting or approved jobs can be rejected.")
             record.write(
                 {
-                    "state": "rejected",
+                    "state": IMPORT_JOB_STATE_REJECTED,
                     "rejected_by_id": self.env.user.id,
                     "rejected_on": fields.Datetime.now(),
                     "approved_by_id": False,

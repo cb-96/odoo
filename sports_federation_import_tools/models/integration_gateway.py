@@ -10,6 +10,19 @@ from odoo.addons.sports_federation_base.models.failure_feedback import (
     FAILURE_CATEGORY_SELECTION,
     build_failure_feedback,
 )
+from odoo.addons.sports_federation_import_tools.workflow_states import (
+    INBOUND_DELIVERY_ACTIVE_STATES,
+    INBOUND_DELIVERY_PROCESSED_STATES,
+    INBOUND_DELIVERY_STATE_APPROVED,
+    INBOUND_DELIVERY_STATE_AWAITING_APPROVAL,
+    INBOUND_DELIVERY_STATE_CANCELLED,
+    INBOUND_DELIVERY_STATE_FAILED,
+    INBOUND_DELIVERY_STATE_PROCESSED,
+    INBOUND_DELIVERY_STATE_PROCESSED_WITH_ERRORS,
+    INBOUND_DELIVERY_STATE_SELECTION,
+    INBOUND_DELIVERY_STATE_STAGED,
+    delivery_state_from_job_state,
+)
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -365,25 +378,16 @@ class FederationIntegrationDelivery(models.Model):
     _name = "federation.integration.delivery"
     _description = "Federation Integration Delivery"
     _order = "received_on desc, id desc"
-    ACTIVE_DEDUPLICATION_STATES = ("staged", "previewed", "awaiting_approval", "approved")
+    ACTIVE_DEDUPLICATION_STATES = INBOUND_DELIVERY_ACTIVE_STATES
 
     RETENTION_DAYS_BY_STATE = {
-        "processed": 180,
-        "processed_with_errors": 180,
-        "failed": 365,
-        "cancelled": 90,
+        INBOUND_DELIVERY_STATE_PROCESSED: 180,
+        INBOUND_DELIVERY_STATE_PROCESSED_WITH_ERRORS: 180,
+        INBOUND_DELIVERY_STATE_FAILED: 365,
+        INBOUND_DELIVERY_STATE_CANCELLED: 90,
     }
 
-    STATE_SELECTION = [
-        ("staged", "Staged"),
-        ("previewed", "Previewed"),
-        ("awaiting_approval", "Awaiting Approval"),
-        ("approved", "Approved"),
-        ("processed", "Processed"),
-        ("processed_with_errors", "Processed With Errors"),
-        ("failed", "Failed"),
-        ("cancelled", "Cancelled"),
-    ]
+    STATE_SELECTION = INBOUND_DELIVERY_STATE_SELECTION
 
     RECEIVED_VIA_SELECTION = [
         ("api", "Partner API"),
@@ -711,7 +715,7 @@ class FederationIntegrationDelivery(models.Model):
         self.ensure_one()
         self.write(
             {
-                "state": "awaiting_approval",
+                "state": INBOUND_DELIVERY_STATE_AWAITING_APPROVAL,
                 "governance_job_id": job.id,
                 "failure_category": job.failure_category,
                 "operator_message": job.operator_message,
@@ -725,7 +729,7 @@ class FederationIntegrationDelivery(models.Model):
         self.ensure_one()
         self.write(
             {
-                "state": "approved",
+                "state": INBOUND_DELIVERY_STATE_APPROVED,
                 "governance_job_id": job.id,
                 "approved_on": fields.Datetime.now(),
                 "failure_category": False,
@@ -740,7 +744,7 @@ class FederationIntegrationDelivery(models.Model):
         self.ensure_one()
         self.write(
             {
-                "state": "processed" if job.state == "completed" else "processed_with_errors",
+                "state": delivery_state_from_job_state(job.state),
                 "governance_job_id": job.id,
                 "processed_on": fields.Datetime.now(),
                 "line_count": job.line_count,
@@ -777,7 +781,7 @@ class FederationIntegrationDelivery(models.Model):
         """Delete terminal delivery records and payload attachments past retention."""
         reference_dt = fields.Datetime.to_datetime(reference_dt or fields.Datetime.now())
         total_deleted = 0
-        processed_states = {"processed", "processed_with_errors"}
+        processed_states = set(INBOUND_DELIVERY_PROCESSED_STATES)
         for state, days in self.RETENTION_DAYS_BY_STATE.items():
             cutoff = fields.Datetime.to_string(reference_dt - timedelta(days=days))
             cutoff_field = "processed_on" if state in processed_states else "received_on"

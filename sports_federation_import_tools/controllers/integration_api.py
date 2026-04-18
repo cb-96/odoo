@@ -227,7 +227,13 @@ class FederationIntegrationApi(http.Controller):
             if not isinstance(payload, dict):
                 raise ValidationError("Inbound delivery requests must use a JSON object body.")
 
-            delivery = request.env["federation.integration.delivery"].sudo().stage_partner_delivery(
+            request_idempotency_key = (
+                request.httprequest.headers.get("X-Federation-Idempotency-Key") or ""
+            ).strip() or False
+
+            delivery_result = request.env[
+                "federation.integration.delivery"
+            ].sudo().stage_partner_delivery_result(
                 partner=partner,
                 contract=subscription.contract_id,
                 filename=(payload.get("filename") or "").strip(),
@@ -235,7 +241,9 @@ class FederationIntegrationApi(http.Controller):
                 content_type=(payload.get("content_type") or "").strip() or False,
                 notes=(payload.get("notes") or "").strip() or False,
                 source_reference=(payload.get("source_reference") or "").strip() or False,
+                idempotency_key=request_idempotency_key,
             )
+            delivery = delivery_result["delivery"]
         except AccessError as error:
             return self._json_error_response(status=401, error=error)
         except ValidationError as error:
@@ -250,6 +258,21 @@ class FederationIntegrationApi(http.Controller):
             _logger.exception("Inbound delivery staging failed for contract %s", contract_code)
             return self._json_error_response(status=500, error=error)
 
+        headers = []
+        if request_idempotency_key:
+            headers.extend(
+                [
+                    (
+                        "X-Federation-Idempotency-Key",
+                        delivery_result["idempotency_key"] or request_idempotency_key,
+                    ),
+                    (
+                        "X-Federation-Idempotent-Replay",
+                        "true" if delivery_result["replayed"] else "false",
+                    ),
+                ]
+            )
+
         return self._json_response(
             {
                 "delivery": {
@@ -259,9 +282,11 @@ class FederationIntegrationApi(http.Controller):
                     "contract_code": delivery.contract_id.code,
                     "state": delivery.state,
                     "filename": delivery.filename,
+                    "idempotency_key": delivery.idempotency_key,
                     "payload_checksum": delivery.payload_checksum,
                     "route_hint": delivery.contract_id.route_hint,
                 }
             },
             status=201,
+            headers=headers,
         )

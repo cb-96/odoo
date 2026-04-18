@@ -45,6 +45,9 @@ jobs:
       - name: Check documentation freshness metadata
         run: python ci/check_doc_freshness.py
 
+      - name: Check markdown links
+        run: python ci/check_markdown_links.py
+
       - name: Check migration review coverage
         run: python ci/check_migration_review.py --base-ref origin/${{ github.base_ref || 'main' }}
 

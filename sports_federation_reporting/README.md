@@ -27,6 +27,15 @@ CSV snapshots from inside Odoo.
 | `sports_federation_finance_bridge` | Finance events |
 | `sports_federation_import_tools` | Inbound delivery failures for operator checklist reporting |
 
+Audit dashboard surfaces:
+
+- `Reporting > Portal Audit` groups privileged portal create/write/call activity
+	emitted through `federation.portal.privilege`.
+- `Reporting > Token Rotation Audit` groups manager-driven integration partner
+	token rotation events emitted from the import-tools token rotation flow.
+- both dashboards read the shared `federation.audit.event` log so additional
+	audited workflows can reuse the same reporting contract later.
+
 ## Models (all SQL view-backed, `_auto = False`)
 
 ### `federation.report.participation`
@@ -215,6 +224,20 @@ Persistent schedule for recurring application-layer report generation.
 | `consecutive_failure_count` | Integer | Number of failed generation attempts in a row |
 | `generated_file` | Binary | Last generated CSV snapshot |
 | `last_row_count` | Integer | Number of exported data rows |
+
+### `federation.report.audit.event`
+
+Read-only audit log reporting view for privileged portal activity and
+integration token rotations.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `event_family` | Selection | `portal_privilege` or `integration_token` |
+| `event_type` / `action_name` | Char | Normalized audit classification and originating method |
+| `actor_user_id` | Many2one | User who triggered the audited action |
+| `target_model` / `target_res_id` / `target_display_name` | Char / Integer / Char | Record affected by the audited action |
+| `changed_fields` | Text | Comma-separated field names touched by the action when known |
+| `description` | Text | Operator-readable audit summary |
 
 ### `federation.report.operator.checklist`
 

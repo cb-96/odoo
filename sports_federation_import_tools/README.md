@@ -89,6 +89,7 @@ Credential handling:
 
 - partner secrets are stored hashed at rest; the raw token is never shown again after issuance
 - federation managers issue or rotate a token from the partner form, then copy it from the one-time modal
+- each manager-driven token rotation writes a shared audit event that appears in `Reporting > Token Rotation Audit`
 - URL query parameters are rejected for partner authentication to avoid leaking secrets into logs, browser history, or proxy traces
 - legacy plaintext tokens are migrated into hashed storage on module load and flagged for mandatory rotation
 

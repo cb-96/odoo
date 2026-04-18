@@ -372,6 +372,18 @@ class FederationImportWizardMixin(models.AbstractModel):
             return "constraint_violation", message
         return "unexpected_error", message
 
+    def _execute_row_create(self, row_num, create_row, errors, error_categories):
+        """Execute one row-level create callback and record shared failures."""
+        if self.dry_run:
+            return True
+        try:
+            create_row()
+            return True
+        except Exception as error:
+            category, message = self._categorize_exception(error)
+            self._record_error(errors, error_categories, row_num, category, message)
+            return False
+
     def _build_result_message(self, line_count, success_count, error_count, errors, error_categories=None):
         """Build result message."""
         result_parts = [

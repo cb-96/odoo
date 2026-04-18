@@ -112,24 +112,23 @@ class FederationImportSeasonsWizard(models.TransientModel):
                 error_count += 1
                 continue
 
-            if not self.dry_run:
-                try:
-                    Season.create({
-                        "name": name,
-                        "code": code,
-                        "date_start": date_start,
-                        "date_end": date_end,
-                        "state": state,
-                        "notes": self._get_row_value(row, "notes") or False,
-                        **planning_target_values,
-                    })
-                    success_count += 1
-                except Exception as error:
-                    category, message = self._categorize_exception(error)
-                    self._record_error(errors, error_categories, row_num, category, message)
-                    error_count += 1
-            else:
+            if self._execute_row_create(
+                row_num,
+                lambda: Season.create({
+                    "name": name,
+                    "code": code,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                    "state": state,
+                    "notes": self._get_row_value(row, "notes") or False,
+                    **planning_target_values,
+                }),
+                errors,
+                error_categories,
+            ):
                 success_count += 1
+            else:
+                error_count += 1
 
         return self._finalize_import_result(
             line_count,

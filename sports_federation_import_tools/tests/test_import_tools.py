@@ -56,6 +56,85 @@ class TestImportTools(TransactionCase):
         })
         return partner, subscription
 
+    def test_all_import_wizards_inherit_shared_mixin(self):
+        """All managed import wizards should share the common mixin contract."""
+        wizard_models = [
+            "federation.import.clubs.wizard",
+            "federation.import.seasons.wizard",
+            "federation.import.teams.wizard",
+            "federation.import.players.wizard",
+            "federation.import.tournament.participants.wizard",
+        ]
+
+        for model_name in wizard_models:
+            wizard_model = self.env[model_name]
+            inherits = wizard_model._inherit
+            if isinstance(inherits, str):
+                inherits = [inherits]
+            self.assertIn("federation.import.wizard.mixin", inherits)
+            self.assertIn("template_id", wizard_model._fields)
+            self.assertIn("mapping_guide", wizard_model._fields)
+            self.assertTrue(hasattr(wizard_model, "_categorize_exception"))
+            self.assertTrue(hasattr(wizard_model, "_finalize_import_result"))
+
+    def test_import_wizard_mixin_categorizes_common_errors(self):
+        """The shared mixin should keep the common error taxonomy stable across wizards."""
+        wizard = self.env["federation.import.clubs.wizard"].create({
+            "upload_file": self._create_csv_file("name\nCategory Club"),
+            "dry_run": True,
+        })
+
+        self.assertEqual(
+            wizard._categorize_exception(ValidationError("Club not found."))[0],
+            "missing_reference",
+        )
+        self.assertEqual(
+            wizard._categorize_exception(ValidationError("Club already exists."))[0],
+            "duplicate_entry",
+        )
+        self.assertEqual(
+            wizard._categorize_exception(ValidationError("Date format is invalid."))[0],
+            "format_error",
+        )
+        self.assertEqual(
+            wizard._categorize_exception(ValidationError("Name is required."))[0],
+            "missing_required_field",
+        )
+
+    def test_import_wizard_mixin_executes_shared_row_create_flow(self):
+        """The shared row-create helper should skip dry runs and record live failures consistently."""
+        wizard = self.env["federation.import.clubs.wizard"].create({
+            "upload_file": self._create_csv_file("name\nRow Create Club"),
+            "dry_run": True,
+        })
+
+        dry_run_calls = []
+        errors = []
+        error_categories = {}
+        self.assertTrue(
+            wizard._execute_row_create(
+                2,
+                lambda: dry_run_calls.append("called"),
+                errors,
+                error_categories,
+            )
+        )
+        self.assertEqual(dry_run_calls, [])
+        self.assertEqual(errors, [])
+        self.assertEqual(error_categories, {})
+
+        wizard.dry_run = False
+        self.assertFalse(
+            wizard._execute_row_create(
+                7,
+                lambda: (_ for _ in ()).throw(ValidationError("Club already exists.")),
+                errors,
+                error_categories,
+            )
+        )
+        self.assertEqual(error_categories["duplicate_entry"], 1)
+        self.assertIn("Row 7 [duplicate_entry]: Club already exists.", errors)
+
     def test_import_clubs_dry_run_exposes_mapping_guide(self):
         """Clubs dry-run should validate rows without creating records and show guidance."""
         csv_content = "name;code;email;phone;city\nNew Club;NC001;new@example.com;123456;City1"

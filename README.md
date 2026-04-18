@@ -24,6 +24,7 @@ Quick links
 - Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
 - Release runbook: `odoo/RELEASE_RUNBOOK.md`
 - Release train: `odoo/RELEASE_TRAIN.md`
+- Data retention policy: `odoo/DATA_RETENTION_POLICY.md`
 - Performance baselines: `odoo/PERFORMANCE_BASELINES.md`
 - Restore drill checklist: `odoo/RESTORE_VERIFICATION_CHECKLIST.md`
 - Module owners: `odoo/MODULE_OWNERS.yaml`

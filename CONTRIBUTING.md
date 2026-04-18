@@ -63,4 +63,5 @@ python3 ci/check_explain_snapshots.py
 - Keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, `INTEGRATIONS.md`, and `STATE_AND_OWNERSHIP_MATRIX.md` aligned when the change affects their scope.
 - Update `MODULE_OWNERS.yaml` whenever a new addon is introduced or primary module ownership changes.
 - Update `RELEASE_TRAIN.md` when a change starts a new release window or needs train-level migration coordination.
+- Update `DATA_RETENTION_POLICY.md` when a change modifies cleanup scope or retention windows for logs, staged deliveries, or generated report files.
 - Update the relevant record under `adr/` when a change revises portal trust boundaries, reporting SQL-view policy, or public route ownership.

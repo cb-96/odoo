@@ -243,6 +243,7 @@ surfaces into a single reporting menu.
 9. **Contract-tagged exports** — Authenticated CSV responses now include explicit contract and version headers for downstream consumers.
 10. **Operator checklist** — Notification failures, workflow exceptions, finance follow-up, inbound delivery failures, blocked season readiness, and scheduled report failures now surface in one menu.
 11. **Persistent schedule failure tracking** — Report schedules keep the last failure timestamp, error message, and consecutive failure count so recurring problems survive beyond transient logs.
+12. **Generated-file retention** — Scheduled report artifacts are cleared automatically after the retention window in `DATA_RETENTION_POLICY.md`, while the schedule metadata and next run remain intact.
 
 ## CSV exports
 

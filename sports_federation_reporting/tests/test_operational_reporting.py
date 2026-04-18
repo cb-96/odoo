@@ -140,6 +140,19 @@ class TestOperationalReporting(TransactionCase):
             "state": "failed",
             "message": "Template lookup failed.",
         })
+        cls.integration_partner = cls.env["federation.integration.partner"].create({
+            "name": "Audit Ops Partner",
+            "code": "AUDITOPS",
+        })
+        cls.audit_token_event = cls.env["federation.audit.event"].log_event(
+            event_family="integration_token",
+            event_type="integration_token_rotated",
+            description="Integration partner token rotated through the manager action.",
+            target=cls.integration_partner,
+            actor=cls.env.user,
+            action_name="action_rotate_token",
+            changed_fields=["auth_token", "auth_token_last4"],
+        )
         stale_dt = fields.Datetime.now() - timedelta(days=4)
         cls.stale_result_match = cls.env["federation.match"].create({
             "tournament_id": cls.tournament.id,
@@ -170,6 +183,15 @@ class TestOperationalReporting(TransactionCase):
             "team_id": cls.team_c.id,
         })
         cls.season_registration.action_submit()
+        cls.audit_portal_event = cls.env["federation.audit.event"].log_event(
+            event_family="portal_privilege",
+            event_type="portal_write",
+            description="Portal representative updated a season registration.",
+            target=cls.season_registration,
+            actor=cls.env.user,
+            action_name="write",
+            changed_fields=["notes", "state"],
+        )
         cls.team_d = cls.env["federation.team"].create({
             "name": "Ops Team D",
             "club_id": cls.club.id,
@@ -486,6 +508,23 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn("Finance Follow-up", audit_payload)
         self.assertIn("Scheduled Report Failures", audit_payload)
         self.assertIn("Inbound Delivery Failures", audit_payload)
+
+    def test_audit_event_reporting_surfaces_portal_and_token_rows(self):
+        """Audit event reporting should expose both portal and token activity rows."""
+        portal_row = self.env["federation.report.audit.event"].search(
+            [("event_family", "=", "portal_privilege")],
+            limit=1,
+        )
+        token_row = self.env["federation.report.audit.event"].search(
+            [("event_family", "=", "integration_token")],
+            limit=1,
+        )
+
+        self.assertTrue(portal_row)
+        self.assertTrue(token_row)
+        self.assertEqual(portal_row.event_type, "portal_write")
+        self.assertEqual(token_row.event_type, "integration_token_rotated")
+        self.assertEqual(token_row.target_display_name, self.integration_partner.display_name)
 
 
 class TestYearFourReporting(TransactionCase):

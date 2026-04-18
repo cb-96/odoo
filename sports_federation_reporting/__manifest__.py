@@ -33,6 +33,7 @@
         "views/report_operational_views.xml",
         "views/report_operator_checklist_views.xml",
         "views/report_planning_views.xml",
+        "views/report_audit_event_views.xml",
         "views/report_snapshot_views.xml",
         "views/report_schedule_views.xml",
         "views/menu_views.xml",

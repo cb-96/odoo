@@ -94,6 +94,14 @@ The upgrade script performs backups by default. It stores:
 
 Do not use `--skip-backup` for production releases.
 
+Run the periodic restore drill against one of these backup directories before
+or during each release train using `RESTORE_VERIFICATION_CHECKLIST.md` as the
+operator checklist:
+
+```bash
+bash addons/ci/restore_backup_drill.sh --backup-dir 2026-04-15_191410 --target-db odoo_restore_drill --dry-run
+```
+
 ## Production Upgrade
 
 Run the upgrade and let the script restart the live Odoo service afterward so

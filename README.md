@@ -24,6 +24,7 @@ Quick links
 - Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
 - Release runbook: `odoo/RELEASE_RUNBOOK.md`
 - Release train: `odoo/RELEASE_TRAIN.md`
+- Restore drill checklist: `odoo/RESTORE_VERIFICATION_CHECKLIST.md`
 - Module owners: `odoo/MODULE_OWNERS.yaml`
 - Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
 - Managed integration OpenAPI: `odoo/openapi/integration_v1.yaml`

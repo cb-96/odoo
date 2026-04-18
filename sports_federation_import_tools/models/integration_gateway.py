@@ -365,6 +365,7 @@ class FederationIntegrationDelivery(models.Model):
     _name = "federation.integration.delivery"
     _description = "Federation Integration Delivery"
     _order = "received_on desc, id desc"
+    ACTIVE_DEDUPLICATION_STATES = ("staged", "previewed", "awaiting_approval", "approved")
 
     RETENTION_DAYS_BY_STATE = {
         "processed": 180,
@@ -418,6 +419,8 @@ class FederationIntegrationDelivery(models.Model):
     )
     filename = fields.Char(required=True)
     payload_checksum = fields.Char(required=True, readonly=True)
+    idempotency_key = fields.Char(readonly=True)
+    idempotency_fingerprint = fields.Char(readonly=True)
     source_reference = fields.Char()
     state = fields.Selection(STATE_SELECTION, required=True, default="staged", readonly=True)
     received_via = fields.Selection(RECEIVED_VIA_SELECTION, required=True, default="api")
@@ -433,6 +436,11 @@ class FederationIntegrationDelivery(models.Model):
     result_message = fields.Text(readonly=True)
     verification_summary = fields.Text(readonly=True)
     notes = fields.Text()
+
+    _partner_contract_idempotency_key_unique = models.Constraint(
+        "UNIQUE(partner_id, contract_id, idempotency_key)",
+        "This partner contract already uses that inbound idempotency key.",
+    )
 
     @api.depends("partner_id", "contract_id", "filename")
     def _compute_name(self):
@@ -455,6 +463,59 @@ class FederationIntegrationDelivery(models.Model):
                 raise ValidationError("Inbound contracts must be linked to an import template.")
 
     @api.model
+    def _normalize_idempotency_key(self, idempotency_key):
+        """Return a normalized idempotency key or False."""
+        return (idempotency_key or "").strip() or False
+
+    @api.model
+    def _build_idempotency_fingerprint(
+        self,
+        filename,
+        payload_checksum,
+        mimetype=None,
+        source_reference=None,
+    ):
+        """Build a stable request fingerprint for idempotent replay checks."""
+        return hashlib.sha256(
+            "\x1f".join(
+                [
+                    filename or "",
+                    payload_checksum or "",
+                    mimetype or "",
+                    source_reference or "",
+                ]
+            ).encode("utf-8")
+        ).hexdigest()
+
+    @api.model
+    def _match_idempotent_delivery(
+        self,
+        partner,
+        contract,
+        idempotency_key,
+        idempotency_fingerprint,
+    ):
+        """Return the existing delivery for a matching idempotency key."""
+        if not idempotency_key:
+            return self.browse()
+
+        existing = self.sudo().search(
+            [
+                ("partner_id", "=", partner.id),
+                ("contract_id", "=", contract.id),
+                ("idempotency_key", "=", idempotency_key),
+            ],
+            limit=1,
+        )
+        if not existing:
+            return self.browse()
+        if existing.idempotency_fingerprint != idempotency_fingerprint:
+            raise ValidationError(
+                "This idempotency key has already been used for a different inbound delivery request."
+            )
+        return existing
+
+    @api.model
     def stage_partner_delivery(
         self,
         partner,
@@ -464,6 +525,7 @@ class FederationIntegrationDelivery(models.Model):
         content_type=None,
         notes=None,
         source_reference=None,
+        idempotency_key=None,
     ):
         """Handle stage partner delivery."""
         if not partner:
@@ -487,16 +549,46 @@ class FederationIntegrationDelivery(models.Model):
             mimetype=content_type,
         )
         checksum = upload["checksum"]
+        normalized_idempotency_key = self._normalize_idempotency_key(idempotency_key)
+        idempotency_fingerprint = False
+        if normalized_idempotency_key:
+            idempotency_fingerprint = self._build_idempotency_fingerprint(
+                filename=upload["filename"],
+                payload_checksum=checksum,
+                mimetype=upload["mimetype"],
+                source_reference=source_reference,
+            )
+            existing = self._match_idempotent_delivery(
+                partner=partner,
+                contract=contract,
+                idempotency_key=normalized_idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+            )
+            if existing:
+                return existing
+
         existing = self.sudo().search(
             [
                 ("partner_id", "=", partner.id),
                 ("contract_id", "=", contract.id),
                 ("payload_checksum", "=", checksum),
-                ("state", "in", ("staged", "previewed", "awaiting_approval", "approved")),
+                ("state", "in", self.ACTIVE_DEDUPLICATION_STATES),
             ],
             limit=1,
         )
         if existing:
+            if normalized_idempotency_key:
+                if existing.idempotency_key and existing.idempotency_key != normalized_idempotency_key:
+                    raise ValidationError(
+                        "This payload is already staged under a different inbound idempotency key."
+                    )
+                if not existing.idempotency_key:
+                    existing.write(
+                        {
+                            "idempotency_key": normalized_idempotency_key,
+                            "idempotency_fingerprint": idempotency_fingerprint,
+                        }
+                    )
             return existing
 
         delivery = self.sudo().create(
@@ -505,6 +597,8 @@ class FederationIntegrationDelivery(models.Model):
                 "contract_id": contract.id,
                 "filename": filename,
                 "payload_checksum": checksum,
+                "idempotency_key": normalized_idempotency_key,
+                "idempotency_fingerprint": idempotency_fingerprint,
                 "source_reference": source_reference,
                 "notes": notes,
             }

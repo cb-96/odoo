@@ -216,6 +216,84 @@ class TestIntegrationApi(TransactionCase):
         self.assertEqual(payload["error_code"], "retryable_delivery")
         self.assertIn("Try again later", payload["error"])
 
+    def test_inbound_route_accepts_idempotency_key_header(self):
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+                "X-Federation-Idempotency-Key": "delivery-001",
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlCklkZW1wb3RlbnQgQ2x1YjtJREMwMDE=",
+                "content_type": "text/csv",
+                "source_reference": "batch-300",
+            },
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ):
+            response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = json.loads(response.get_data(as_text=True))
+        delivery = self.env["federation.integration.delivery"].browse(payload["delivery"]["id"])
+        self.assertEqual(delivery.idempotency_key, "delivery-001")
+
+    def test_inbound_route_returns_400_for_conflicting_idempotency_key(self):
+        first_request = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+                "X-Federation-Idempotency-Key": "delivery-002",
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlCklkZW1wb3RlbnQgQ2x1YjtJREMwMDE=",
+                "content_type": "text/csv",
+                "source_reference": "batch-400",
+            },
+        )
+        second_request = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+                "X-Federation-Idempotency-Key": "delivery-002",
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlCkRpZmZlcmVudCBDbHViO0lEQzAwMg==",
+                "content_type": "text/csv",
+                "source_reference": "batch-401",
+            },
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            first_request,
+        ):
+            first_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            second_request,
+        ):
+            second_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(second_response.status_code, 400)
+        payload = json.loads(second_response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "data_validation")
+        self.assertIn("idempotency key", payload["error"].lower())
+
     def test_contracts_route_rate_limits_repeat_callers(self):
         self.env["ir.config_parameter"].sudo().set_param(
             "sports_federation.rate_limit.integration_contracts.limit",

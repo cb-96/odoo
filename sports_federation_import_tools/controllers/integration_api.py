@@ -235,6 +235,10 @@ class FederationIntegrationApi(http.Controller):
                 content_type=(payload.get("content_type") or "").strip() or False,
                 notes=(payload.get("notes") or "").strip() or False,
                 source_reference=(payload.get("source_reference") or "").strip() or False,
+                idempotency_key=(
+                    request.httprequest.headers.get("X-Federation-Idempotency-Key") or ""
+                ).strip()
+                or False,
             )
         except AccessError as error:
             return self._json_error_response(status=401, error=error)

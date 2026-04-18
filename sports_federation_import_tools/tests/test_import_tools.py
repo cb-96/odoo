@@ -321,6 +321,63 @@ class TestImportTools(TransactionCase):
         self.assertTrue(delivery.attachment_id)
         self.assertEqual(delivery.import_template_id, contract.import_template_id)
 
+    def test_inbound_delivery_reuses_matching_idempotency_key(self):
+        """Repeated deliveries with the same idempotency key should reuse the original record."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        payload = self._create_csv_file("name;code\nIdempotent Club;IDC001").decode("utf-8")
+
+        delivery = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="clubs.csv",
+            payload_base64=payload,
+            source_reference="batch-100",
+            idempotency_key="delivery-001",
+        )
+        duplicate = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="clubs.csv",
+            payload_base64=payload,
+            source_reference="batch-100",
+            idempotency_key="delivery-001",
+        )
+
+        self.assertEqual(delivery, duplicate)
+        self.assertEqual(delivery.idempotency_key, "delivery-001")
+        self.assertTrue(delivery.idempotency_fingerprint)
+
+    def test_inbound_delivery_rejects_conflicting_idempotency_key_reuse(self):
+        """Reusing an idempotency key for a different request should fail fast."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        first_payload = self._create_csv_file("name;code\nIdempotent Club;IDC001").decode("utf-8")
+        second_payload = self._create_csv_file("name;code\nDifferent Club;IDC002").decode("utf-8")
+
+        self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="clubs.csv",
+            payload_base64=first_payload,
+            source_reference="batch-200",
+            idempotency_key="delivery-002",
+        )
+
+        with self.assertRaises(ValidationError):
+            self.env["federation.integration.delivery"].stage_partner_delivery(
+                partner=partner,
+                contract=contract,
+                filename="clubs.csv",
+                payload_base64=second_payload,
+                source_reference="batch-201",
+                idempotency_key="delivery-002",
+            )
+
     def test_inbound_delivery_links_to_governed_import_flow(self):
         """Test that inbound delivery links to governed import flow."""
         contract = self.env.ref(

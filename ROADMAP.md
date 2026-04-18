@@ -131,7 +131,7 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 10. [x] Add per-module ownership metadata to manifests or a central owner registry.
 11. Add data-retention policies for logs, staged deliveries, and generated report files.
 12. [x] Add a backup-restore drill script and a periodic restore verification checklist.
-13. Add slow-query logging and `EXPLAIN` snapshots for the largest SQL views.
+13. [x] Add slow-query logging and `EXPLAIN` snapshots for the largest SQL views.
 14. Add accessibility review passes for portal and public templates.
 15. Add mobile-specific template checks for the largest portal workflows.
 16. Add a deterministic demo-data pack for end-to-end federation walkthroughs.

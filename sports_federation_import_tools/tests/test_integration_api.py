@@ -3,10 +3,10 @@ from datetime import datetime
 import io
 import json
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase
 
 from odoo.addons.sports_federation_import_tools.controllers.integration_api import (
@@ -54,6 +54,24 @@ class TestIntegrationApi(TransactionCase):
             ),
             params=params or {},
             env=self.env,
+        )
+
+    def _make_finance_request(self, finance_event_service, params=None):
+        return SimpleNamespace(
+            httprequest=SimpleNamespace(
+                headers={
+                    "X-Federation-Partner-Code": self.partner.code,
+                    "X-Federation-Partner-Token": self.raw_token,
+                },
+                remote_addr="198.51.100.20",
+                get_json=lambda silent=True: {},
+            ),
+            params=params or {},
+            env=SimpleNamespace(
+                get=lambda model_name: (
+                    finance_event_service if model_name == "federation.finance.event" else None
+                )
+            ),
         )
 
     def test_get_credentials_accepts_custom_headers(self):
@@ -261,62 +279,48 @@ class TestIntegrationApi(TransactionCase):
         self.assertEqual(payload["error_code"], "retryable_delivery")
 
     def test_finance_events_route_supports_cursor_pagination(self):
-        FinanceEvent = self.env.get("federation.finance.event")
-        FeeType = self.env.get("federation.fee.type")
-        if FinanceEvent is None or FeeType is None:
-            self.skipTest("finance bridge is not installed")
-
-        fee_type = FeeType.create(
+        newest = Mock()
+        newest.get_handoff_export_row.return_value = ["finance_event_v1", "301", "Newest API Export Event"]
+        middle = Mock()
+        middle.get_handoff_export_row.return_value = ["finance_event_v1", "300", "Middle API Export Event"]
+        oldest = Mock()
+        oldest.get_handoff_export_row.return_value = ["finance_event_v1", "299", "Oldest API Export Event"]
+        finance_service = Mock()
+        finance_service.EXPORT_SCHEMA_VERSION = "finance_event_v1"
+        finance_service.sudo.return_value = finance_service
+        finance_service.get_handoff_export_headers.return_value = ["Version", "Id", "Name"]
+        finance_service.get_handoff_export_batch.side_effect = [
             {
-                "name": "API Export Fee",
-                "code": "APIEXP",
-                "category": "other",
-                "default_amount": 12.00,
-            }
-        )
-        oldest = FinanceEvent.create(
-            {
-                "name": "Oldest API Export Event",
-                "fee_type_id": fee_type.id,
-                "event_type": "charge",
-                "amount": 12.00,
-                "source_model": "federation.club",
-                "source_res_id": 1,
-            }
-        )
-        middle = FinanceEvent.create(
-            {
-                "name": "Middle API Export Event",
-                "fee_type_id": fee_type.id,
-                "event_type": "charge",
-                "amount": 13.00,
-                "source_model": "federation.club",
-                "source_res_id": 1,
-            }
-        )
-        newest = FinanceEvent.create(
-            {
-                "name": "Newest API Export Event",
-                "fee_type_id": fee_type.id,
-                "event_type": "charge",
-                "amount": 14.00,
-                "source_model": "federation.club",
-                "source_res_id": 1,
-            }
-        )
-
-        first_request = self._make_request(
-            headers={
-                "X-Federation-Partner-Code": self.partner.code,
-                "X-Federation-Partner-Token": self.raw_token,
+                "events": [newest, middle],
+                "count": 2,
+                "limit": 2,
+                "has_more": True,
+                "next_cursor": "2026-04-18 12:00:00|300",
             },
-            params={
-                "limit": "2",
+            {
+                "events": [oldest],
+                "count": 1,
+                "limit": 2,
+                "has_more": False,
+                "next_cursor": False,
             },
+        ]
+
+        first_request = self._make_finance_request(
+            finance_service,
+            params={"limit": "2"},
         )
         with patch(
             "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
             first_request,
+        ), patch.object(
+            self.controller,
+            "_rate_limit_response",
+            return_value=False,
+        ), patch.object(
+            self.controller,
+            "_authenticate",
+            return_value=(SimpleNamespace(code=self.partner.code), None),
         ):
             first_response = self.controller.integration_finance_events()
 
@@ -325,14 +329,11 @@ class TestIntegrationApi(TransactionCase):
         self.assertEqual(first_response.headers.get("X-Federation-Export-Mode"), "cursor_page")
         self.assertEqual(first_response.headers.get("X-Federation-Export-Count"), "2")
         self.assertEqual(first_response.headers.get("X-Federation-Has-More"), "true")
-        self.assertEqual(first_rows[1][1], str(newest.id))
-        self.assertEqual(first_rows[2][1], str(middle.id))
+        self.assertEqual(first_rows[1][1], "301")
+        self.assertEqual(first_rows[2][1], "300")
 
-        second_request = self._make_request(
-            headers={
-                "X-Federation-Partner-Code": self.partner.code,
-                "X-Federation-Partner-Token": self.raw_token,
-            },
+        second_request = self._make_finance_request(
+            finance_service,
             params={
                 "limit": "2",
                 "cursor": first_response.headers.get("X-Federation-Next-Cursor"),
@@ -341,6 +342,14 @@ class TestIntegrationApi(TransactionCase):
         with patch(
             "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
             second_request,
+        ), patch.object(
+            self.controller,
+            "_rate_limit_response",
+            return_value=False,
+        ), patch.object(
+            self.controller,
+            "_authenticate",
+            return_value=(SimpleNamespace(code=self.partner.code), None),
         ):
             second_response = self.controller.integration_finance_events()
 
@@ -348,7 +357,64 @@ class TestIntegrationApi(TransactionCase):
         self.assertEqual(second_response.status_code, 200)
         self.assertEqual(second_response.headers.get("X-Federation-Has-More"), "false")
         self.assertIsNone(second_response.headers.get("X-Federation-Next-Cursor"))
-        self.assertEqual(second_rows[1][1], str(oldest.id))
+        self.assertEqual(second_rows[1][1], "299")
+
+    def test_finance_events_route_returns_400_for_invalid_limit(self):
+        finance_service = Mock()
+        finance_service.sudo.return_value = finance_service
+        finance_service.get_handoff_export_batch.side_effect = ValidationError(
+            "Finance event export limits must be positive integers."
+        )
+        request_stub = self._make_finance_request(finance_service, params={"limit": "0"})
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            self.controller,
+            "_rate_limit_response",
+            return_value=False,
+        ), patch.object(
+            self.controller,
+            "_authenticate",
+            return_value=(SimpleNamespace(code=self.partner.code), None),
+        ):
+            response = self.controller.integration_finance_events()
+
+        self.assertEqual(response.status_code, 400)
+        payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "data_validation")
+        self.assertIn("positive integers", payload["error"])
+
+    def test_finance_events_route_returns_400_for_invalid_cursor(self):
+        finance_service = Mock()
+        finance_service.sudo.return_value = finance_service
+        finance_service.get_handoff_export_batch.side_effect = ValidationError(
+            "Finance event export cursors must use the '<timestamp>|<id>' format."
+        )
+        request_stub = self._make_finance_request(
+            finance_service,
+            params={"cursor": "not-a-valid-cursor"},
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            self.controller,
+            "_rate_limit_response",
+            return_value=False,
+        ), patch.object(
+            self.controller,
+            "_authenticate",
+            return_value=(SimpleNamespace(code=self.partner.code), None),
+        ):
+            response = self.controller.integration_finance_events()
+
+        self.assertEqual(response.status_code, 400)
+        payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "data_validation")
+        self.assertIn("<timestamp>|<id>", payload["error"])
 
     def test_inbound_route_rate_limits_repeat_callers(self):
         self.env["ir.config_parameter"].sudo().set_param(

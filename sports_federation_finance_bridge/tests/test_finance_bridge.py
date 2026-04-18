@@ -303,6 +303,18 @@ class TestFinanceBridge(TransactionCase):
         self.assertFalse(second_batch["has_more"])
         self.assertFalse(second_batch["next_cursor"])
 
+    def test_handoff_export_batch_rejects_invalid_limit(self):
+        """Test that cursor exports reject invalid limits."""
+        with self.assertRaises(ValidationError):
+            self.env["federation.finance.event"].get_handoff_export_batch(limit="0")
+
+    def test_handoff_export_batch_rejects_invalid_cursor(self):
+        """Test that cursor exports reject malformed cursors."""
+        with self.assertRaises(ValidationError):
+            self.env["federation.finance.event"].get_handoff_export_batch(
+                cursor="not-a-valid-cursor"
+            )
+
     def test_finance_event_infers_season_from_source_record(self):
         """Test that finance event infers season from source record."""
         fee_type = self.env["federation.fee.type"].create({

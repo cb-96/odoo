@@ -166,14 +166,17 @@ class FederationIntegrationApi(http.Controller):
         export_cursor = (request.params.get("cursor") or "").strip() or False
         export_limit = (request.params.get("limit") or "").strip() or False
         export_batch = False
-        if export_cursor or export_limit:
-            export_batch = FinanceEvent.sudo().get_handoff_export_batch(
-                cursor=export_cursor,
-                limit=export_limit,
-            )
-            events = export_batch["events"]
-        else:
-            events = FinanceEvent.sudo().search([], order="create_date desc, id desc")
+        try:
+            if export_cursor or export_limit:
+                export_batch = FinanceEvent.sudo().get_handoff_export_batch(
+                    cursor=export_cursor,
+                    limit=export_limit,
+                )
+                events = export_batch["events"]
+            else:
+                events = FinanceEvent.sudo().search([], order="create_date desc, id desc")
+        except ValidationError as error:
+            return self._json_error_response(status=400, error=error)
 
         output = io.StringIO()
         writer = csv.writer(output)

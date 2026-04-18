@@ -1,6 +1,7 @@
-from unittest.mock import patch
 import subprocess
+from unittest.mock import patch
 
+from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
 from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase
 
@@ -148,12 +149,33 @@ class TestFederationAttachmentPolicy(TransactionCase):
                 stderr=b"scanner offline\n",
             )
 
-            with self.assertRaises(ValidationError) as error:
+            with self.assertRaises(AttachmentScanVerificationError) as error:
                 scanner.scan_upload(
                     "integration_inbound_csv",
                     "clubs.csv",
                     b"name;code\nClub;CL001",
                     mimetype="text/csv",
+                )
+
+        self.assertIn("could not be verified", str(error.exception))
+
+    def test_scan_upload_rejects_when_external_command_is_unavailable(self):
+        scanner = self.env["federation.attachment.scan.service"]
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.attachment_scan.command",
+            "/usr/local/bin/fake-attachment-scan",
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_base.models.attachment_scan_service.subprocess.run",
+            side_effect=FileNotFoundError(),
+        ):
+            with self.assertRaises(AttachmentScanVerificationError) as error:
+                scanner.scan_upload(
+                    "portal_document",
+                    "club-insurance.pdf",
+                    b"portal-payload",
+                    mimetype="application/pdf",
                 )
 
         self.assertIn("could not be verified", str(error.exception))

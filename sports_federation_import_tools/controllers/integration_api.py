@@ -4,6 +4,7 @@ import json
 import logging
 
 from odoo import http
+from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
 from odoo.addons.sports_federation_base.models.failure_feedback import build_failure_feedback
 from odoo.exceptions import AccessError, ValidationError
 from odoo.http import Response, request
@@ -212,6 +213,12 @@ class FederationIntegrationApi(http.Controller):
             return self._json_error_response(status=401, error=error)
         except ValidationError as error:
             return self._json_error_response(status=400, error=error)
+        except AttachmentScanVerificationError as error:
+            return self._json_error_response(
+                status=503,
+                error=error,
+                default_category="retryable_delivery",
+            )
         except Exception as error:
             _logger.exception("Inbound delivery staging failed for contract %s", contract_code)
             return self._json_error_response(status=500, error=error)

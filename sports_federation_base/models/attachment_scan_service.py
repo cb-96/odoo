@@ -4,6 +4,7 @@ import shlex
 import subprocess
 
 from odoo import api, models
+from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
 from odoo.exceptions import ValidationError
 
 
@@ -65,7 +66,7 @@ class FederationAttachmentScanService(models.AbstractModel):
     @api.model
     def _build_verification_error(self):
         """Return the stable operator-facing verification failure."""
-        return ValidationError(
+        return AttachmentScanVerificationError(
             "Uploaded files could not be verified by the federation malware scanner. Try again later."
         )
 

@@ -1,6 +1,7 @@
 from urllib.parse import quote_plus
 
 from odoo import http
+from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.exceptions import AccessError, ValidationError
 from odoo.http import request
@@ -123,7 +124,7 @@ class FederationCompliancePortal(CustomerPortal):
                 uploaded_files=request.httprequest.files.getlist("attachment"),
                 user=request.env.user,
             )
-        except (AccessError, ValidationError) as error:
+        except (AccessError, ValidationError, AttachmentScanVerificationError) as error:
             return request.redirect(f"{redirect_url}?error={quote_plus(str(error))}")
 
         return request.redirect(

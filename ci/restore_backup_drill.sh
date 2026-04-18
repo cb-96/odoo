@@ -15,6 +15,7 @@ Options:
   --db-user NAME            PostgreSQL user for psql/pg_restore (default: odoo).
   --backup-root PATH        Backup root directory (default: ../backups).
   --filestore-root PATH     Filestore root directory (default: ../odoo-data/filestore).
+  --report-file PATH        Optional report file path (default: <backup-dir>/restore_drill_<target-db>.txt).
   --skip-filestore          Skip restoring the filestore archive.
   --dry-run                 Print the resolved restore plan and exit.
   --yes, -y                 Skip the confirmation prompt.
@@ -144,6 +145,7 @@ BACKUP_ROOT="${BACKUP_ROOT:-$WORKSPACE_ROOT/backups}"
 FILESTORE_ROOT="${FILESTORE_ROOT:-$WORKSPACE_ROOT/odoo-data/filestore}"
 BACKUP_DIR=""
 TARGET_DB=""
+REPORT_FILE=""
 SKIP_FILESTORE=false
 DRY_RUN=false
 AUTO_CONFIRM=false
@@ -190,6 +192,11 @@ while [[ $# -gt 0 ]]; do
       FILESTORE_ROOT="$2"
       shift 2
       ;;
+    --report-file)
+      [[ $# -ge 2 ]] || die "Missing value for $1"
+      REPORT_FILE="$2"
+      shift 2
+      ;;
     --skip-filestore)
       SKIP_FILESTORE=true
       shift
@@ -228,8 +235,17 @@ MODULES_FILE="$BACKUP_DIR/modules.txt"
 FILESTORE_ARCHIVE="$(find_optional_file "$BACKUP_DIR" 'filestore_*.tar.gz' 'filestore archive')"
 
 declare -a EXPECTED_MODULES=()
-mapfile -t EXPECTED_MODULES < <(while IFS= read -r line || [[ -n "$line" ]]; do trim "$line"; done < "$MODULES_FILE")
+while IFS= read -r line || [[ -n "$line" ]]; do
+  line="$(trim "$line")"
+  if [[ -n "$line" ]]; then
+    EXPECTED_MODULES+=("$line")
+  fi
+done < "$MODULES_FILE"
 [[ ${#EXPECTED_MODULES[@]} -gt 0 ]] || die "No modules found in $MODULES_FILE"
+
+if [[ -z "$REPORT_FILE" ]]; then
+  REPORT_FILE="$BACKUP_DIR/restore_drill_${TARGET_DB}.txt"
+fi
 
 COMPOSE_CMD=(docker compose)
 if [[ -n "$COMPOSE_PROJECT_NAME" ]]; then
@@ -246,6 +262,7 @@ echo "  Compose file:    $COMPOSE_FILE"
 echo "  DB service:      $DB_SERVICE"
 echo "  DB user:         $DB_USER"
 echo "  Module count:    ${#EXPECTED_MODULES[@]}"
+echo "  Report file:     $REPORT_FILE"
 if [[ -n "$FILESTORE_ARCHIVE" && "$SKIP_FILESTORE" == false ]]; then
   echo "  Filestore:       $FILESTORE_ARCHIVE"
 elif [[ "$SKIP_FILESTORE" == true ]]; then
@@ -311,8 +328,21 @@ if [[ ${#MISSING_MODULES[@]} -gt 0 ]]; then
   exit 1
 fi
 
+mkdir -p "$(dirname "$REPORT_FILE")"
+cat > "$REPORT_FILE" <<EOF
+restore_drill_completed_at=$(date '+%F %T')
+backup_dir=$BACKUP_DIR
+dump_file=$DUMP_FILE
+target_db=$TARGET_DB
+module_count_expected=${#EXPECTED_MODULES[@]}
+module_count_verified=${#RESTORED_MODULES[@]}
+filestore_archive=${FILESTORE_ARCHIVE:-none}
+filestore_restored=$([[ -n "$FILESTORE_ARCHIVE" && "$SKIP_FILESTORE" == false ]] && echo yes || echo no)
+EOF
+
 log "Restore drill completed successfully"
 log "Verified ${#RESTORED_MODULES[@]} expected modules in '$TARGET_DB'"
 if [[ -n "$FILESTORE_ARCHIVE" && "$SKIP_FILESTORE" == false ]]; then
   log "Filestore restored under $FILESTORE_ROOT/$TARGET_DB"
 fi
+log "Report written to $REPORT_FILE"

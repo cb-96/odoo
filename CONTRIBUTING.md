@@ -47,6 +47,7 @@ black --check sports_federation_base sports_federation_tournament sports_federat
 flake8 sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
 bash -n ci/run_tests.sh
 bash -n ci/apply_env_to_ir_config.sh
+bash -n ci/restore_backup_drill.sh
 python3 ci/check_doc_freshness.py
 python3 ci/check_markdown_links.py
 python3 ci/check_module_owners.py

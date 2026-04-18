@@ -249,6 +249,22 @@ paths:
       operationId: exportPartnerFinanceEvents
       summary: Export finance events as CSV for a subscribed partner.
       description: Returns the current partner finance-event handoff export in CSV form.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 200
+          description: Optional bounded page size for cursor-based exports.
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Resume token in `<timestamp>|<id>` format from the previous page.
       responses:
         '200':
           description: Finance handoff CSV export.
@@ -263,6 +279,31 @@ paths:
             X-Federation-Partner-Code:
               schema:
                 type: string
+            X-Federation-Export-Mode:
+              schema:
+                type: string
+                enum:
+                  - cursor_page
+              description: Present when cursor pagination is active.
+            X-Federation-Export-Count:
+              schema:
+                type: integer
+              description: Present when cursor pagination is active.
+            X-Federation-Has-More:
+              schema:
+                type: string
+                enum:
+                  - 'true'
+                  - 'false'
+              description: Present when cursor pagination is active.
+            X-Federation-Page-Limit:
+              schema:
+                type: integer
+              description: Effective bounded page size when cursor pagination is active.
+            X-Federation-Next-Cursor:
+              schema:
+                type: string
+              description: Resume token for the next page when more rows are available.
           content:
             text/csv:
               schema:
@@ -270,6 +311,12 @@ paths:
               example: |
                 event_id,event_code,state,handoff_state,fee_type,amount_total
                 12,FIN-00012,confirmed,ready,team_fee,125.00
+        '400':
+          description: Invalid pagination parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Invalid or missing partner credentials.
           content:

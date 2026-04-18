@@ -315,6 +315,20 @@ class TestFinanceBridge(TransactionCase):
                 cursor="not-a-valid-cursor"
             )
 
+    def test_handoff_export_limit_defaults_when_unspecified(self):
+        """Test that cursor exports default to the configured page size."""
+        self.assertEqual(
+            self.env["federation.finance.event"]._normalize_handoff_export_limit(),
+            self.env["federation.finance.event"].HANDOFF_EXPORT_DEFAULT_LIMIT,
+        )
+
+    def test_handoff_export_limit_caps_requested_page_size(self):
+        """Test that cursor exports clamp oversized page sizes."""
+        self.assertEqual(
+            self.env["federation.finance.event"]._normalize_handoff_export_limit(limit="999"),
+            self.env["federation.finance.event"].HANDOFF_EXPORT_MAX_LIMIT,
+        )
+
     def test_finance_event_infers_season_from_source_record(self):
         """Test that finance event infers season from source record."""
         fee_type = self.env["federation.fee.type"].create({

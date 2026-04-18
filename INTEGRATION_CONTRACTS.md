@@ -150,8 +150,9 @@ All authenticated CSV exports expose these headers:
 - Response type: `text/csv`
 - Contract: `finance_event_v1`
 - Optional query parameters:
-  - `limit` to request one bounded page of rows
+  - `limit` to request one bounded page of rows; defaults to `200` and caps at `500`
   - `cursor` to resume after the last row from the previous page
+- Invalid `limit` or `cursor` values return `400` with the standard `data_validation` payload.
 - Headers:
   - `X-Federation-Contract: finance_event_v1`
   - `X-Federation-Contract-Version: <schema version>`

@@ -118,14 +118,14 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 
 ## Twenty Additional Improvements
 
-1. Publish an OpenAPI-style contract document for partner integration routes and payloads.
-2. Introduce one-time token reveal plus last-four-character token display in the back office.
+1. [x] Publish an OpenAPI-style contract document for partner integration routes and payloads.
+2. [x] Introduce one-time token reveal plus last-four-character token display in the back office.
 3. Add rate limiting or throttling for public JSON and partner integration endpoints.
 4. Add attachment antivirus or external malware-scanning hooks for uploaded files.
 5. Implement pagination or incremental cursors for finance event exports.
 6. Add idempotency keys for inbound delivery submissions.
-7. Add architecture decision records for portal trust boundaries, reporting SQL views, and public route ownership.
-8. Add a repo-wide dead-link and stale-doc check in CI.
+7. [x] Add architecture decision records for portal trust boundaries, reporting SQL views, and public route ownership.
+8. [x] Add a repo-wide dead-link and stale-doc check in CI.
 9. Add smoke tests that verify every public route listed in `ROUTE_INVENTORY.md` still resolves.
 10. Add per-module ownership metadata to manifests or a central owner registry.
 11. Add data-retention policies for logs, staged deliveries, and generated report files.

@@ -9,6 +9,10 @@ This document defines the stable partner-facing contracts currently supported by
 the federation platform and the policy used to version, evolve, and deprecate
 them.
 
+Machine-readable partner route definitions live in `openapi/integration_v1.yaml`.
+Keep the OpenAPI file, this document, and the route implementations aligned in
+the same change set whenever a managed integration contract changes.
+
 ## Contract Principles
 
 - Every external export or feed must expose an explicit contract identifier.

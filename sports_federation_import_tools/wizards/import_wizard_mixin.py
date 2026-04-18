@@ -5,6 +5,12 @@ import io
 
 from odoo import fields, models
 from odoo.addons.sports_federation_base.models.failure_feedback import DEFAULT_OPERATOR_MESSAGES
+from odoo.addons.sports_federation_import_tools.workflow_states import (
+    IMPORT_JOB_STATE_APPROVED,
+    IMPORT_JOB_STATE_COMPLETED,
+    IMPORT_JOB_STATE_COMPLETED_WITH_ERRORS,
+    is_import_job_approved,
+)
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -153,7 +159,7 @@ class FederationImportWizardMixin(models.AbstractModel):
         if not self.template_id or not self.template_id.approval_required:
             return
         job = self.governance_job_id
-        if not job or job.state != "approved":
+        if not job or not is_import_job_approved(job.state):
             raise ValidationError(
                 "Live imports require an approved governance job. Run a dry run, request approval, and approve the job before importing."
             )
@@ -222,13 +228,17 @@ class FederationImportWizardMixin(models.AbstractModel):
         if self.integration_delivery_id and self.dry_run:
             self.integration_delivery_id.action_mark_previewed(self)
 
-        if not self.dry_run and self.governance_job_id and self.governance_job_id.state == "approved":
+        if not self.dry_run and self.governance_job_id and is_import_job_approved(self.governance_job_id.state):
             after_count = self._get_target_record_count()
             failure_category = self._get_overall_failure_category(error_categories=error_categories)
             operator_message = self._get_overall_operator_message(error_categories=error_categories)
             self.governance_job_id.write(
                 {
-                    "state": "completed" if not error_count else "completed_with_errors",
+                    "state": (
+                        IMPORT_JOB_STATE_COMPLETED
+                        if not error_count
+                        else IMPORT_JOB_STATE_COMPLETED_WITH_ERRORS
+                    ),
                     "line_count": line_count,
                     "success_count": success_count,
                     "error_count": error_count,

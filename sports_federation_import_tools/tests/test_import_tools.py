@@ -3,6 +3,11 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from odoo import fields
+from odoo.addons.sports_federation_import_tools.workflow_states import (
+    IMPORT_JOB_STATE_SELECTION,
+    INBOUND_DELIVERY_STATE_SELECTION,
+    delivery_state_from_job_state,
+)
 from odoo.exceptions import AccessError
 from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase
@@ -79,6 +84,28 @@ class TestImportTools(TransactionCase):
             self.assertIn("mapping_guide", wizard_model._fields)
             self.assertTrue(hasattr(wizard_model, "_categorize_exception"))
             self.assertTrue(hasattr(wizard_model, "_finalize_import_result"))
+
+    def test_import_job_uses_shared_state_selection(self):
+        """Import job workflow states should come from the shared helper module."""
+        self.assertEqual(
+            self.env["federation.import.job"].STATE_SELECTION,
+            IMPORT_JOB_STATE_SELECTION,
+        )
+
+    def test_inbound_delivery_uses_shared_state_selection(self):
+        """Inbound delivery workflow states should come from the shared helper module."""
+        self.assertEqual(
+            self.env["federation.integration.delivery"].STATE_SELECTION,
+            INBOUND_DELIVERY_STATE_SELECTION,
+        )
+
+    def test_shared_workflow_helper_maps_job_completion_to_delivery_state(self):
+        """The shared workflow helper should map job completion states to delivery states."""
+        self.assertEqual(delivery_state_from_job_state("completed"), "processed")
+        self.assertEqual(
+            delivery_state_from_job_state("completed_with_errors"),
+            "processed_with_errors",
+        )
 
     def test_import_wizard_mixin_categorizes_common_errors(self):
         """The shared mixin should keep the common error taxonomy stable across wizards."""

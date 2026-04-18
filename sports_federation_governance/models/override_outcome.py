@@ -1,4 +1,7 @@
 from odoo import api, fields, models
+from odoo.addons.sports_federation_governance.workflow_states import (
+    OVERRIDE_REQUEST_STATE_SELECTION,
+)
 
 
 class FederationOverrideOutcome(models.Model):
@@ -13,14 +16,7 @@ class FederationOverrideOutcome(models.Model):
         ("ineffective", "Ineffective"),
         ("reversed", "Reversed"),
     ]
-    REQUEST_STATE_SELECTION = [
-        ("draft", "Draft"),
-        ("submitted", "Submitted"),
-        ("approved", "Approved"),
-        ("rejected", "Rejected"),
-        ("implemented", "Implemented"),
-        ("closed", "Closed"),
-    ]
+    REQUEST_STATE_SELECTION = OVERRIDE_REQUEST_STATE_SELECTION
 
     name = fields.Char(string="Name", compute="_compute_name", store=True)
     request_id = fields.Many2one(

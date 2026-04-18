@@ -149,6 +149,22 @@ Add unit and integration tests covering the following:
 
 This technical note documents architecture, coding conventions, workflows, and extension points for the Sports Federation Odoo 19 custom addons collection located in the `odoo/` folder. It is intended for developers, integrators, and release engineers working on federation features: tournaments, matches, rosters, refereeing, results pipelines, and public website publication.
 
+### Shared workflow state helpers (2026-04-18)
+
+Where one addon reuses the same workflow vocabulary across multiple models,
+keep the selection tuples and state-role predicates in a small plain Python
+helper module instead of repeating raw string tuples in each model.
+
+- `sports_federation_import_tools/workflow_states.py` now owns the inbound
+    delivery and import-governance lifecycle constants used by the delivery
+    model, governance job model, wizard mixin, migration backfill, and tests.
+- `sports_federation_governance/workflow_states.py` now owns the override
+    request and decision lifecycle constants used by the request, decision,
+    outcome, and test modules.
+- When new logic only needs to know the semantic role of a state, prefer a
+    helper predicate such as `is_import_job_approved(...)` over direct string
+    comparisons so future state changes stay localized.
+
 ## Table of contents
 
 - Executive summary

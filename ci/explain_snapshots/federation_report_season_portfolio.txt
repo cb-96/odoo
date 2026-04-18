@@ -1,4 +1,4 @@
-# Captured at: 2026-04-18T08:34:55Z
+# Captured at: 2026-04-18T08:35:36Z
 # Database: odoo_restore_drill
 # Season ID: 122
 # Query: SELECT * FROM federation_report_season_portfolio WHERE season_id = 122

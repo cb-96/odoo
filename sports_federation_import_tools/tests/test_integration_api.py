@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -41,10 +42,11 @@ class TestIntegrationApi(TransactionCase):
         )
         cls.raw_token = cls.partner._issue_auth_token()
 
-    def _make_request(self, headers=None, params=None, json_payload=None):
+    def _make_request(self, headers=None, params=None, json_payload=None, remote_addr="198.51.100.20"):
         return SimpleNamespace(
             httprequest=SimpleNamespace(
                 headers=headers or {},
+                remote_addr=remote_addr,
                 get_json=lambda silent=True: json_payload,
             ),
             params=params or {},
@@ -159,3 +161,105 @@ class TestIntegrationApi(TransactionCase):
         payload = json.loads(response.get_data(as_text=True))
         self.assertEqual(payload["error_code"], "data_validation")
         self.assertIn("extensions", payload["error"])
+
+    def test_contracts_route_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.integration_contracts.limit",
+            1,
+        )
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            }
+        )
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            response = self.controller.integration_contracts()
+            blocked = self.controller.integration_contracts()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.headers.get("Retry-After"), "60")
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")
+
+    def test_finance_events_route_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.integration_finance_events.limit",
+            1,
+        )
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            }
+        )
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            response = self.controller.integration_finance_events()
+            blocked = self.controller.integration_finance_events()
+
+        self.assertNotEqual(response.status_code, 429)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.headers.get("Retry-After"), "60")
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")
+
+    def test_inbound_route_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.integration_inbound_deliveries.limit",
+            1,
+        )
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlClN0YWdlZCBDbHViO1NDMDAx",
+                "content_type": "text/csv",
+            },
+        )
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+            blocked = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.headers.get("Retry-After"), "60")
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")

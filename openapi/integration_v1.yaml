@@ -31,6 +31,12 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: Alternative to X-Federation-Partner-Token.
+  headers:
+    RetryAfter:
+      description: Number of seconds to wait before retrying the same route.
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     ErrorResponse:
       type: object
@@ -227,6 +233,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded for this partner route.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /integration/v1/outbound/finance/events:
     get:
       tags:
@@ -263,6 +278,15 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Finance export contract unavailable in the active database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded for this partner route.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
           content:
             application/json:
               schema:
@@ -308,6 +332,15 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Invalid or missing partner credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded for this partner route.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
           content:
             application/json:
               schema:

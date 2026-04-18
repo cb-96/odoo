@@ -378,6 +378,13 @@ Backups and rollback
 
 ## Developer workflow: add/modify checklist
 
+Architecture decisions
+
+- Repository-level architectural choices that cut across portal trust
+    boundaries, reporting SQL views, or public route ownership live in `adr/`.
+- Update the relevant ADR in the same change set when one of those core
+    decisions materially changes.
+
 When introducing a new feature follow this minimal patch checklist:
 
 1. Add model code: `models/<file>.py`. Export in `models/__init__.py`.

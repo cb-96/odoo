@@ -53,6 +53,7 @@ python3 ci/check_markdown_links.py
 python3 ci/check_module_owners.py
 python3 ci/check_openapi_contracts.py
 python3 ci/check_release_train.py
+python3 ci/check_explain_snapshots.py
 ```
 
 ## Documentation expectations

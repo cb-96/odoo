@@ -378,6 +378,40 @@ class TestImportTools(TransactionCase):
                 idempotency_key="delivery-002",
             )
 
+    def test_inbound_delivery_reuses_idempotency_key_after_processing(self):
+        """The same idempotency key should resolve to the original delivery even after processing."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        payload = self._create_csv_file("name;code\nProcessed Club;IDC003").decode("utf-8")
+
+        delivery = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="clubs.csv",
+            payload_base64=payload,
+            source_reference="batch-202",
+            idempotency_key="delivery-003",
+        )
+        delivery.write(
+            {
+                "state": "processed",
+                "processed_on": fields.Datetime.now(),
+            }
+        )
+
+        replayed = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="clubs.csv",
+            payload_base64=payload,
+            source_reference="batch-202",
+            idempotency_key="delivery-003",
+        )
+
+        self.assertEqual(delivery, replayed)
+
     def test_inbound_delivery_links_to_governed_import_flow(self):
         """Test that inbound delivery links to governed import flow."""
         contract = self.env.ref(

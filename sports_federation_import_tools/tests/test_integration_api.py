@@ -241,6 +241,9 @@ class TestIntegrationApi(TransactionCase):
 
         self.assertEqual(response.status_code, 201)
         payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response.headers.get("X-Federation-Idempotency-Key"), "delivery-001")
+        self.assertEqual(response.headers.get("X-Federation-Idempotent-Replay"), "false")
+        self.assertEqual(payload["delivery"]["idempotency_key"], "delivery-001")
         delivery = self.env["federation.integration.delivery"].browse(payload["delivery"]["id"])
         self.assertEqual(delivery.idempotency_key, "delivery-001")
 
@@ -293,6 +296,45 @@ class TestIntegrationApi(TransactionCase):
         payload = json.loads(second_response.get_data(as_text=True))
         self.assertEqual(payload["error_code"], "data_validation")
         self.assertIn("idempotency key", payload["error"].lower())
+
+    def test_inbound_route_marks_idempotent_replay_in_headers(self):
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+                "X-Federation-Idempotency-Key": "delivery-003",
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlCklkZW1wb3RlbnQgQ2x1YjtJREMwMDE=",
+                "content_type": "text/csv",
+                "source_reference": "batch-402",
+            },
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ):
+            first_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ):
+            second_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        first_payload = json.loads(first_response.get_data(as_text=True))
+        second_payload = json.loads(second_response.get_data(as_text=True))
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(second_response.status_code, 201)
+        self.assertEqual(first_response.headers.get("X-Federation-Idempotent-Replay"), "false")
+        self.assertEqual(second_response.headers.get("X-Federation-Idempotent-Replay"), "true")
+        self.assertEqual(first_payload["delivery"]["id"], second_payload["delivery"]["id"])
 
     def test_contracts_route_rate_limits_repeat_callers(self):
         self.env["ir.config_parameter"].sudo().set_param(

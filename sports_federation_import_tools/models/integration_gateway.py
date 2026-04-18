@@ -527,7 +527,31 @@ class FederationIntegrationDelivery(models.Model):
         source_reference=None,
         idempotency_key=None,
     ):
-        """Handle stage partner delivery."""
+        """Stage a partner delivery and return only the delivery record."""
+        return self.stage_partner_delivery_result(
+            partner=partner,
+            contract=contract,
+            filename=filename,
+            payload_base64=payload_base64,
+            content_type=content_type,
+            notes=notes,
+            source_reference=source_reference,
+            idempotency_key=idempotency_key,
+        )["delivery"]
+
+    @api.model
+    def stage_partner_delivery_result(
+        self,
+        partner,
+        contract,
+        filename,
+        payload_base64,
+        content_type=None,
+        notes=None,
+        source_reference=None,
+        idempotency_key=None,
+    ):
+        """Stage a partner delivery and return replay metadata."""
         if not partner:
             raise ValidationError("Select a partner before staging an inbound delivery.")
         if not contract or contract.direction != "inbound":
@@ -565,7 +589,11 @@ class FederationIntegrationDelivery(models.Model):
                 idempotency_fingerprint=idempotency_fingerprint,
             )
             if existing:
-                return existing
+                return {
+                    "delivery": existing,
+                    "replayed": True,
+                    "idempotency_key": existing.idempotency_key or normalized_idempotency_key,
+                }
 
         existing = self.sudo().search(
             [
@@ -589,7 +617,11 @@ class FederationIntegrationDelivery(models.Model):
                             "idempotency_fingerprint": idempotency_fingerprint,
                         }
                     )
-            return existing
+            return {
+                "delivery": existing,
+                "replayed": True,
+                "idempotency_key": existing.idempotency_key or normalized_idempotency_key,
+            }
 
         delivery = self.sudo().create(
             {
@@ -613,7 +645,11 @@ class FederationIntegrationDelivery(models.Model):
             }
         )
         delivery.write({"attachment_id": attachment.id})
-        return delivery
+        return {
+            "delivery": delivery,
+            "replayed": False,
+            "idempotency_key": delivery.idempotency_key or normalized_idempotency_key,
+        }
 
     def action_open_import_wizard(self):
         """Execute the open import wizard action."""

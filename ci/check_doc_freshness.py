@@ -19,6 +19,7 @@ TRACKED_DOCS = [
     "STATE_AND_OWNERSHIP_MATRIX.md",
     "RELEASE_RUNBOOK.md",
     "RELEASE_TRAIN.md",
+    "RESTORE_VERIFICATION_CHECKLIST.md",
     "adr/README.md",
     "adr/0001-portal-trust-boundaries.md",
     "adr/0002-reporting-sql-views.md",

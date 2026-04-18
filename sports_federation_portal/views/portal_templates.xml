@@ -219,23 +219,24 @@
                     </div>
                 </div>
 
-                <div t-if="success" class="alert alert-success">
+                <div t-if="success" class="alert alert-success" role="status">
                     <t t-esc="success"/>
                 </div>
-                <div t-if="error" class="alert alert-danger">
+                <div t-if="error" class="alert alert-danger" role="alert">
                     <t t-esc="error"/>
                 </div>
 
                 <div class="row">
                     <div class="col-12">
                         <table class="table">
+                            <caption class="visually-hidden">Teams available to the current club representative.</caption>
                             <thead>
                                 <tr>
-                                    <th>Team Name</th>
-                                    <th>Club</th>
-                                    <th>Category</th>
-                                    <th>Gender</th>
-                                    <th>Registrations</th>
+                                    <th scope="col">Team Name</th>
+                                    <th scope="col">Club</th>
+                                    <th scope="col">Category</th>
+                                    <th scope="col">Gender</th>
+                                    <th scope="col">Registrations</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -273,7 +274,7 @@
                     </div>
                 </div>
 
-                <div t-if="error" class="alert alert-danger">
+                <div t-if="error" class="alert alert-danger" role="alert">
                     <t t-esc="error"/>
                 </div>
 
@@ -281,13 +282,13 @@
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
                     <div class="mb-3">
-                        <label class="form-label">Team Name</label>
-                        <input class="form-control" name="name" required="required"/>
+                        <label class="form-label" for="team_name">Team Name</label>
+                        <input id="team_name" class="form-control" name="name" required="required"/>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Club</label>
-                        <select name="club_id" class="form-select">
+                        <label class="form-label" for="team_club_id">Club</label>
+                        <select id="team_club_id" name="club_id" class="form-select">
                             <t t-foreach="clubs" t-as="club">
                                 <option t-att-value="club.id"><t t-esc="club.name"/></option>
                             </t>
@@ -295,8 +296,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <select name="category" class="form-select" required="required">
+                        <label class="form-label" for="team_category">Category</label>
+                        <select id="team_category" name="category" class="form-select" required="required">
                             <option value="senior">Senior</option>
                             <option value="youth">Youth</option>
                             <option value="junior">Junior</option>
@@ -306,8 +307,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Gender</label>
-                        <select name="gender" class="form-select" required="required">
+                        <label class="form-label" for="team_gender">Gender</label>
+                        <select id="team_gender" name="gender" class="form-select" required="required">
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                             <option value="mixed">Mixed</option>
@@ -315,13 +316,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input class="form-control" name="email" type="email"/>
+                        <label class="form-label" for="team_email">Email</label>
+                        <input id="team_email" class="form-control" name="email" type="email"/>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input class="form-control" name="phone"/>
+                        <label class="form-label" for="team_phone">Phone</label>
+                        <input id="team_phone" class="form-control" name="phone"/>
                     </div>
 
                     <button class="btn btn-primary" type="submit">Create Team</button>
@@ -349,24 +350,25 @@
                     </div>
                 </div>
 
-                <div t-if="success" class="alert alert-success">
+                <div t-if="success" class="alert alert-success" role="status">
                     <t t-esc="success"/>
                 </div>
-                <div t-if="error" class="alert alert-danger">
+                <div t-if="error" class="alert alert-danger" role="alert">
                     <t t-esc="error"/>
                 </div>
 
                 <div class="row">
                     <div class="col-12">
                         <table class="table">
+                            <caption class="visually-hidden">Season registrations submitted through the portal.</caption>
                             <thead>
                                 <tr>
-                                    <th>Reference</th>
-                                    <th>Season</th>
-                                    <th>Team</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th scope="col">Reference</th>
+                                    <th scope="col">Season</th>
+                                    <th scope="col">Team</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -435,24 +437,25 @@
                     </div>
                 </div>
 
-                <div t-if="success" class="alert alert-success">
+                <div t-if="success" class="alert alert-success" role="status">
                     <t t-esc="success"/>
                 </div>
-                <div t-if="error" class="alert alert-danger">
+                <div t-if="error" class="alert alert-danger" role="alert">
                     <t t-esc="error"/>
                 </div>
 
                 <div class="row">
                     <div class="col-12">
                         <table class="table">
+                            <caption class="visually-hidden">Tournament registrations visible in the portal.</caption>
                             <thead>
                                 <tr>
-                                    <th>Reference</th>
-                                    <th>Tournament</th>
-                                    <th>Team</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th scope="col">Reference</th>
+                                    <th scope="col">Tournament</th>
+                                    <th scope="col">Team</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -520,7 +523,7 @@
                     </div>
                 </div>
 
-                <div t-if="error" class="alert alert-danger">
+                <div t-if="error" class="alert alert-danger" role="alert">
                     <t t-esc="error"/>
                 </div>
 

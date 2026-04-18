@@ -138,4 +138,4 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 17. Add audit dashboards for privileged portal actions and token rotations.
 18. [x] Add import wizard base classes for row parsing, duplicate detection, and reusable error taxonomy.
 19. Add shared enums or helper predicates for cross-module workflow states where semantics are reused.
-20. Add a release train and versioning convention so roadmap, migrations, and runbooks share one cadence.
+20. [x] Add a release train and versioning convention so roadmap, migrations, and runbooks share one cadence.

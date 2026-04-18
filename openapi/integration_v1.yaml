@@ -192,6 +192,7 @@ paths:
     get:
       tags:
         - Integration Contracts
+      operationId: listManagedIntegrationContracts
       summary: List subscribed managed integration contracts.
       description: Returns the contracts currently active for the authenticated partner.
       responses:
@@ -230,6 +231,7 @@ paths:
     get:
       tags:
         - Finance Export
+      operationId: exportPartnerFinanceEvents
       summary: Export finance events as CSV for a subscribed partner.
       description: Returns the current partner finance-event handoff export in CSV form.
       responses:
@@ -269,6 +271,7 @@ paths:
     post:
       tags:
         - Inbound Deliveries
+      operationId: stageInboundPartnerDelivery
       summary: Stage an inbound partner delivery for governed import review.
       parameters:
         - name: contract_code

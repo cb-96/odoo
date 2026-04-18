@@ -24,6 +24,7 @@ guidance changed:
 
 ```bash
 python3 addons/ci/check_doc_freshness.py
+python3 addons/ci/check_openapi_contracts.py
 ```
 
 If the release changed any tracked surface, update the affected document or

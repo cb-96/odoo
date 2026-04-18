@@ -23,6 +23,7 @@ Quick links
 - Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
 - Release runbook: `odoo/RELEASE_RUNBOOK.md`
 - Integration contracts: `odoo/INTEGRATION_CONTRACTS.md`
+- Managed integration OpenAPI: `odoo/openapi/integration_v1.yaml`
 - Workflows: `odoo/_workflows/WORKFLOW_TOURNAMENT_LIFECYCLE.md`
 - Contributor guide: `CONTRIBUTING.md`
 

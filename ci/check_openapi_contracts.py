@@ -68,6 +68,7 @@ def main() -> int:
                     operation = route_entry.get(method)
                     _expect(isinstance(operation, dict), f"Missing {method.upper()} operation for {route}", failures)
                     if isinstance(operation, dict):
+                        _expect(bool(operation.get("operationId")), f"{method.upper()} {route} requires an operationId.", failures)
                         _expect(bool(operation.get("summary")), f"{method.upper()} {route} requires a summary.", failures)
                         responses = operation.get("responses")
                         _expect(isinstance(responses, dict) and bool(responses), f"{method.upper()} {route} requires responses.", failures)

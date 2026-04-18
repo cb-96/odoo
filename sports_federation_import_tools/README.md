@@ -96,6 +96,7 @@ Inbound delivery guardrails:
 - partner uploads must use a `.csv` filename and a `text/csv` content type when declared
 - inbound payloads larger than 5 MiB are rejected before staging
 - duplicate inbound payloads are deduplicated by checksum before a new delivery record or attachment is created
+- terminal inbound deliveries are purged automatically once they exceed the retention windows documented in `DATA_RETENTION_POLICY.md`; the staged payload attachment is deleted with the delivery record
 
 ## Supported Wizards
 

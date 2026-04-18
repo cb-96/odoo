@@ -356,6 +356,29 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(schedule.last_run_status, "success")
         self.assertEqual(schedule.consecutive_failure_count, 0)
 
+    def test_report_schedule_retention_clears_old_generated_files(self):
+        """Retention should clear stale generated report payloads but keep the schedule."""
+        schedule = self.env["federation.report.schedule"].create({
+            "name": "Retention Operations",
+            "report_type": "operational",
+            "period_type": "weekly",
+            "season_id": self.season.id,
+        })
+
+        schedule.action_generate_now()
+        old_last_run = fields.Datetime.to_string(
+            fields.Datetime.to_datetime(fields.Datetime.now()) - timedelta(days=90)
+        )
+        schedule.write({"last_run_on": old_last_run})
+
+        cleared = self.env["federation.report.schedule"]._purge_generated_files()
+        schedule.invalidate_recordset()
+
+        self.assertEqual(cleared, 1)
+        self.assertTrue(schedule.exists())
+        self.assertFalse(schedule.generated_file)
+        self.assertFalse(schedule.generated_filename)
+
     def test_schedule_failures_are_persisted_and_visible_in_operator_checklist(self):
         """Test that schedule failures persist and surface in the operator checklist."""
         schedule = self.env["federation.report.schedule"].create({

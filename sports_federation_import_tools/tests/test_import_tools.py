@@ -1,5 +1,7 @@
 import base64
+from datetime import timedelta
 
+from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase
@@ -395,6 +397,34 @@ class TestImportTools(TransactionCase):
         self.assertEqual(delivery.failure_category, "data_validation")
         self.assertEqual(delivery.operator_message, "Preview checksum failed")
         self.assertEqual(delivery.result_message, "Preview checksum failed")
+
+    def test_delivery_retention_purges_old_processed_records_and_payloads(self):
+        """Retention should delete old terminal deliveries and their payload attachments."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        delivery = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="retained-clubs.csv",
+            payload_base64=self._create_csv_file("name;code\nRetained Club;RC001").decode("utf-8"),
+        )
+        attachment = delivery.attachment_id
+
+        old_processed_on = fields.Datetime.to_string(
+            fields.Datetime.to_datetime(fields.Datetime.now()) - timedelta(days=200)
+        )
+        delivery.write({
+            "state": "processed",
+            "processed_on": old_processed_on,
+        })
+
+        deleted = self.env["federation.integration.delivery"]._purge_retained_deliveries()
+
+        self.assertEqual(deleted, 1)
+        self.assertFalse(delivery.exists())
+        self.assertFalse(attachment.exists())
 
     def test_inbound_delivery_rejects_oversized_payload(self):
         """Inbound staging should enforce the shared maximum payload size."""

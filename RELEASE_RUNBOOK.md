@@ -49,6 +49,10 @@ If the release changes addon responsibility boundaries or adds a new
 `sports_federation_*` module, update `MODULE_OWNERS.yaml` in the same release
 branch and rerun the registry check before cutting the release.
 
+If the release changes log retention, staged-delivery cleanup, or generated
+report artifact handling, update `DATA_RETENTION_POLICY.md` in the same branch
+and confirm the affected cleanup crons still match the documented windows.
+
 ## Pre-Release Verification
 
 Run the focused suites that cover the highest-risk federation workflows:
@@ -57,6 +61,15 @@ Run the focused suites that cover the highest-risk federation workflows:
 bash addons/ci/run_tests.sh --suite portal_public_ops
 bash addons/ci/run_tests.sh --suite finance_reporting
 bash addons/ci/run_tests.sh --suite release_surfaces
+```
+
+If the release changed retention jobs or cleanup scope, also re-run the
+affected module suites directly:
+
+```bash
+bash addons/ci/run_tests.sh --module sports_federation_notifications
+bash addons/ci/run_tests.sh --module sports_federation_import_tools
+bash addons/ci/run_tests.sh --module sports_federation_reporting
 ```
 
 These suites now include query-budget regression checks for the public-site,

@@ -229,6 +229,7 @@
                 <field name="partner_id"/>
                 <field name="contract_id"/>
                 <field name="filename"/>
+                <field name="idempotency_key" optional="show"/>
                 <field name="state"/>
                 <field name="governance_job_id" optional="show"/>
                 <field name="line_count" optional="show"/>
@@ -256,6 +257,7 @@
                             <field name="partner_id" readonly="1"/>
                             <field name="contract_id" readonly="1"/>
                             <field name="import_template_id" readonly="1"/>
+                            <field name="idempotency_key" readonly="1"/>
                             <field name="source_reference"/>
                         </group>
                         <group>

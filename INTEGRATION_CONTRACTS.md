@@ -174,19 +174,26 @@ All authenticated CSV exports expose these headers:
 - Authentication:
   - `X-Federation-Partner-Code`
   - `X-Federation-Partner-Token`
+  - optional `X-Federation-Idempotency-Key` to replay the same staging request safely
 - Request fields:
   - `filename`
   - `payload_base64`
   - optional `notes`
   - optional `source_reference`
+- Response headers when an idempotency key is supplied:
+  - `X-Federation-Idempotency-Key: <normalized key>`
+  - `X-Federation-Idempotent-Replay: true|false`
 - Response fields:
   - delivery identity and current state
   - partner and contract codes
+  - echoed `idempotency_key` when present
   - payload checksum
   - contract route hint
 - Duplicate handling:
   - the same partner, contract, and payload checksum reuse the active staged
     delivery while it remains in preview or approval flow
+  - the same partner, contract, and idempotency key replay the original delivery
+    across all states, but reusing a key for a different payload returns `400`
 
 ## Import Contracts
 
@@ -209,8 +216,9 @@ Managed inbound delivery policy:
 
 1. A subscribed partner posts a base64 payload to the inbound delivery route for
   the relevant contract.
-2. The system stages a `federation.integration.delivery` record and deduplicates
-  active resubmissions by checksum.
+2. The system stages a `federation.integration.delivery` record, deduplicates
+  active resubmissions by checksum, and can also bind an explicit idempotency
+  key to the request for safer client retries.
 3. Operators open the staged delivery in the matching import wizard for preview.
 4. Approval and live execution continue through the standard governance-job
   workflow already used for manual rollover imports.

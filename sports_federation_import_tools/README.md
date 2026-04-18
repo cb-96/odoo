@@ -73,7 +73,8 @@ Managed integration behaviour:
 2. `/integration/v1/contracts` exposes the subscribed contract manifest,
    including database-specific availability and deprecation metadata.
 3. Inbound payloads posted to `/integration/v1/inbound/<contract_code>/deliveries`
-   are stored as staged deliveries with checksum-based duplicate reuse.
+  are stored as staged deliveries with checksum-based duplicate reuse and can
+  optionally bind an `X-Federation-Idempotency-Key` for safe retries.
 4. Operators open the staged delivery directly in the matching import wizard,
    review the preview, request approval, and then run the live import.
 5. Delivery records mirror preview, approval, completion, and failure states so
@@ -96,6 +97,7 @@ Inbound delivery guardrails:
 - partner uploads must use a `.csv` filename and a `text/csv` content type when declared
 - inbound payloads larger than 5 MiB are rejected before staging
 - duplicate inbound payloads are deduplicated by checksum before a new delivery record or attachment is created
+- explicit inbound idempotency keys replay the original delivery across retries and reject conflicting payload reuse
 - terminal inbound deliveries are purged automatically once they exceed the retention windows documented in `DATA_RETENTION_POLICY.md`; the staged payload attachment is deleted with the delivery record
 
 ## Supported Wizards

@@ -177,6 +177,9 @@ components:
             - failed
         filename:
           type: string
+        idempotency_key:
+          type: string
+          nullable: true
         payload_checksum:
           type: string
         route_hint:
@@ -350,6 +353,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: X-Federation-Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional idempotency key that replays the original delivery response for matching requests.
       requestBody:
         required: true
         content:
@@ -367,12 +376,24 @@ paths:
       responses:
         '201':
           description: Delivery staged successfully.
+          headers:
+            X-Federation-Idempotency-Key:
+              schema:
+                type: string
+              description: Echoed when the request supplied an idempotency key.
+            X-Federation-Idempotent-Replay:
+              schema:
+                type: string
+                enum:
+                  - 'true'
+                  - 'false'
+              description: Indicates whether the idempotent request replayed an existing delivery.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InboundDeliveryResponse'
         '400':
-          description: Invalid delivery payload.
+          description: Invalid delivery payload or conflicting idempotency key reuse.
           content:
             application/json:
               schema:

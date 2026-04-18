@@ -2,6 +2,7 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 from odoo import SUPERUSER_ID, api
+from odoo.addons.sports_federation_base.tests.route_inventory import load_route_inventory
 from odoo.tests.common import HttpCase, tagged
 
 
@@ -18,6 +19,13 @@ def _extract_csrf_token(response_text):
 
 @tagged("-at_install", "post_install")
 class TestPortalHttpSmoke(HttpCase):
+    def test_web_login_get_renders_login_page(self):
+        response = self.url_open("/web/login")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('name="login"', response.text)
+        self.assertNotIn("Internal Server Error", response.text)
+
     def test_web_login_recovers_from_stale_csrf_submission(self):
         login = "portal.login.smoke@example.com"
 
@@ -435,6 +443,22 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
         self.assertEqual(submit_response.status_code, 200)
         self.assertIn("Assignment confirmed.", submit_response.text)
         self.assertIn("Confirmed from smoke test.", submit_response.text)
+
+    def test_route_inventory_lists_smoke_covered_portal_routes(self):
+        inventory_routes = {
+            (entry["method"], entry["path"])
+            for entry in load_route_inventory("sports_federation_portal")
+        }
+
+        self.assertEqual(
+            inventory_routes,
+            {
+                ("GET", "/web/login"),
+                ("POST", "/my/teams/new"),
+                ("POST", "/my/season-registration/new"),
+                ("POST", "/my/referee-assignments/<id>/respond"),
+            },
+        )
 
     def test_roster_workspace_and_match_day_routes_render_successfully(self):
         data = self._create_roster_workspace_smoke_data()

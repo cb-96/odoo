@@ -30,6 +30,10 @@ python3 addons/ci/check_openapi_contracts.py
 If the release changed any tracked surface, update the affected document or
 archive it in the same release branch before proceeding.
 
+If the release changed portal privilege boundaries, reporting SQL view policy,
+or canonical public route ownership, review the affected record under `adr/`
+and update it in the same release branch when the decision changed.
+
 If the release includes model, view, or controller ownership changes, confirm
 the migration-review gate passes and that every affected module has either
 release-note coverage or an explicit migration script:

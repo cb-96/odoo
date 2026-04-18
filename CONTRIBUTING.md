@@ -47,6 +47,8 @@ black --check sports_federation_base sports_federation_tournament sports_federat
 flake8 sports_federation_base sports_federation_tournament sports_federation_standings sports_federation_venues sports_federation_portal sports_federation_public_site ci
 bash -n ci/run_tests.sh
 bash -n ci/apply_env_to_ir_config.sh
+python3 ci/check_doc_freshness.py
+python3 ci/check_openapi_contracts.py
 ```
 
 ## Documentation expectations
@@ -54,3 +56,4 @@ bash -n ci/apply_env_to_ir_config.sh
 - Update the relevant module README for behavior or schema changes.
 - Update the matching workflow under `_workflows/` when business behavior changes.
 - Keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, `INTEGRATIONS.md`, and `STATE_AND_OWNERSHIP_MATRIX.md` aligned when the change affects their scope.
+- Update the relevant record under `adr/` when a change revises portal trust boundaries, reporting SQL-view policy, or public route ownership.

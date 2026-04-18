@@ -77,6 +77,11 @@ Managed integration behaviour:
 5. Delivery records mirror preview, approval, completion, and failure states so
    the inbound handoff remains auditable.
 
+Managed integration contract docs:
+
+- narrative policy and deprecation guidance live in `INTEGRATION_CONTRACTS.md`
+- machine-readable route and payload definitions live in `openapi/integration_v1.yaml`
+
 Credential handling:
 
 - partner secrets are stored hashed at rest; the raw token is never shown again after issuance

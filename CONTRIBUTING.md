@@ -49,6 +49,7 @@ bash -n ci/run_tests.sh
 bash -n ci/apply_env_to_ir_config.sh
 python3 ci/check_doc_freshness.py
 python3 ci/check_markdown_links.py
+python3 ci/check_module_owners.py
 python3 ci/check_openapi_contracts.py
 ```
 
@@ -57,4 +58,5 @@ python3 ci/check_openapi_contracts.py
 - Update the relevant module README for behavior or schema changes.
 - Update the matching workflow under `_workflows/` when business behavior changes.
 - Keep `TECHNICAL_NOTE.md`, `CONTEXT.md`, `INTEGRATIONS.md`, and `STATE_AND_OWNERSHIP_MATRIX.md` aligned when the change affects their scope.
+- Update `MODULE_OWNERS.yaml` whenever a new addon is introduced or primary module ownership changes.
 - Update the relevant record under `adr/` when a change revises portal trust boundaries, reporting SQL-view policy, or public route ownership.

@@ -25,6 +25,7 @@ guidance changed:
 ```bash
 python3 addons/ci/check_doc_freshness.py
 python3 addons/ci/check_markdown_links.py
+python3 addons/ci/check_module_owners.py
 python3 addons/ci/check_openapi_contracts.py
 ```
 
@@ -42,6 +43,10 @@ release-note coverage or an explicit migration script:
 ```bash
 python3 addons/ci/check_migration_review.py --base-ref origin/main
 ```
+
+If the release changes addon responsibility boundaries or adds a new
+`sports_federation_*` module, update `MODULE_OWNERS.yaml` in the same release
+branch and rerun the registry check before cutting the release.
 
 ## Pre-Release Verification
 

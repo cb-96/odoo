@@ -19,6 +19,7 @@ Table of contents
 Quick links
 - High-level context: `odoo/CONTEXT.md`
 - Technical notes: `odoo/TECHNICAL_NOTE.md`
+- Architecture decisions: `odoo/adr/README.md`
 - Route inventory: `odoo/ROUTE_INVENTORY.md`
 - Compatibility inventory: `odoo/COMPATIBILITY_INVENTORY.md`
 - Release runbook: `odoo/RELEASE_RUNBOOK.md`

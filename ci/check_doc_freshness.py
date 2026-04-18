@@ -16,6 +16,10 @@ TRACKED_DOCS = [
     "ROUTE_INVENTORY.md",
     "STATE_AND_OWNERSHIP_MATRIX.md",
     "RELEASE_RUNBOOK.md",
+    "adr/README.md",
+    "adr/0001-portal-trust-boundaries.md",
+    "adr/0002-reporting-sql-views.md",
+    "adr/0003-public-route-ownership.md",
 ]
 REQUIRED_FIELDS = ("Owner", "Last reviewed", "Review cadence")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")

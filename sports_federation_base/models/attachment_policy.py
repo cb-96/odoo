@@ -88,9 +88,17 @@ class FederationAttachmentPolicy(models.AbstractModel):
                 f"{allowed_mimetypes}."
             )
 
+        scan_result = self.env["federation.attachment.scan.service"].scan_upload(
+            policy_code,
+            filename,
+            payload,
+            mimetype=normalized_mimetype or policy["default_mimetype"] or False,
+        )
+
         return {
             "filename": filename,
             "payload": payload,
             "checksum": self.checksum_payload(payload),
             "mimetype": normalized_mimetype or policy["default_mimetype"] or False,
+            "scan_result": scan_result,
         }

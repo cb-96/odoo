@@ -1,4 +1,5 @@
 from . import attachment_policy
+from . import attachment_scan_service
 from . import failure_feedback
 from . import request_rate_limit
 from . import federation_club

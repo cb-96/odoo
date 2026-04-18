@@ -1,4 +1,5 @@
 from io import BytesIO
+from unittest.mock import patch
 
 from odoo.tests import TransactionCase
 from odoo.exceptions import AccessError, ValidationError
@@ -522,6 +523,31 @@ class TestCompliance(TransactionCase):
             )
 
         self.assertIn("MiB or smaller", str(error.exception))
+
+    def test_portal_submit_submission_rejects_attachment_that_fails_malware_scan(self):
+        """Portal submit helper should surface shared malware-scan failures."""
+        upload = BytesIO(b"portal-malware-test")
+        upload.filename = "club-insurance.pdf"
+        upload.mimetype = "application/pdf"
+        scanner = self.env["federation.attachment.scan.service"]
+
+        with patch.object(
+            type(scanner),
+            "scan_upload",
+            side_effect=ValidationError("Uploaded files failed the federation malware scan."),
+        ):
+            with self.assertRaises(ValidationError) as error:
+                self.env["federation.document.submission"]._portal_submit_submission(
+                    self.requirement,
+                    self.club,
+                    values={
+                        "expiry_date": date.today() + timedelta(days=365),
+                    },
+                    uploaded_files=[upload],
+                    user=self.club_user,
+                )
+
+        self.assertIn("malware scan", str(error.exception))
 
     def test_portal_submit_submission_dedupes_duplicate_attachments(self):
         """Portal submit helper should keep one attachment per checksum."""

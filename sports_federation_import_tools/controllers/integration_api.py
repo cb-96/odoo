@@ -13,12 +13,13 @@ _logger = logging.getLogger(__name__)
 
 
 class FederationIntegrationApi(http.Controller):
-    def _json_response(self, payload, status=200):
+    def _json_response(self, payload, status=200, headers=None):
         """Handle JSON response."""
         return Response(
             json.dumps(payload),
             status=status,
             content_type="application/json; charset=utf-8",
+            headers=headers or [],
         )
 
     def _json_error_response(self, status, error=None, detail=None, default_category="unexpected_bug"):
@@ -60,6 +61,38 @@ class FederationIntegrationApi(http.Controller):
             raise AccessError("Partner code and token are required in request headers.")
         return partner_code, token
 
+    def _get_remote_addr(self):
+        """Return the best-effort caller IP for integration throttling."""
+        headers = getattr(request.httprequest, "headers", {}) or {}
+        forwarded_for = (headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
+        remote_addr = forwarded_for or (getattr(request.httprequest, "remote_addr", "") or "").strip()
+        return remote_addr or "unknown"
+
+    def _get_rate_limit_subject(self):
+        """Key partner traffic by partner code, then fall back to caller IP."""
+        headers = getattr(request.httprequest, "headers", {}) or {}
+        partner_code = (headers.get("X-Federation-Partner-Code") or "").strip()
+        if partner_code:
+            return f"partner:{partner_code}"
+        return f"ip:{self._get_remote_addr()}"
+
+    def _rate_limit_response(self, scope):
+        """Return a 429 response when the caller exceeds the route limit."""
+        decision = request.env["federation.request.rate.limit"].sudo().consume(
+            scope,
+            self._get_rate_limit_subject(),
+        )
+        if decision["allowed"]:
+            return False
+        return self._json_response(
+            {
+                "error": f"Too many requests. Retry after {decision['retry_after']} seconds.",
+                "error_code": "retryable_delivery",
+            },
+            status=429,
+            headers=[("Retry-After", str(decision["retry_after"]))],
+        )
+
     def _authenticate(self, contract_code=None):
         """Handle authenticate."""
         partner_code, token = self._get_credentials()
@@ -79,6 +112,9 @@ class FederationIntegrationApi(http.Controller):
     )
     def integration_contracts(self, **kw):
         """Handle integration contracts."""
+        blocked_response = self._rate_limit_response("integration_contracts")
+        if blocked_response:
+            return blocked_response
         try:
             partner, _subscription = self._authenticate()
         except (AccessError, ValidationError) as error:
@@ -110,6 +146,9 @@ class FederationIntegrationApi(http.Controller):
     )
     def integration_finance_events(self, **kw):
         """Handle integration finance events."""
+        blocked_response = self._rate_limit_response("integration_finance_events")
+        if blocked_response:
+            return blocked_response
         try:
             partner, _subscription = self._authenticate(contract_code="finance_event_v1")
         except (AccessError, ValidationError) as error:
@@ -151,6 +190,9 @@ class FederationIntegrationApi(http.Controller):
     )
     def integration_stage_inbound_delivery(self, contract_code, **kw):
         """Handle integration stage inbound delivery."""
+        blocked_response = self._rate_limit_response("integration_inbound_deliveries")
+        if blocked_response:
+            return blocked_response
         try:
             partner, subscription = self._authenticate(contract_code=contract_code)
             payload = request.httprequest.get_json(silent=True) or {}

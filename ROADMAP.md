@@ -121,7 +121,7 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 
 1. [x] Publish an OpenAPI-style contract document for partner integration routes and payloads.
 2. [x] Introduce one-time token reveal plus last-four-character token display in the back office.
-3. Add rate limiting or throttling for public JSON and partner integration endpoints.
+3. [x] Add rate limiting or throttling for public JSON and partner integration endpoints.
 4. Add attachment antivirus or external malware-scanning hooks for uploaded files.
 5. Implement pagination or incremental cursors for finance event exports.
 6. Add idempotency keys for inbound delivery submissions.

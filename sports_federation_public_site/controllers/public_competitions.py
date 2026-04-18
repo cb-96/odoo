@@ -9,6 +9,18 @@ from odoo.http import Response, request
 
 class PublicTournamentHubController(http.Controller):
 
+    def _make_json_response(self, payload, status=200, headers=None):
+        """Build a JSON response for public API callers."""
+        make_json_response = getattr(request, "make_json_response", None)
+        if make_json_response:
+            return make_json_response(payload, status=status, headers=headers)
+        return Response(
+            json.dumps(payload),
+            status=status,
+            headers=headers or [],
+            content_type="application/json; charset=utf-8",
+        )
+
     def _parse_int_param(self, value):
         """Parse int param."""
         try:
@@ -102,6 +114,33 @@ class PublicTournamentHubController(http.Controller):
         """Redirect to a path with a user-facing error message."""
         return request.redirect(f"{path}?error={quote_plus(message)}")
 
+    def _get_rate_limit_subject(self):
+        """Return the caller fingerprint for public endpoints."""
+        headers = getattr(request.httprequest, "headers", {}) or {}
+        forwarded_for = (headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
+        remote_addr = forwarded_for or (getattr(request.httprequest, "remote_addr", "") or "").strip()
+        return f"ip:{remote_addr or 'unknown'}"
+
+    def _rate_limit_response(self, scope):
+        """Return a 429 response when the caller exceeds the route limit."""
+        decision = request.env["federation.request.rate.limit"].sudo().consume(
+            scope,
+            self._get_rate_limit_subject(),
+        )
+        if decision["allowed"]:
+            return False
+        return self._make_json_response(
+            {
+                "error": (
+                    "Too many requests. "
+                    f"Retry after {decision['retry_after']} seconds."
+                ),
+                "error_code": "retryable_delivery",
+            },
+            status=429,
+            headers=[("Retry-After", str(decision["retry_after"]))],
+        )
+
     @http.route(["/competitions"], type="http", auth="public", website=True)
     def competitions_list(self, **kw):
         """Handle competitions list."""
@@ -115,6 +154,9 @@ class PublicTournamentHubController(http.Controller):
     @http.route(["/competitions/api/json", "/tournaments/api/json"], type="jsonrpc", auth="public", methods=["POST"])
     def competitions_api_json(self, **kw):
         """Handle competitions API JSON."""
+        blocked_response = self._rate_limit_response("public_competitions_json")
+        if blocked_response:
+            return blocked_response
         tournaments = request.env["federation.tournament"].get_public_published_tournaments(limit=None)
         return {
             "tournaments": [
@@ -484,6 +526,9 @@ class PublicTournamentHubController(http.Controller):
     ], type="http", auth="public", methods=["GET"])
     def competition_feed_v1(self, tournament_slug=None, tournament_id=None, **kw):
         """Handle competition feed v1."""
+        blocked_response = self._rate_limit_response("public_competition_feed")
+        if blocked_response:
+            return blocked_response
         tournament = self._resolve_tournament(tournament_slug=tournament_slug, tournament_id=tournament_id)
         if not tournament.exists() or not tournament.can_access_public_detail():
             return request.not_found()

@@ -112,6 +112,9 @@ class PublicSeasonAndTeamController(PublicTournamentHubController):
     @http.route(["/api/v1/teams/<string:team_slug>/feed"], type="http", auth="public", methods=["GET"])
     def team_feed_v1(self, team_slug, **kw):
         """Handle team feed v1."""
+        blocked_response = self._rate_limit_response("public_team_feed")
+        if blocked_response:
+            return blocked_response
         team = self._resolve_team(team_slug)
         if not team.exists() or not team.can_access_public_profile():
             return request.not_found()

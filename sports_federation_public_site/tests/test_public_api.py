@@ -7,6 +7,17 @@ Tests for new public site endpoints (Phase 4):
 These are ORM-level tests (no HTTP client needed) that verify
 the data layer logic that the new controller endpoints rely on.
 """
+from datetime import datetime
+import json
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from odoo.addons.sports_federation_public_site.controllers.public_competitions import (
+    PublicTournamentHubController,
+)
+from odoo.addons.sports_federation_public_site.controllers.public_follow import (
+    PublicSeasonAndTeamController,
+)
 from odoo.tests.common import TransactionCase
 
 
@@ -372,3 +383,180 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertEqual(payload["api_version"], "v1")
         self.assertEqual(payload["team"]["slug"], "ps-team-a")
         self.assertIn("BEGIN:VCALENDAR", ics_payload)
+
+
+class TestPublicApiRateLimits(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.hub_controller = PublicTournamentHubController()
+        cls.follow_controller = PublicSeasonAndTeamController()
+        cls.club = cls.env["federation.club"].create(
+            {
+                "name": "Rate Limit Club",
+                "code": "RLC",
+            }
+        )
+        cls.team_a = cls.env["federation.team"].create(
+            {
+                "name": "Rate Limit Team A",
+                "club_id": cls.club.id,
+                "code": "RLTA",
+                "public_slug": "rate-limit-team-a",
+                "category": "senior",
+                "gender": "male",
+            }
+        )
+        cls.team_b = cls.env["federation.team"].create(
+            {
+                "name": "Rate Limit Team B",
+                "club_id": cls.club.id,
+                "code": "RLTB",
+                "category": "senior",
+                "gender": "male",
+            }
+        )
+        cls.season = cls.env["federation.season"].create(
+            {
+                "name": "Rate Limit Season",
+                "code": "RLS",
+                "date_start": "2026-01-01",
+                "date_end": "2026-12-31",
+            }
+        )
+        cls.tournament = cls.env["federation.tournament"].create(
+            {
+                "name": "Rate Limit Tournament",
+                "code": "RLT",
+                "season_id": cls.season.id,
+                "date_start": "2026-06-01",
+                "state": "in_progress",
+                "website_published": True,
+                "public_slug": "rate-limit-tournament",
+                "public_featured": True,
+                "show_public_results": True,
+                "show_public_standings": True,
+                "gender": "male",
+                "category": "senior",
+            }
+        )
+        cls.env["federation.tournament.participant"].create(
+            {
+                "tournament_id": cls.tournament.id,
+                "team_id": cls.team_a.id,
+                "state": "confirmed",
+            }
+        )
+        cls.env["federation.tournament.participant"].create(
+            {
+                "tournament_id": cls.tournament.id,
+                "team_id": cls.team_b.id,
+                "state": "confirmed",
+            }
+        )
+        cls.env["federation.match"].create(
+            {
+                "tournament_id": cls.tournament.id,
+                "home_team_id": cls.team_a.id,
+                "away_team_id": cls.team_b.id,
+                "date_scheduled": "2026-06-02 10:00:00",
+                "state": "done",
+                "home_score": 2,
+                "away_score": 1,
+                "result_state": "approved",
+            }
+        )
+
+    def _make_request(self, remote_addr="198.51.100.10"):
+        return SimpleNamespace(
+            env=self.env,
+            httprequest=SimpleNamespace(
+                remote_addr=remote_addr,
+                headers={},
+            ),
+        )
+
+    def test_competitions_api_json_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.public_competitions_json.limit",
+            2,
+        )
+        request_stub = self._make_request()
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_public_site.controllers.public_competitions.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            first = self.hub_controller.competitions_api_json()
+            second = self.hub_controller.competitions_api_json()
+            blocked = self.hub_controller.competitions_api_json()
+
+        self.assertIn("tournaments", first)
+        self.assertIn("tournaments", second)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.headers.get("Retry-After"), "60")
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")
+
+    def test_competition_feed_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.public_competition_feed.limit",
+            1,
+        )
+        request_stub = self._make_request()
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_public_site.controllers.public_competitions.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            response = self.hub_controller.competition_feed_v1(
+                tournament_slug=self.tournament.public_slug
+            )
+            blocked = self.hub_controller.competition_feed_v1(
+                tournament_slug=self.tournament.public_slug
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(blocked.status_code, 429)
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertIn("Too many requests", payload["error"])
+
+    def test_team_feed_rate_limits_repeat_callers(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sports_federation.rate_limit.public_team_feed.limit",
+            1,
+        )
+        request_stub = self._make_request()
+        rate_limit_service = self.env["federation.request.rate.limit"].sudo()
+        frozen_time = datetime(2026, 4, 18, 12, 0, 0)
+
+        with patch(
+            "odoo.addons.sports_federation_public_site.controllers.public_competitions.request",
+            request_stub,
+        ), patch(
+            "odoo.addons.sports_federation_public_site.controllers.public_follow.request",
+            request_stub,
+        ), patch.object(
+            type(rate_limit_service),
+            "_get_now",
+            return_value=frozen_time,
+        ):
+            response = self.follow_controller.team_feed_v1(self.team_a.public_slug)
+            blocked = self.follow_controller.team_feed_v1(self.team_a.public_slug)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(blocked.status_code, 429)
+        payload = json.loads(blocked.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")

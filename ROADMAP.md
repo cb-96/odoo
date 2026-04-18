@@ -4,6 +4,7 @@ Last updated: 2026-04-18
 Owner: Federation Platform Team
 Last reviewed: 2026-04-18
 Review cadence: Every release
+Release train: 2026.04
 
 The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-17.md`.
 This roadmap is driven by the 2026-04-17 code review and shifts the focus from

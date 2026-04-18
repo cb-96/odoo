@@ -3,6 +3,7 @@ import binascii
 import hashlib
 import hmac
 import secrets
+from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.addons.sports_federation_base.models.failure_feedback import (
@@ -365,6 +366,13 @@ class FederationIntegrationDelivery(models.Model):
     _description = "Federation Integration Delivery"
     _order = "received_on desc, id desc"
 
+    RETENTION_DAYS_BY_STATE = {
+        "processed": 180,
+        "processed_with_errors": 180,
+        "failed": 365,
+        "cancelled": 90,
+    }
+
     STATE_SELECTION = [
         ("staged", "Staged"),
         ("previewed", "Previewed"),
@@ -633,3 +641,28 @@ class FederationIntegrationDelivery(models.Model):
         if job:
             values["governance_job_id"] = job.id
         self.write(values)
+
+    @api.model
+    def _purge_retained_deliveries(self, reference_dt=None):
+        """Delete terminal delivery records and payload attachments past retention."""
+        reference_dt = fields.Datetime.to_datetime(reference_dt or fields.Datetime.now())
+        total_deleted = 0
+        processed_states = {"processed", "processed_with_errors"}
+        for state, days in self.RETENTION_DAYS_BY_STATE.items():
+            cutoff = fields.Datetime.to_string(reference_dt - timedelta(days=days))
+            cutoff_field = "processed_on" if state in processed_states else "received_on"
+            deliveries = self.sudo().search([
+                ("state", "=", state),
+                (cutoff_field, "!=", False),
+                (cutoff_field, "<", cutoff),
+            ])
+            attachments = deliveries.mapped("attachment_id").sudo()
+            total_deleted += len(deliveries)
+            attachments.unlink()
+            deliveries.unlink()
+        return total_deleted
+
+    @api.model
+    def _cron_purge_retained_deliveries(self):
+        """Execute the inbound-delivery retention policy."""
+        return self._purge_retained_deliveries()

@@ -23,6 +23,8 @@ class FederationReportSchedule(models.Model):
     _description = "Federation Report Schedule"
     _order = "next_run_on, name"
 
+    GENERATED_FILE_RETENTION_DAYS = 60
+
     RUN_STATUS_SELECTION = [
         ("never", "Never Run"),
         ("success", "Last Run Succeeded"),
@@ -680,3 +682,24 @@ class FederationReportSchedule(models.Model):
             ("next_run_on", "<=", fields.Datetime.now()),
         ], limit=20)
         schedules._generate_report()
+
+    @api.model
+    def _purge_generated_files(self, reference_dt=None):
+        """Clear stored report payloads after the retention window expires."""
+        reference_dt = fields.Datetime.to_datetime(reference_dt or fields.Datetime.now())
+        cutoff = fields.Datetime.to_string(reference_dt - timedelta(days=self.GENERATED_FILE_RETENTION_DAYS))
+        schedules = self.search([
+            ("generated_file", "!=", False),
+            ("last_run_on", "!=", False),
+            ("last_run_on", "<", cutoff),
+        ])
+        schedules.write({
+            "generated_file": False,
+            "generated_filename": False,
+        })
+        return len(schedules)
+
+    @api.model
+    def _cron_purge_generated_files(self):
+        """Execute the generated-report retention policy."""
+        return self._purge_generated_files()

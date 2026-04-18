@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from odoo import fields
 from odoo.tests import TransactionCase
 from odoo.exceptions import ValidationError
 
@@ -83,6 +86,34 @@ class TestNotifications(TransactionCase):
             service._cron_placeholder_notification_scan()
         except Exception as e:
             self.fail(f"Cron method raised exception: {e}")
+
+    def test_notification_log_retention_purges_old_sent_records(self):
+        """Retention should purge old sent logs without deleting recent failures."""
+        old_log = self.env["federation.notification.log"].create({
+            "name": "Old Sent Log",
+            "notification_type": "email",
+            "state": "sent",
+        })
+        failed_log = self.env["federation.notification.log"].create({
+            "name": "Recent Failed Log",
+            "notification_type": "email",
+            "state": "failed",
+        })
+
+        old_create_date = fields.Datetime.to_string(
+            fields.Datetime.to_datetime(fields.Datetime.now()) - timedelta(days=120)
+        )
+        self.env.cr.execute(
+            "UPDATE federation_notification_log SET create_date = %s WHERE id = %s",
+            [old_create_date, old_log.id],
+        )
+        self.env["federation.notification.log"].flush_model(["create_date"])
+
+        deleted = self.env["federation.notification.log"]._purge_retained_logs()
+
+        self.assertEqual(deleted, 1)
+        self.assertFalse(old_log.exists())
+        self.assertTrue(failed_log.exists())
 
     def test_suspension_activation_creates_notification_log(self):
         """Test that suspension activation creates notification log."""

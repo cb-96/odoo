@@ -1,6 +1,7 @@
 import re
 
 from odoo import SUPERUSER_ID, api
+from odoo.addons.sports_federation_base.tests.route_inventory import load_route_inventory
 from odoo.tests.common import HttpCase, tagged
 
 
@@ -207,3 +208,16 @@ class TestPublicSiteHttpSmoke(HttpCase):
         self.assertEqual(submit_response.status_code, 200)
         self.assertIn("Tournament is full", submit_response.text)
         self.assertNotIn("Internal Server Error", submit_response.text)
+
+    def test_route_inventory_lists_smoke_covered_public_routes(self):
+        inventory_routes = {
+            (entry["method"], entry["path"])
+            for entry in load_route_inventory("sports_federation_public_site")
+        }
+
+        self.assertEqual(
+            inventory_routes,
+            {
+                ("POST", "/tournaments/<slug>/register"),
+            },
+        )

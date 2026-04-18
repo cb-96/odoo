@@ -127,7 +127,7 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 6. Add idempotency keys for inbound delivery submissions.
 7. [x] Add architecture decision records for portal trust boundaries, reporting SQL views, and public route ownership.
 8. [x] Add a repo-wide dead-link and stale-doc check in CI.
-9. Add smoke tests that verify every public route listed in `ROUTE_INVENTORY.md` still resolves.
+9. [x] Add smoke tests that verify every public route listed in `ROUTE_INVENTORY.md` still resolves.
 10. [x] Add per-module ownership metadata to manifests or a central owner registry.
 11. [x] Add data-retention policies for logs, staged deliveries, and generated report files.
 12. [x] Add a backup-restore drill script and a periodic restore verification checklist.

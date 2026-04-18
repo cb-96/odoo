@@ -1,8 +1,8 @@
 # Route Inventory
 
-Last updated: 2026-04-17
+Last updated: 2026-04-18
 Owner: Federation Platform Team
-Last reviewed: 2026-04-17
+Last reviewed: 2026-04-18
 Review cadence: Every release
 
 This is the maintainer-facing inventory of the primary browser and API entry
@@ -12,6 +12,11 @@ service performs the write?" without reading source first.
 
 Detailed route tables still live in module READMEs. This file highlights the
 critical workflows, write boundaries, and external contracts.
+
+These routes are backed by module-owned smoke suites in the portal,
+public-site, compliance, and reporting addons. Inventory changes should land
+with matching smoke coverage in the same branch so new owner modules or routes
+cannot drift without test coverage.
 
 ## Browser and Portal Flows
 

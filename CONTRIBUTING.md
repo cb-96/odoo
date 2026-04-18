@@ -48,6 +48,7 @@ flake8 sports_federation_base sports_federation_tournament sports_federation_sta
 bash -n ci/run_tests.sh
 bash -n ci/apply_env_to_ir_config.sh
 python3 ci/check_doc_freshness.py
+python3 ci/check_markdown_links.py
 python3 ci/check_openapi_contracts.py
 ```
 

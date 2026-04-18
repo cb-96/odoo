@@ -123,7 +123,7 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 2. [x] Introduce one-time token reveal plus last-four-character token display in the back office.
 3. [x] Add rate limiting or throttling for public JSON and partner integration endpoints.
 4. [x] Add attachment antivirus or external malware-scanning hooks for uploaded files.
-5. Implement pagination or incremental cursors for finance event exports.
+5. [x] Implement pagination or incremental cursors for finance event exports.
 6. Add idempotency keys for inbound delivery submissions.
 7. [x] Add architecture decision records for portal trust boundaries, reporting SQL views, and public route ownership.
 8. [x] Add a repo-wide dead-link and stale-doc check in CI.

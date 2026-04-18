@@ -7,6 +7,33 @@ from odoo.tests.common import TransactionCase
 
 
 class TestFederationAttachmentPolicy(TransactionCase):
+    def test_settings_round_trip_attachment_scan_parameters(self):
+        settings = self.env["res.config.settings"].create(
+            {
+                "federation_attachment_scan_command": "/usr/local/bin/scan-upload",
+                "federation_attachment_scan_timeout_seconds": 27,
+            }
+        )
+
+        settings.execute()
+
+        params = self.env["ir.config_parameter"].sudo()
+        self.assertEqual(
+            params.get_param("sports_federation.attachment_scan.command"),
+            "/usr/local/bin/scan-upload",
+        )
+        self.assertEqual(
+            params.get_param("sports_federation.attachment_scan.timeout_seconds"),
+            "27",
+        )
+
+        reloaded = self.env["res.config.settings"].create({})
+        self.assertEqual(
+            reloaded.federation_attachment_scan_command,
+            "/usr/local/bin/scan-upload",
+        )
+        self.assertEqual(reloaded.federation_attachment_scan_timeout_seconds, 27)
+
     def test_validate_upload_skips_scan_when_no_hook_is_configured(self):
         upload = self.env["federation.attachment.policy"].validate_upload(
             "portal_document",

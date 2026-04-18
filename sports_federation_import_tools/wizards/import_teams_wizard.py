@@ -103,24 +103,23 @@ class FederationImportTeamsWizard(models.TransientModel):
                 error_count += 1
                 continue
 
-            if not self.dry_run:
-                try:
-                    Team.create({
-                        "name": team_name,
-                        "code": team_code or False,
-                        "club_id": club.id,
-                        "category": self._get_row_value(row, "category") or "senior",
-                        "gender": self._get_row_value(row, "gender") or "male",
-                        "email": self._get_row_value(row, "email") or False,
-                        "phone": self._get_row_value(row, "phone") or False,
-                    })
-                    success_count += 1
-                except Exception as e:
-                    category, message = self._categorize_exception(e)
-                    self._record_error(errors, error_categories, row_num, category, message)
-                    error_count += 1
-            else:
+            if self._execute_row_create(
+                row_num,
+                lambda: Team.create({
+                    "name": team_name,
+                    "code": team_code or False,
+                    "club_id": club.id,
+                    "category": self._get_row_value(row, "category") or "senior",
+                    "gender": self._get_row_value(row, "gender") or "male",
+                    "email": self._get_row_value(row, "email") or False,
+                    "phone": self._get_row_value(row, "phone") or False,
+                }),
+                errors,
+                error_categories,
+            ):
                 success_count += 1
+            else:
+                error_count += 1
 
         return self._finalize_import_result(
             line_count,

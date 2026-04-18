@@ -117,24 +117,19 @@ class FederationImportTournamentParticipantsWizard(models.TransientModel):
                     error_count += 1
                     continue
 
-            if not self.dry_run:
-                try:
-                    Participant.create({
-                        "tournament_id": tournament.id,
-                        "team_id": team.id,
-                        "seed": seed or False,
-                    })
-                    success_count += 1
-                except ValidationError as e:
-                    category, message = self._categorize_exception(e)
-                    self._record_error(errors, error_categories, row_num, category, message)
-                    error_count += 1
-                except Exception as e:
-                    category, message = self._categorize_exception(e)
-                    self._record_error(errors, error_categories, row_num, category, message)
-                    error_count += 1
-            else:
+            if self._execute_row_create(
+                row_num,
+                lambda: Participant.create({
+                    "tournament_id": tournament.id,
+                    "team_id": team.id,
+                    "seed": seed or False,
+                }),
+                errors,
+                error_categories,
+            ):
                 success_count += 1
+            else:
+                error_count += 1
 
         return self._finalize_import_result(
             line_count,

@@ -235,6 +235,29 @@ class FederationIntegrationPartner(models.Model):
         )
         return raw_token
 
+    def _log_token_rotation_audit(self):
+        """Record manager-driven token rotations in the shared audit log."""
+        audit_model = self.env.get("federation.audit.event")
+        if audit_model is None:
+            return False
+        changed_fields = [
+            "auth_token",
+            "auth_token_last4",
+            "token_last_rotated_on",
+            "token_rotation_required",
+        ]
+        for partner in self:
+            audit_model.log_event(
+                event_family="integration_token",
+                event_type="integration_token_rotated",
+                description="Integration partner token rotated through the manager action.",
+                target=partner,
+                actor=self.env.user,
+                action_name="action_rotate_token",
+                changed_fields=changed_fields,
+            )
+        return True
+
     @api.model
     def _migrate_plaintext_tokens(self):
         """Hash legacy plaintext tokens and flag them for scheduled rotation."""
@@ -291,6 +314,7 @@ class FederationIntegrationPartner(models.Model):
             raise AccessError("Only federation managers can rotate integration tokens.")
 
         raw_token = self._issue_auth_token(rotation_required=False)
+        self._log_token_rotation_audit()
         wizard = self.env["federation.integration.partner.token.wizard"].create(
             {
                 "partner_id": self.id,

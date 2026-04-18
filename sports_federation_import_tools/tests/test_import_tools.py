@@ -286,6 +286,20 @@ class TestImportTools(TransactionCase):
         ].authenticate_partner(partner.code, raw_token)
         self.assertEqual(auth_partner, partner)
 
+        audit_event = self.env["federation.audit.event"].search(
+            [
+                ("event_family", "=", "integration_token"),
+                ("event_type", "=", "integration_token_rotated"),
+                ("target_model", "=", "federation.integration.partner"),
+                ("target_res_id", "=", partner.id),
+            ],
+            limit=1,
+        )
+        self.assertTrue(audit_event)
+        self.assertEqual(audit_event.actor_user_id, self.env.user)
+        self.assertEqual(audit_event.action_name, "action_rotate_token")
+        self.assertIn("auth_token_last4", audit_event.changed_fields)
+
     def test_legacy_plaintext_tokens_are_migrated_and_flagged(self):
         """Legacy plaintext tokens should be hashed in place and marked for rotation."""
         contract = self.env.ref(

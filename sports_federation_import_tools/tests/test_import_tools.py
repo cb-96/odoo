@@ -1,5 +1,6 @@
 import base64
 from datetime import timedelta
+from unittest.mock import patch
 
 from odoo import fields
 from odoo.exceptions import AccessError
@@ -446,6 +447,29 @@ class TestImportTools(TransactionCase):
             )
 
         self.assertIn("MiB or smaller", str(error.exception))
+
+    def test_inbound_delivery_rejects_payloads_that_fail_malware_scan(self):
+        """Inbound staging should surface the shared malware-scan rejection."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        scanner = self.env["federation.attachment.scan.service"]
+
+        with patch.object(
+            type(scanner),
+            "scan_upload",
+            side_effect=ValidationError("Uploaded files failed the federation malware scan."),
+        ):
+            with self.assertRaises(ValidationError) as error:
+                self.env["federation.integration.delivery"].stage_partner_delivery(
+                    partner=partner,
+                    contract=contract,
+                    filename="clubs.csv",
+                    payload_base64=self._create_csv_file("name;code\nBlocked Club;BC001").decode("utf-8"),
+                )
+
+        self.assertIn("malware scan", str(error.exception))
 
     def test_import_teams_resolves_club_by_code(self):
         """Teams import should resolve parent clubs via club codes and create the record."""

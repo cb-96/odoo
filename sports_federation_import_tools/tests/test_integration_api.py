@@ -3,6 +3,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerificationError
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase
 
@@ -161,6 +162,39 @@ class TestIntegrationApi(TransactionCase):
         payload = json.loads(response.get_data(as_text=True))
         self.assertEqual(payload["error_code"], "data_validation")
         self.assertIn("extensions", payload["error"])
+
+    def test_inbound_route_returns_503_when_scanner_cannot_verify_payload(self):
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlClN0YWdlZCBDbHViO1NDMDAx",
+                "content_type": "text/csv",
+            },
+        )
+        scanner = self.env["federation.attachment.scan.service"]
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ), patch.object(
+            type(scanner),
+            "scan_upload",
+            side_effect=AttachmentScanVerificationError(
+                "Uploaded files could not be verified by the federation malware scanner. Try again later."
+            ),
+        ):
+            response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        self.assertEqual(response.status_code, 503)
+        payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "retryable_delivery")
+        self.assertIn("Try again later", payload["error"])
 
     def test_contracts_route_rate_limits_repeat_callers(self):
         self.env["ir.config_parameter"].sudo().set_param(

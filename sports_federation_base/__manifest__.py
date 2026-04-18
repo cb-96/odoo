@@ -6,11 +6,12 @@
     "author": "Sports Federation",
     "website": "",
     "license": "LGPL-3",
-    "depends": ["base", "mail"],
+    "depends": ["base", "mail", "base_setup"],
     "data": [
         "security/res_groups.xml",
         "security/ir.model.access.csv",
         "data/ir_sequence.xml",
+        "views/res_config_settings_views.xml",
         "views/federation_season_registration_views.xml",
         "views/federation_season_views.xml",
         "views/federation_team_views.xml",

@@ -115,6 +115,18 @@ class TestSeasonRegistrationOwnership(TransactionCase):
         self.assertEqual(registration.create_uid, self.user)
         self.assertEqual(registration.notes, "Submitted through the portal helper.")
 
+        audit_events = self.env["federation.audit.event"].search(
+            [
+                ("event_family", "=", "portal_privilege"),
+                ("target_model", "=", "federation.season.registration"),
+                ("target_res_id", "=", registration.id),
+            ],
+            order="event_on asc, id asc",
+        )
+        self.assertEqual(audit_events.mapped("event_type"), ["portal_create", "portal_call"])
+        self.assertEqual([event.actor_user_id.id for event in audit_events], [self.user.id, self.user.id])
+        self.assertEqual(audit_events[-1].action_name, "action_submit")
+
     def test_portal_submit_registration_request_blocks_unowned_team(self):
         """Service helper should reject season registrations for other clubs."""
         self.season.state = "open"

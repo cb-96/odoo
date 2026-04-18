@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import FAILURE_CATEGORY_SELECTION
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -70,6 +71,8 @@ class FederationImportJob(models.Model):
     line_count = fields.Integer(readonly=True)
     success_count = fields.Integer(readonly=True)
     error_count = fields.Integer(readonly=True)
+    failure_category = fields.Selection(FAILURE_CATEGORY_SELECTION, readonly=True)
+    operator_message = fields.Text(readonly=True)
     preview_result_message = fields.Text(readonly=True)
     execution_result_message = fields.Text(readonly=True)
     verification_summary = fields.Text(readonly=True)
@@ -118,6 +121,8 @@ class FederationImportJob(models.Model):
                     "rejected_by_id": False,
                     "rejected_on": False,
                     "rejection_reason": False,
+                    "failure_category": False,
+                    "operator_message": False,
                 }
             )
             if record.integration_delivery_id:
@@ -137,6 +142,8 @@ class FederationImportJob(models.Model):
                     "rejected_by_id": False,
                     "rejected_on": False,
                     "rejection_reason": False,
+                    "failure_category": False,
+                    "operator_message": False,
                 }
             )
             if record.integration_delivery_id:
@@ -155,10 +162,13 @@ class FederationImportJob(models.Model):
                     "rejected_on": fields.Datetime.now(),
                     "approved_by_id": False,
                     "approved_on": False,
+                    "failure_category": "operator_input",
+                    "operator_message": record.rejection_reason or "The governance job was rejected by a federation manager.",
                 }
             )
             if record.integration_delivery_id:
                 record.integration_delivery_id.action_mark_failed(
                     message=record.rejection_reason or "The governance job was rejected.",
+                    category="operator_input",
                     job=record,
                 )

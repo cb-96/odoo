@@ -29,6 +29,7 @@
                 <field name="last_attempt_on"/>
                 <field name="last_run_on"/>
                 <field name="last_run_status"/>
+                <field name="last_failure_category" optional="show"/>
                 <field name="last_failure_on" optional="show"/>
                 <field name="consecutive_failure_count" optional="show"/>
                 <field name="last_row_count"/>
@@ -60,6 +61,7 @@
                             <field name="last_attempt_on" readonly="1"/>
                             <field name="last_run_on" readonly="1"/>
                             <field name="last_run_status" readonly="1"/>
+                            <field name="last_failure_category" readonly="1"/>
                             <field name="last_failure_on" readonly="1"/>
                             <field name="consecutive_failure_count" readonly="1"/>
                             <field name="last_period_start" readonly="1"/>
@@ -74,8 +76,8 @@
                     <group>
                         <field name="notes" placeholder="Operational notes for this schedule."/>
                     </group>
-                    <group invisible="not last_error_message">
-                        <field name="last_error_message" readonly="1" widget="text"/>
+                    <group invisible="not last_operator_message">
+                        <field name="last_operator_message" readonly="1" widget="text"/>
                     </group>
                 </sheet>
             </form>

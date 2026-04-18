@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,6 +44,9 @@ jobs:
 
       - name: Check documentation freshness metadata
         run: python ci/check_doc_freshness.py
+
+      - name: Check migration review coverage
+        run: python ci/check_migration_review.py --base-ref origin/${{ github.base_ref || 'main' }}
 
       - name: Validate CI shell scripts
         run: |

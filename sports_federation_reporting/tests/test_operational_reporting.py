@@ -377,14 +377,17 @@ class TestOperationalReporting(TransactionCase):
         self.env["federation.report.schedule"].flush_model([
             "last_run_status",
             "last_failure_on",
-            "last_error_message",
+            "last_failure_category",
+            "last_operator_message",
             "consecutive_failure_count",
         ])
         schedule.invalidate_recordset()
         self.assertEqual(schedule.last_run_status, "failed")
         self.assertEqual(schedule.consecutive_failure_count, 1)
         self.assertTrue(schedule.last_failure_on)
-        self.assertIn("Simulated schedule failure", schedule.last_error_message)
+        self.assertEqual(schedule.last_failure_category, "unexpected_bug")
+        self.assertFalse(schedule.last_error_message)
+        self.assertIn("unexpected server error", schedule.last_operator_message.lower())
 
         checklist_row = self.env["federation.report.operator.checklist"].search([
             ("queue_code", "=", "scheduled_report_failures"),
@@ -463,6 +466,11 @@ class TestOperationalReporting(TransactionCase):
 
 
 class TestYearFourReporting(TransactionCase):
+
+    def _get_plan_text(self, sql, params=None):
+        """Return the textual PostgreSQL plan for the supplied statement."""
+        self.env.cr.execute(f"EXPLAIN {sql}", params or [])
+        return "\n".join(line[0] for line in self.env.cr.fetchall())
 
     @classmethod
     def setUpClass(cls):
@@ -658,3 +666,40 @@ class TestYearFourReporting(TransactionCase):
         self.assertEqual(portfolio_action["domain"], [("season_id", "=", self.season.id)])
         self.assertEqual(club_action["res_model"], "federation.report.club.performance")
         self.assertEqual(club_action["domain"], [("season_id", "=", self.season.id)])
+
+    def test_year_four_report_builders_stay_within_query_budget(self):
+        """The heavy planning report builders keep stable ORM query budgets."""
+        portfolio_schedule = self.env["federation.report.schedule"].create({
+            "name": "Budgeted Season Portfolio",
+            "report_type": "season_portfolio",
+            "period_type": "monthly",
+            "season_id": self.season.id,
+        })
+        club_schedule = self.env["federation.report.schedule"].create({
+            "name": "Budgeted Club Performance",
+            "report_type": "club_performance",
+            "period_type": "weekly",
+            "season_id": self.season.id,
+        })
+
+        with self.assertQueryCount(3):
+            _headers, portfolio_rows, _slug = portfolio_schedule._build_season_portfolio_rows()
+        with self.assertQueryCount(4):
+            _headers, club_rows, _slug = club_schedule._build_club_performance_rows()
+
+        self.assertTrue(portfolio_rows)
+        self.assertTrue(club_rows)
+
+    def test_year_four_report_plan_watchpoints_capture_heavy_operators(self):
+        """The large SQL reports still expose the known aggregate and sort plan operators."""
+        season_plan = self._get_plan_text(
+            "SELECT * FROM federation_report_season_portfolio WHERE season_id = %s",
+            [self.season.id],
+        )
+        club_plan = self._get_plan_text(
+            "SELECT * FROM federation_report_club_performance WHERE season_id = %s",
+            [self.season.id],
+        )
+
+        self.assertRegex(season_plan, r"HashAggregate|GroupAggregate|WindowAgg|Sort")
+        self.assertRegex(club_plan, r"HashAggregate|GroupAggregate|WindowAgg|Sort")

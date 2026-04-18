@@ -60,6 +60,7 @@
                 <field name="line_count"/>
                 <field name="success_count"/>
                 <field name="error_count"/>
+                <field name="failure_category" optional="show"/>
                 <field name="requested_by_id"/>
                 <field name="approved_by_id" optional="hide"/>
                 <field name="executed_by_id" optional="hide"/>
@@ -110,6 +111,7 @@
                             <field name="line_count" readonly="1"/>
                             <field name="success_count" readonly="1"/>
                             <field name="error_count" readonly="1"/>
+                            <field name="failure_category" readonly="1"/>
                             <field name="pre_import_record_count" readonly="1"/>
                             <field name="post_import_record_count" readonly="1"/>
                         </group>
@@ -119,6 +121,7 @@
                         </group>
                     </group>
                     <group>
+                        <field name="operator_message" readonly="1" widget="text"/>
                         <field name="preview_result_message" readonly="1" widget="text"/>
                         <field name="execution_result_message" readonly="1" widget="text"/>
                         <field name="verification_summary" readonly="1" widget="text"/>
@@ -136,12 +139,14 @@
                 <field name="name"/>
                 <field name="template_id"/>
                 <field name="state"/>
+                <field name="failure_category"/>
                 <filter name="awaiting_approval" string="Awaiting Approval" domain="[('state', '=', 'awaiting_approval')]"/>
                 <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
                 <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
                 <filter name="completed_with_errors" string="Completed With Errors" domain="[('state', '=', 'completed_with_errors')]"/>
                 <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
                 <group>
+                    <filter name="group_failure_category" string="Failure Category" context="{'group_by': 'failure_category'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_template" string="Template" context="{'group_by': 'template_id'}"/>
                     <filter name="group_requester" string="Requested By" context="{'group_by': 'requested_by_id'}"/>

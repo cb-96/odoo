@@ -5,6 +5,10 @@ import hmac
 import secrets
 
 from odoo import api, fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import (
+    FAILURE_CATEGORY_SELECTION,
+    build_failure_feedback,
+)
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -416,6 +420,8 @@ class FederationIntegrationDelivery(models.Model):
     line_count = fields.Integer(readonly=True)
     success_count = fields.Integer(readonly=True)
     error_count = fields.Integer(readonly=True)
+    failure_category = fields.Selection(FAILURE_CATEGORY_SELECTION, readonly=True)
+    operator_message = fields.Text(readonly=True)
     result_message = fields.Text(readonly=True)
     verification_summary = fields.Text(readonly=True)
     notes = fields.Text()
@@ -555,6 +561,8 @@ class FederationIntegrationDelivery(models.Model):
                 "line_count": wizard.line_count,
                 "success_count": wizard.success_count,
                 "error_count": wizard.error_count,
+                "failure_category": wizard._get_overall_failure_category(),
+                "operator_message": wizard._get_overall_operator_message(),
                 "result_message": wizard.result_message,
             }
         )
@@ -567,6 +575,8 @@ class FederationIntegrationDelivery(models.Model):
             {
                 "state": "awaiting_approval",
                 "governance_job_id": job.id,
+                "failure_category": job.failure_category,
+                "operator_message": job.operator_message,
                 "verification_summary": job.verification_summary,
             }
         )
@@ -580,6 +590,8 @@ class FederationIntegrationDelivery(models.Model):
                 "state": "approved",
                 "governance_job_id": job.id,
                 "approved_on": fields.Datetime.now(),
+                "failure_category": False,
+                "operator_message": False,
                 "verification_summary": job.verification_summary,
             }
         )
@@ -596,19 +608,28 @@ class FederationIntegrationDelivery(models.Model):
                 "line_count": job.line_count,
                 "success_count": job.success_count,
                 "error_count": job.error_count,
+                "failure_category": job.failure_category,
+                "operator_message": job.operator_message,
                 "result_message": job.execution_result_message or job.preview_result_message,
                 "verification_summary": job.verification_summary,
             }
         )
 
-    def action_mark_failed(self, message=None, job=None):
+    def action_mark_failed(self, message=None, category=None, job=None, error=None):
         """Execute the mark failed action."""
         self.ensure_one()
+        failure_category, operator_message = build_failure_feedback(
+            error=error,
+            detail=message,
+            default_category=category or "unexpected_bug",
+        )
         values = {
             "state": "failed",
+            "failure_category": failure_category,
+            "operator_message": operator_message,
         }
-        if message:
-            values["result_message"] = message
+        if operator_message:
+            values["result_message"] = operator_message
         if job:
             values["governance_job_id"] = job.id
         self.write(values)

@@ -348,6 +348,7 @@ CI recommendations
 - Include a lint step (flake8/black for Python where applicable) and XML/manifest validation.
 - The repository CI entrypoint is `ci/run_tests.sh`; the GitHub workflow at `.github/workflows/ci.yml` reuses that script and runs Black/Flake8 from `requirements.txt`.
 - `ci/run_tests.sh` also provides named suites (`competition_core`, `portal_public_ops`, `finance_reporting`) so maintainers can run the same focused coverage locally and in GitHub Actions.
+- Public-site, portal, and reporting performance hotspots should carry explicit `assertQueryCount(...)` budgets in their regression suites; the current enforced budgets are summarized in `PERFORMANCE_BASELINES.md`.
 - Do not commit runtime credentials. Keep local CI values in `ci/.env`, commit only `ci/.env.example`, and let CI generate ephemeral values at runtime.
 - Integration environment variables: maintain `ci/integrations.env.example` with the common external-integration keys (SMTP, SendGrid/Mailgun keys, OAuth client IDs/secrets, Slack webhook, Twilio credentials, AWS S3 keys). Keep real values out of VCS and populate `ci/.env` locally or via your secret store in CI runs.
 - Contributor-facing local setup, suite selection, and script validation commands live in `CONTRIBUTING.md`.
@@ -365,6 +366,7 @@ Manifest and data maintenance
 
 - Keep `__manifest__.py` `version` and `data` accurate. Prefer small, focused upgrade scripts to large one-off DB migrations.
 - For breaking model changes provide a dedicated migration script (`openupgrade` style) and document steps.
+- `ci/check_migration_review.py` should pass whenever model, view, or controller ownership changes are present. Treat a passing run as evidence that migration scripts or release-note surfaces were updated in the same change set.
 
 Pre/post hooks
 

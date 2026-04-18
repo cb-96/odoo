@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import FAILURE_CATEGORY_SELECTION
 
 
 class FederationNotificationLog(models.Model):
@@ -36,6 +37,8 @@ class FederationNotificationLog(models.Model):
         default="pending",
         required=True,
     )
+    failure_category = fields.Selection(FAILURE_CATEGORY_SELECTION, string="Failure Category")
+    operator_message = fields.Text(string="Operator Message")
     message = fields.Text(string="Message")
 
     @api.model

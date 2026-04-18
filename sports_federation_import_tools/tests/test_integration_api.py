@@ -132,6 +132,7 @@ class TestIntegrationApi(TransactionCase):
 
         self.assertEqual(response.status_code, 401)
         payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "access_denied")
         self.assertIn("headers only", payload["error"])
 
     def test_inbound_route_returns_400_for_disallowed_payload_extension(self):
@@ -156,4 +157,5 @@ class TestIntegrationApi(TransactionCase):
 
         self.assertEqual(response.status_code, 400)
         payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(payload["error_code"], "data_validation")
         self.assertIn("extensions", payload["error"])

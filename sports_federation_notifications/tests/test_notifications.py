@@ -45,6 +45,22 @@ class TestNotifications(TransactionCase):
         self.assertEqual(log.notification_type, "email")
         self.assertIn(log.state, ("sent", "failed"))
 
+    def test_missing_template_failure_is_typed_for_operators(self):
+        """Missing templates should create a configuration failure with safe operator feedback."""
+        service = self.env["federation.notification.service"]
+
+        log = service.send_email_template(
+            self.club,
+            "sports_federation_notifications.template_missing_for_phase4",
+            email_to="test@example.com",
+            log_name="Missing Template",
+        )
+
+        self.assertEqual(log.state, "failed")
+        self.assertEqual(log.failure_category, "configuration_error")
+        self.assertIn("not available in this database", log.operator_message)
+        self.assertFalse(log.message)
+
     def test_create_activity(self):
         """Test creating an activity and log."""
         service = self.env["federation.notification.service"]

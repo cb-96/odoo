@@ -4,6 +4,7 @@ import hashlib
 import io
 
 from odoo import fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import DEFAULT_OPERATOR_MESSAGES
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -121,6 +122,31 @@ class FederationImportWizardMixin(models.AbstractModel):
             ]
         )
 
+    def _get_overall_failure_category(self, error_categories=None):
+        """Return the top-level category for the latest import result."""
+        categories = set((error_categories or {}).keys())
+        if not (self.error_count or categories):
+            return False
+        if "unexpected_error" in categories:
+            return "unexpected_bug"
+        if self.error_count:
+            return "data_validation"
+        if categories:
+            return "data_validation"
+        return "operator_input"
+
+    def _get_overall_operator_message(self, error_categories=None):
+        """Return an operator-facing summary for the latest import result."""
+        category = self._get_overall_failure_category(error_categories=error_categories)
+        if not category:
+            return False
+        if category == "data_validation":
+            return (
+                "The import completed with row-level validation errors. Review the categorized result "
+                "summary before retrying."
+            )
+        return DEFAULT_OPERATOR_MESSAGES[category]
+
     def _ensure_live_import_approved(self):
         """Handle ensure live import approved."""
         self.ensure_one()
@@ -198,12 +224,16 @@ class FederationImportWizardMixin(models.AbstractModel):
 
         if not self.dry_run and self.governance_job_id and self.governance_job_id.state == "approved":
             after_count = self._get_target_record_count()
+            failure_category = self._get_overall_failure_category(error_categories=error_categories)
+            operator_message = self._get_overall_operator_message(error_categories=error_categories)
             self.governance_job_id.write(
                 {
                     "state": "completed" if not error_count else "completed_with_errors",
                     "line_count": line_count,
                     "success_count": success_count,
                     "error_count": error_count,
+                    "failure_category": failure_category,
+                    "operator_message": operator_message,
                     "execution_result_message": result_message,
                     "verification_summary": self._build_execution_verification_summary(baseline_count),
                     "pre_import_record_count": baseline_count,
@@ -245,6 +275,8 @@ class FederationImportWizardMixin(models.AbstractModel):
                 "line_count": self.line_count,
                 "success_count": self.success_count,
                 "error_count": self.error_count,
+                "failure_category": self._get_overall_failure_category(),
+                "operator_message": self._get_overall_operator_message(),
                 "preview_result_message": self.result_message,
                 "verification_summary": self._build_preview_verification_summary(),
             }

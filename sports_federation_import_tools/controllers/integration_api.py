@@ -1,10 +1,15 @@
 import csv
 import io
 import json
+import logging
 
 from odoo import http
+from odoo.addons.sports_federation_base.models.failure_feedback import build_failure_feedback
 from odoo.exceptions import AccessError, ValidationError
 from odoo.http import Response, request
+
+
+_logger = logging.getLogger(__name__)
 
 
 class FederationIntegrationApi(http.Controller):
@@ -14,6 +19,21 @@ class FederationIntegrationApi(http.Controller):
             json.dumps(payload),
             status=status,
             content_type="application/json; charset=utf-8",
+        )
+
+    def _json_error_response(self, status, error=None, detail=None, default_category="unexpected_bug"):
+        """Return a typed JSON error payload with sanitized operator detail."""
+        failure_category, operator_message = build_failure_feedback(
+            error=error,
+            detail=detail,
+            default_category=default_category,
+        )
+        return self._json_response(
+            {
+                "error": operator_message,
+                "error_code": failure_category,
+            },
+            status=status,
         )
 
     def _get_bearer_token(self, headers):
@@ -62,7 +82,7 @@ class FederationIntegrationApi(http.Controller):
         try:
             partner, _subscription = self._authenticate()
         except (AccessError, ValidationError) as error:
-            return self._json_response({"error": str(error)}, status=401)
+            return self._json_error_response(status=401, error=error)
 
         subscriptions = partner.subscription_ids.filtered(
             lambda line: line.state == "active" and line.contract_id.active
@@ -93,13 +113,14 @@ class FederationIntegrationApi(http.Controller):
         try:
             partner, _subscription = self._authenticate(contract_code="finance_event_v1")
         except (AccessError, ValidationError) as error:
-            return self._json_response({"error": str(error)}, status=401)
+            return self._json_error_response(status=401, error=error)
 
         FinanceEvent = request.env.get("federation.finance.event")
         if FinanceEvent is None:
-            return self._json_response(
-                {"error": "The finance export contract is not available in this database."},
+            return self._json_error_response(
                 status=404,
+                detail="The finance export contract is not available in this database.",
+                default_category="configuration_error",
             )
 
         events = FinanceEvent.sudo().search([], order="create_date desc, id desc")
@@ -146,9 +167,12 @@ class FederationIntegrationApi(http.Controller):
                 source_reference=(payload.get("source_reference") or "").strip() or False,
             )
         except AccessError as error:
-            return self._json_response({"error": str(error)}, status=401)
+            return self._json_error_response(status=401, error=error)
         except ValidationError as error:
-            return self._json_response({"error": str(error)}, status=400)
+            return self._json_error_response(status=400, error=error)
+        except Exception as error:
+            _logger.exception("Inbound delivery staging failed for contract %s", contract_code)
+            return self._json_error_response(status=500, error=error)
 
         return self._json_response(
             {

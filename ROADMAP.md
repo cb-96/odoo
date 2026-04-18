@@ -1,8 +1,8 @@
 # ROADMAP — 2026-04-17 Improvement Program
 
-Last updated: 2026-04-17
+Last updated: 2026-04-18
 Owner: Federation Platform Team
-Last reviewed: 2026-04-17
+Last reviewed: 2026-04-18
 Review cadence: Every release
 
 The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-17.md`.
@@ -83,17 +83,17 @@ Done when: time-sensitive documents are archived or refreshed during the release
 
 ## Phase 4 — Weeks 9 To 12: Operability, Performance, And Upgrade Safety
 
-1. Add performance baselines for public and reporting hotspots.
+1. [x] Add performance baselines for public and reporting hotspots.
 Modules: `sports_federation_public_site`, `sports_federation_reporting`, `sports_federation_portal`.
 Work: baseline expensive public routes and large SQL reports, capturing query counts and slow operators.
 Done when: the slowest public and reporting endpoints have known budgets and regressions can be detected early.
 
-2. Tighten migration discipline.
+2. [x] Tighten migration discipline.
 Modules: repository-wide.
 Work: require migration impact review for model, view, and route ownership changes and add module-local migration scripts where needed.
 Done when: upgrade-sensitive changes are not shipped without explicit migration handling or release notes.
 
-3. Improve failure typing and operator feedback.
+3. [x] Improve failure typing and operator feedback.
 Modules: `sports_federation_notifications`, `sports_federation_reporting`, `sports_federation_import_tools`.
 Work: replace broad exception storage with typed failure categories and sanitized operator messages.
 Done when: retryable delivery, import, and report failures are distinguishable from developer defects.

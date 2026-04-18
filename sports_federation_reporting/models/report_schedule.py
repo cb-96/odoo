@@ -8,7 +8,11 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import ustr
+from odoo.addons.sports_federation_base.models.failure_feedback import (
+    FAILURE_CATEGORY_SELECTION,
+    build_failure_feedback,
+    get_failure_category_label,
+)
 
 
 _logger = logging.getLogger(__name__)
@@ -57,6 +61,8 @@ class FederationReportSchedule(models.Model):
     last_row_count = fields.Integer(readonly=True)
     last_failure_on = fields.Datetime(readonly=True)
     last_error_message = fields.Text(readonly=True)
+    last_failure_category = fields.Selection(FAILURE_CATEGORY_SELECTION, readonly=True)
+    last_operator_message = fields.Text(readonly=True)
     consecutive_failure_count = fields.Integer(readonly=True)
     generated_file = fields.Binary(string="Last Generated File", attachment=True, readonly=True)
     generated_filename = fields.Char(readonly=True)
@@ -585,6 +591,8 @@ class FederationReportSchedule(models.Model):
                 "last_row_count": row_count,
                 "last_failure_on": False,
                 "last_error_message": False,
+                "last_failure_category": False,
+                "last_operator_message": False,
                 "consecutive_failure_count": 0,
                 "generated_filename": filename,
                 "generated_file": base64.b64encode(payload),
@@ -592,7 +600,7 @@ class FederationReportSchedule(models.Model):
             })
             return False
         except Exception as error:
-            error_message = ustr(error)
+            failure_category, operator_message = build_failure_feedback(error=error)
             _logger.exception(
                 "Scheduled report generation failed for %s (%s)",
                 self.display_name,
@@ -602,11 +610,13 @@ class FederationReportSchedule(models.Model):
                 "last_attempt_on": run_at,
                 "last_run_status": "failed",
                 "last_failure_on": run_at,
-                "last_error_message": error_message,
+                "last_error_message": False,
+                "last_failure_category": failure_category,
+                "last_operator_message": operator_message,
                 "consecutive_failure_count": self.consecutive_failure_count + 1,
                 "next_run_on": self._get_next_run_on(run_at),
             })
-            return error_message
+            return operator_message
 
     def _generate_report(self):
         """Generate each selected report and return operator-readable failures."""
@@ -624,7 +634,7 @@ class FederationReportSchedule(models.Model):
         if failures:
             raise UserError(
                 "\n".join(
-                    f"{schedule.display_name}: {message}"
+                    f"{schedule.display_name} [{get_failure_category_label(schedule.last_failure_category)}]: {message}"
                     for schedule, message in failures
                 )
             )

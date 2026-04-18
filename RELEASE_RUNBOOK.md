@@ -29,6 +29,14 @@ python3 addons/ci/check_doc_freshness.py
 If the release changed any tracked surface, update the affected document or
 archive it in the same release branch before proceeding.
 
+If the release includes model, view, or controller ownership changes, confirm
+the migration-review gate passes and that every affected module has either
+release-note coverage or an explicit migration script:
+
+```bash
+python3 addons/ci/check_migration_review.py --base-ref origin/main
+```
+
 ## Pre-Release Verification
 
 Run the focused suites that cover the highest-risk federation workflows:
@@ -38,6 +46,9 @@ bash addons/ci/run_tests.sh --suite portal_public_ops
 bash addons/ci/run_tests.sh --suite finance_reporting
 bash addons/ci/run_tests.sh --suite release_surfaces
 ```
+
+These suites now include query-budget regression checks for the public-site,
+portal, and reporting hotspots documented in `PERFORMANCE_BASELINES.md`.
 
 If the release changes only one module, also run that module directly before the
 broader suites:

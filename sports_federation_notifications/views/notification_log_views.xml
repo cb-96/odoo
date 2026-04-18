@@ -13,6 +13,7 @@
                             <field name="name"/>
                             <field name="notification_type"/>
                             <field name="state"/>
+                            <field name="failure_category" readonly="1"/>
                             <field name="sent_on"/>
                         </group>
                         <group string="Target">
@@ -29,7 +30,10 @@
                             <field name="template_xmlid"/>
                         </group>
                     </group>
-                    <group string="Message">
+                    <group string="Operator Feedback" invisible="not operator_message">
+                        <field name="operator_message" nolabel="1" readonly="1"/>
+                    </group>
+                    <group string="Message" invisible="not message">
                         <field name="message" nolabel="1"/>
                     </group>
                 </sheet>
@@ -49,6 +53,7 @@
                 <field name="target_model"/>
                 <field name="recipient_email"/>
                 <field name="state"/>
+                <field name="failure_category" optional="show"/>
                 <field name="sent_on"/>
             </list>
         </field>
@@ -63,6 +68,7 @@
                 <field name="name"/>
                 <field name="target_model"/>
                 <field name="recipient_email"/>
+                <field name="failure_category"/>
                 <filter name="email" string="Email" domain="[('notification_type', '=', 'email')]"/>
                 <filter name="activity" string="Activity" domain="[('notification_type', '=', 'activity')]"/>
                 <filter name="other" string="Other" domain="[('notification_type', '=', 'other')]"/>
@@ -71,6 +77,7 @@
                 <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
                 <separator/>
                 <group>
+                    <filter name="group_failure_category" string="Failure Category" context="{'group_by': 'failure_category'}"/>
                     <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_target_model" string="Target Model" context="{'group_by': 'target_model'}"/>

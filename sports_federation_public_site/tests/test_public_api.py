@@ -255,6 +255,28 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertIn(self.active_tour, live)
         self.assertIn(self.active_tour, recent)
 
+    def test_public_discovery_helpers_stay_within_query_budget(self):
+        """Public discovery helpers keep a stable query budget for CI regression checks."""
+        with self.assertQueryCount(1):
+            featured = self.env["federation.tournament"].get_public_featured_tournaments(limit=4)
+            self.assertIn(self.active_tour, featured)
+
+        with self.assertQueryCount(1):
+            live = self.env["federation.tournament"].get_public_live_tournaments(limit=4)
+            self.assertIn(self.active_tour, live)
+
+        with self.assertQueryCount(3):
+            recent = self.env["federation.tournament"].get_public_recent_result_tournaments(limit=4)
+            self.assertEqual(recent[:1], self.active_tour)
+
+    def test_public_schedule_sections_stay_within_query_budget(self):
+        """Tournament schedule section assembly stays within the agreed route budget."""
+        with self.assertQueryCount(4):
+            sections = self.active_tour.get_public_schedule_sections()
+
+        self.assertTrue(sections)
+        self.assertTrue(any(section["matches"] for section in sections))
+
     def test_schedule_sections_use_fixture_query_not_approved_results(self):
         """The schedule helper returns future fixtures and excludes completed matches."""
         sections = self.active_tour.get_public_schedule_sections()

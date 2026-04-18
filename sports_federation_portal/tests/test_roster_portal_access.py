@@ -343,3 +343,12 @@ class TestRosterPortalAccess(TransactionCase):
 
         self.assertIn(female_player, available_players)
         self.assertNotIn(male_player, available_players)
+
+    def test_portal_player_picker_stays_within_query_budget(self):
+        """Roster player availability should not regress into an expensive portal lookup."""
+        with self.assertQueryCount(7):
+            available_players = self.env[
+                "federation.team.roster.line"
+            ]._portal_get_available_players(self.roster_a, user=self.user_a)
+
+        self.assertIn(self.player_a, available_players)

@@ -15,6 +15,7 @@ Usage (from any model override):
         Dispatcher.send_result_approved(self)
 """
 from odoo import fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import build_failure_feedback
 
 
 class FederationNotificationDispatcher(models.AbstractModel):
@@ -45,7 +46,8 @@ class FederationNotificationDispatcher(models.AbstractModel):
             "target_res_id": record.id,
             "notification_type": notification_type,
             "state": "failed",
-            "message": message,
+            "failure_category": "configuration_error",
+            "operator_message": message,
         })
 
     def _send_email_or_log(self, record, template_xmlid, log_name, emails):
@@ -104,11 +106,16 @@ class FederationNotificationDispatcher(models.AbstractModel):
             log.write({
                 "state": "sent",
                 "sent_on": fields.Datetime.now(),
+                "failure_category": False,
+                "operator_message": False,
             })
         except Exception as exc:
+            failure_category, operator_message = build_failure_feedback(error=exc)
             log.write({
                 "state": "failed",
-                "message": str(exc),
+                "failure_category": failure_category,
+                "operator_message": operator_message,
+                "message": False,
             })
 
         return log

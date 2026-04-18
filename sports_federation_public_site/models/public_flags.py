@@ -183,11 +183,11 @@ class FederationTournament(models.Model):
     @api.model
     def get_public_published_tournaments(self, search=None, limit=None, extra_domain=None):
         """Return public published tournaments."""
-        tournaments = self.sudo().search(
+        return self.sudo().search(
             [("website_published", "=", True)] + self._get_public_site_search_domain(search) + list(extra_domain or []),
             order="date_start asc, id asc",
+            limit=limit,
         )
-        return tournaments[:limit] if limit else tournaments
 
     @api.model
     def get_public_featured_tournaments(self, search=None, limit=None, extra_domain=None):
@@ -196,32 +196,35 @@ class FederationTournament(models.Model):
             ("website_published", "=", True),
             ("state", "in", ("open", "in_progress")),
         ] + self._get_public_site_search_domain(search) + list(extra_domain or [])
-        tournaments = self.sudo().search(domain, order="date_start asc, id asc")
-        featured = tournaments.filtered("public_featured")
-        ordered = featured + (tournaments - featured)
-        return ordered[:limit] if limit else ordered
+        return self.sudo().search(
+            domain,
+            order="public_featured desc, date_start asc, id asc",
+            limit=limit,
+        )
 
     @api.model
     def get_public_archived_tournaments(self, search=None, limit=None, extra_domain=None):
         """Return public archived tournaments."""
-        domain = [
-            ("website_published", "=", True),
-            ("state", "in", ("closed", "cancelled")),
-        ] + self._get_public_site_search_domain(search) + list(extra_domain or [])
-        tournaments = self.sudo().search(domain, order="date_start desc, id desc")
-        return tournaments[:limit] if limit else tournaments
+        return self.sudo().search(
+            [
+                ("website_published", "=", True),
+                ("state", "in", ("closed", "cancelled")),
+            ] + self._get_public_site_search_domain(search) + list(extra_domain or []),
+            order="date_start desc, id desc",
+            limit=limit,
+        )
 
     @api.model
     def get_public_live_tournaments(self, limit=None, extra_domain=None):
         """Return public live tournaments."""
-        domain = [
-            ("website_published", "=", True),
-            ("state", "=", "in_progress"),
-        ] + list(extra_domain or [])
-        tournaments = self.sudo().search(domain, order="date_start desc, id desc")
-        featured = tournaments.filtered("public_featured")
-        ordered = featured + (tournaments - featured)
-        return ordered[:limit] if limit else ordered
+        return self.sudo().search(
+            [
+                ("website_published", "=", True),
+                ("state", "=", "in_progress"),
+            ] + list(extra_domain or []),
+            order="public_featured desc, date_start desc, id desc",
+            limit=limit,
+        )
 
     @api.model
     def get_public_recent_result_tournaments(self, limit=None, extra_domain=None):
@@ -233,17 +236,22 @@ class FederationTournament(models.Model):
             ] + list(extra_domain or []),
             order="write_date desc, id desc",
         )
+        if not tournaments:
+            return tournaments
+
         ranked = []
-        Match = self.env["federation.match"].sudo()
+        latest_match_by_tournament = {}
+        matches = self.env["federation.match"].sudo().search(
+            [
+                ("tournament_id", "in", tournaments.ids),
+                ("result_state", "=", "approved"),
+            ],
+            order="date_scheduled desc, write_date desc, id desc",
+        )
+        for match in matches:
+            latest_match_by_tournament.setdefault(match.tournament_id.id, match)
         for tournament in tournaments:
-            latest_match = Match.search(
-                [
-                    ("tournament_id", "=", tournament.id),
-                    ("result_state", "=", "approved"),
-                ],
-                order="date_scheduled desc, write_date desc, id desc",
-                limit=1,
-            )
+            latest_match = latest_match_by_tournament.get(tournament.id)
             if not latest_match:
                 continue
             activity_dt = latest_match.date_scheduled or latest_match.write_date or tournament.write_date

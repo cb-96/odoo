@@ -272,12 +272,14 @@
                             <field name="line_count" readonly="1"/>
                             <field name="success_count" readonly="1"/>
                             <field name="error_count" readonly="1"/>
+                            <field name="failure_category" readonly="1"/>
                             <field name="previewed_on" readonly="1"/>
                             <field name="approved_on" readonly="1"/>
                             <field name="processed_on" readonly="1"/>
                         </group>
                         <group>
                             <field name="notes" widget="text"/>
+                            <field name="operator_message" widget="text" readonly="1"/>
                             <field name="result_message" widget="text" readonly="1"/>
                             <field name="verification_summary" widget="text" readonly="1"/>
                         </group>

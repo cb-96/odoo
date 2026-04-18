@@ -1,4 +1,10 @@
+import logging
+
 from odoo import api, fields, models
+from odoo.addons.sports_federation_base.models.failure_feedback import build_failure_feedback
+
+
+_logger = logging.getLogger(__name__)
 
 
 class FederationNotificationService(models.AbstractModel):
@@ -50,7 +56,9 @@ class FederationNotificationService(models.AbstractModel):
             if not template:
                 log.write({
                     "state": "failed",
-                    "message": f"Template '{template_xmlid}' not found.",
+                    "failure_category": "configuration_error",
+                    "operator_message": f"Template '{template_xmlid}' is not available in this database.",
+                    "message": False,
                 })
                 return log
             template = template.sudo()
@@ -65,11 +73,17 @@ class FederationNotificationService(models.AbstractModel):
             log.write({
                 "state": "sent",
                 "sent_on": fields.Datetime.now(),
+                "failure_category": False,
+                "operator_message": False,
             })
         except Exception as e:
+            failure_category, operator_message = build_failure_feedback(error=e)
+            _logger.exception("Notification email delivery failed for %s", log.display_name)
             log.write({
                 "state": "failed",
-                "message": str(e),
+                "failure_category": failure_category,
+                "operator_message": operator_message,
+                "message": False,
             })
 
         return log
@@ -112,11 +126,17 @@ class FederationNotificationService(models.AbstractModel):
             log.write({
                 "state": "sent",
                 "sent_on": fields.Datetime.now(),
+                "failure_category": False,
+                "operator_message": False,
             })
         except Exception as e:
+            failure_category, operator_message = build_failure_feedback(error=e)
+            _logger.exception("Notification activity creation failed for %s", log.display_name)
             log.write({
                 "state": "failed",
-                "message": str(e),
+                "failure_category": failure_category,
+                "operator_message": operator_message,
+                "message": False,
             })
 
         return log

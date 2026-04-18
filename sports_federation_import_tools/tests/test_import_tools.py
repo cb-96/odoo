@@ -298,6 +298,25 @@ class TestImportTools(TransactionCase):
 
         self.assertIn("extensions", str(error.exception))
 
+    def test_failed_delivery_records_typed_operator_feedback(self):
+        """Failed deliveries should store typed categories instead of raw exception text."""
+        contract = self.env.ref(
+            "sports_federation_import_tools.federation_integration_contract_clubs_csv"
+        )
+        partner, _subscription = self._create_integration_partner(contract)
+        delivery = self.env["federation.integration.delivery"].stage_partner_delivery(
+            partner=partner,
+            contract=contract,
+            filename="delivery-clubs.csv",
+            payload_base64=self._create_csv_file("name;code\nDelivery Club;DC001").decode("utf-8"),
+        )
+
+        delivery.action_mark_failed("Preview checksum failed")
+
+        self.assertEqual(delivery.failure_category, "data_validation")
+        self.assertEqual(delivery.operator_message, "Preview checksum failed")
+        self.assertEqual(delivery.result_message, "Preview checksum failed")
+
     def test_inbound_delivery_rejects_oversized_payload(self):
         """Inbound staging should enforce the shared maximum payload size."""
         contract = self.env.ref(
@@ -384,7 +403,26 @@ class TestImportTools(TransactionCase):
         self.assertEqual(wizard.success_count, 1)
         self.assertEqual(wizard.error_count, 1)
         self.assertIn("format_error", wizard.result_message)
-        self.assertTrue(self.env["federation.season"].search([("code", "=", "S2026")], limit=1))
+
+    def test_completed_import_job_records_typed_feedback_for_row_errors(self):
+        """Approved imports with row errors should persist a typed operator summary."""
+        csv_content = (
+            "name,code,date_start,date_end,state\n"
+            "Season 2028,S2028,2028-01-01,2028-12-31,open\n"
+            "Season 2029,S2029,2028/01/01,2028-12-31,open"
+        )
+        wizard = self.env["federation.import.seasons.wizard"].create({
+            "upload_file": self._create_csv_file(csv_content),
+            "dry_run": False,
+        })
+
+        self._approve_wizard_import(wizard)
+        wizard.action_parse_and_import()
+
+        self.assertEqual(wizard.governance_job_id.state, "completed_with_errors")
+        self.assertEqual(wizard.governance_job_id.failure_category, "data_validation")
+        self.assertIn("row-level validation errors", wizard.governance_job_id.operator_message)
+        self.assertTrue(self.env["federation.season"].search([("code", "=", "S2028")], limit=1))
 
     def test_import_seasons_supports_planning_targets(self):
         """Test that import seasons supports planning targets."""

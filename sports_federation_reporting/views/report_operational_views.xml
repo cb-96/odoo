@@ -202,10 +202,12 @@
                 <field name="recipient_email"/>
                 <field name="template_xmlid"/>
                 <field name="notification_type"/>
+                <field name="failure_category"/>
                 <field name="sla_status"/>
                 <filter name="escalated" string="Escalated" domain="[('sla_status', '=', 'escalated')]"/>
                 <group>
                     <filter name="group_type" string="Type" context="{'group_by': 'notification_type'}"/>
+                    <filter name="group_failure_category" string="Failure Category" context="{'group_by': 'failure_category'}"/>
                     <filter name="group_model" string="Target Model" context="{'group_by': 'target_model'}"/>
                     <filter name="group_sla" string="SLA Status" context="{'group_by': 'sla_status'}"/>
                 </group>
@@ -225,6 +227,7 @@
                 <field name="target_res_id"/>
                 <field name="recipient_email"/>
                 <field name="template_xmlid"/>
+                <field name="failure_category"/>
                 <field name="queue_owner_display"/>
                 <field name="sla_due_on"/>
                 <field name="sla_status"/>

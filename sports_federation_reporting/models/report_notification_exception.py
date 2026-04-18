@@ -1,4 +1,5 @@
 from odoo import fields, models, tools
+from odoo.addons.sports_federation_base.models.failure_feedback import FAILURE_CATEGORY_SELECTION
 
 from .report_operational import FederationReportOperational
 
@@ -38,6 +39,7 @@ class FederationReportNotificationException(models.Model):
     )
     template_xmlid = fields.Char(string="Template XML ID", readonly=True)
     state = fields.Selection(STATE_SELECTION, string="State", readonly=True)
+    failure_category = fields.Selection(FAILURE_CATEGORY_SELECTION, string="Failure Category", readonly=True)
     message = fields.Text(string="Failure Message", readonly=True)
     age_days = fields.Integer(string="Age (Days)", readonly=True)
     queue_owner_display = fields.Char(string="Queue Owner", readonly=True)
@@ -66,7 +68,8 @@ class FederationReportNotificationException(models.Model):
                     log.notification_type,
                     log.template_xmlid,
                     log.state,
-                    log.message,
+                    log.failure_category,
+                    COALESCE(log.operator_message, log.message) AS message,
                     (CURRENT_DATE - COALESCE(log.create_date::date, CURRENT_DATE))::int AS age_days,
                     'Federation Managers'::varchar AS queue_owner_display,
                     (COALESCE(log.create_date, NOW()) + INTERVAL '1 day') AS sla_due_on,

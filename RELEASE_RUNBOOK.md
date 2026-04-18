@@ -62,6 +62,14 @@ bash addons/ci/run_tests.sh --suite release_surfaces
 These suites now include query-budget regression checks for the public-site,
 portal, and reporting hotspots documented in `PERFORMANCE_BASELINES.md`.
 
+If the release changes the largest reporting SQL views, refresh the committed
+`EXPLAIN` snapshots from a restored or staging database and review the diff in
+`addons/ci/explain_snapshots/` before promoting the release:
+
+```bash
+python3 addons/ci/capture_explain_snapshots.py --db odoo_restore_drill
+```
+
 If the release changes only one module, also run that module directly before the
 broader suites:
 

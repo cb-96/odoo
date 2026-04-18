@@ -28,6 +28,35 @@ highlight which operators usually dominate the heavy reporting views.
 - `federation_report_season_portfolio`: expect aggregate and sort or window operators because the view rolls up season registrations, finance events, budgets, and compliance checks through multiple CTEs.
 - `federation_report_club_performance`: expect aggregate and sort or window operators because the view unions match sides before club-level rollups and season ordering.
 
+Committed snapshots:
+
+- `ci/explain_snapshots/federation_report_season_portfolio.txt`
+- `ci/explain_snapshots/federation_report_club_performance.txt`
+
+Refresh the snapshots from a live or restored database when the underlying SQL
+views change materially:
+
+```bash
+python3 addons/ci/capture_explain_snapshots.py --db odoo_restore_drill
+```
+
+## Slow-Query Logging Recipe
+
+Use PostgreSQL slow-query logging on a staging or restore-drill database before
+and after reporting view changes when the query budgets or plan snapshots move:
+
+```bash
+docker compose exec -T db psql -U odoo -d postgres -c "ALTER SYSTEM SET log_min_duration_statement = '200ms';"
+docker compose exec -T db psql -U odoo -d postgres -c "SELECT pg_reload_conf();"
+```
+
+After the sampling window, reset the override:
+
+```bash
+docker compose exec -T db psql -U odoo -d postgres -c "ALTER SYSTEM RESET log_min_duration_statement;"
+docker compose exec -T db psql -U odoo -d postgres -c "SELECT pg_reload_conf();"
+```
+
 ## Regression Coverage
 
 - Public-site budgets are asserted in `sports_federation_public_site/tests/test_public_api.py`.

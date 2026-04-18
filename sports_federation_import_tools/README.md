@@ -42,6 +42,8 @@ All import wizards inherit `federation.import.wizard.mixin`, which provides:
 - checksum-bound `federation.import.job` approval workflow for live imports
 - shared `dry_run`, `mapping_guide`, `result_message`, `line_count`,
   `success_count`, and `error_count` fields
+- shared `_execute_row_create(...)` handling so live imports reuse one
+  row-create failure path instead of ad hoc wizard-level try/except blocks
 - standardized error categories such as `missing_reference`,
   `duplicate_entry`, `format_error`, and `missing_required_field`
 - explicit compatibility handling for legacy CSV aliases tracked in

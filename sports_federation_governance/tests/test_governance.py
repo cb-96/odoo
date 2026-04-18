@@ -1,5 +1,13 @@
 from odoo.tests import TransactionCase
 from odoo.exceptions import ValidationError
+from odoo.addons.sports_federation_governance.workflow_states import (
+    OVERRIDE_DECISION_SELECTION,
+    OVERRIDE_REQUEST_STATE_APPROVED,
+    OVERRIDE_REQUEST_STATE_DRAFT,
+    OVERRIDE_REQUEST_STATE_REJECTED,
+    OVERRIDE_REQUEST_STATE_SELECTION,
+    OVERRIDE_REQUEST_STATE_SUBMITTED,
+)
 
 
 class TestGovernance(TransactionCase):
@@ -22,8 +30,19 @@ class TestGovernance(TransactionCase):
             "reason": "Test reason for override",
         })
         self.assertTrue(request.id)
-        self.assertEqual(request.state, "draft")
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_DRAFT)
         self.assertEqual(request.requested_by_id, self.env.user)
+
+    def test_override_models_use_shared_state_selections(self):
+        """Governance workflow selections should reuse the shared helper module."""
+        self.assertEqual(
+            self.env["federation.override.request"].STATE_SELECTION,
+            OVERRIDE_REQUEST_STATE_SELECTION,
+        )
+        self.assertEqual(
+            self.env["federation.override.decision"].DECISION_SELECTION,
+            OVERRIDE_DECISION_SELECTION,
+        )
 
     def test_submit_override_request(self):
         """Test submitting an override request."""
@@ -35,7 +54,7 @@ class TestGovernance(TransactionCase):
             "reason": "Test reason",
         })
         request.action_submit()
-        self.assertEqual(request.state, "submitted")
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_SUBMITTED)
 
     def test_approve_creates_decision(self):
         """Test approving creates a decision record."""
@@ -48,9 +67,9 @@ class TestGovernance(TransactionCase):
         })
         request.action_submit()
         request.action_approve()
-        self.assertEqual(request.state, "approved")
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_APPROVED)
         self.assertTrue(request.decision_ids)
-        self.assertEqual(request.decision_ids[0].decision, "approved")
+        self.assertEqual(request.decision_ids[0].decision, OVERRIDE_REQUEST_STATE_APPROVED)
 
     def test_reject_creates_decision(self):
         """Test rejecting creates a decision record."""
@@ -63,9 +82,9 @@ class TestGovernance(TransactionCase):
         })
         request.action_submit()
         request.action_reject()
-        self.assertEqual(request.state, "rejected")
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_REJECTED)
         self.assertTrue(request.decision_ids)
-        self.assertEqual(request.decision_ids[0].decision, "rejected")
+        self.assertEqual(request.decision_ids[0].decision, OVERRIDE_REQUEST_STATE_REJECTED)
 
     def test_mark_implemented(self):
         """Test marking request as implemented."""
@@ -102,7 +121,7 @@ class TestGovernance(TransactionCase):
         self.assertEqual(outcome.request_type, "standing_adjustment")
         self.assertEqual(outcome.target_model, "federation.tournament")
         self.assertEqual(outcome.target_res_id, 4)
-        self.assertEqual(outcome.request_state, "draft")
+        self.assertEqual(outcome.request_state, OVERRIDE_REQUEST_STATE_DRAFT)
 
     def test_target_validation(self):
         """Test target validation constraints."""

@@ -149,10 +149,18 @@ All authenticated CSV exports expose these headers:
 - Route: `/integration/v1/outbound/finance/events`
 - Response type: `text/csv`
 - Contract: `finance_event_v1`
+- Optional query parameters:
+  - `limit` to request one bounded page of rows
+  - `cursor` to resume after the last row from the previous page
 - Headers:
   - `X-Federation-Contract: finance_event_v1`
   - `X-Federation-Contract-Version: <schema version>`
   - `X-Federation-Partner-Code: <partner code>`
+  - `X-Federation-Export-Mode: cursor_page` when cursor pagination is active
+  - `X-Federation-Export-Count: <row count>` when cursor pagination is active
+  - `X-Federation-Has-More: true|false` when cursor pagination is active
+  - `X-Federation-Page-Limit: <effective limit>` when cursor pagination is active
+  - `X-Federation-Next-Cursor: <timestamp>|<id>` when another page is available
 - Authentication:
   - `X-Federation-Partner-Code`
   - `X-Federation-Partner-Token`

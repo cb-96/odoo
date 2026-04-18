@@ -6,6 +6,8 @@ class FederationFinanceEvent(models.Model):
     _name = "federation.finance.event"
     _description = "Federation Finance Event"
     _order = "create_date desc"
+    HANDOFF_EXPORT_DEFAULT_LIMIT = 200
+    HANDOFF_EXPORT_MAX_LIMIT = 500
 
     HANDOFF_STATE_SELECTION = [
         ("pending_export", "Pending Export"),
@@ -424,6 +426,86 @@ class FederationFinanceEvent(models.Model):
             "Closed On",
             "Closure Note",
         ]
+
+    @api.model
+    def _normalize_handoff_export_limit(self, limit=None):
+        """Return a bounded page size for cursor-based exports."""
+        if limit in (False, None, ""):
+            return self.HANDOFF_EXPORT_DEFAULT_LIMIT
+        try:
+            export_limit = int(limit)
+        except (TypeError, ValueError) as error:
+            raise ValidationError("Finance event export limits must be positive integers.") from error
+        if export_limit < 1:
+            raise ValidationError("Finance event export limits must be positive integers.")
+        return min(export_limit, self.HANDOFF_EXPORT_MAX_LIMIT)
+
+    @api.model
+    def _parse_handoff_export_cursor(self, cursor):
+        """Parse a cursor token into its stable sort components."""
+        if not cursor:
+            return False
+        create_date_token, separator, record_id_token = (cursor or "").partition("|")
+        if not separator:
+            raise ValidationError(
+                "Finance event export cursors must use the '<timestamp>|<id>' format."
+            )
+        create_date = fields.Datetime.to_datetime(create_date_token.strip())
+        try:
+            record_id = int(record_id_token)
+        except (TypeError, ValueError) as error:
+            raise ValidationError(
+                "Finance event export cursors must use the '<timestamp>|<id>' format."
+            ) from error
+        if not create_date or record_id < 1:
+            raise ValidationError(
+                "Finance event export cursors must use the '<timestamp>|<id>' format."
+            )
+        return {
+            "create_date": fields.Datetime.to_string(create_date),
+            "id": record_id,
+        }
+
+    @api.model
+    def _build_handoff_export_cursor(self, event):
+        """Return the cursor token that resumes after the given event."""
+        event.ensure_one()
+        return f"{fields.Datetime.to_string(event.create_date)}|{event.id}"
+
+    @api.model
+    def get_handoff_export_batch(self, cursor=None, limit=None):
+        """Return one deterministic export batch ordered by newest events first."""
+        export_limit = self._normalize_handoff_export_limit(limit=limit)
+        domain = []
+        parsed_cursor = self._parse_handoff_export_cursor(cursor)
+        if parsed_cursor:
+            domain = [
+                "|",
+                ("create_date", "<", parsed_cursor["create_date"]),
+                "&",
+                ("create_date", "=", parsed_cursor["create_date"]),
+                ("id", "<", parsed_cursor["id"]),
+            ]
+
+        events = self.search(
+            domain,
+            order="create_date desc, id desc",
+            limit=export_limit + 1,
+        )
+        has_more = len(events) > export_limit
+        batch_events = events[:export_limit]
+        next_cursor = (
+            self._build_handoff_export_cursor(batch_events[-1])
+            if has_more and batch_events
+            else False
+        )
+        return {
+            "events": batch_events,
+            "count": len(batch_events),
+            "limit": export_limit,
+            "has_more": has_more,
+            "next_cursor": next_cursor,
+        }
 
     def get_handoff_export_row(self):
         """Return handoff export row."""

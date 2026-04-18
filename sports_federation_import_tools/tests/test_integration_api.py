@@ -1,4 +1,6 @@
+import csv
 from datetime import datetime
+import io
 import json
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -257,6 +259,96 @@ class TestIntegrationApi(TransactionCase):
         self.assertEqual(blocked.headers.get("Retry-After"), "60")
         payload = json.loads(blocked.get_data(as_text=True))
         self.assertEqual(payload["error_code"], "retryable_delivery")
+
+    def test_finance_events_route_supports_cursor_pagination(self):
+        FinanceEvent = self.env.get("federation.finance.event")
+        FeeType = self.env.get("federation.fee.type")
+        if FinanceEvent is None or FeeType is None:
+            self.skipTest("finance bridge is not installed")
+
+        fee_type = FeeType.create(
+            {
+                "name": "API Export Fee",
+                "code": "APIEXP",
+                "category": "other",
+                "default_amount": 12.00,
+            }
+        )
+        oldest = FinanceEvent.create(
+            {
+                "name": "Oldest API Export Event",
+                "fee_type_id": fee_type.id,
+                "event_type": "charge",
+                "amount": 12.00,
+                "source_model": "federation.club",
+                "source_res_id": 1,
+            }
+        )
+        middle = FinanceEvent.create(
+            {
+                "name": "Middle API Export Event",
+                "fee_type_id": fee_type.id,
+                "event_type": "charge",
+                "amount": 13.00,
+                "source_model": "federation.club",
+                "source_res_id": 1,
+            }
+        )
+        newest = FinanceEvent.create(
+            {
+                "name": "Newest API Export Event",
+                "fee_type_id": fee_type.id,
+                "event_type": "charge",
+                "amount": 14.00,
+                "source_model": "federation.club",
+                "source_res_id": 1,
+            }
+        )
+
+        first_request = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            },
+            params={
+                "limit": "2",
+            },
+        )
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            first_request,
+        ):
+            first_response = self.controller.integration_finance_events()
+
+        first_rows = list(csv.reader(io.StringIO(first_response.get_data(as_text=True))))
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(first_response.headers.get("X-Federation-Export-Mode"), "cursor_page")
+        self.assertEqual(first_response.headers.get("X-Federation-Export-Count"), "2")
+        self.assertEqual(first_response.headers.get("X-Federation-Has-More"), "true")
+        self.assertEqual(first_rows[1][1], str(newest.id))
+        self.assertEqual(first_rows[2][1], str(middle.id))
+
+        second_request = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            },
+            params={
+                "limit": "2",
+                "cursor": first_response.headers.get("X-Federation-Next-Cursor"),
+            },
+        )
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            second_request,
+        ):
+            second_response = self.controller.integration_finance_events()
+
+        second_rows = list(csv.reader(io.StringIO(second_response.get_data(as_text=True))))
+        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(second_response.headers.get("X-Federation-Has-More"), "false")
+        self.assertIsNone(second_response.headers.get("X-Federation-Next-Cursor"))
+        self.assertEqual(second_rows[1][1], str(oldest.id))
 
     def test_inbound_route_rate_limits_repeat_callers(self):
         self.env["ir.config_parameter"].sudo().set_param(

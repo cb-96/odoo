@@ -1,3 +1,4 @@
+from odoo import fields
 from odoo.tests import TransactionCase
 from odoo.exceptions import ValidationError
 
@@ -239,6 +240,68 @@ class TestFinanceBridge(TransactionCase):
         self.assertIn("Reconciliation Ref", headers)
         self.assertIn("ACC-2026-001", row)
         self.assertIn("REC-2026-001", row)
+
+    def test_handoff_export_batch_paginates_with_stable_cursor(self):
+        """Test that handoff exports page newest-first with a resumable cursor."""
+        fee_type = self.env["federation.fee.type"].create({
+            "name": "Paged Export Fee",
+            "code": "PAGEDEXP",
+            "category": "other",
+            "default_amount": 15.00,
+        })
+        second_club = self.env["federation.club"].create({
+            "name": "Second Export Club",
+            "code": "TC002",
+        })
+        third_club = self.env["federation.club"].create({
+            "name": "Third Export Club",
+            "code": "TC003",
+        })
+        first = self.env["federation.finance.event"].create({
+            "name": "Oldest Export Event",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 15.00,
+            "source_model": "federation.club",
+            "source_res_id": self.club.id,
+            "club_id": self.club.id,
+        })
+        second = self.env["federation.finance.event"].create({
+            "name": "Middle Export Event",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 16.00,
+            "source_model": "federation.club",
+            "source_res_id": second_club.id,
+            "club_id": second_club.id,
+        })
+        third = self.env["federation.finance.event"].create({
+            "name": "Newest Export Event",
+            "fee_type_id": fee_type.id,
+            "event_type": "charge",
+            "amount": 17.00,
+            "source_model": "federation.club",
+            "source_res_id": third_club.id,
+            "club_id": third_club.id,
+        })
+
+        first_batch = self.env["federation.finance.event"].get_handoff_export_batch(limit=2)
+
+        self.assertEqual(first_batch["events"].ids, [third.id, second.id])
+        self.assertEqual(
+            first_batch["next_cursor"],
+            f"{fields.Datetime.to_string(second.create_date)}|{second.id}",
+        )
+        self.assertTrue(first_batch["has_more"])
+
+        second_batch = self.env["federation.finance.event"].get_handoff_export_batch(
+            cursor=first_batch["next_cursor"],
+            limit=2,
+        )
+
+        self.assertEqual(second_batch["events"].ids, [first.id])
+        self.assertFalse(second_batch["has_more"])
+        self.assertFalse(second_batch["next_cursor"])
 
     def test_finance_event_infers_season_from_source_record(self):
         """Test that finance event infers season from source record."""

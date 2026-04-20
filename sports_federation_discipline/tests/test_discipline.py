@@ -109,6 +109,27 @@ class TestDiscipline(TransactionCase):
         self.assertEqual(case.state, "closed")
         self.assertTrue(case.closed_on)
 
+    def test_review_submission_and_reopen_enforce_state_guards(self):
+        """Test review submission and reopen only allow the documented states."""
+        case = self.env["federation.disciplinary.case"].create({
+            "name": "Review Guard Case",
+            "subject_player_id": self.player.id,
+            "summary": "Exercise review workflow guards.",
+        })
+
+        with self.assertRaises(ValidationError):
+            case.action_reopen()
+        self.assertEqual(case.state, "draft")
+
+        case.action_submit_review()
+        self.assertEqual(case.state, "under_review")
+
+        with self.assertRaises(ValidationError):
+            case.action_submit_review()
+
+        case.action_reopen()
+        self.assertEqual(case.state, "draft")
+
     def test_create_sanction(self):
         """Test creating a sanction."""
         case = self.env["federation.disciplinary.case"].create({

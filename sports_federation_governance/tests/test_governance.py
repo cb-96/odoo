@@ -56,6 +56,26 @@ class TestGovernance(TransactionCase):
         request.action_submit()
         self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_SUBMITTED)
 
+    def test_withdraw_returns_submitted_request_to_draft(self):
+        """Test withdrawing returns a submitted request to draft only."""
+        request = self.env["federation.override.request"].create({
+            "name": "Withdraw Request",
+            "request_type": "manual_seeding",
+            "target_model": "federation.tournament",
+            "target_res_id": 1,
+            "reason": "Need to revise the override before review.",
+        })
+
+        with self.assertRaises(ValidationError):
+            request.action_withdraw()
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_DRAFT)
+
+        request.action_submit()
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_SUBMITTED)
+
+        request.action_withdraw()
+        self.assertEqual(request.state, OVERRIDE_REQUEST_STATE_DRAFT)
+
     def test_approve_creates_decision(self):
         """Test approving creates a decision record."""
         request = self.env["federation.override.request"].create({

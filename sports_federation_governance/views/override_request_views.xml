@@ -10,10 +10,12 @@
                 <header>
                     <button name="action_submit" string="Submit" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
+                    <button name="action_withdraw" string="Withdraw" type="object"
+                            invisible="state != 'submitted'"/>
                     <button name="action_approve" string="Approve" type="object" class="btn-success"
                             invisible="state != 'submitted'"/>
                     <button name="action_reject" string="Reject" type="object" class="btn-danger"
-                            invisible="state != 'submitted'"/>
+                            invisible="state != 'submitted'" confirm="Are you sure you want to reject this override request?"/>
                     <button name="action_mark_implemented" string="Implement" type="object" class="btn-secondary"
                             invisible="state != 'approved'"/>
                     <button name="action_close" string="Close" type="object"

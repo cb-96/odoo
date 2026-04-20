@@ -66,6 +66,69 @@ Core models:
 - `federation.integration.delivery` stages inbound partner payloads and links
   them to the downstream governance job.
 
+Current model layout:
+
+- `models/integration_contract.py` keeps contract manifest and availability rules.
+- `models/integration_partner.py` keeps partner identity, subscription lookup,
+  and the stable authentication entry point.
+- `models/integration_partner_token_mixin.py` keeps token generation, hashing,
+  verification, migration, and hashed persistence hooks.
+- `models/integration_partner_rotation_mixin.py` keeps manager-driven token
+  rotation and audit logging.
+- `models/integration_partner_contract.py` keeps subscription state and usage tracking.
+- `models/integration_delivery.py` keeps the ORM fields and composes focused helper mixins.
+- `models/integration_delivery_stage_mixin.py` keeps inbound staging, idempotency,
+  duplicate reuse, and attachment creation.
+- `models/integration_delivery_workflow_mixin.py` keeps wizard handoff and delivery
+  state transitions.
+- `models/integration_delivery_retention_mixin.py` keeps retention cleanup.
+
+Current wizard layout:
+
+- `wizards/import_wizard_mixin.py` remains the stable shared surface used by all
+  import wizards.
+- `wizards/import_wizard_csv_mixin.py` keeps CSV parsing, column validation,
+  row helpers, and shared error taxonomy.
+- `wizards/import_wizard_governance_mixin.py` keeps approval checks,
+  governance-job persistence, and result finalization.
+
+Current controller layout:
+
+- `controllers/integration_api.py` keeps the stable public route surface and
+  route-level orchestration.
+- `controllers/integration_api_auth_mixin.py` keeps header parsing, partner
+  authentication, caller identity, and rate-limit subject helpers.
+- `controllers/integration_api_response_mixin.py` keeps JSON response shaping
+  and typed error payload helpers.
+
+Phased maintainability plan:
+
+1. Phase 1 completed: the former multi-model gateway hotspot was split into
+  per-model files without changing model names, fields, or table ownership.
+  Test impact: existing import-tools tests should stay green. Migration risk:
+  none, because this is a file-layout change only.
+2. Phase 2 completed: delivery staging, idempotency, workflow handoff, and
+  retention cleanup now live in dedicated helper mixins while
+  `federation.integration.delivery` keeps the ORM contract stable. Test impact:
+  inbound delivery staging, idempotency, and retention coverage stays green.
+  Migration risk: replay semantics and attachment linkage.
+3. Phase 3 completed: token generation, hashing, verification, migration, and
+  rotation/audit helpers now live in dedicated partner mixins while
+  `federation.integration.partner` keeps the stable ORM entry points for
+  authentication and subscription lookup. Test impact: token rotation and
+  legacy-token migration coverage stay green. Migration risk: stored hash
+  compatibility and audit logging.
+4. Phase 4 completed: `wizards/import_wizard_mixin.py` now composes dedicated
+  CSV and governance/result helper mixins while preserving the shared wizard
+  API. Test impact: shared mixin coverage plus wizard-specific dry-run and
+  live-import flows stay green. Migration risk: approval checksum binding and
+  result-summary compatibility.
+5. Phase 5 completed: `controllers/integration_api.py` now composes dedicated
+  auth and response helper mixins while preserving the public route surface and
+  existing headers/status codes. Test impact: integration API credential,
+  rate-limit, finance export, and inbound delivery coverage stays green.
+  Migration risk: request patching in tests and route-level error semantics.
+
 Managed integration behaviour:
 
 1. Partners authenticate with `X-Federation-Partner-Code` plus either
@@ -99,6 +162,7 @@ Inbound delivery guardrails:
 - inbound payloads larger than 5 MiB are rejected before staging
 - duplicate inbound payloads are deduplicated by checksum before a new delivery record or attachment is created
 - explicit inbound idempotency keys replay the original delivery across retries and reject conflicting payload reuse
+- successful inbound API responses now expose `delivery_outcome` plus `X-Federation-Delivery-Outcome` so clients can distinguish fresh staging from checksum reuse and idempotent replay
 - terminal inbound deliveries are purged automatically once they exceed the retention windows documented in `DATA_RETENTION_POLICY.md`; the staged payload attachment is deleted with the delivery record
 
 ## Supported Wizards

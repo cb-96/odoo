@@ -69,6 +69,26 @@ class FederationDisciplinaryCase(models.Model):
     )
     summary = fields.Text(string="Summary")
     notes = fields.Text(string="Notes")
+    incident_count = fields.Integer(
+        compute="_compute_related_counts",
+        string="Incidents",
+    )
+    sanction_count = fields.Integer(
+        compute="_compute_related_counts",
+        string="Sanctions",
+    )
+    suspension_count = fields.Integer(
+        compute="_compute_related_counts",
+        string="Suspensions",
+    )
+
+    @api.depends("incident_ids", "sanction_ids", "suspension_ids")
+    def _compute_related_counts(self):
+        """Compute related counts."""
+        for record in self:
+            record.incident_count = len(record.incident_ids)
+            record.sanction_count = len(record.sanction_ids)
+            record.suspension_count = len(record.suspension_ids)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -103,10 +123,23 @@ class FederationDisciplinaryCase(models.Model):
     def action_submit_review(self):
         """Execute the submit review action."""
         for record in self:
+            if record.state != "draft":
+                raise ValidationError(
+                    "Only draft cases can be submitted for review."
+                )
             record.state = "under_review"
             for incident in record.incident_ids:
                 if incident.status == "new":
                     incident.status = "attached"
+
+    def action_reopen(self):
+        """Reopen a case under review, returning it to draft for corrections."""
+        for record in self:
+            if record.state != "under_review":
+                raise ValidationError(
+                    "Only cases under review can be reopened to draft."
+                )
+            record.state = "draft"
 
     def action_decide(self):
         """Execute the decide action."""
@@ -127,3 +160,36 @@ class FederationDisciplinaryCase(models.Model):
             for incident in record.incident_ids:
                 if incident.status != "closed":
                     incident.status = "closed"
+
+    def action_view_incidents(self):
+        """Open the related incidents."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Incidents",
+            "res_model": "federation.match.incident",
+            "view_mode": "list,form",
+            "domain": [("id", "in", self.incident_ids.ids)],
+        }
+
+    def action_view_sanctions(self):
+        """Open the related sanctions."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Sanctions",
+            "res_model": "federation.sanction",
+            "view_mode": "list,form",
+            "domain": [("case_id", "=", self.id)],
+        }
+
+    def action_view_suspensions(self):
+        """Open the related suspensions."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Suspensions",
+            "res_model": "federation.suspension",
+            "view_mode": "list,form",
+            "domain": [("case_id", "=", self.id)],
+        }

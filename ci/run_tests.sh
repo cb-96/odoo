@@ -153,6 +153,7 @@ ALL_MODULES=(
   sports_federation_compliance
   sports_federation_public_site
   sports_federation_reporting
+  sports_federation_demo
 )
 
 is_known_module() {

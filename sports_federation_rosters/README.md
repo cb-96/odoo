@@ -91,7 +91,7 @@ The squad list submitted for a specific match.
 | `coach_name` / `manager_name` | Char | Team staff |
 | `notes` | Text | Remarks |
 
-- **State machine**: draft → submitted → approved → locked.
+- **State machine**: draft → submitted → approved → locked, with submitted sheets allowed back to draft for operator corrections before approval.
 
 ### `federation.match.sheet.line`
 
@@ -159,7 +159,7 @@ tournament start if no match has been scheduled yet.
 6. **Substitution governance** — Approved sheets can record `entered_minute`
    and `left_minute` values while still blocking lineup changes after approval.
 7. **Participation audit trail** — Roster lifecycle changes, lineup changes,
-   submissions, approvals, locks, and substitutions are captured in
+   submissions, submitted-sheet resets, approvals, locks, and substitutions are captured in
    `federation.participation.audit`.
 8. **Participant roster readiness** — Tournament registration creates or reuses
    the relevant team roster automatically so roster maintenance stays attached

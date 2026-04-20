@@ -36,7 +36,7 @@
                         </div>
                     </t>
                 </div>
-                <div t-if="not tournaments" class="alert alert-info">
+                <div t-if="not tournaments" class="alert alert-info" role="status">
                     No tournaments are published yet. Check back for schedules, results, and standings.
                 </div>
             </div>
@@ -179,7 +179,7 @@
                         </table>
                     </div>
                 </t>
-                <div t-if="not standings" class="alert alert-info">
+                <div t-if="not standings" class="alert alert-info" role="status">
                     Standings have not been published for this tournament yet.
                 </div>
             </div>
@@ -246,7 +246,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div t-if="not matches" class="alert alert-info">
+                <div t-if="not matches" class="alert alert-info" role="status">
                     Approved results have not been published for this tournament yet.
                 </div>
             </div>
@@ -317,7 +317,7 @@
                         </div>
                     </div>
                 </t>
-                <div t-if="not schedule_sections" class="alert alert-info">
+                <div t-if="not schedule_sections" class="alert alert-info" role="status">
                     Fixtures have not been published for this tournament yet.
                 </div>
             </div>
@@ -374,7 +374,7 @@
                         </div>
                     </t>
                 </div>
-                <div t-if="not bracket_sections" class="alert alert-info">
+                <div t-if="not bracket_sections" class="alert alert-info" role="status">
                     Bracket details have not been published for this tournament yet.
                 </div>
             </div>
@@ -416,7 +416,7 @@
                         </div>
                     </t>
                 </div>
-                <div t-if="not tournaments" class="alert alert-info">
+                <div t-if="not tournaments" class="alert alert-info" role="status">
                     No published tournaments are archived yet.
                 </div>
             </div>
@@ -464,7 +464,7 @@
                         </t>
                     </tbody>
                 </table>
-                <div t-if="not participants" class="alert alert-info">
+                <div t-if="not participants" class="alert alert-info" role="status">
                     Teams have not been published for this tournament yet.
                 </div>
             </div>

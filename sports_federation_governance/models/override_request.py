@@ -104,6 +104,13 @@ class FederationOverrideRequest(models.Model):
                 raise ValidationError("Only draft requests can be submitted.")
             record.state = OVERRIDE_REQUEST_STATE_SUBMITTED
 
+    def action_withdraw(self):
+        """Withdraw a submitted request back to draft."""
+        for record in self:
+            if not is_override_request_submitted(record.state):
+                raise ValidationError("Only submitted requests can be withdrawn.")
+            record.state = OVERRIDE_REQUEST_STATE_DRAFT
+
     def action_approve(self):
         """Approve the request and create decision record."""
         for record in self:

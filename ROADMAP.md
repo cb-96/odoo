@@ -1,8 +1,8 @@
 # ROADMAP — 2026-04-17 Improvement Program
 
-Last updated: 2026-04-18
+Last updated: 2026-04-19
 Owner: Federation Platform Team
-Last reviewed: 2026-04-18
+Last reviewed: 2026-04-19
 Review cadence: Every release
 Release train: 2026.04
 
@@ -132,9 +132,9 @@ Done when: retryable delivery, import, and report failures are distinguishable f
 11. [x] Add data-retention policies for logs, staged deliveries, and generated report files.
 12. [x] Add a backup-restore drill script and a periodic restore verification checklist.
 13. [x] Add slow-query logging and `EXPLAIN` snapshots for the largest SQL views.
-14. Add accessibility review passes for portal and public templates.
-15. Add mobile-specific template checks for the largest portal workflows.
-16. Add a deterministic demo-data pack for end-to-end federation walkthroughs.
+14. [x] Add accessibility review passes for portal and public templates.
+15. [x] Add mobile-specific template checks for the largest portal workflows.
+16. [x] Add a deterministic demo-data pack for end-to-end federation walkthroughs.
 17. [x] Add audit dashboards for privileged portal actions and token rotations.
 18. [x] Add import wizard base classes for row parsing, duplicate detection, and reusable error taxonomy.
 19. [x] Add shared enums or helper predicates for cross-module workflow states where semantics are reused.

@@ -180,6 +180,38 @@ class FederationPublicEditorialItem(models.Model):
                     "Editorial items must be linked to a season, tournament, or team."
                 )
 
+    def action_schedule(self):
+        """Schedule the editorial item for publication."""
+        for record in self:
+            if record.publication_state != "draft":
+                raise ValidationError("Only draft items can be scheduled.")
+            if not record.publish_start:
+                raise ValidationError(
+                    "Set a publish start date before scheduling."
+                )
+            record.publication_state = "scheduled"
+
+    def action_publish(self):
+        """Publish the editorial item immediately."""
+        for record in self:
+            if record.publication_state not in ("draft", "scheduled"):
+                raise ValidationError("Only draft or scheduled items can be published.")
+            record.publication_state = "published"
+
+    def action_archive_item(self):
+        """Archive a published or scheduled editorial item."""
+        for record in self:
+            if record.publication_state not in ("published", "scheduled"):
+                raise ValidationError("Only published or scheduled items can be archived.")
+            record.publication_state = "archived"
+
+    def action_reset_to_draft(self):
+        """Reset an archived or scheduled item back to draft."""
+        for record in self:
+            if record.publication_state not in ("archived", "scheduled"):
+                raise ValidationError("Only archived or scheduled items can be reset to draft.")
+            record.publication_state = "draft"
+
     def can_access_publicly(self, reference_dt=None):
         """Return whether access publicly is allowed."""
         self.ensure_one()

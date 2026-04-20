@@ -301,6 +301,21 @@ class FederationMatchSheet(models.Model):
                 % {"sheet": record.display_name},
             )
 
+    def action_reset_to_draft(self):
+        """Reset a submitted match sheet back to draft for corrections."""
+        for record in self:
+            if record.state != "submitted":
+                raise ValidationError(
+                    _("Only submitted match sheets can be reset to draft.")
+                )
+        self.write({"state": "draft"})
+        for record in self:
+            record._log_audit_event(
+                "match_sheet_reset",
+                _("Match sheet '%(sheet)s' reset to draft.")
+                % {"sheet": record.display_name},
+            )
+
     def action_approve(self):
         """Execute the approve action."""
         for record in self:

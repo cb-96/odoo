@@ -228,6 +228,7 @@
 
                 <div class="row">
                     <div class="col-12">
+                        <div class="table-responsive">
                         <table class="table">
                             <caption class="visually-hidden">Teams available to the current club representative.</caption>
                             <thead>
@@ -251,6 +252,7 @@
                                 </t>
                             </tbody>
                         </table>
+                        </div>
                         <div t-if="not teams" class="text-center py-4">
                             <p class="text-muted mb-3">No teams are linked to this club yet.</p>
                             <a href="/my/teams/new" class="btn btn-primary">Create Your First Team</a>
@@ -359,6 +361,7 @@
 
                 <div class="row">
                     <div class="col-12">
+                        <div class="table-responsive">
                         <table class="table">
                             <caption class="visually-hidden">Season registrations submitted through the portal.</caption>
                             <thead>
@@ -403,6 +406,7 @@
                                 </t>
                             </tbody>
                         </table>
+                        </div>
                         <div t-if="not registrations" class="text-center py-4">
                             <p class="text-muted">No season registrations have been submitted yet. Start with the next eligible team when you are ready.</p>
                             <a href="/my/season-registration/new" class="btn btn-primary">
@@ -446,6 +450,7 @@
 
                 <div class="row">
                     <div class="col-12">
+                        <div class="table-responsive">
                         <table class="table">
                             <caption class="visually-hidden">Tournament registrations visible in the portal.</caption>
                             <thead>
@@ -494,6 +499,7 @@
                                 </t>
                             </tbody>
                         </table>
+                        </div>
                         <div t-if="not registrations" class="text-center py-4">
                             <p class="text-muted">No tournament registrations have been sent yet. Browse the published tournament hub to find the next open event.</p>
                             <a href="/tournaments" class="btn btn-primary">

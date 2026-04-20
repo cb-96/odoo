@@ -40,6 +40,11 @@ class TestRosterPortalAccess(TransactionCase):
             "club_id": cls.club_b.id,
             "code": "PRTB",
         })
+        cls.team_a_reserve = cls.env["federation.team"].create({
+            "name": "Portal Roster Team A Reserve",
+            "club_id": cls.club_a.id,
+            "code": "PRTR",
+        })
         cls.user_a = cls.env["res.users"].with_context(no_reset_password=True).create({
             "name": "Portal Roster User A",
             "login": "portal.roster.a@example.com",
@@ -97,6 +102,12 @@ class TestRosterPortalAccess(TransactionCase):
             "user_id": cls.user_a.id,
         })
         cls.registration_a.action_confirm()
+        cls.registration_a_reserve = cls.env["federation.season.registration"].create({
+            "season_id": cls.season.id,
+            "team_id": cls.team_a_reserve.id,
+            "user_id": cls.user_a.id,
+        })
+        cls.registration_a_reserve.action_confirm()
         cls.registration_b = cls.env["federation.season.registration"].create({
             "season_id": cls.season.id,
             "team_id": cls.team_b.id,
@@ -109,6 +120,12 @@ class TestRosterPortalAccess(TransactionCase):
             "team_id": cls.team_a.id,
             "season_id": cls.season.id,
             "season_registration_id": cls.registration_a.id,
+        })
+        cls.roster_a_reserve = cls.env["federation.team.roster"].create({
+            "name": "Portal Roster A Reserve",
+            "team_id": cls.team_a_reserve.id,
+            "season_id": cls.season.id,
+            "season_registration_id": cls.registration_a_reserve.id,
         })
         cls.roster_b = cls.env["federation.team.roster"].create({
             "name": "Portal Roster B",
@@ -237,6 +254,33 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertEqual(roster.team_id, team_c)
         self.assertEqual(roster.season_registration_id, registration_c)
         self.assertEqual(roster.create_uid, self.user_a)
+
+    def test_team_scoped_coach_reuses_primary_roster_only_for_assigned_team(self):
+        """Team-scoped portal helpers must stay pinned to the assigned team."""
+        roster = self.env[
+            "federation.team.roster"
+        ]._portal_get_primary_roster_for_registration(
+            self.registration_a,
+            user=self.coach_user,
+        )
+
+        self.assertEqual(roster, self.roster_a)
+
+        with self.assertRaises(AccessError):
+            self.env[
+                "federation.team.roster"
+            ]._portal_get_primary_roster_for_registration(
+                self.registration_a_reserve,
+                user=self.coach_user,
+            )
+
+    def test_team_scoped_coach_cannot_manage_same_club_other_team_roster(self):
+        """Team-scoped representatives cannot mutate same-club foreign-team rosters."""
+        with self.assertRaises(AccessError):
+            self.roster_a_reserve._portal_update_roster(
+                user=self.coach_user,
+                values={"notes": "Not allowed"},
+            )
 
     def test_portal_user_cannot_create_roster_without_confirmation_or_for_other_club(self):
         """Test that portal user cannot create roster without confirmation or for other club."""

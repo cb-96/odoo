@@ -18,6 +18,7 @@ Table of contents
 
 Quick links
 - High-level context: `odoo/CONTEXT.md`
+- Maintainability review: `odoo/MAINTAINABILITY_REVIEW.md`
 - Technical notes: `odoo/TECHNICAL_NOTE.md`
 - Architecture decisions: `odoo/adr/README.md`
 - Route inventory: `odoo/ROUTE_INVENTORY.md`

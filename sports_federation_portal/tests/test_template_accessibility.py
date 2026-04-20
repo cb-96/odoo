@@ -9,16 +9,27 @@ class TestPortalTemplateAccessibility(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        template_path = Path(__file__).resolve().parents[1] / "views" / "portal_templates.xml"
-        cls.template_root = etree.parse(str(template_path)).getroot()
+        views_dir = Path(__file__).resolve().parents[1] / "views"
+        cls.template_roots = {
+            "portal_templates": etree.parse(str(views_dir / "portal_templates.xml")).getroot(),
+            "portal_roster_templates": etree.parse(
+                str(views_dir / "portal_roster_templates.xml")
+            ).getroot(),
+            "portal_tournament_workspace_templates": etree.parse(
+                str(views_dir / "portal_tournament_workspace_templates.xml")
+            ).getroot(),
+            "portal_officiating_templates": etree.parse(
+                str(views_dir / "portal_officiating_templates.xml")
+            ).getroot(),
+        }
 
-    def _template(self, template_id):
-        templates = self.template_root.xpath(f".//template[@id='{template_id}']")
-        self.assertTrue(templates, f"Template {template_id} should exist.")
+    def _template(self, file_key, template_id):
+        templates = self.template_roots[file_key].xpath(f".//template[@id='{template_id}']")
+        self.assertTrue(templates, f"Template {template_id} should exist in {file_key}.")
         return templates[0]
 
-    def _assert_controls_have_labels(self, template_id):
-        template = self._template(template_id)
+    def _assert_controls_have_labels(self, file_key, template_id):
+        template = self._template(file_key, template_id)
         controls = template.xpath(
             ".//form//*[self::input or self::select or self::textarea][not(@type='hidden')]"
         )
@@ -37,8 +48,8 @@ class TestPortalTemplateAccessibility(TransactionCase):
                 f"Control {control.get('name')} in {template_id} should have a matching label.",
             )
 
-    def _assert_alert_roles(self, template_id):
-        template = self._template(template_id)
+    def _assert_alert_roles(self, file_key, template_id):
+        template = self._template(file_key, template_id)
         alerts = template.xpath(
             ".//*[contains(concat(' ', normalize-space(@class), ' '), ' alert ')]"
         )
@@ -50,9 +61,9 @@ class TestPortalTemplateAccessibility(TransactionCase):
                 f"Alert in {template_id} should declare an assistive role.",
             )
 
-    def _assert_tables_have_captions_and_scoped_headers(self, template_id):
-        template = self._template(template_id)
-        tables = template.xpath(".//table")
+    def _assert_tables_have_captions_and_scoped_headers(self, file_key, template_id):
+        template = self._template(file_key, template_id)
+        tables = template.xpath(".//table[.//thead]")
         self.assertTrue(tables, f"Template {template_id} should contain data tables.")
         for table in tables:
             self.assertTrue(
@@ -69,17 +80,64 @@ class TestPortalTemplateAccessibility(TransactionCase):
                 )
 
     def test_core_portal_forms_have_explicit_labels(self):
-        self._assert_controls_have_labels("portal_my_team_new")
-        self._assert_controls_have_labels("portal_season_registration_form")
+        self._assert_controls_have_labels("portal_templates", "portal_my_team_new")
+        self._assert_controls_have_labels("portal_templates", "portal_season_registration_form")
+
+    def test_operational_portal_forms_have_explicit_labels(self):
+        self._assert_controls_have_labels("portal_roster_templates", "portal_my_roster_edit")
+        self._assert_controls_have_labels("portal_roster_templates", "portal_my_roster_line_form")
+        self._assert_controls_have_labels("portal_roster_templates", "portal_my_match_sheet_detail")
+        self._assert_controls_have_labels(
+            "portal_officiating_templates", "portal_my_referee_assignment_detail"
+        )
 
     def test_core_portal_feedback_uses_alert_roles(self):
-        self._assert_alert_roles("portal_my_team_new")
-        self._assert_alert_roles("portal_my_teams")
-        self._assert_alert_roles("portal_my_season_registrations")
-        self._assert_alert_roles("portal_my_tournament_registrations")
-        self._assert_alert_roles("portal_season_registration_form")
+        self._assert_alert_roles("portal_templates", "portal_my_team_new")
+        self._assert_alert_roles("portal_templates", "portal_my_teams")
+        self._assert_alert_roles("portal_templates", "portal_my_season_registrations")
+        self._assert_alert_roles("portal_templates", "portal_my_tournament_registrations")
+        self._assert_alert_roles("portal_templates", "portal_season_registration_form")
+
+    def test_operational_portal_feedback_uses_alert_roles(self):
+        self._assert_alert_roles("portal_roster_templates", "portal_my_rosters")
+        self._assert_alert_roles("portal_roster_templates", "portal_my_roster_detail")
+        self._assert_alert_roles("portal_roster_templates", "portal_my_match_sheet_detail")
+        self._assert_alert_roles(
+            "portal_tournament_workspace_templates", "portal_my_tournament_workspaces"
+        )
+        self._assert_alert_roles("portal_officiating_templates", "portal_my_referee_assignments")
+        self._assert_alert_roles(
+            "portal_officiating_templates", "portal_my_referee_assignment_detail"
+        )
 
     def test_core_portal_tables_have_captions_and_header_scope(self):
-        self._assert_tables_have_captions_and_scoped_headers("portal_my_teams")
-        self._assert_tables_have_captions_and_scoped_headers("portal_my_season_registrations")
-        self._assert_tables_have_captions_and_scoped_headers("portal_my_tournament_registrations")
+        self._assert_tables_have_captions_and_scoped_headers("portal_templates", "portal_my_teams")
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_templates", "portal_my_season_registrations"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_templates", "portal_my_tournament_registrations"
+        )
+
+    def test_operational_portal_tables_have_captions_and_header_scope(self):
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_roster_templates", "portal_my_rosters"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_roster_templates", "portal_my_roster_detail"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_roster_templates", "portal_my_match_sheets"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_roster_templates", "portal_my_match_sheet_detail"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_roster_templates", "portal_my_match_day"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_officiating_templates", "portal_my_referee_assignments"
+        )
+        self._assert_tables_have_captions_and_scoped_headers(
+            "portal_tournament_workspace_templates", "portal_my_tournament_workspace_detail"
+        )

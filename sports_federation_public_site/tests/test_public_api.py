@@ -18,6 +18,7 @@ from odoo.addons.sports_federation_public_site.controllers.public_competitions i
 from odoo.addons.sports_federation_public_site.controllers.public_follow import (
     PublicSeasonAndTeamController,
 )
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase
 
 
@@ -122,6 +123,17 @@ class TestPublicSiteNewEndpoints(TransactionCase):
             "public_slug": "ps-season",
             "public_summary": "Season-wide discovery entry.",
         })
+
+    def _create_editorial_item(self, **values):
+        """Create a minimal editorial item anchored to the shared season."""
+        defaults = {
+            "name": "Editorial Item",
+            "content_type": "highlight",
+            "summary": "Editorial summary.",
+            "season_id": self.season.id,
+        }
+        defaults.update(values)
+        return self.env["federation.public.editorial.item"].create(defaults)
 
     # ------------------------------------------------------------------
     # Archive endpoint data layer
@@ -366,6 +378,87 @@ class TestPublicSiteNewEndpoints(TransactionCase):
 
         self.assertIn(live_item, items)
         self.assertNotIn(future_item, items)
+
+    def test_editorial_schedule_requires_draft_with_publish_start(self):
+        """Scheduling requires a draft item with a publish start date."""
+        missing_start = self._create_editorial_item(name="Missing Start")
+        with self.assertRaises(ValidationError):
+            missing_start.action_schedule()
+        self.assertEqual(missing_start.publication_state, "draft")
+
+        published_item = self._create_editorial_item(
+            name="Published Item",
+            publication_state="published",
+            publish_start="2024-05-01 08:00:00",
+        )
+        with self.assertRaises(ValidationError):
+            published_item.action_schedule()
+
+        scheduled_item = self._create_editorial_item(
+            name="Scheduled Item",
+            publish_start="2024-05-01 08:00:00",
+        )
+        scheduled_item.action_schedule()
+        self.assertEqual(scheduled_item.publication_state, "scheduled")
+
+    def test_editorial_publish_accepts_only_draft_or_scheduled(self):
+        """Publishing works from draft or scheduled and rejects archived items."""
+        draft_item = self._create_editorial_item(name="Draft Publish")
+        draft_item.action_publish()
+        self.assertEqual(draft_item.publication_state, "published")
+
+        scheduled_item = self._create_editorial_item(
+            name="Scheduled Publish",
+            publication_state="scheduled",
+            publish_start="2024-05-02 08:00:00",
+        )
+        scheduled_item.action_publish()
+        self.assertEqual(scheduled_item.publication_state, "published")
+
+        archived_item = self._create_editorial_item(
+            name="Archived Publish",
+            publication_state="archived",
+        )
+        with self.assertRaises(ValidationError):
+            archived_item.action_publish()
+
+    def test_editorial_archive_and_reset_to_draft_enforce_allowed_states(self):
+        """Archive and reset only allow the documented workflow states."""
+        published_item = self._create_editorial_item(
+            name="Published Archive",
+            publication_state="published",
+        )
+        published_item.action_archive_item()
+        self.assertEqual(published_item.publication_state, "archived")
+        published_item.action_reset_to_draft()
+        self.assertEqual(published_item.publication_state, "draft")
+
+        scheduled_archive = self._create_editorial_item(
+            name="Scheduled Archive",
+            publication_state="scheduled",
+            publish_start="2024-05-03 08:00:00",
+        )
+        scheduled_archive.action_archive_item()
+        self.assertEqual(scheduled_archive.publication_state, "archived")
+
+        scheduled_reset = self._create_editorial_item(
+            name="Scheduled Reset",
+            publication_state="scheduled",
+            publish_start="2024-05-04 08:00:00",
+        )
+        scheduled_reset.action_reset_to_draft()
+        self.assertEqual(scheduled_reset.publication_state, "draft")
+
+        draft_item = self._create_editorial_item(name="Draft Archive")
+        with self.assertRaises(ValidationError):
+            draft_item.action_archive_item()
+
+        published_reset = self._create_editorial_item(
+            name="Published Reset",
+            publication_state="published",
+        )
+        with self.assertRaises(ValidationError):
+            published_reset.action_reset_to_draft()
 
     def test_team_follow_helpers_expose_schedule_results_and_feed(self):
         """Test that team follow helpers expose schedule results and feed."""

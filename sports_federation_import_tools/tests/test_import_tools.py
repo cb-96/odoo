@@ -85,6 +85,18 @@ class TestImportTools(TransactionCase):
             self.assertTrue(hasattr(wizard_model, "_categorize_exception"))
             self.assertTrue(hasattr(wizard_model, "_finalize_import_result"))
 
+    def test_import_wizard_mixin_composes_split_helpers(self):
+        """The shared import wizard mixin should stay assembled from the focused helper mixins."""
+        wizard_mixin = self.env["federation.import.wizard.mixin"]
+        inherits = wizard_mixin._inherit
+        if isinstance(inherits, str):
+            inherits = [inherits]
+
+        self.assertIn("federation.import.wizard.csv.mixin", inherits)
+        self.assertIn("federation.import.wizard.governance.mixin", inherits)
+        self.assertTrue(hasattr(wizard_mixin, "_get_csv_reader"))
+        self.assertTrue(hasattr(wizard_mixin, "action_request_approval"))
+
     def test_import_job_uses_shared_state_selection(self):
         """Import job workflow states should come from the shared helper module."""
         self.assertEqual(
@@ -98,6 +110,31 @@ class TestImportTools(TransactionCase):
             self.env["federation.integration.delivery"].STATE_SELECTION,
             INBOUND_DELIVERY_STATE_SELECTION,
         )
+
+    def test_inbound_delivery_model_composes_split_helpers(self):
+        """The delivery model should stay assembled from the focused staging and lifecycle helpers."""
+        delivery_model = self.env["federation.integration.delivery"]
+        inherits = delivery_model._inherit
+        if isinstance(inherits, str):
+            inherits = [inherits]
+
+        self.assertIn("federation.integration.delivery.stage.mixin", inherits)
+        self.assertIn("federation.integration.delivery.workflow.mixin", inherits)
+        self.assertIn("federation.integration.delivery.retention.mixin", inherits)
+        self.assertTrue(hasattr(delivery_model, "stage_partner_delivery_result"))
+        self.assertTrue(hasattr(delivery_model, "_purge_retained_deliveries"))
+
+    def test_integration_partner_model_composes_split_helpers(self):
+        """The partner model should stay assembled from focused token and rotation helpers."""
+        partner_model = self.env["federation.integration.partner"]
+        inherits = partner_model._inherit
+        if isinstance(inherits, str):
+            inherits = [inherits]
+
+        self.assertIn("federation.integration.partner.token.mixin", inherits)
+        self.assertIn("federation.integration.partner.rotation.mixin", inherits)
+        self.assertTrue(hasattr(partner_model, "_hash_auth_token"))
+        self.assertTrue(hasattr(partner_model, "action_rotate_token"))
 
     def test_shared_workflow_helper_maps_job_completion_to_delivery_state(self):
         """The shared workflow helper should map job completion states to delivery states."""

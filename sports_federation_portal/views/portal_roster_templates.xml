@@ -65,13 +65,14 @@
                                 </p>
                                 <div class="table-responsive">
                                     <table class="table table-sm align-middle mb-0">
+                                        <caption class="visually-hidden">Season registrations that can be converted into portal-managed rosters.</caption>
                                         <thead>
                                             <tr>
-                                                <th>Team</th>
-                                                <th>Season</th>
-                                                <th>Registration</th>
-                                                <th>Roster</th>
-                                                <th class="text-end">Action</th>
+                                                <th scope="col">Team</th>
+                                                <th scope="col">Season</th>
+                                                <th scope="col">Registration</th>
+                                                <th scope="col">Roster</th>
+                                                <th scope="col" class="text-end">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -106,15 +107,17 @@
                     </div>
                 </div>
 
+                <div class="table-responsive">
                 <table class="table">
+                    <caption class="visually-hidden">Rosters available to the current portal representative.</caption>
                     <thead>
                         <tr>
-                            <th>Roster</th>
-                            <th>Team</th>
-                            <th>Season</th>
-                            <th>Status</th>
-                            <th>Locked</th>
-                            <th>Actions</th>
+                            <th scope="col">Roster</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Season</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Locked</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -135,6 +138,7 @@
                         </t>
                     </tbody>
                 </table>
+                </div>
 
                 <div t-if="not rosters" class="text-center py-4">
                     <p class="text-muted">No rosters are available for your club yet.</p>
@@ -154,7 +158,7 @@
                     <div class="col">
                         <h2><i class="fa fa-id-card me-2"/><t t-esc="roster.name"/></h2>
                     </div>
-                    <div class="col-auto d-flex gap-2">
+                    <div class="col-auto d-flex flex-wrap gap-2">
                         <a t-if="can_edit_roster"
                            t-attf-href="/my/rosters/#{roster.id}/edit"
                            class="btn btn-primary">Edit Roster</a>
@@ -195,10 +199,10 @@
                         <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Operational Status</h5>
-                                <div t-if="roster.readiness_feedback" class="alert alert-warning mb-3">
+                                <div t-if="roster.readiness_feedback" class="alert alert-warning mb-3" role="alert">
                                     <t t-esc="roster.readiness_feedback"/>
                                 </div>
-                                <div t-if="roster.match_day_lock_feedback" class="alert alert-info mb-0">
+                                <div t-if="roster.match_day_lock_feedback" class="alert alert-info mb-0" role="status">
                                     <t t-esc="roster.match_day_lock_feedback"/>
                                 </div>
                                 <div t-if="not roster.readiness_feedback and not roster.match_day_lock_feedback" class="text-muted">
@@ -234,22 +238,24 @@
 
                 <div class="row mt-4">
                     <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2 gap-2">
                             <h4 class="mb-0">Roster Lines</h4>
                             <a t-if="can_edit_roster"
                                t-attf-href="/my/rosters/#{roster.id}/lines/new"
                                class="btn btn-sm btn-outline-primary">Add Player</a>
                         </div>
+                        <div class="table-responsive">
                         <table class="table table-sm">
+                            <caption class="visually-hidden">Players currently attached to this roster.</caption>
                             <thead>
                                 <tr>
-                                    <th>Player</th>
-                                    <th>License</th>
-                                    <th>Status</th>
-                                    <th>Captaincy</th>
-                                    <th>Eligibility</th>
-                                    <th>Dates</th>
-                                    <th class="text-end">Actions</th>
+                                    <th scope="col">Player</th>
+                                    <th scope="col">License</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Captaincy</th>
+                                    <th scope="col">Eligibility</th>
+                                    <th scope="col">Dates</th>
+                                    <th scope="col" class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -292,6 +298,7 @@
                                 </t>
                             </tbody>
                         </table>
+                        </div>
                         <div t-if="not roster.line_ids" class="text-muted">No players have been added to this roster yet.</div>
                     </div>
                 </div>
@@ -300,12 +307,13 @@
                     <div class="col-12">
                         <h4>Audit History</h4>
                         <table class="table table-sm">
+                            <caption class="visually-hidden">Audit history entries recorded for this roster.</caption>
                             <thead>
                                 <tr>
-                                    <th>When</th>
-                                    <th>Event</th>
-                                    <th>Player</th>
-                                    <th>Description</th>
+                                    <th scope="col">When</th>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Player</th>
+                                    <th scope="col">Description</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -363,30 +371,30 @@
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Roster Name</label>
-                                        <input type="text" name="name" class="form-control" required="required"
+                                        <label class="form-label" for="roster_name">Roster Name</label>
+                                        <input id="roster_name" type="text" name="name" class="form-control" required="required"
                                                t-att-value="roster.name"/>
                                     </div>
 
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label">Valid From</label>
-                                            <input type="date" name="valid_from" class="form-control"
+                                            <label class="form-label" for="roster_valid_from">Valid From</label>
+                                            <input id="roster_valid_from" type="date" name="valid_from" class="form-control"
                                                    t-att-value="roster.valid_from or ''"/>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">Valid To</label>
-                                            <input type="date" name="valid_to" class="form-control"
+                                            <label class="form-label" for="roster_valid_to">Valid To</label>
+                                            <input id="roster_valid_to" type="date" name="valid_to" class="form-control"
                                                    t-att-value="roster.valid_to or ''"/>
                                         </div>
                                     </div>
 
                                     <div class="mt-3">
-                                        <label class="form-label">Notes</label>
-                                        <textarea name="notes" class="form-control" rows="6"><t t-esc="roster.notes or ''"/></textarea>
+                                        <label class="form-label" for="roster_notes">Notes</label>
+                                        <textarea id="roster_notes" name="notes" class="form-control" rows="6"><t t-esc="roster.notes or ''"/></textarea>
                                     </div>
 
-                                    <div class="mt-4 d-flex gap-2">
+                                    <div class="mt-4 d-flex flex-wrap gap-2">
                                         <button type="submit" class="btn btn-primary">Save Changes</button>
                                         <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Cancel</a>
                                     </div>
@@ -422,18 +430,18 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Team</label>
-                                    <input type="text" class="form-control" t-att-value="roster.team_id.display_name" readonly="readonly"/>
+                                    <label class="form-label" for="roster_line_team">Team</label>
+                                    <input id="roster_line_team" type="text" class="form-control" t-att-value="roster.team_id.display_name" readonly="readonly"/>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Season</label>
-                                    <input type="text" class="form-control" t-att-value="roster.season_id.display_name" readonly="readonly"/>
+                                    <label class="form-label" for="roster_line_season">Season</label>
+                                    <input id="roster_line_season" type="text" class="form-control" t-att-value="roster.season_id.display_name" readonly="readonly"/>
                                 </div>
                             </div>
 
                             <div class="mt-3" t-if="not line">
-                                <label class="form-label">Player</label>
-                                <select name="player_id" class="form-select" required="required">
+                                <label class="form-label" for="roster_line_player_id">Player</label>
+                                <select id="roster_line_player_id" name="player_id" class="form-select" required="required">
                                     <option value="">Select a player</option>
                                     <t t-foreach="available_players" t-as="player">
                                         <option t-att-value="player.id"><t t-esc="player.display_name"/></option>
@@ -441,26 +449,26 @@
                                 </select>
                             </div>
                             <div class="mt-3" t-if="line">
-                                <label class="form-label">Player</label>
-                                <input type="text" class="form-control" t-att-value="line.player_id.display_name" readonly="readonly"/>
+                                <label class="form-label" for="roster_line_player_name">Player</label>
+                                <input id="roster_line_player_name" type="text" class="form-control" t-att-value="line.player_id.display_name" readonly="readonly"/>
                             </div>
 
                             <div class="row g-3 mt-1">
                                 <div class="col-md-4">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label" for="roster_line_status">Status</label>
                                     <input type="hidden" name="status" t-att-value="line and line.status or 'active'"/>
-                                    <input type="text" class="form-control"
+                                    <input id="roster_line_status" type="text" class="form-control"
                                            t-att-value="dict(roster.line_ids._fields['status'].selection).get(line.status) if line else 'Active'"
                                            readonly="readonly"/>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Jersey Number</label>
-                                    <input type="text" name="jersey_number" class="form-control"
+                                    <label class="form-label" for="roster_line_jersey_number">Jersey Number</label>
+                                    <input id="roster_line_jersey_number" type="text" name="jersey_number" class="form-control"
                                            t-att-value="line and line.jersey_number or ''"/>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">License</label>
-                                    <select name="license_id" class="form-select">
+                                    <label class="form-label" for="roster_line_license_id">License</label>
+                                    <select id="roster_line_license_id" name="license_id" class="form-select">
                                         <option value="">No license selected</option>
                                         <t t-foreach="available_licenses" t-as="license">
                                             <option t-att-value="license.id"
@@ -474,13 +482,13 @@
 
                             <div class="row g-3 mt-1">
                                 <div class="col-md-6">
-                                    <label class="form-label">Date From</label>
-                                    <input type="date" name="date_from" class="form-control"
+                                    <label class="form-label" for="roster_line_date_from">Date From</label>
+                                    <input id="roster_line_date_from" type="date" name="date_from" class="form-control"
                                            t-att-value="line and line.date_from or ''"/>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Date To</label>
-                                    <input type="date" name="date_to" class="form-control"
+                                    <label class="form-label" for="roster_line_date_to">Date To</label>
+                                    <input id="roster_line_date_to" type="date" name="date_to" class="form-control"
                                            t-att-value="line and line.date_to or ''"/>
                                 </div>
                             </div>
@@ -488,26 +496,26 @@
                             <div class="row g-3 mt-1">
                                 <div class="col-md-6">
                                     <div class="form-check mt-4">
-                                        <input class="form-check-input" type="checkbox" name="is_captain"
+                                        <input id="roster_line_is_captain" class="form-check-input" type="checkbox" name="is_captain"
                                                t-att-checked="line and line.is_captain and 'checked' or None"/>
-                                        <label class="form-check-label">Captain</label>
+                                        <label class="form-check-label" for="roster_line_is_captain">Captain</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check mt-4">
-                                        <input class="form-check-input" type="checkbox" name="is_vice_captain"
+                                        <input id="roster_line_is_vice_captain" class="form-check-input" type="checkbox" name="is_vice_captain"
                                                t-att-checked="line and line.is_vice_captain and 'checked' or None"/>
-                                        <label class="form-check-label">Vice Captain</label>
+                                        <label class="form-check-label" for="roster_line_is_vice_captain">Vice Captain</label>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="mt-3">
-                                <label class="form-label">Notes</label>
-                                <textarea name="notes" class="form-control" rows="5"><t t-esc="line and line.notes or ''"/></textarea>
+                                <label class="form-label" for="roster_line_notes">Notes</label>
+                                <textarea id="roster_line_notes" name="notes" class="form-control" rows="5"><t t-esc="line and line.notes or ''"/></textarea>
                             </div>
 
-                            <div class="mt-4 d-flex gap-2">
+                            <div class="mt-4 d-flex flex-wrap gap-2">
                                 <button type="submit" class="btn btn-primary">Save Player</button>
                                 <a t-attf-href="/my/rosters/#{roster.id}" class="btn btn-outline-secondary">Cancel</a>
                             </div>
@@ -527,15 +535,17 @@
                     </div>
                 </div>
 
+                <div class="table-responsive">
                 <table class="table">
+                    <caption class="visually-hidden">Match sheets available for match-day preparation.</caption>
                     <thead>
                         <tr>
-                            <th>Sheet</th>
-                            <th>Match</th>
-                            <th>Team</th>
-                            <th>State</th>
-                            <th>Ready</th>
-                            <th>Actions</th>
+                            <th scope="col">Sheet</th>
+                            <th scope="col">Match</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">State</th>
+                            <th scope="col">Ready</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -556,6 +566,7 @@
                         </t>
                     </tbody>
                 </table>
+                </div>
 
                 <div t-if="not match_sheets" class="text-center py-4">
                     <p class="text-muted">No match sheets are available for your club yet.</p>
@@ -606,14 +617,14 @@
                         <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Operational Notes</h5>
-                                <div t-if="sheet.readiness_feedback" class="alert alert-warning mb-3">
+                                <div t-if="sheet.readiness_feedback" class="alert alert-warning mb-3" role="alert">
                                     <t t-esc="sheet.readiness_feedback"/>
                                 </div>
-                                <div t-if="sheet.match_id.result_contest_reason" class="alert alert-danger mb-3">
+                                <div t-if="sheet.match_id.result_contest_reason" class="alert alert-danger mb-3" role="alert">
                                     <strong>Contest Reason:</strong>
                                     <t t-esc="sheet.match_id.result_contest_reason"/>
                                 </div>
-                                <div t-if="sheet.match_id.result_correction_reason" class="alert alert-info mb-0">
+                                <div t-if="sheet.match_id.result_correction_reason" class="alert alert-info mb-0" role="status">
                                     <strong>Correction Reason:</strong>
                                     <t t-esc="sheet.match_id.result_correction_reason"/>
                                 </div>
@@ -627,16 +638,16 @@
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label">Coach Name</label>
-                                            <input type="text" name="coach_name" class="form-control" t-att-value="sheet.coach_name or ''"/>
+                                            <label class="form-label" for="match_sheet_coach_name">Coach Name</label>
+                                            <input id="match_sheet_coach_name" type="text" name="coach_name" class="form-control" t-att-value="sheet.coach_name or ''"/>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">Manager Name</label>
-                                            <input type="text" name="manager_name" class="form-control" t-att-value="sheet.manager_name or ''"/>
+                                            <label class="form-label" for="match_sheet_manager_name">Manager Name</label>
+                                            <input id="match_sheet_manager_name" type="text" name="manager_name" class="form-control" t-att-value="sheet.manager_name or ''"/>
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label">Preparation Notes</label>
-                                            <textarea name="notes" class="form-control" rows="3"><t t-esc="sheet.notes or ''"/></textarea>
+                                            <label class="form-label" for="match_sheet_notes">Preparation Notes</label>
+                                            <textarea id="match_sheet_notes" name="notes" class="form-control" rows="3"><t t-esc="sheet.notes or ''"/></textarea>
                                         </div>
                                     </div>
                                     <div class="d-flex flex-wrap gap-2 mt-3">
@@ -656,15 +667,17 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <h4>Squad</h4>
+                        <div class="table-responsive">
                         <table class="table table-sm">
+                            <caption class="visually-hidden">Match-day squad submission lines for this sheet.</caption>
                             <thead>
                                 <tr>
-                                    <th>Player</th>
-                                    <th>Role</th>
-                                    <th>Captain</th>
-                                    <th>Eligibility</th>
-                                    <th>Entered</th>
-                                    <th>Left</th>
+                                    <th scope="col">Player</th>
+                                    <th scope="col">Role</th>
+                                    <th scope="col">Captain</th>
+                                    <th scope="col">Eligibility</th>
+                                    <th scope="col">Entered</th>
+                                    <th scope="col">Left</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -689,6 +702,7 @@
                                 </t>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
 
@@ -696,11 +710,12 @@
                     <div class="col-lg-6">
                         <h4>Participation Audit</h4>
                         <table class="table table-sm">
+                            <caption class="visually-hidden">Participation audit events recorded for this match sheet.</caption>
                             <thead>
                                 <tr>
-                                    <th>When</th>
-                                    <th>Event</th>
-                                    <th>Description</th>
+                                    <th scope="col">When</th>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Description</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -717,12 +732,13 @@
                     <div class="col-lg-6">
                         <h4>Result Audit</h4>
                         <table class="table table-sm">
+                            <caption class="visually-hidden">Result audit events linked to this match.</caption>
                             <thead>
                                 <tr>
-                                    <th>When</th>
-                                    <th>Event</th>
-                                    <th>Reason</th>
-                                    <th>Description</th>
+                                    <th scope="col">When</th>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Reason</th>
+                                    <th scope="col">Description</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -751,15 +767,17 @@
                     </div>
                 </div>
 
+                <div class="table-responsive">
                 <table class="table">
+                    <caption class="visually-hidden">Match-day preparation queue for the current portal representative.</caption>
                     <thead>
                         <tr>
-                            <th>Kickoff</th>
-                            <th>Match</th>
-                            <th>Team</th>
-                            <th>Sheet State</th>
-                            <th>Readiness</th>
-                            <th>Actions</th>
+                            <th scope="col">Kickoff</th>
+                            <th scope="col">Match</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Sheet State</th>
+                            <th scope="col">Readiness</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -785,6 +803,7 @@
                         </t>
                     </tbody>
                 </table>
+                </div>
 
                 <div t-if="not match_day_sheets" class="text-center py-4">
                     <p class="text-muted">No scheduled match-day sheets are currently assigned to you.</p>

@@ -9,8 +9,14 @@ from odoo.addons.sports_federation_base.exceptions import AttachmentScanVerifica
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase
 
+from odoo.addons.sports_federation_import_tools.controllers.integration_api_auth_mixin import (
+    FederationIntegrationApiAuthMixin,
+)
 from odoo.addons.sports_federation_import_tools.controllers.integration_api import (
     FederationIntegrationApi,
+)
+from odoo.addons.sports_federation_import_tools.controllers.integration_api_response_mixin import (
+    FederationIntegrationApiResponseMixin,
 )
 
 
@@ -73,6 +79,12 @@ class TestIntegrationApi(TransactionCase):
                 )
             ),
         )
+
+    def test_integration_api_controller_composes_split_helpers(self):
+        self.assertIsInstance(self.controller, FederationIntegrationApiAuthMixin)
+        self.assertIsInstance(self.controller, FederationIntegrationApiResponseMixin)
+        self.assertTrue(hasattr(self.controller, "_get_credentials"))
+        self.assertTrue(hasattr(self.controller, "_json_error_response"))
 
     def test_get_credentials_accepts_custom_headers(self):
         request_stub = self._make_request(
@@ -241,8 +253,10 @@ class TestIntegrationApi(TransactionCase):
 
         self.assertEqual(response.status_code, 201)
         payload = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response.headers.get("X-Federation-Delivery-Outcome"), "created")
         self.assertEqual(response.headers.get("X-Federation-Idempotency-Key"), "delivery-001")
         self.assertEqual(response.headers.get("X-Federation-Idempotent-Replay"), "false")
+        self.assertEqual(payload["delivery_outcome"], "created")
         self.assertEqual(payload["delivery"]["idempotency_key"], "delivery-001")
         delivery = self.env["federation.integration.delivery"].browse(payload["delivery"]["id"])
         self.assertEqual(delivery.idempotency_key, "delivery-001")
@@ -332,8 +346,53 @@ class TestIntegrationApi(TransactionCase):
         second_payload = json.loads(second_response.get_data(as_text=True))
         self.assertEqual(first_response.status_code, 201)
         self.assertEqual(second_response.status_code, 201)
+        self.assertEqual(first_response.headers.get("X-Federation-Delivery-Outcome"), "created")
+        self.assertEqual(second_response.headers.get("X-Federation-Delivery-Outcome"), "idempotency_replay")
         self.assertEqual(first_response.headers.get("X-Federation-Idempotent-Replay"), "false")
         self.assertEqual(second_response.headers.get("X-Federation-Idempotent-Replay"), "true")
+        self.assertEqual(first_payload["delivery_outcome"], "created")
+        self.assertEqual(second_payload["delivery_outcome"], "idempotency_replay")
+        self.assertEqual(first_payload["delivery"]["id"], second_payload["delivery"]["id"])
+
+    def test_inbound_route_exposes_checksum_reuse_without_idempotency_key(self):
+        request_stub = self._make_request(
+            headers={
+                "X-Federation-Partner-Code": self.partner.code,
+                "X-Federation-Partner-Token": self.raw_token,
+            },
+            json_payload={
+                "filename": "clubs.csv",
+                "payload_base64": "bmFtZTtjb2RlCkR1cGxpY2F0ZSBDbHViO0RVUDAwMQ==",
+                "content_type": "text/csv",
+                "source_reference": "batch-403",
+            },
+        )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ):
+            first_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        with patch(
+            "odoo.addons.sports_federation_import_tools.controllers.integration_api.request",
+            request_stub,
+        ):
+            second_response = self.controller.integration_stage_inbound_delivery(
+                self.inbound_contract.code
+            )
+
+        first_payload = json.loads(first_response.get_data(as_text=True))
+        second_payload = json.loads(second_response.get_data(as_text=True))
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(second_response.status_code, 201)
+        self.assertEqual(first_response.headers.get("X-Federation-Delivery-Outcome"), "created")
+        self.assertEqual(second_response.headers.get("X-Federation-Delivery-Outcome"), "checksum_reuse")
+        self.assertIsNone(second_response.headers.get("X-Federation-Idempotent-Replay"))
+        self.assertEqual(first_payload["delivery_outcome"], "created")
+        self.assertEqual(second_payload["delivery_outcome"], "checksum_reuse")
         self.assertEqual(first_payload["delivery"]["id"], second_payload["delivery"]["id"])
 
     def test_contracts_route_rate_limits_repeat_callers(self):

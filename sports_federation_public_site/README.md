@@ -73,7 +73,10 @@ queries, and editorial aggregation for season landing pages.
 | `body_html` | Html | Long-form editorial content |
 
 Editorial items let operators schedule season-, tournament-, or team-linked
-highlights without editing website templates.
+highlights without editing website templates. Scheduling requires a publish
+start while the item is still in draft; items can publish from draft or
+scheduled, archive from scheduled or published, and reset from scheduled or
+archived back to draft.
 
 ### `federation.standing`
 

@@ -1,3 +1,4 @@
+from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase
 
 
@@ -141,6 +142,17 @@ class TestTournamentWorkspace(TransactionCase):
                 "competition_id": cls.competition.id,
                 "date_start": "2025-07-01",
                 "state": "in_progress",
+                "category": "senior",
+                "gender": "male",
+            }
+        )
+        cls.closed_tournament = cls.env["federation.tournament"].create(
+            {
+                "name": "Workspace Closed Tournament",
+                "code": "WSCT",
+                "season_id": cls.season.id,
+                "date_start": "2025-08-01",
+                "state": "closed",
                 "category": "senior",
                 "gender": "male",
             }
@@ -306,6 +318,22 @@ class TestTournamentWorkspace(TransactionCase):
             user=self.user_a,
         )
         self.assertFalse(other_team_entry)
+
+    def test_workspace_entry_builder_blocks_direct_cross_team_access(self):
+        """Test that direct workspace reads still enforce the caller's team scope."""
+        with self.assertRaises(AccessError):
+            self.live_tournament._portal_get_workspace_entry(
+                self.team_b,
+                user=self.user_a,
+            )
+
+    def test_workspace_entry_builder_blocks_closed_tournaments(self):
+        """Test that direct workspace reads stay limited to active tournaments."""
+        with self.assertRaises(AccessError):
+            self.closed_tournament._portal_get_workspace_entry(
+                self.team_a,
+                user=self.user_a,
+            )
 
     def test_team_scoped_coach_only_sees_assigned_team_workspaces(self):
         """Test that team scoped coach only sees assigned team workspaces."""

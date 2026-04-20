@@ -70,6 +70,7 @@ Club and team-scoped portal users now get a tournament-first workspace for activ
 - `/my/tournament-workspaces` groups visible teams by active tournament (`open` or `in_progress`).
 - each entry summarizes registration state, the preferred roster checkpoint, upcoming match-day sheet work, and done matches whose results still need follow-up.
 - `/my/tournament-workspaces/<tournament>/<team>` expands that entry into operational detail with direct links to the roster, match-day queue, and team match sheets.
+- the workspace model itself revalidates team scope and active-tournament scope through `federation.portal.privilege` before any elevated reads, so direct model or RPC callers cannot bypass the controller filters.
 
 **Why add a separate workspace instead of more dashboard counters?**
 - recurring club operations are tournament-scoped, not model-scoped.
@@ -183,6 +184,7 @@ Every write operation in the controllers:
 4. Hands the mutation to a model helper such as `federation.team._portal_create_team()`, `federation.season.registration._portal_submit_registration_request()`, or `federation.tournament.registration._portal_submit_registration_request()`.
 
 The same ownership rules are also enforced in the ORM for portal-managed registration models. That second layer matters whenever data is created from tests, server actions, imports, or future controllers.
+Roster portal helpers also revalidate roster and season-registration scope through `federation.portal.privilege` before any elevated reuse or create lookup, so team-scoped representatives cannot reach same-club rosters outside their assigned team through helper calls.
 
 ### Public Routes
 Public routes use `sudo()` to bypass ACL (since anonymous users have no federation access). They only expose:

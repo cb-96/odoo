@@ -25,13 +25,27 @@
             <form>
                 <header>
                     <button name="action_submit_review" string="Submit for Review" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_reopen" string="Reopen" type="object" invisible="state != 'under_review'"/>
                     <button name="action_decide" string="Decide" type="object" class="oe_highlight" invisible="state != 'under_review'"/>
                     <button name="action_mark_appealed" string="Mark as Appealed" type="object" invisible="state != 'decided'"/>
-                    <button name="action_close" string="Close" type="object" invisible="state in ['draft', 'closed']"/>
+                    <button name="action_close" string="Close" type="object" invisible="state in ['draft', 'closed']" confirm="Closing this case will also close all attached incidents. Continue?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,decided,closed"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-warning" name="action_view_incidents" type="object"
+                                invisible="not incident_count">
+                            <field name="incident_count" string="Incidents" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-gavel" name="action_view_sanctions" type="object"
+                                invisible="not sanction_count">
+                            <field name="sanction_count" string="Sanctions" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-ban" name="action_view_suspensions" type="object"
+                                invisible="not suspension_count">
+                            <field name="suspension_count" string="Suspensions" widget="statinfo"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name"/></h1>

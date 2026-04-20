@@ -59,7 +59,7 @@ class TestPublicSiteTemplateAccessibility(TransactionCase):
 
     def _assert_tables_have_captions_and_scoped_headers(self, file_key, template_id):
         template = self._template(file_key, template_id)
-        tables = template.xpath(".//table")
+        tables = template.xpath(".//table[.//thead]")
         self.assertTrue(tables, f"Template {template_id} should contain data tables.")
         for table in tables:
             self.assertTrue(
@@ -81,6 +81,14 @@ class TestPublicSiteTemplateAccessibility(TransactionCase):
 
     def test_public_feedback_uses_alert_roles(self):
         self._assert_alert_roles("website_hub_templates", "page_tournament_register")
+        self._assert_alert_roles("website_hub_templates", "page_tournament_overview")
+        self._assert_alert_roles("website_templates", "page_competitions")
+        self._assert_alert_roles("website_templates", "page_competition_standings")
+        self._assert_alert_roles("website_templates", "page_competition_results")
+        self._assert_alert_roles("website_templates", "page_competition_schedule")
+        self._assert_alert_roles("website_templates", "page_competition_bracket")
+        self._assert_alert_roles("website_templates", "page_competitions_archive")
+        self._assert_alert_roles("website_templates", "page_competition_teams")
 
     def test_public_data_tables_have_captions_and_header_scope(self):
         self._assert_tables_have_captions_and_scoped_headers("website_templates", "page_competition_standings")

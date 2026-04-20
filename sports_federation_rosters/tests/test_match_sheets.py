@@ -259,6 +259,40 @@ class TestMatchSheets(TransactionCase):
         with self.assertRaises(ValidationError):
             sheet.action_submit()
 
+    def test_match_sheet_reset_to_draft_requires_submitted_state(self):
+        """Test reset to draft only works from submitted match sheets."""
+        roster, roster_line, _unused = self._create_active_roster(
+            "Reset Sheet Roster",
+            min_players=1,
+        )
+        sheet = self.env["federation.match.sheet"].create({
+            "name": "Reset Sheet",
+            "match_id": self.match.id,
+            "team_id": self.team_home.id,
+            "roster_id": roster.id,
+            "side": "home",
+        })
+        self.env["federation.match.sheet.line"].create({
+            "match_sheet_id": sheet.id,
+            "player_id": self.player1.id,
+            "roster_line_id": roster_line.id,
+            "is_starter": True,
+        })
+
+        with self.assertRaises(ValidationError):
+            sheet.action_reset_to_draft()
+        self.assertEqual(sheet.state, "draft")
+
+        sheet.action_submit()
+        self.assertEqual(sheet.state, "submitted")
+
+        sheet.action_reset_to_draft()
+        self.assertEqual(sheet.state, "draft")
+        self.assertIn(
+            "match_sheet_reset",
+            sheet.audit_event_ids.mapped("event_type"),
+        )
+
     def test_match_sheet_substitution_minutes_require_valid_roles(self):
         """Test that match sheet substitution minutes require valid roles."""
         sheet = self.env["federation.match.sheet"].create({

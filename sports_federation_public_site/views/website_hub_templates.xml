@@ -380,7 +380,7 @@
                     </div>
                 </section>
 
-                <div t-if="tournament.can_access_public_detail() and tournament.public_pinned_announcement" class="alert alert-warning border-0 shadow-sm">
+                <div t-if="tournament.can_access_public_detail() and tournament.public_pinned_announcement" class="alert alert-warning border-0 shadow-sm" role="alert">
                     <strong class="me-2">Announcement</strong>
                     <span t-esc="tournament.public_pinned_announcement"/>
                 </div>
@@ -515,7 +515,7 @@
                         </section>
 
                         <section class="mb-4" t-if="not tournament.can_access_public_detail()">
-                            <div class="alert alert-info border-0 shadow-sm mb-0">
+                            <div class="alert alert-info border-0 shadow-sm mb-0" role="status">
                                 Public updates are not published for this tournament yet. Registration details remain available here, and schedules, standings, results, and bracket links will appear once the federation opens public release.
                             </div>
                         </section>

@@ -7,6 +7,10 @@ from odoo.http import request
 
 
 class FederationOfficiatingPortal(http.Controller):
+    def _raise_not_found(self):
+        """Raise the framework 404 exception for hidden officiating resources."""
+        raise request.not_found()
+
     @http.route(
         ["/my/referee-assignments", "/my/referee-assignments/page/<int:page>"],
         type="http",
@@ -69,10 +73,10 @@ class FederationOfficiatingPortal(http.Controller):
         assignment = Assignment.browse(assignment_id)
         try:
             if not assignment.exists():
-                return request.not_found()
+                self._raise_not_found()
             assignment._portal_assert_access(user=request.env.user)
         except AccessError:
-            return request.not_found()
+            self._raise_not_found()
 
         values = {
             "assignment": assignment,
@@ -99,7 +103,7 @@ class FederationOfficiatingPortal(http.Controller):
         assignment = Assignment.browse(assignment_id)
         try:
             if not assignment.exists():
-                return request.not_found()
+                self._raise_not_found()
             assignment._portal_assert_access(user=request.env.user)
             if action == "confirm":
                 assignment._portal_action_confirm(
@@ -116,7 +120,7 @@ class FederationOfficiatingPortal(http.Controller):
             else:
                 raise ValidationError("Choose a valid response action.")
         except AccessError:
-            return request.not_found()
+            self._raise_not_found()
         except ValidationError as exc:
             return request.redirect(
                 "/my/referee-assignments/%s?error=%s"

@@ -7,6 +7,10 @@ from odoo.addons.portal.controllers.portal import CustomerPortal
 class FederationPortalBase(CustomerPortal):
     """Shared helpers for federation portal controllers."""
 
+    def _raise_not_found(self):
+        """Raise the framework 404 exception for hidden portal resources."""
+        raise request.not_found()
+
     def _prepare_portal_layout_values(self):
         """Populate shared portal personas with elevated reads for safe layout render.
 

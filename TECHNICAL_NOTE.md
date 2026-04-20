@@ -311,6 +311,7 @@ Public site
 
 - Public controllers use `auth='public'` and `sudo()` for reads. Only expose non-sensitive fields (no emails/phones/notes) to public templates.
 - Enforce `website_published` and the relevant visibility toggle (`show_public_results`, `show_public_standings`) before serving direct public routes.
+- When a controller must deny a hidden portal or public route with 404, raise the HTTP exception (`raise request.not_found()`) instead of returning it, so fail-closed paths stay quiet in logs and match Odoo's expected flow.
 - Render public rich text through sanitized website field rendering rather than raw `t-raw` output.
 - Keep `public_slug` unique even while the public routes remain model-bound, so publication metadata and future external references cannot collide.
 

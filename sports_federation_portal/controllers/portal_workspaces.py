@@ -52,7 +52,7 @@ class FederationWorkspacePortal(FederationPortalBase):
             user=request.env.user,
         )
         if not workspace_entry:
-            return request.not_found()
+            self._raise_not_found()
 
         values = {
             "workspace": workspace_entry,

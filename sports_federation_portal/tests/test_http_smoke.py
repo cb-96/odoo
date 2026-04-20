@@ -238,6 +238,11 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
 
     def _create_roster_workspace_smoke_data(self):
         """Create committed data used by the split portal controller smoke test."""
+        type(self)._roster_workspace_smoke_seq = (
+            getattr(type(self), "_roster_workspace_smoke_seq", 0) + 1
+        )
+        suffix = type(self)._roster_workspace_smoke_seq
+
         with self.registry.cursor() as cr:
             env = api.Environment(cr, SUPERUSER_ID, {})
 
@@ -245,7 +250,7 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
                 {
                     "name": "Portal Smoke Roster Opportunity",
                     "club_id": self.season_club.id,
-                    "code": "PSRO",
+                    "code": f"PSRO{suffix}",
                     "category": "senior",
                     "gender": "male",
                 }
@@ -263,7 +268,7 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
                 {
                     "name": "Portal Smoke Workspace Team",
                     "club_id": self.season_club.id,
-                    "code": "PSWT",
+                    "code": f"PSWT{suffix}",
                     "category": "senior",
                     "gender": "male",
                 }
@@ -280,7 +285,7 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
             live_tournament = env["federation.tournament"].create(
                 {
                     "name": "Portal Smoke Workspace Tournament",
-                    "code": "PSWTN",
+                    "code": f"PSWTN{suffix}",
                     "season_id": self.open_season.id,
                     "date_start": "2026-06-15",
                     "state": "in_progress",
@@ -328,14 +333,14 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
             opponent_club = env["federation.club"].create(
                 {
                     "name": "Portal Smoke Opponent Club",
-                    "code": "PSOC",
+                    "code": f"PSOC{suffix}",
                 }
             )
             opponent_team = env["federation.team"].create(
                 {
                     "name": "Portal Smoke Opponent Team",
                     "club_id": opponent_club.id,
-                    "code": "PSOT",
+                    "code": f"PSOT{suffix}",
                 }
             )
             match = env["federation.match"].create(
@@ -364,6 +369,28 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
                     "is_starter": True,
                 }
             )
+            foreign_player = env["federation.player"].create(
+                {
+                    "first_name": "Portal",
+                    "last_name": "Smoke Foreign",
+                    "gender": "male",
+                    "club_id": opponent_club.id,
+                    "team_ids": [(4, opponent_team.id)],
+                }
+            )
+            foreign_roster = env["federation.team.roster"].create(
+                {
+                    "name": "Portal Smoke Foreign Roster",
+                    "team_id": opponent_team.id,
+                    "season_id": self.open_season.id,
+                }
+            )
+            foreign_line = env["federation.team.roster.line"].create(
+                {
+                    "roster_id": foreign_roster.id,
+                    "player_id": foreign_player.id,
+                }
+            )
             cr.commit()
 
         return {
@@ -371,6 +398,9 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
             "workspace_team_id": workspace_team.id,
             "tournament_id": live_tournament.id,
             "sheet_id": sheet.id,
+            "roster_id": roster.id,
+            "roster_line_id": roster_line.id,
+            "foreign_line_id": foreign_line.id,
         }
 
     def test_my_teams_empty_state_and_create_flow(self):
@@ -518,3 +548,20 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
             match_day_response.text,
         )
         self.assertIn("Open Sheet", match_day_response.text)
+
+    def test_roster_routes_hide_foreign_rosters_and_lines(self):
+        data = self._create_roster_workspace_smoke_data()
+
+        self.authenticate(self.team_user.login, "ignored")
+
+        foreign_roster_response = self.url_open(
+            f"/my/rosters/{data['roster_id']}"
+        )
+        self.assertEqual(foreign_roster_response.status_code, 404)
+
+        self.authenticate(self.season_user.login, "ignored")
+
+        foreign_line_response = self.url_open(
+            f"/my/rosters/{data['roster_id']}/lines/{data['foreign_line_id']}/edit"
+        )
+        self.assertEqual(foreign_line_response.status_code, 404)

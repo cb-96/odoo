@@ -111,9 +111,20 @@ Canonical public surfaces include:
 | `/tournaments/<slug>/schedule.ics` | Tournament schedule calendar export |
 | `/api/v1/tournaments/<slug>/feed` | Stable v1 JSON feed |
 | `/seasons/<slug>` | Season landing page with editorial and tournament aggregation |
+| `/teams/<slug>` | Public team profile page |
+| `/teams/<slug>/schedule` | Team-centric grouped upcoming schedule |
+| `/teams/<slug>/results` | Team-centric recent approved results |
+| `/teams/<slug>/schedule.ics` | Team schedule calendar export |
+| `/api/v1/teams/<slug>/feed` | Stable v1 team follow feed |
 
 Older `/competitions` and numeric routes remain as compatibility paths, but the
 authoritative public URLs are the slug-based `/tournaments/...` routes.
+Compatibility routes only redirect while the tournament still matches the
+relevant publication guard; unpublished tournaments fail closed instead of
+resolving through direct slug or numeric paths. Season detail routes apply the
+same fail-closed rule for both `/seasons/<slug>` and numeric `/season/<id>`
+compatibility paths, and team profile/follow routes only resolve teams that
+still have a published competition footprint.
 
 ### 5. Ongoing Updates
 
@@ -157,8 +168,9 @@ As the tournament progresses:
 | Publication settings and editorial actions | Federation administrator or owning backend staff |
 | Data changes | Backend users only |
 
-Public pages are read-only snapshots. Controllers only elevate reads after the
-publication and visibility guards are satisfied.
+Public pages are read-only snapshots. Controllers resolve tournament, season,
+and team records through publication- and visibility-scoped queries before
+redirects, rendering, or feed and registration reads.
 
 ## Related Workflows
 

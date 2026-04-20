@@ -54,12 +54,17 @@ class FederationSeason(models.Model):
         return f"{_slugify_public_text(self._get_public_slug_seed())}-{self.id}"
 
     @api.model
-    def resolve_public_slug(self, slug_value):
+    def resolve_public_slug(self, slug_value, extra_domain=None):
         """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
-        explicit = self.sudo().search([("public_slug", "=", slug_value)], limit=1)
+        extra_domain = list(extra_domain or [])
+
+        explicit = self.sudo().search(
+            [("public_slug", "=", slug_value)] + extra_domain,
+            limit=1,
+        )
         if explicit:
             return explicit
 
@@ -67,8 +72,11 @@ class FederationSeason(models.Model):
         if not tail.isdigit():
             return self.browse([])
 
-        record = self.sudo().browse(int(tail))
-        if record.exists() and record.get_public_slug_value() == slug_value:
+        record = self.sudo().search(
+            [("id", "=", int(tail))] + extra_domain,
+            limit=1,
+        )
+        if record and record.get_public_slug_value() == slug_value:
             return record
         return self.browse([])
 

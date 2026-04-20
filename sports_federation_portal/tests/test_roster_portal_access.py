@@ -349,7 +349,7 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertFalse(self.env["federation.team.roster.line"].browse(line_id).exists())
 
     def test_portal_player_picker_filters_by_team_gender(self):
-        """Test that portal player picker filters by team gender."""
+        """Portal line creation must enforce the same gender filter as the picker."""
         women_team = self.env["federation.team"].create({
             "name": "Portal Women Team",
             "club_id": self.club_a.id,
@@ -388,11 +388,100 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertIn(female_player, available_players)
         self.assertNotIn(male_player, available_players)
 
+        line = self.env[
+            "federation.team.roster.line"
+        ]._portal_create_line(
+            women_roster,
+            values={
+                "player_id": str(female_player.id),
+                "jersey_number": "7",
+            },
+            user=self.user_a,
+        )
+        self.assertEqual(line.player_id, female_player)
+
+        with self.assertRaises(ValidationError):
+            self.env[
+                "federation.team.roster.line"
+            ]._portal_create_line(
+                women_roster,
+                values={
+                    "player_id": str(male_player.id),
+                    "jersey_number": "8",
+                },
+                user=self.user_a,
+            )
+
     def test_portal_player_picker_stays_within_query_budget(self):
         """Roster player availability should not regress into an expensive portal lookup."""
-        with self.assertQueryCount(7):
+        with self.assertQueryCount(8):
             available_players = self.env[
                 "federation.team.roster.line"
             ]._portal_get_available_players(self.roster_a, user=self.user_a)
 
         self.assertIn(self.player_a, available_players)
+
+    def test_portal_license_picker_and_submission_share_scope_domain(self):
+        """Portal line licenses must use the same roster and player scope on read and write."""
+        licensed_player = self.env["federation.player"].create({
+            "first_name": "Portal",
+            "last_name": "Licensed Player",
+            "gender": "male",
+            "club_id": self.club_a.id,
+        })
+        valid_license = self.env["federation.player.license"].create({
+            "name": "PORTAL-LIC-A",
+            "player_id": licensed_player.id,
+            "season_id": self.season.id,
+            "club_id": self.club_a.id,
+            "issue_date": "2025-01-01",
+            "expiry_date": "2025-12-31",
+            "state": "active",
+        })
+        foreign_license = self.env["federation.player.license"].create({
+            "name": "PORTAL-LIC-B",
+            "player_id": self.player_b.id,
+            "season_id": self.season.id,
+            "club_id": self.club_b.id,
+            "issue_date": "2025-01-01",
+            "expiry_date": "2025-12-31",
+            "state": "active",
+        })
+
+        available_licenses = self.env[
+            "federation.team.roster.line"
+        ]._portal_get_available_licenses(
+            self.roster_a,
+            user=self.user_a,
+            player=licensed_player,
+        )
+
+        self.assertIn(valid_license, available_licenses)
+        self.assertNotIn(foreign_license, available_licenses)
+
+        with self.assertRaises(ValidationError):
+            self.env[
+                "federation.team.roster.line"
+            ]._portal_create_line(
+                self.roster_a,
+                values={
+                    "player_id": str(licensed_player.id),
+                    "license_id": str(foreign_license.id),
+                    "jersey_number": "11",
+                },
+                user=self.user_a,
+            )
+
+        line = self.env[
+            "federation.team.roster.line"
+        ]._portal_create_line(
+            self.roster_a,
+            values={
+                "player_id": str(licensed_player.id),
+                "license_id": str(valid_license.id),
+                "jersey_number": "12",
+            },
+            user=self.user_a,
+        )
+
+        self.assertEqual(line.license_id, valid_license)

@@ -97,12 +97,17 @@ class FederationTournament(models.Model):
         return f"{_slugify_public_text(self._get_public_slug_seed())}-{self.id}"
 
     @api.model
-    def resolve_public_slug(self, slug_value):
+    def resolve_public_slug(self, slug_value, extra_domain=None):
         """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
-        explicit = self.sudo().search([("public_slug", "=", slug_value)], limit=1)
+        extra_domain = list(extra_domain or [])
+
+        explicit = self.sudo().search(
+            [("public_slug", "=", slug_value)] + extra_domain,
+            limit=1,
+        )
         if explicit:
             return explicit
 
@@ -110,8 +115,11 @@ class FederationTournament(models.Model):
         if not tail.isdigit():
             return self.browse([])
 
-        record = self.sudo().browse(int(tail))
-        if record.exists() and record.get_public_slug_value() == slug_value:
+        record = self.sudo().search(
+            [("id", "=", int(tail))] + extra_domain,
+            limit=1,
+        )
+        if record and record.get_public_slug_value() == slug_value:
             return record
         return self.browse([])
 
@@ -613,6 +621,22 @@ class FederationTeam(models.Model):
         "Public team slug must be unique.",
     )
 
+    public_participant_ids = fields.One2many(
+        "federation.tournament.participant",
+        "team_id",
+        string="Public Tournament Participants",
+    )
+    public_home_match_ids = fields.One2many(
+        "federation.match",
+        "home_team_id",
+        string="Public Home Matches",
+    )
+    public_away_match_ids = fields.One2many(
+        "federation.match",
+        "away_team_id",
+        string="Public Away Matches",
+    )
+
     public_slug = fields.Char(
         string="Public Slug",
         help="Optional readable slug seed for public team pages.",
@@ -641,12 +665,17 @@ class FederationTeam(models.Model):
         return f"{_slugify_public_text(self._get_public_slug_seed())}-{self.id}"
 
     @api.model
-    def resolve_public_slug(self, slug_value):
+    def resolve_public_slug(self, slug_value, extra_domain=None):
         """Resolve public slug."""
         if not slug_value:
             return self.browse([])
 
-        explicit = self.sudo().search([("public_slug", "=", slug_value)], limit=1)
+        extra_domain = list(extra_domain or [])
+
+        explicit = self.sudo().search(
+            [("public_slug", "=", slug_value)] + extra_domain,
+            limit=1,
+        )
         if explicit:
             return explicit
 
@@ -654,8 +683,11 @@ class FederationTeam(models.Model):
         if not tail.isdigit():
             return self.browse([])
 
-        record = self.sudo().browse(int(tail))
-        if record.exists() and record.get_public_slug_value() == slug_value:
+        record = self.sudo().search(
+            [("id", "=", int(tail))] + extra_domain,
+            limit=1,
+        )
+        if record and record.get_public_slug_value() == slug_value:
             return record
         return self.browse([])
 

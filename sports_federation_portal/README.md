@@ -185,6 +185,8 @@ Every write operation in the controllers:
 
 The same ownership rules are also enforced in the ORM for portal-managed registration models. That second layer matters whenever data is created from tests, server actions, imports, or future controllers.
 Roster portal helpers also revalidate roster and season-registration scope through `federation.portal.privilege` before any elevated reuse or create lookup, so team-scoped representatives cannot reach same-club rosters outside their assigned team through helper calls.
+Roster-line player submission now reuses the same portal-scoped player domain as the picker, so forged POST values cannot add inactive or wrong-gender players that the form intentionally hid.
+Roster detail, roster-line route helpers, and roster-line license submission now also resolve ids through `federation.portal.privilege`, so hidden roster, roster-line, or license ids cannot be recovered through raw elevated browse paths.
 
 ### Public Routes
 Public routes use `sudo()` to bypass ACL (since anonymous users have no federation access). They only expose:

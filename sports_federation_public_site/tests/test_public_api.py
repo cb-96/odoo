@@ -40,9 +40,17 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         cls.team_c = cls.env["federation.team"].create({
             "name": "PS Team C", "club_id": cls.club.id, "code": "PSTC",
         })
+        cls.hidden_team = cls.env["federation.team"].create({
+            "name": "PS Hidden Team", "club_id": cls.club.id, "code": "PSHT", "public_slug": "ps-hidden-team",
+        })
         cls.season = cls.env["federation.season"].create({
             "name": "PS Season", "code": "PSS24",
             "date_start": "2024-01-01", "date_end": "2024-12-31",
+        })
+        cls.hidden_season = cls.env["federation.season"].create({
+            "name": "Hidden PS Season", "code": "HPSS24",
+            "date_start": "2025-01-01", "date_end": "2025-12-31",
+            "public_slug": "hidden-ps-season",
         })
 
         # Active published tournament (in_progress)
@@ -81,6 +89,11 @@ class TestPublicSiteNewEndpoints(TransactionCase):
             "date_end": "2023-06-30",
             "website_published": False,
             "state": "closed",
+        })
+        cls.env["federation.tournament.participant"].create({
+            "tournament_id": cls.unpub_closed_tour.id,
+            "team_id": cls.hidden_team.id,
+            "state": "confirmed",
         })
         cls.schedule_match = cls.env["federation.match"].create({
             "tournament_id": cls.active_tour.id,
@@ -243,6 +256,54 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertEqual(resolved, self.active_tour)
         self.assertEqual(self.active_tour.get_public_path(), "/tournaments/active-tour")
         self.assertEqual(self.active_tour.get_public_schedule_ics_path(), "/tournaments/active-tour/schedule.ics")
+
+    def test_public_slug_resolution_can_apply_publication_domain(self):
+        """Public slug resolution can fail closed for unpublished tournaments."""
+        resolved = self.env["federation.tournament"].resolve_public_slug(
+            "active-tour",
+            extra_domain=[("website_published", "=", True)],
+        )
+        hidden = self.env["federation.tournament"].resolve_public_slug(
+            self.unpub_closed_tour.get_public_slug_value(),
+            extra_domain=[("website_published", "=", True)],
+        )
+
+        self.assertEqual(resolved, self.active_tour)
+        self.assertFalse(hidden)
+
+    def test_public_season_slug_resolution_can_apply_publication_domain(self):
+        """Season slug resolution can fail closed for unpublished seasons."""
+        public_domain = PublicTournamentHubController()._build_season_public_domain(
+            public_access="detail"
+        )
+        resolved = self.env["federation.season"].resolve_public_slug(
+            "ps-season",
+            extra_domain=public_domain,
+        )
+        hidden = self.env["federation.season"].resolve_public_slug(
+            self.hidden_season.get_public_slug_value(),
+            extra_domain=public_domain,
+        )
+
+        self.assertEqual(resolved, self.season)
+        self.assertFalse(hidden)
+
+    def test_team_public_slug_resolution_can_apply_publication_domain(self):
+        """Team slug resolution can fail closed for hidden public-team routes."""
+        public_domain = PublicTournamentHubController()._build_team_public_domain(
+            public_access="profile"
+        )
+        resolved = self.env["federation.team"].resolve_public_slug(
+            "ps-team-a",
+            extra_domain=public_domain,
+        )
+        hidden = self.env["federation.team"].resolve_public_slug(
+            self.hidden_team.get_public_slug_value(),
+            extra_domain=public_domain,
+        )
+
+        self.assertEqual(resolved, self.team_a)
+        self.assertFalse(hidden)
 
     def test_team_public_slug_and_profile_helpers(self):
         """Teams that appear on published tournaments expose public profile URLs."""

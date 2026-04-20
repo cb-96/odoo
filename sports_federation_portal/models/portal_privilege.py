@@ -79,6 +79,13 @@ class FederationPortalPrivilege(models.AbstractModel):
         return self.elevate(model_env, user=user).search(domain, **kwargs)
 
     @api.model
+    def portal_search_by_id(self, model_env, record_id, domain=None, user=None, **kwargs):
+        """Resolve one record id only when it matches the expected portal domain."""
+        domain = list(domain or [])
+        domain.append(("id", "=", record_id))
+        return self.portal_search(model_env, domain, user=user, limit=1, **kwargs)
+
+    @api.model
     def portal_search_count(self, model_env, domain, user=None, **kwargs):
         """Count records through the shared portal privilege boundary."""
         return self.elevate(model_env, user=user).search_count(domain, **kwargs)

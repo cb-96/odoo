@@ -35,8 +35,11 @@ the operational sequence from pre-match preparation through to the final whistle
 3. Add **roster lines** — each line links a player and can mark captain or vice-captain responsibilities.
 4. Validate squad size and player eligibility against the rule set, including
    season registration, suspensions, and season/club-scoped license checks.
-5. Review readiness feedback and set roster status: `draft` → `active`.
-6. An active roster is the pool from which match sheets draw players.
+5. Portal roster editing only offers licenses that match the selected roster,
+   season, and player, and manually posted hidden ids are rejected by the same
+   server-side scope.
+6. Review readiness feedback and set roster status: `draft` → `active`.
+7. An active roster is the pool from which match sheets draw players.
 
 ### 2. Match Sheet Creation
 

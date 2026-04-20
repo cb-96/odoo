@@ -372,13 +372,8 @@ class FederationTeamRosterLine(models.Model):
     _inherit = "federation.team.roster.line"
 
     @api.model
-    def _portal_get_available_players(self, roster, user=None):
-        """Return only players the caller may legally add to the selected roster.
-
-        Team-scoped users are constrained to players already linked to that
-        team, while club-scoped users may also pick club players not yet linked
-        to the team.
-        """
+    def _portal_get_available_player_domain(self, roster, user=None):
+        """Return the exact player domain shared by the picker and write path."""
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
         if roster.team_id in user.portal_team_scope_ids and roster.club_id not in user.portal_club_scope_ids:
@@ -395,16 +390,27 @@ class FederationTeamRosterLine(models.Model):
             ]
         if roster.team_id.gender in ("male", "female"):
             domain.append(("gender", "=", roster.team_id.gender))
-        return (
-            self.env["federation.player"]
-            .with_user(user)
-            .sudo()
-            .search(domain, order="last_name, first_name, id")
+        return domain
+
+    @api.model
+    def _portal_get_available_players(self, roster, user=None):
+        """Return only players the caller may legally add to the selected roster.
+
+        Team-scoped users are constrained to players already linked to that
+        team, while club-scoped users may also pick club players not yet linked
+        to the team.
+        """
+        user = user or self.env.user
+        return self.env["federation.portal.privilege"].portal_search(
+            self.env["federation.player"],
+            self._portal_get_available_player_domain(roster, user=user),
+            user=user,
+            order="last_name, first_name, id",
         )
 
     @api.model
-    def _portal_get_available_licenses(self, roster, user=None, player=None):
-        """Return licenses that match the roster club, season, and optional player."""
+    def _portal_get_available_license_domain(self, roster, user=None, player=None):
+        """Return the exact license domain shared by the picker and write path."""
         user = user or self.env.user
         roster._portal_assert_manage_access(user=user)
         domain = [
@@ -413,11 +419,21 @@ class FederationTeamRosterLine(models.Model):
         ]
         if player:
             domain.append(("player_id", "=", player.id))
-        return (
-            self.env["federation.player.license"]
-            .with_user(user)
-            .sudo()
-            .search(domain, order="player_id, issue_date desc, id desc")
+        return domain
+
+    @api.model
+    def _portal_get_available_licenses(self, roster, user=None, player=None):
+        """Return licenses that match the roster club, season, and optional player."""
+        user = user or self.env.user
+        return self.env["federation.portal.privilege"].portal_search(
+            self.env["federation.player.license"],
+            self._portal_get_available_license_domain(
+                roster,
+                user=user,
+                player=player,
+            ),
+            user=user,
+            order="player_id, issue_date desc, id desc",
         )
 
     @api.model
@@ -430,9 +446,11 @@ class FederationTeamRosterLine(models.Model):
         """
         user = user or self.env.user
         values = values or {}
-        selected_from_form = player is None
+        PortalPrivilege = self.env["federation.portal.privilege"]
 
-        if not player:
+        if player:
+            player = PortalPrivilege.elevate(player, user=user).exists()
+        else:
             player_id = values.get("player_id")
             if not player_id:
                 raise ValidationError(_("Select a player."))
@@ -440,26 +458,15 @@ class FederationTeamRosterLine(models.Model):
                 player_id = int(player_id)
             except (TypeError, ValueError) as exc:
                 raise ValidationError(_("Select a valid player.")) from exc
-            player = (
-                self.env["federation.player"]
-                .with_user(user)
-                .sudo()
-                .browse(player_id)
+            player = PortalPrivilege.portal_search_by_id(
+                self.env["federation.player"],
+                player_id,
+                self._portal_get_available_player_domain(roster, user=user),
+                user=user,
             )
 
-        if not player.exists():
+        if not player:
             raise ValidationError(_("Select a valid player."))
-
-        if selected_from_form:
-            if roster.team_id in user.portal_team_scope_ids and roster.club_id not in user.portal_club_scope_ids:
-                if roster.team_id not in player.team_ids:
-                    raise ValidationError(
-                        _("You can only roster players already assigned to the selected team.")
-                    )
-            elif player.club_id != roster.club_id and roster.team_id not in player.team_ids:
-                raise ValidationError(
-                    _("You can only roster players who belong to your club.")
-                )
 
         return player
 
@@ -479,18 +486,17 @@ class FederationTeamRosterLine(models.Model):
             license_id = int(license_id)
         except (TypeError, ValueError) as exc:
             raise ValidationError(_("Select a valid license.")) from exc
-        license_record = (
-            self.env["federation.player.license"]
-            .with_user(user)
-            .sudo()
-            .browse(license_id)
+        license_record = self.env["federation.portal.privilege"].portal_search_by_id(
+            self.env["federation.player.license"],
+            license_id,
+            self._portal_get_available_license_domain(
+                roster,
+                user=user,
+                player=player,
+            ),
+            user=user,
         )
-        if (
-            not license_record.exists()
-            or license_record.player_id != player
-            or license_record.club_id != roster.club_id
-            or license_record.season_id != roster.season_id
-        ):
+        if not license_record:
             raise ValidationError(
                 _(
                     "The selected license must belong to the chosen player, your club, and the roster season."

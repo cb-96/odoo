@@ -61,5 +61,6 @@ Use the model enums below in code, docs, and tests:
 
 - New controller writes must validate represented-club ownership before any `sudo().create()` or state change.
 - Portal tournament workspace reads must revalidate active-tournament scope and visible team/club scope before any elevated read.
-- Public website routes must enforce `website_published` and the relevant visibility toggle before reading data with `sudo()`.
+- Portal roster detail, roster-line edit, and roster-line license paths must resolve ids through the shared portal privilege boundary instead of raw elevated browse calls.
+- Public website routes must enforce `website_published` and the relevant visibility toggle before reading data with `sudo()`, and slug or numeric compatibility routes must resolve records through those publication-scoped domains up front.
 - State transitions referenced in docs and workflows must match the real selection values in the models.

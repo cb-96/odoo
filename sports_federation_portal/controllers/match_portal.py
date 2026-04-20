@@ -55,11 +55,11 @@ class FederationMatchPortal(FederationRosterPortalBase):
         """Render a single match sheet."""
         sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
         if not sheet.exists():
-            return request.not_found()
+            self._raise_not_found()
         try:
             sheet._portal_assert_review_access(user=request.env.user)
         except AccessError:
-            return request.not_found()
+            self._raise_not_found()
 
         values = {
             "sheet": sheet,
@@ -85,7 +85,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
         """Save match-sheet preparation data."""
         sheet = request.env["federation.match.sheet"].sudo().browse(sheet_id)
         if not sheet.exists():
-            return request.not_found()
+            self._raise_not_found()
 
         try:
             sheet._portal_update_preparation(
@@ -99,7 +99,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
             if kw.get("submit_sheet"):
                 sheet._portal_action_submit(user=request.env.user)
         except AccessError:
-            return request.not_found()
+            self._raise_not_found()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/match-sheets/{sheet_id}",

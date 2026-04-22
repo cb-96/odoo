@@ -6,7 +6,7 @@
         <field name="model">federation.match</field>
         <field name="inherit_id" ref="sports_federation_tournament.view_federation_match_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet/div[@class='oe_title']" position="before">
+            <xpath expr="//sheet/div[hasclass('oe_title')]" position="before">
                 <div class="oe_button_box" name="button_box">
                     <button name="action_view_referee_assignments" type="object" class="oe_stat_button" icon="fa-gavel" invisible="not referee_assignment_count">
                         <field name="referee_assignment_count" string="Officials" widget="statinfo"/>

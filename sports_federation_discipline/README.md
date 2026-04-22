@@ -55,11 +55,13 @@ An investigation triggered by one or more incidents.
 | `incident_ids` | One2many | Related incidents |
 | `sanction_ids` | One2many | Resulting sanctions |
 | `suspension_ids` | One2many | Resulting suspensions |
+| `incident_count` / `sanction_count` / `suspension_count` | Integer | Dedicated stat counters for case shortcuts |
 | `subject_player_id` / `subject_club_id` / `subject_referee_id` | Many2one | Subject |
 | `summary` / `notes` | Text | Case details |
 
 - **State machine**: draft → under_review → decided → appealed / closed, with under-review cases allowed back to draft for corrections before a decision is recorded.
 - **Auto-numbering** via `ir.sequence`.
+- **Counter labels** use distinct technical field names so the case relation tabs and their stat counters do not trigger duplicate-label warnings during module loading.
 
 ### `federation.sanction`
 

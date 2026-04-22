@@ -156,6 +156,13 @@ class TestKnockout(TransactionCase):
         second = self._generate(overwrite=True)
         self.assertEqual(len(second), 7)
 
+    def test_knockout_wizard_overwrite_warning_uses_alert_role(self):
+        """The overwrite warning should keep the Odoo alert accessibility role."""
+        view = self.env.ref("sports_federation_competition_engine.view_knockout_wizard_form")
+
+        self.assertIn('class="alert alert-warning"', view.arch_db)
+        self.assertIn('role="alert"', view.arch_db)
+
     def test_tournament_state_validation(self):
         """Cannot generate for draft tournament."""
         self.tournament.state = "draft"

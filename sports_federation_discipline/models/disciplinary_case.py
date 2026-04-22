@@ -71,15 +71,15 @@ class FederationDisciplinaryCase(models.Model):
     notes = fields.Text(string="Notes")
     incident_count = fields.Integer(
         compute="_compute_related_counts",
-        string="Incidents",
+        string="Incident Count",
     )
     sanction_count = fields.Integer(
         compute="_compute_related_counts",
-        string="Sanctions",
+        string="Sanction Count",
     )
     suspension_count = fields.Integer(
         compute="_compute_related_counts",
-        string="Suspensions",
+        string="Suspension Count",
     )
 
     @api.depends("incident_ids", "sanction_ids", "suspension_ids")

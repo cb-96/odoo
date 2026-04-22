@@ -225,6 +225,11 @@ Persistent schedule for recurring application-layer report generation.
 | `generated_file` | Binary | Last generated CSV snapshot |
 | `last_row_count` | Integer | Number of exported data rows |
 
+Implementation note:
+
+- Report-type-specific row builders and back-office action metadata now live in `services/report_schedule_builders.py`.
+- Keep new schedule types in that registry so `federation.report.schedule` stays focused on cadence, CSV serialization, retention, and failure capture.
+
 ### `federation.report.audit.event`
 
 Read-only audit log reporting view for privileged portal activity and

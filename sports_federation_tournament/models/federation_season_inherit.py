@@ -10,7 +10,7 @@ class FederationSeason(models.Model):
         string="Tournaments",
     )
     tournament_count = fields.Integer(
-        string="Tournaments",
+        string="Tournament Count",
         compute="_compute_tournament_count",
     )
 

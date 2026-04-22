@@ -145,6 +145,20 @@ class TestFederationCompetition(TransactionCase):
         self.assertEqual(edition.tournament_count, 1)
         self.assertEqual(tournament.edition_id, edition)
 
+    def test_season_tournament_fields_use_distinct_labels(self):
+        """Season tournament relation and counter should not share the same label."""
+        self.assertEqual(self.season._fields["tournament_ids"].string, "Tournaments")
+        self.assertEqual(self.season._fields["tournament_count"].string, "Tournament Count")
+
+        self.env["federation.tournament"].create({
+            "name": "Season Tournament",
+            "code": "ST01",
+            "season_id": self.season.id,
+            "date_start": "2025-09-01",
+        })
+
+        self.assertEqual(self.season.tournament_count, 1)
+
     def test_tournament_open_requires_season(self):
         """Test that tournament open requires season."""
         tournament = self.env["federation.tournament"].create({

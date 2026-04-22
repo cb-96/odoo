@@ -1,8 +1,8 @@
 # Sports Federation — Technical Note
 
-Last updated: 2026-04-10
+Last updated: 2026-04-21
 Owner: Federation Platform Team
-Last reviewed: 2026-04-17
+Last reviewed: 2026-04-21
 Review cadence: Every release
 
 ## Import safety hardening (2026-04-10)
@@ -46,6 +46,21 @@ operator-facing application reports.
 - The compliance summary report now exposes `non_compliant_count` so rejected
     or explicitly failed checks are visible alongside missing, pending, and
     expired totals.
+
+## Scheduled reporting maintainability extraction (2026-04-21)
+
+The next highest-value reporting cleanup was to separate schedule orchestration
+from per-report row assembly.
+
+- `sports_federation_reporting/services/report_schedule_builders.py` now owns
+    the scheduled-report registry: label metadata, report-row builder
+    functions, list-action XML IDs, season scoping, and any action defaults.
+- `federation.report.schedule` now keeps the stable responsibilities only:
+    cadence windows, CSV serialization, generated-file retention, and typed
+    failure capture for cron or manual runs.
+- Adding a new scheduled report type should now be a single-registry change
+    plus focused tests, instead of editing separate builder and action maps in
+    the model.
 
 ## Notification activation (2026-04-10)
 

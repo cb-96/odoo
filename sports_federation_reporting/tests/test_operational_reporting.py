@@ -2,6 +2,7 @@ import base64
 from datetime import timedelta
 from unittest.mock import patch
 
+from odoo.addons.sports_federation_reporting.services import report_schedule_builders
 from odoo import fields
 from odoo.tests.common import TransactionCase
 
@@ -377,6 +378,34 @@ class TestOperationalReporting(TransactionCase):
         self.assertIn(self.tournament.name, csv_payload)
         self.assertEqual(schedule.last_run_status, "success")
         self.assertEqual(schedule.consecutive_failure_count, 0)
+
+    def test_report_schedule_registry_maps_each_type_to_builder_and_action(self):
+        """Every scheduled report type should resolve through the shared registry."""
+        schedule_model = self.env["federation.report.schedule"]
+        self.assertEqual(
+            [report_type for report_type, _label in schedule_model._fields["report_type"].selection],
+            list(report_schedule_builders.REPORT_SPECS),
+        )
+
+        for report_type, spec in report_schedule_builders.REPORT_SPECS.items():
+            self.assertTrue(callable(spec["builder"]))
+            self.assertTrue(spec["action_xmlid"])
+
+            schedule = schedule_model.create({
+                "name": f"Registry {report_type}",
+                "report_type": report_type,
+                "period_type": "weekly",
+                "season_id": self.season.id if spec.get("season_scoped") else False,
+            })
+
+            action = schedule.action_open_report()
+
+            self.assertEqual(action["type"], "ir.actions.act_window")
+            if spec.get("season_scoped"):
+                self.assertEqual(action["domain"], [("season_id", "=", self.season.id)])
+            if spec.get("action_context"):
+                for key, value in spec["action_context"].items():
+                    self.assertEqual(action["context"].get(key), value)
 
     def test_report_schedule_retention_clears_old_generated_files(self):
         """Retention should clear stale generated report payloads but keep the schedule."""

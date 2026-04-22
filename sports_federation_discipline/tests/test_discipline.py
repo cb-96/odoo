@@ -86,6 +86,25 @@ class TestDiscipline(TransactionCase):
         self.assertEqual(case.state, "draft")
         self.assertIn(incident, case.incident_ids)
 
+    def test_case_related_fields_use_distinct_labels(self):
+        """Count fields should not reuse the relation labels that Odoo warns on."""
+        case_model = self.env["federation.disciplinary.case"]
+        self.assertEqual(case_model._fields["incident_ids"].string, "Incidents")
+        self.assertEqual(case_model._fields["incident_count"].string, "Incident Count")
+        self.assertEqual(case_model._fields["sanction_ids"].string, "Sanctions")
+        self.assertEqual(case_model._fields["sanction_count"].string, "Sanction Count")
+        self.assertEqual(case_model._fields["suspension_ids"].string, "Suspensions")
+        self.assertEqual(case_model._fields["suspension_count"].string, "Suspension Count")
+
+        case = case_model.create({
+            "name": "Case Labels",
+            "subject_player_id": self.player.id,
+            "summary": "Verify related counters.",
+        })
+        self.assertEqual(case.incident_count, 0)
+        self.assertEqual(case.sanction_count, 0)
+        self.assertEqual(case.suspension_count, 0)
+
     def test_case_state_transitions(self):
         """Test case state transitions."""
         case = self.env["federation.disciplinary.case"].create({

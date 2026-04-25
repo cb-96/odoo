@@ -61,7 +61,10 @@ class PublicTournamentHubController(http.Controller):
 
     def _build_main_tournament_domain(self, filters):
         """Build main tournament domain."""
-        domain = [("state", "in", ("open", "in_progress", "closed", "cancelled"))]
+        domain = [
+            ("website_published", "=", True),
+            ("state", "in", ("open", "in_progress", "closed", "cancelled")),
+        ]
         domain += self._build_shared_filter_domain(filters)
         if filters["state"]:
             domain.append(("state", "=", filters["state"]))

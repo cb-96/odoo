@@ -99,6 +99,7 @@ Tournament-level operational KPI view.
 | `pending_finance_event_count` / `pending_finance_amount` | Integer / Float | Open finance follow-up tied to match operations |
 | `open_club_compliance_count` | Integer | Outstanding club compliance checks for participating clubs |
 | `readiness_status` | Selection | `healthy`, `attention`, or `blocked` |
+| `readiness_note` | Text | Operator-readable summary of the active readiness blockers or follow-up work |
 
 ### `federation.report.standing.reconciliation`
 

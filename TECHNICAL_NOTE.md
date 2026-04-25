@@ -34,6 +34,9 @@ operator-facing application reports.
 - `sports_federation_reporting` now includes `federation.report.operational`
     for tournament readiness KPIs across participation, standings coverage,
     match completion, finance follow-up, and participant-club compliance.
+- Operational KPI rows now include an operator-readable readiness note so the
+    list view and scheduled CSV exports expose the current blocker directly,
+    instead of forcing staff to infer it from raw counts alone.
 - A new `federation.report.standing.reconciliation` view exposes mismatches
     between confirmed participants and standings coverage, with operator-readable
     reconciliation notes.
@@ -115,7 +118,8 @@ workflow boundaries instead of leaving them as isolated checks.
     tied to valid active roster lines, do not satisfy license or registration
     rules, or the submitted squad size is outside the allowed bounds.
 - `sports_federation_rosters` extends `federation.tournament.participant` so
-    participant confirmation requires an active ready roster for the tournament
+    participant confirmation warns before the roster deadline, then requires an
+    active ready roster once that deadline is reached for the tournament
     season, with competition-specific rosters preferred over generic season
     rosters.
 - Regression coverage was added for season-aware license checks, team-season

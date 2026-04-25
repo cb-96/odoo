@@ -323,6 +323,23 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         self.assertNotIn(self.closed_tour, featured)
         self.assertNotIn(self.unpub_closed_tour, featured)
 
+    def test_main_tournament_hub_domain_excludes_unpublished_records(self):
+        """Main hub pagination and list results must stay aligned with publication guards."""
+        controller = PublicTournamentHubController()
+        filters = controller._build_filters()
+        with patch(
+            "odoo.addons.sports_federation_public_site.controllers.public_competitions.request",
+            new=SimpleNamespace(env=self.env),
+        ):
+            tournaments = self.env["federation.tournament"].sudo().search(
+                controller._build_main_tournament_domain(filters),
+                order="date_start desc, id desc",
+            )
+
+        self.assertIn(self.active_tour, tournaments)
+        self.assertIn(self.closed_tour, tournaments)
+        self.assertNotIn(self.unpub_closed_tour, tournaments)
+
     def test_public_archived_tournaments_only_return_published_archive(self):
         """Archived tournament coverage only includes published closed or cancelled tournaments."""
         archived = self.env["federation.tournament"].get_public_archived_tournaments()

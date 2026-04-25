@@ -63,6 +63,12 @@ class TestRosterPortalAccess(TransactionCase):
             "email": "portal.coach@example.com",
             "group_ids": [(6, 0, [cls.portal_group.id])],
         })
+        cls.inactive_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Portal Inactive User",
+            "login": "portal.inactive@example.com",
+            "email": "portal.inactive@example.com",
+            "group_ids": [(6, 0, [cls.portal_group.id])],
+        })
         cls.env["federation.club.representative"].create({
             "club_id": cls.club_a.id,
             "partner_id": cls.user_a.partner_id.id,
@@ -81,6 +87,13 @@ class TestRosterPortalAccess(TransactionCase):
             "partner_id": cls.coach_user.partner_id.id,
             "user_id": cls.coach_user.id,
             "role_type_id": cls.coach_role_type.id,
+        })
+        cls.env["federation.club.representative"].create({
+            "club_id": cls.club_a.id,
+            "partner_id": cls.inactive_user.partner_id.id,
+            "user_id": cls.inactive_user.id,
+            "role_type_id": cls.role_type.id,
+            "date_end": "2024-12-31",
         })
 
         cls.player_a = cls.env["federation.player"].create({
@@ -190,13 +203,39 @@ class TestRosterPortalAccess(TransactionCase):
         self.assertEqual(self.coach_user.portal_team_scope_ids, self.team_a)
         self.assertFalse(self.coach_user.portal_club_scope_ids)
 
+        visible_teams = self.env["federation.team"].with_user(self.coach_user).search([])
+        self.assertIn(self.team_a, visible_teams)
+        self.assertNotIn(self.team_a_reserve, visible_teams)
+        self.assertNotIn(self.team_b, visible_teams)
+
         visible_rosters = self.env["federation.team.roster"].with_user(self.coach_user).search([])
         self.assertIn(self.roster_a, visible_rosters)
+        self.assertNotIn(self.roster_a_reserve, visible_rosters)
         self.assertNotIn(self.roster_b, visible_rosters)
 
         visible_sheets = self.env["federation.match.sheet"].with_user(self.coach_user).search([])
         self.assertIn(self.sheet_a, visible_sheets)
         self.assertNotIn(self.sheet_b, visible_sheets)
+
+    def test_inactive_representative_loses_current_match_day_scope(self):
+        """Inactive representative rows must not preserve live portal match-day access."""
+        self.assertIn(self.club_a, self.inactive_user.represented_club_ids)
+        self.assertFalse(self.inactive_user.portal_club_scope_ids)
+        self.assertFalse(self.inactive_user.portal_team_scope_ids)
+
+        visible_teams = self.env["federation.team"].with_user(self.inactive_user).search([])
+        visible_rosters = self.env["federation.team.roster"].with_user(self.inactive_user).search([])
+        visible_sheets = self.env["federation.match.sheet"].with_user(self.inactive_user).search([])
+
+        self.assertFalse(visible_teams)
+        self.assertFalse(visible_rosters)
+        self.assertFalse(visible_sheets)
+        self.assertFalse(self.tournament._portal_has_workspace_access(user=self.inactive_user))
+
+        with self.assertRaises(AccessError):
+            self.roster_a._portal_assert_scope_access(user=self.inactive_user)
+        with self.assertRaises(AccessError):
+            self.sheet_a._portal_assert_review_access(user=self.inactive_user)
 
     def test_team_scoped_coach_can_prepare_and_submit_assigned_sheet(self):
         """Test that team scoped coach can prepare and submit assigned sheet."""

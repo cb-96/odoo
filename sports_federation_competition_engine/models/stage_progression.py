@@ -157,11 +157,10 @@ class FederationStageProgression(models.Model):
                 ], limit=1)
                 vals = {
                     "stage_id": rec.target_stage_id.id,
+                    "group_id": rec.target_group_id.id or False,
                     "seed": idx + 1,
                     "state": "confirmed",
                 }
-                if rec.target_group_id:
-                    vals["group_id"] = rec.target_group_id.id
                 if existing:
                     existing.write(vals)
                 else:

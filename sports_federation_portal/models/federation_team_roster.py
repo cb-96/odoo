@@ -20,9 +20,8 @@ class FederationTeamRoster(models.Model):
             return ["|", ("team_id", "in", team_scope.ids), ("club_id", "in", club_scope.ids)]
         if team_scope:
             return [("team_id", "in", team_scope.ids)]
-        represented_clubs = user.represented_club_ids
-        if represented_clubs:
-            return [("club_id", "in", represented_clubs.ids)]
+        if club_scope:
+            return [("club_id", "in", club_scope.ids)]
         return [("id", "=", False)]
 
     @api.model
@@ -39,9 +38,8 @@ class FederationTeamRoster(models.Model):
             return ["|", ("team_id", "in", team_scope.ids), ("club_id", "in", club_scope.ids)]
         if team_scope:
             return [("team_id", "in", team_scope.ids)]
-        represented_clubs = user.represented_club_ids
-        if represented_clubs:
-            return [("club_id", "in", represented_clubs.ids)]
+        if club_scope:
+            return [("club_id", "in", club_scope.ids)]
         return [("id", "=", False)]
 
     def _portal_assert_scope_access(self, user=None):
@@ -49,16 +47,13 @@ class FederationTeamRoster(models.Model):
         user = user or self.env.user
         team_scope = user.portal_team_scope_ids
         club_scope = user.portal_club_scope_ids
-        represented_clubs = user.represented_club_ids
-        if not represented_clubs and not team_scope:
+        if not club_scope and not team_scope:
             raise AccessError(_("You do not have portal access to team rosters."))
 
         for roster in self:
             if team_scope and roster.team_id in team_scope:
                 continue
             if club_scope and roster.club_id in club_scope:
-                continue
-            if not team_scope and roster.club_id in represented_clubs:
                 continue
             raise AccessError(
                 _("You can only access rosters for your assigned teams or clubs.")

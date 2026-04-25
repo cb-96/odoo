@@ -17,7 +17,11 @@ class FederationMatchSheet(models.Model):
     _name = "federation.match.sheet"
     _description = "Match Sheet"
 
-    name = fields.Char(required=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+        readonly=False,
+    )
     match_id = fields.Many2one(
         "federation.match",
         string="Match",
@@ -45,6 +49,20 @@ class FederationMatchSheet(models.Model):
         required=True,
         ondelete="restrict",
         index=True,
+    )
+    # Computed helper used as domain source for team_id in the form view.
+    # Returns the IDs of the home and away teams on the linked match.
+    match_team_ids = fields.Many2many(
+        "federation.team",
+        compute="_compute_match_team_ids",
+        string="Match Teams",
+    )
+    # Computed helper used as domain source for player_id in sheet lines.
+    # When a roster is selected, only players on that roster are returned.
+    roster_player_ids = fields.Many2many(
+        "federation.player",
+        compute="_compute_roster_player_ids",
+        string="Roster Players",
     )
     roster_id = fields.Many2one(
         "federation.team.roster",
@@ -118,6 +136,73 @@ class FederationMatchSheet(models.Model):
         """Compute line count."""
         for record in self:
             record.line_count = len(record.line_ids)
+
+    @api.depends("match_id", "team_id")
+    def _compute_name(self):
+        for rec in self:
+            if rec.match_id and rec.team_id:
+                rec.name = f"{rec.match_id.display_name} – {rec.team_id.display_name}"
+            elif rec.match_id:
+                rec.name = rec.match_id.display_name
+            elif rec.team_id:
+                rec.name = rec.team_id.display_name
+            elif not rec.name:
+                rec.name = _("New Match Sheet")
+
+    @api.depends("match_id", "match_id.home_team_id", "match_id.away_team_id")
+    def _compute_match_team_ids(self):
+        """Return the home and away teams of the linked match for domain filtering."""
+        for record in self:
+            if record.match_id:
+                teams = (
+                    record.match_id.home_team_id | record.match_id.away_team_id
+                )
+                record.match_team_ids = teams
+            else:
+                record.match_team_ids = self.env["federation.team"]
+
+    @api.depends("roster_id", "roster_id.line_ids", "roster_id.line_ids.player_id")
+    def _compute_roster_player_ids(self):
+        for rec in self:
+            if rec.roster_id:
+                rec.roster_player_ids = rec.roster_id.line_ids.mapped("player_id")
+            else:
+                rec.roster_player_ids = self.env["federation.player"]
+
+    @api.onchange("match_id")
+    def _onchange_match_id(self):
+        """Clear team/roster when the match changes and auto-derive side when possible."""
+        if not self.match_id:
+            self.team_id = False
+            self.roster_id = False
+            return
+
+        match = self.match_id
+        # Clear team if it is no longer part of the new match
+        if self.team_id and self.team_id not in (
+            match.home_team_id | match.away_team_id
+        ):
+            self.team_id = False
+            self.roster_id = False
+
+    @api.onchange("team_id")
+    def _onchange_team_id(self):
+        """Clear roster when team changes and auto-set the side field."""
+        if not self.team_id:
+            self.roster_id = False
+            return
+
+        # Clear roster if it belongs to a different team
+        if self.roster_id and self.roster_id.team_id != self.team_id:
+            self.roster_id = False
+
+        # Auto-set side when the team unambiguously maps to one side
+        if self.match_id:
+            match = self.match_id
+            if self.team_id == match.home_team_id and self.team_id != match.away_team_id:
+                self.side = "home"
+            elif self.team_id == match.away_team_id and self.team_id != match.home_team_id:
+                self.side = "away"
 
     @api.depends("line_ids.entered_minute")
     def _compute_substitution_count(self):

@@ -410,7 +410,7 @@ class FederationEligibilityService(models.AbstractModel):
 
     def _resolve_rule_set(self, match):
         """Walk match → stage → tournament → competition for a rule set."""
-        if match.stage_id and match.stage_id.rule_set_id:
+        if match.stage_id and getattr(match.stage_id, "rule_set_id", False):
             return match.stage_id.rule_set_id
         if match.tournament_id and match.tournament_id.rule_set_id:
             return match.tournament_id.rule_set_id

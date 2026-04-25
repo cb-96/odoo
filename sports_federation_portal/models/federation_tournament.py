@@ -45,13 +45,12 @@ class FederationTournament(models.Model):
         user = user or self.env.user
         club_scope = user.portal_club_scope_ids
         team_scope = user.portal_team_scope_ids
-        represented_clubs = user.represented_club_ids
         if team_scope and club_scope:
             return ["|", ("id", "in", team_scope.ids), ("club_id", "in", club_scope.ids)]
         if team_scope:
             return [("id", "in", team_scope.ids)]
-        if represented_clubs:
-            return [("club_id", "in", represented_clubs.ids)]
+        if club_scope:
+            return [("club_id", "in", club_scope.ids)]
         return [("id", "=", False)]
 
     @api.model

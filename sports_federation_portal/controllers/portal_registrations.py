@@ -110,9 +110,15 @@ class FederationRegistrationPortal(FederationPortalBase):
             [("state", "=", "open")],
             order="date_start desc",
         )
+        # Support pre-selecting a team when linked from /my/teams
+        try:
+            preselect_team_id = int(kw.get("team_id", 0)) or None
+        except (ValueError, TypeError):
+            preselect_team_id = None
         values = {
             "teams": teams,
             "seasons": seasons,
+            "preselect_team_id": preselect_team_id,
             "page_name": "new_season_registration",
             "error": kw.get("error"),
         }

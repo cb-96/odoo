@@ -36,6 +36,7 @@ tournament registration workflows on top of the federation base modules.
         "views/federation_season_registration_views.xml",
         "views/federation_tournament_registration_views.xml",
         "views/federation_tournament_views.xml",
+        "views/federation_match_sheet_views.xml",
         "views/federation_club_representative_portal_views.xml",
         "views/portal_templates.xml",
         "views/portal_officiating_templates.xml",

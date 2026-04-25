@@ -71,6 +71,7 @@ Club and team-scoped portal users now get a tournament-first workspace for activ
 - each entry summarizes registration state, the preferred roster checkpoint, upcoming match-day sheet work, and done matches whose results still need follow-up.
 - `/my/tournament-workspaces/<tournament>/<team>` expands that entry into operational detail with direct links to the roster, match-day queue, and team match sheets.
 - the workspace model itself revalidates team scope and active-tournament scope through `federation.portal.privilege` before any elevated reads, so direct model or RPC callers cannot bypass the controller filters.
+- current whole-club access comes only from `portal_club_scope_ids`, while current team-scoped roles stay pinned to `portal_team_scope_ids`; historical or inactive representative rows do not widen workspace visibility.
 
 **Why add a separate workspace instead of more dashboard counters?**
 - recurring club operations are tournament-scoped, not model-scoped.
@@ -174,7 +175,7 @@ Official portal group gets:
 Manager group gets full CRUD on all new models.
 
 ### Record Rules
-Seven record rules ensure portal users can only access data belonging to their clubs. The domain `('club_id', 'in', user.representative_ids.mapped('club_id').ids)` is used consistently.
+Portal access now distinguishes between current whole-club scope and current team scope. Match-day record rules use `user.portal_club_scope_ids` for whole-club visibility and `user.portal_team_scope_ids` for assigned-team visibility so inactive or historical representative rows do not widen access.
 
 ### Controller-Level Validation
 Every write operation in the controllers:
@@ -209,6 +210,8 @@ Public routes use `sudo()` to bypass ACL (since anonymous users have no federati
 - [ ] **Tournament detail** (`/tournament/<id>`) shows participants and register button when state is `open`.
 - [ ] **Tournament registration** creates a `federation.tournament.registration` in `submitted` state.
 - [ ] **Roster portal pages** (`/my/rosters`, `/my/rosters/<id>`) show only the representative's clubs, including lock feedback and audit events.
+- [ ] **Team-scoped portal users** only see their assigned team's rosters, teams, match sheets, and workspace entries; same-club foreign-team records stay hidden.
+- [ ] **Inactive or expired representatives** lose live team, roster, match-sheet, and workspace visibility.
 - [ ] **Match-sheet portal pages** (`/my/match-sheets`, `/my/match-sheets/<id>`) show substitutions plus related result disputes and corrections.
 - [ ] **Duplicate registration** is rejected with an error message.
 - [ ] **Max participants** limit is enforced.

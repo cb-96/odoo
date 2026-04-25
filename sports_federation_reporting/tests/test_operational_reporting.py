@@ -220,6 +220,8 @@ class TestOperationalReporting(TransactionCase):
         self.assertEqual(row.pending_finance_amount, 55.0)
         self.assertEqual(row.open_club_compliance_count, 1)
         self.assertEqual(row.readiness_status, "blocked")
+        self.assertIn("open compliance checks", row.readiness_note.lower())
+        self.assertIn("finance events", row.readiness_note.lower())
 
     def test_standing_reconciliation_flags_missing_participants(self):
         """Test that standing reconciliation flags missing participants."""
@@ -376,6 +378,8 @@ class TestOperationalReporting(TransactionCase):
         csv_payload = base64.b64decode(schedule.generated_file).decode()
         self.assertIn("Operational Summary", csv_payload)
         self.assertIn(self.tournament.name, csv_payload)
+        self.assertIn("Readiness Note", csv_payload)
+        self.assertIn("open compliance checks", csv_payload.lower())
         self.assertEqual(schedule.last_run_status, "success")
         self.assertEqual(schedule.consecutive_failure_count, 0)
 

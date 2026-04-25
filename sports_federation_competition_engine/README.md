@@ -84,6 +84,8 @@ Key Behaviours
 - At least 2 teams are required before schedule generation can proceed.
 - Tournament templates let `federation.tournament.template.action_apply()`
 	scaffold stages, groups, and progression rules with regression coverage.
+- Stage progression clears any stale source-group assignment when advancing an
+	existing participant into a target stage that has no explicit target group.
 - Wizard launch buttons are added to the tournament form view.
 
 Validation and safeguards

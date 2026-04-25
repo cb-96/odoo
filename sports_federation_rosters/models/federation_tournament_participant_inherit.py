@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class FederationTournamentParticipant(models.Model):
@@ -91,7 +92,31 @@ class FederationTournamentParticipant(models.Model):
             self._ensure_linked_roster()
         return result
 
+    def _get_confirmation_deadline_errors(self):
+        """Return operator-facing confirmation blockers once the roster deadline hits."""
+        errors = []
+        for record in self:
+            assessment = record._get_roster_assessment()
+            if assessment["blocking_issues"]:
+                feedback = assessment["feedback"] or "; ".join(assessment["blocking_issues"])
+                errors.append(
+                    _("%(team)s: %(feedback)s")
+                    % {
+                        "team": record.team_id.display_name or record.display_name,
+                        "feedback": feedback,
+                    }
+                )
+        return errors
+
     def action_confirm(self):
         """Execute the confirm action."""
         self._ensure_linked_roster()
+        deadline_errors = self._get_confirmation_deadline_errors()
+        if deadline_errors:
+            raise ValidationError(
+                _(
+                    "Participants cannot be confirmed after the roster deadline until each team has an active ready roster:\n- %(errors)s"
+                )
+                % {"errors": "\n- ".join(deadline_errors)}
+            )
         return super().action_confirm()

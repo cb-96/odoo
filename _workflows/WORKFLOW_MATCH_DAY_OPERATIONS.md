@@ -67,8 +67,9 @@ Match sheet states: `draft` → `submitted` → `approved` → `locked`.
 Portal workspace note:
 
 - Club representatives using the tournament workspace only see match-day tasks
-  for active tournaments (`open` or `in_progress`) and for teams inside their
-  represented-club or explicit team scope.
+   for active tournaments (`open` or `in_progress`) and for teams inside their
+   current whole-club scope or explicit current team scope. Inactive or expired
+   representative rows do not keep match-day visibility alive.
 
 ### 3. Referee Assignment
 

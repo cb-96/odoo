@@ -177,6 +177,16 @@ class TestTournamentWorkspace(TransactionCase):
         cls.live_registration.action_submit()
         cls.live_registration.action_confirm()
         cls.participant = cls.live_registration.participant_id
+
+        cls.competition_roster = cls.participant._get_readiness_roster()
+        cls.roster_line = cls.env["federation.team.roster.line"].create(
+            {
+                "roster_id": cls.competition_roster.id,
+                "player_id": cls.player_a.id,
+                "status": "active",
+            }
+        )
+        cls.competition_roster.action_activate()
         cls.participant.action_confirm()
 
         cls.generic_roster = cls.env["federation.team.roster"].create(
@@ -186,21 +196,6 @@ class TestTournamentWorkspace(TransactionCase):
                 "season_id": cls.season.id,
             }
         )
-        cls.competition_roster = cls.env["federation.team.roster"].create(
-            {
-                "name": "Workspace Competition Roster",
-                "team_id": cls.team_a.id,
-                "season_id": cls.season.id,
-                "competition_id": cls.competition.id,
-            }
-        )
-        cls.roster_line = cls.env["federation.team.roster.line"].create(
-            {
-                "roster_id": cls.competition_roster.id,
-                "player_id": cls.player_a.id,
-            }
-        )
-        cls.competition_roster.action_activate()
 
         cls.future_match = cls.env["federation.match"].create(
             {

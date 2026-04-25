@@ -103,8 +103,8 @@ class TestParticipantReadiness(TransactionCase):
 
         self.assertEqual(participant.state, "confirmed")
 
-    def test_participant_confirm_allows_group_workflow_once_deadline_reached(self):
-        """Test that participant confirm allows group workflow once deadline reached."""
+    def test_participant_confirm_blocks_missing_roster_once_deadline_reached(self):
+        """Test that participant confirm blocks once the roster deadline is reached."""
         urgent_tournament = self.env["federation.tournament"].create({
             "name": "Participant Deadline Tournament",
             "code": "PRT-DEADLINE",
@@ -121,12 +121,23 @@ class TestParticipantReadiness(TransactionCase):
         self.assertIn("Roster deadline reached", participant.confirmation_feedback)
         self.assertTrue(participant.readiness_roster_id)
 
-        participant.action_confirm()
+        with self.assertRaisesRegex(
+            ValidationError,
+            "Participants cannot be confirmed after the roster deadline",
+        ):
+            participant.action_confirm()
 
-        self.assertEqual(participant.state, "confirmed")
+        self.assertEqual(participant.state, "registered")
 
-    def test_participant_confirm_succeeds_with_ready_roster(self):
-        """Test that participant confirm succeeds with ready roster."""
+    def test_participant_confirm_succeeds_with_ready_roster_after_deadline(self):
+        """Test that participant confirm succeeds after the deadline once ready."""
+        urgent_tournament = self.env["federation.tournament"].create({
+            "name": "Participant Ready Deadline Tournament",
+            "code": "PRT-READY-DEADLINE",
+            "season_id": self.season.id,
+            "date_start": (self.today + timedelta(days=7)).isoformat(),
+            "rule_set_id": self.rule_set.id,
+        })
         self._create_ready_roster(
             self.team,
             self.player,
@@ -134,7 +145,7 @@ class TestParticipantReadiness(TransactionCase):
         )
 
         participant = self.env["federation.tournament.participant"].create({
-            "tournament_id": self.tournament.id,
+            "tournament_id": urgent_tournament.id,
             "team_id": self.team.id,
         })
         participant.action_confirm()

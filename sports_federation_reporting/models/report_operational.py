@@ -46,6 +46,7 @@ class FederationReportOperational(models.Model):
     pending_finance_amount = fields.Float(string="Pending Finance Amount", readonly=True)
     open_club_compliance_count = fields.Integer(string="Open Club Compliance Checks", readonly=True)
     readiness_status = fields.Selection(STATUS_SELECTION, string="Readiness Status", readonly=True)
+    readiness_note = fields.Text(string="Readiness Note", readonly=True)
 
     def init(self):
         """Rebuild the SQL view during install and upgrade.
@@ -163,7 +164,33 @@ class FederationReportOperational(models.Model):
                           OR COALESCE(fs.pending_finance_event_count, 0) > 0
                         THEN 'attention'
                         ELSE 'healthy'
-                    END AS readiness_status
+                    END AS readiness_status,
+                    CASE
+                        WHEN COALESCE(ccs.open_club_compliance_count, 0) > 0
+                          OR COALESCE(ps.participant_count, 0) > COALESCE(ps.confirmed_participant_count, 0)
+                          OR (
+                              COALESCE(ms.match_count, 0) > 0
+                              AND COALESCE(ms.completed_match_count, 0) < COALESCE(ms.match_count, 0)
+                          )
+                          OR COALESCE(fs.pending_finance_event_count, 0) > 0
+                        THEN CONCAT_WS(
+                            ' ',
+                            CASE
+                                WHEN COALESCE(ccs.open_club_compliance_count, 0) > 0 THEN 'Participating clubs still have open compliance checks.'
+                            END,
+                            CASE
+                                WHEN COALESCE(ps.participant_count, 0) > COALESCE(ps.confirmed_participant_count, 0) THEN 'Participant confirmations are still incomplete.'
+                            END,
+                            CASE
+                                WHEN COALESCE(ms.match_count, 0) > 0
+                                  AND COALESCE(ms.completed_match_count, 0) < COALESCE(ms.match_count, 0) THEN 'Some scheduled matches are still not completed.'
+                            END,
+                            CASE
+                                WHEN COALESCE(fs.pending_finance_event_count, 0) > 0 THEN 'Pending finance events still need reconciliation.'
+                            END
+                        )
+                        ELSE 'Tournament operations are currently on track.'
+                    END AS readiness_note
                 FROM federation_tournament t
                 LEFT JOIN federation_season s ON s.id = t.season_id
                 LEFT JOIN participant_stats ps ON ps.tournament_id = t.id

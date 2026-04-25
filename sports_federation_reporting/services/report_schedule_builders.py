@@ -34,6 +34,7 @@ def build_operational_rows(schedule):
         "Pending Finance Amount",
         "Open Club Compliance Checks",
         "Readiness Status",
+        "Readiness Note",
     ]
     data = [
         [
@@ -52,6 +53,7 @@ def build_operational_rows(schedule):
             row.pending_finance_amount,
             row.open_club_compliance_count,
             row.readiness_status or "",
+            row.readiness_note or "",
         ]
         for row in rows
     ]

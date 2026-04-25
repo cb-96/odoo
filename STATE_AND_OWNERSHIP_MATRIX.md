@@ -12,7 +12,7 @@ controllers, record rules, tests, and workflow docs aligned with the code.
 
 | Record | Module | Primary owner | Create path | Canonical states | Ownership boundary | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `federation.tournament` | `sports_federation_tournament` + `sports_federation_portal` | Federation competition operations | Backend UI, scheduling services, website publication helpers | `draft`, `open`, `in_progress`, `closed`, `cancelled` | Federation-owned season / competition scope | Portal tournament workspaces only expose active tournaments (`open`, `in_progress`) and only for visible teams or represented clubs. |
+| `federation.tournament` | `sports_federation_tournament` + `sports_federation_portal` | Federation competition operations | Backend UI, scheduling services, website publication helpers | `draft`, `open`, `in_progress`, `closed`, `cancelled` | Federation-owned season / competition scope | Portal tournament workspaces only expose active tournaments (`open`, `in_progress`) and only for teams inside the user's current whole-club or explicit team scope. |
 | `federation.match` | `sports_federation_tournament` | Federation competition operations | Backend UI, scheduling services, wizards | `draft`, `scheduled`, `in_progress`, `done`, `cancelled` | Federation-owned tournament/stage/group | Official standings inclusion is further gated by `include_in_official_standings` when `sports_federation_result_control` is installed. |
 | `federation.standing` | `sports_federation_standings` | Federation competition operations | Backend UI, recompute/freeze actions | `draft`, `computed`, `frozen` | Federation-owned tournament/stage/group | Only computed or frozen standings are publication candidates. |
 | `federation.tournament.participant` | `sports_federation_tournament` | Federation competition operations | Backend UI or confirmed tournament registration | `registered`, `confirmed`, `withdrawn` | Team's club within a federation tournament | Portal users do not write participants directly; confirmed registrations may create them. |
@@ -60,7 +60,7 @@ Use the model enums below in code, docs, and tests:
 ## Review checklist
 
 - New controller writes must validate represented-club ownership before any `sudo().create()` or state change.
-- Portal tournament workspace reads must revalidate active-tournament scope and visible team/club scope before any elevated read.
+- Portal tournament workspace reads and match-day record rules must revalidate active-tournament scope plus the user's current `portal_club_scope_ids` and `portal_team_scope_ids` before any elevated read or cross-team search.
 - Portal roster detail, roster-line edit, and roster-line license paths must resolve ids through the shared portal privilege boundary instead of raw elevated browse calls.
 - Public website routes must enforce `website_published` and the relevant visibility toggle before reading data with `sudo()`, and slug or numeric compatibility routes must resolve records through those publication-scoped domains up front.
 - State transitions referenced in docs and workflows must match the real selection values in the models.

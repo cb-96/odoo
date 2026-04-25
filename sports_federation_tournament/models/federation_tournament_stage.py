@@ -27,6 +27,12 @@ class FederationTournamentStage(models.Model):
     date_end = fields.Date(string="End Date")
     notes = fields.Text(string="Notes")
 
+    rule_set_id = fields.Many2one(
+        "federation.rule.set",
+        string="Rule Set",
+        help="Optional stage-specific rule set. Overrides the tournament-level rule set when set.",
+    )
+
     group_ids = fields.One2many("federation.tournament.group", "stage_id", string="Groups")
     round_ids = fields.One2many("federation.tournament.round", "stage_id", string="Rounds")
     match_ids = fields.One2many("federation.match", "stage_id", string="Matches")

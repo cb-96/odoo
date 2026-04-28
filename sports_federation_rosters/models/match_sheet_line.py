@@ -127,6 +127,10 @@ class FederationMatchSheetLine(models.Model):
         ]
         result = super().unlink()
         for sheet, player, description in audit_payloads:
+            # Skip audit when the parent sheet is being cascade-deleted (sheet
+            # may no longer exist in the DB at this point).
+            if not sheet.exists():
+                continue
             sheet._log_audit_event(
                 "sheet_line_removed",
                 description,

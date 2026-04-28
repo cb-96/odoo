@@ -272,7 +272,7 @@ class TestRosters(TransactionCase):
             "player_id": self.player1.id,
         })
         roster.action_activate()
-        match = self.env["federation.match"].create({
+        match = self.env["federation.match"].with_context(skip_auto_match_sheets=True).create({
             "tournament_id": self.env["federation.tournament"].create({
                 "name": "Roster Lock Tournament",
                 "code": "RLT",

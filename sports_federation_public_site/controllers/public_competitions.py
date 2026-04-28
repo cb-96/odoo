@@ -6,8 +6,10 @@ from odoo.addons.portal.controllers.portal import pager as portal_pager
 from odoo.exceptions import AccessError, ValidationError
 from odoo.http import Response, request
 
+from ._filters import TournamentHubFilterMixin
 
-class PublicTournamentHubController(http.Controller):
+
+class PublicTournamentHubController(TournamentHubFilterMixin, http.Controller):
 
     def _raise_not_found(self):
         """Raise the framework 404 exception for hidden public resources."""
@@ -24,103 +26,6 @@ class PublicTournamentHubController(http.Controller):
             headers=headers or [],
             content_type="application/json; charset=utf-8",
         )
-
-    def _parse_int_param(self, value):
-        """Parse int param."""
-        try:
-            return int(value) if value else False
-        except (TypeError, ValueError):
-            return False
-
-    def _build_filters(self, search="", **kw):
-        """Build filters."""
-        return {
-            "search": (search or kw.get("search") or "").strip(),
-            "season_id": self._parse_int_param(kw.get("season_id")),
-            "state": (kw.get("state") or "").strip(),
-            "category": (kw.get("category") or "").strip(),
-            "gender": (kw.get("gender") or "").strip(),
-            "venue_id": self._parse_int_param(kw.get("venue_id")),
-        }
-
-    def _build_shared_filter_domain(self, filters):
-        """Build shared filter domain."""
-        Tournament = request.env["federation.tournament"]
-        domain = []
-        if filters["search"]:
-            domain += Tournament._get_public_site_search_domain(filters["search"])
-        if filters["season_id"]:
-            domain.append(("season_id", "=", filters["season_id"]))
-        if filters["category"]:
-            domain.append(("category", "=", filters["category"]))
-        if filters["gender"]:
-            domain.append(("gender", "=", filters["gender"]))
-        if filters["venue_id"] and "venue_id" in Tournament._fields:
-            domain.append(("venue_id", "=", filters["venue_id"]))
-        return domain
-
-    def _build_main_tournament_domain(self, filters):
-        """Build main tournament domain."""
-        domain = [
-            ("website_published", "=", True),
-            ("state", "in", ("open", "in_progress", "closed", "cancelled")),
-        ]
-        domain += self._build_shared_filter_domain(filters)
-        if filters["state"]:
-            domain.append(("state", "=", filters["state"]))
-        return domain
-
-    def _get_filter_reference_data(self):
-        """Return filter reference data."""
-        Tournament = request.env["federation.tournament"]
-        category_options = [("", "All Categories")] + list(Tournament._fields["category"].selection)
-        gender_options = [("", "All Genders")] + list(Tournament._fields["gender"].selection)
-        state_options = [
-            ("", "All States"),
-            ("open", "Open"),
-            ("in_progress", "In Progress"),
-            ("closed", "Closed"),
-            ("cancelled", "Cancelled"),
-        ]
-        return {
-            "category_options": category_options,
-            "gender_options": gender_options,
-            "state_options": state_options,
-            "seasons": request.env["federation.season"].sudo().search([], order="date_start desc, id desc"),
-            "venues": request.env["federation.venue"].sudo().search([], order="name asc") if "venue_id" in Tournament._fields else request.env["federation.venue"].browse([]),
-        }
-
-    def _build_tournament_public_domain(self, public_access=None):
-        """Return the publication domain required for a public tournament route."""
-        if not public_access:
-            return []
-
-        domain = [("website_published", "=", True)]
-        if public_access == "results":
-            domain.append(("show_public_results", "=", True))
-        elif public_access == "standings":
-            domain.append(("show_public_standings", "=", True))
-        return domain
-
-    def _build_season_public_domain(self, public_access=None):
-        """Return the publication domain required for a public season route."""
-        if not public_access:
-            return []
-        return [("website_published", "=", True)]
-
-    def _build_team_public_domain(self, public_access=None):
-        """Return the publication domain required for a public team route."""
-        if not public_access:
-            return []
-        return [
-            "|",
-            "&",
-            ("public_participant_ids.state", "!=", "withdrawn"),
-            ("public_participant_ids.tournament_id.website_published", "=", True),
-            "|",
-            ("public_home_match_ids.tournament_id.website_published", "=", True),
-            ("public_away_match_ids.tournament_id.website_published", "=", True),
-        ]
 
     def _resolve_tournament(self, tournament_slug=None, tournament_id=None, tournament=False, public_access=None):
         """Resolve tournament."""
@@ -316,22 +221,10 @@ class PublicTournamentHubController(http.Controller):
         else:
             return request.redirect(tournament.get_public_path())
 
-        participants = request.env["federation.tournament.participant"].sudo().search(
-            [("tournament_id", "=", tournament.id), ("state", "!=", "withdrawn")],
-            order="state asc, seed asc, team_id asc",
+        return request.render(
+            "sports_federation_public_site.page_tournament_overview",
+            tournament.get_public_detail_context(),
         )
-        values = {
-            "tournament": tournament,
-            "participants": participants,
-            "can_register": tournament.state == "open",
-            "public_live_matches": tournament.get_public_live_matches(limit=4) if tournament.can_access_public_detail() else request.env["federation.match"].browse([]),
-            "upcoming_matches": tournament.get_public_upcoming_matches(limit=4) if tournament.can_access_public_detail() else request.env["federation.match"].browse([]),
-            "recent_results": tournament.get_public_recent_result_matches(limit=4) if tournament.can_access_public_detail() else request.env["federation.match"].browse([]),
-            "public_standings": tournament.get_public_standings() if tournament.can_access_public_detail() else request.env["federation.standing"].browse([]),
-            "public_participants": tournament.get_public_participants(limit=12) if tournament.can_access_public_detail() else participants[:12],
-            "page_name": "tournament_overview",
-        }
-        return request.render("sports_federation_public_site.page_tournament_overview", values)
 
     @http.route(["/tournaments/<string:tournament_slug>/register"], type="http", auth="user", website=True, methods=["GET"])
     def tournament_register_form(self, tournament_slug=None, **kw):

@@ -273,6 +273,32 @@ class FederationTournament(models.Model):
         self.ensure_one()
         return bool(self.website_published)
 
+    def get_public_detail_context(self):
+        """Return the template context dict for the tournament detail page.
+
+        Centralises template data preparation so the controller only resolves
+        the tournament and renders the response.
+        """
+        self.ensure_one()
+        participants = self.env["federation.tournament.participant"].sudo().search(
+            [("tournament_id", "=", self.id), ("state", "!=", "withdrawn")],
+            order="state asc, seed asc, team_id asc",
+        )
+        access = self.can_access_public_detail()
+        empty_matches = self.env["federation.match"].browse([])
+        empty_standings = self.env["federation.standing"].browse([])
+        return {
+            "tournament": self,
+            "participants": participants,
+            "can_register": self.state == "open",
+            "public_live_matches": self.get_public_live_matches(limit=4) if access else empty_matches,
+            "upcoming_matches": self.get_public_upcoming_matches(limit=4) if access else empty_matches,
+            "recent_results": self.get_public_recent_result_matches(limit=4) if access else empty_matches,
+            "public_standings": self.get_public_standings() if access else empty_standings,
+            "public_participants": self.get_public_participants(limit=12) if access else participants[:12],
+            "page_name": "tournament_overview",
+        }
+
     def get_public_standings(self):
         """Return public standings."""
         self.ensure_one()

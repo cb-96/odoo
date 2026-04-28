@@ -327,9 +327,13 @@ class TestPublicSiteNewEndpoints(TransactionCase):
         """Main hub pagination and list results must stay aligned with publication guards."""
         controller = PublicTournamentHubController()
         filters = controller._build_filters()
+        mock_request = SimpleNamespace(env=self.env)
         with patch(
             "odoo.addons.sports_federation_public_site.controllers.public_competitions.request",
-            new=SimpleNamespace(env=self.env),
+            new=mock_request,
+        ), patch(
+            "odoo.addons.sports_federation_public_site.controllers._filters.request",
+            new=mock_request,
         ):
             tournaments = self.env["federation.tournament"].sudo().search(
                 controller._build_main_tournament_domain(filters),

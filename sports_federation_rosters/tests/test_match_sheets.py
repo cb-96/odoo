@@ -383,6 +383,16 @@ class TestMatchSheets(TransactionCase):
             "season_id": self.season.id,
             "rule_set_id": rule_set.id,
         })
+        player = self.env["federation.player"].create({
+            "name": "Auto Player",
+            "first_name": "Auto",
+            "last_name": "Player",
+            "gender": "male",
+        })
+        self.env["federation.team.roster.line"].create({
+            "roster_id": roster.id,
+            "player_id": player.id,
+        })
         roster.action_activate()
 
         match = self.env["federation.match"].create({

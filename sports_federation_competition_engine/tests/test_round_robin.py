@@ -258,11 +258,11 @@ class TestRoundRobin(TransactionCase):
         self.assertEqual(len(rounds), 10)
 
     def test_explicit_round_mode_fewer_gamedays_than_math_rounds(self):
-        """Explicit mode with fewer gamedays than math rounds is valid.
+        """Explicit mode with fewer gamedays than the minimum must raise UserError.
 
-        Requesting 3 gamedays for 6 participants (which needs 5 math rounds)
-        is a valid scheduling choice — all 15 matches are created and cycled
-        across the 3 gameday records.
+        Requesting 3 gamedays for 6 participants requires at least 5 rounds
+        (n - 1 for even n) so every team can play every other team once.
+        The engine must reject the request rather than produce an incomplete schedule.
         """
         options = {
             "double_round": False,
@@ -272,22 +272,13 @@ class TestRoundRobin(TransactionCase):
             "overwrite": False,
             "group": False,
             "round_mode": "explicit",
-            "requested_rounds": 3,  # Fewer gamedays than the 5 math rounds needed
+            "requested_rounds": 3,  # Fewer than the 5 rounds required for 6 participants
         }
         engine = self.env["federation.competition.engine.service"]
-        matches = engine.generate_round_robin_schedule(
-            self.tournament, self.stage, self.participants, options
-        )
-        # All 15 matches are still created
-        self.assertEqual(len(matches), 15)
-        # Exactly 3 gameday (round) records are created
-        rounds = self.env["federation.tournament.round"].search([
-            ("stage_id", "=", self.stage.id)
-        ])
-        self.assertEqual(len(rounds), 3)
-        # Every match is assigned to one of those 3 gamedays
-        for match in matches:
-            self.assertIn(match.round_id, rounds)
+        with self.assertRaises(Exception):
+            engine.generate_round_robin_schedule(
+                self.tournament, self.stage, self.participants, options
+            )
 
     def test_explicit_round_mode_zero_gamedays_raises(self):
         """Explicit mode with requested_rounds=0 must raise UserError."""

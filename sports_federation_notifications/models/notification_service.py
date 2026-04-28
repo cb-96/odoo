@@ -51,6 +51,20 @@ class FederationNotificationService(models.AbstractModel):
 
         log = Log.create(log_vals)
 
+        # Pre-flight: ensure partner still exists before attempting delivery.
+        # A deleted partner causes MissingError deep inside send_mail which
+        # would surface as an untyped failure with no actionable category.
+        if partner and not partner.exists():
+            log.write({
+                "state": "failed",
+                "failure_category": "data_validation",
+                "operator_message": (
+                    f"Recipient partner (ID {partner.id}) has been deleted. "
+                    "Recreate or reassign the contact and retry."
+                ),
+            })
+            return log
+
         try:
             template = self.env.ref(template_xmlid, raise_if_not_found=False)
             if not template:

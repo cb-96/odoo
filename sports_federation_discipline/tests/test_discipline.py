@@ -203,3 +203,119 @@ class TestDiscipline(TransactionCase):
                 "date_start": "2024-07-31",
                 "date_end": "2024-07-01",
             })
+
+    # ------------------------------------------------------------------
+    # Suspension activation / expiry / eligibility-gate edge cases
+    # ------------------------------------------------------------------
+
+    def _make_case(self, suffix=""):
+        return self.env["federation.disciplinary.case"].create({
+            "name": f"Case {suffix}",
+            "subject_player_id": self.player.id,
+            "summary": "Edge-case test case.",
+        })
+
+    def _make_suspension(self, case, name="Suspension", start="2024-07-01", end="2024-07-31"):
+        return self.env["federation.suspension"].create({
+            "name": name,
+            "case_id": case.id,
+            "player_id": self.player.id,
+            "date_start": start,
+            "date_end": end,
+        })
+
+    def test_suspension_activation_sets_player_suspended(self):
+        """Activating a suspension must flip the player state to 'suspended'."""
+        case = self._make_case("activate")
+        suspension = self._make_suspension(case)
+        self.assertEqual(self.player.state, "active")
+
+        suspension.action_activate()
+
+        self.assertEqual(suspension.state, "active")
+        self.assertEqual(self.player.state, "suspended")
+
+    def test_suspension_already_active_is_noop(self):
+        """Calling action_activate() on an already-active suspension is a no-op."""
+        case = self._make_case("noop")
+        suspension = self._make_suspension(case)
+        suspension.action_activate()
+        self.assertEqual(suspension.state, "active")
+
+        # Second call must not raise and must leave state unchanged.
+        suspension.action_activate()
+        self.assertEqual(suspension.state, "active")
+        self.assertEqual(self.player.state, "suspended")
+
+    def test_suspension_cancel_from_draft_restores_player(self):
+        """Cancelling a draft suspension leaves the player state unchanged (already active)."""
+        case = self._make_case("cancel-draft")
+        suspension = self._make_suspension(case)
+        # Player is active; suspension in draft; cancel it.
+        suspension.action_cancel()
+        self.assertEqual(suspension.state, "cancelled")
+        # Player had no active suspensions, so state stays active.
+        self.assertEqual(self.player.state, "active")
+
+    def test_suspension_cancel_from_active_restores_player(self):
+        """Cancelling the only active suspension restores the player to active."""
+        case = self._make_case("cancel-active")
+        suspension = self._make_suspension(case)
+        suspension.action_activate()
+        self.assertEqual(self.player.state, "suspended")
+
+        suspension.action_cancel()
+        self.assertEqual(suspension.state, "cancelled")
+        self.assertEqual(self.player.state, "active")
+
+    def test_suspension_cancel_with_another_active_keeps_player_suspended(self):
+        """Cancelling one suspension keeps the player suspended if another is still active."""
+        case1 = self._make_case("multi-1")
+        case2 = self._make_case("multi-2")
+        s1 = self._make_suspension(case1, name="S1", start="2024-07-01", end="2024-07-15")
+        s2 = self._make_suspension(case2, name="S2", start="2024-07-16", end="2024-07-31")
+        s1.action_activate()
+        s2.action_activate()
+        self.assertEqual(self.player.state, "suspended")
+
+        # Cancel first suspension; second is still active.
+        s1.action_cancel()
+        self.assertEqual(self.player.state, "suspended")
+
+    def test_suspension_expire_restores_player_when_no_other_active(self):
+        """Expiring the only active suspension restores the player state."""
+        case = self._make_case("expire")
+        suspension = self._make_suspension(case)
+        suspension.action_activate()
+        self.assertEqual(self.player.state, "suspended")
+
+        suspension.action_expire()
+        self.assertEqual(suspension.state, "expired")
+        self.assertEqual(self.player.state, "active")
+
+    def test_suspension_expire_draft_is_noop(self):
+        """Calling action_expire() on a draft suspension does nothing (only active expire)."""
+        case = self._make_case("expire-draft")
+        suspension = self._make_suspension(case)
+        self.assertEqual(suspension.state, "draft")
+
+        suspension.action_expire()
+        self.assertEqual(suspension.state, "draft")
+
+    def test_suspension_activate_skips_dispatcher_when_absent(self):
+        """action_activate() must not raise when the notification dispatcher is not installed."""
+        case = self._make_case("no-dispatcher")
+        suspension = self._make_suspension(case)
+        # Ensure dispatcher is genuinely absent in the test environment.
+        self.assertIsNone(self.env.get("federation.notification.dispatcher"))
+        # Must complete without error.
+        suspension.action_activate()
+        self.assertEqual(suspension.state, "active")
+
+    def test_player_suspension_count_reflects_linked_suspensions(self):
+        """federation.player.suspension_count must include all suspensions for the player."""
+        case = self._make_case("count")
+        self._make_suspension(case, name="S-A", start="2024-07-01", end="2024-07-10")
+        self._make_suspension(case, name="S-B", start="2024-07-11", end="2024-07-20")
+        self.player.invalidate_recordset()
+        self.assertEqual(self.player.suspension_count, 2)

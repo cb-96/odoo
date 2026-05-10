@@ -425,8 +425,18 @@ class FederationFinanceEvent(models.Model):
             note: Optional notes.
 
         Returns:
-            The created federation.finance.event record.
+            The existing or newly created federation.finance.event record.
         """
+        existing = self.search(
+            [
+                ("fee_type_id", "=", fee_type.id),
+                ("source_model", "=", source_record._name),
+                ("source_res_id", "=", source_record.id),
+            ],
+            limit=1,
+        )
+        if existing:
+            return existing
         return self.create(
             self._prepare_from_source_vals(
                 source_record,

@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import _, fields, models
 from odoo.addons.sports_federation_base.models.failure_feedback import (
     DEFAULT_OPERATOR_MESSAGES,
 )
@@ -179,7 +179,33 @@ class FederationImportWizardGovernanceMixin(models.AbstractModel):
                 self.integration_delivery_id.action_mark_processed(
                     self.governance_job_id
                 )
+        if not self.dry_run and success_count > 0 and error_count == 0:
+            return self._build_import_success_notification(success_count)
         return self._reopen_wizard()
+
+    def _build_import_success_notification(self, success_count):
+        """Return a display_notification action after a clean live import."""
+        self.ensure_one()
+        target_model = self._get_import_target_model()
+        next_action = {"type": "ir.actions.act_window_close"}
+        if target_model:
+            next_action = {
+                "type": "ir.actions.act_window",
+                "res_model": target_model,
+                "view_mode": "list,form",
+                "target": "main",
+            }
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Import Successful"),
+                "message": _("%d record(s) imported successfully.") % success_count,
+                "type": "success",
+                "sticky": False,
+                "next": next_action,
+            },
+        }
 
     def action_request_approval(self):
         """Create and submit the governance job for the current previewed upload."""

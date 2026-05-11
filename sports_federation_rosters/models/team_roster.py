@@ -81,8 +81,19 @@ class FederationTeamRoster(models.Model):
         related="team_id.club_id",
         store=True,
     )
-    min_players_required = fields.Integer(string="Min Players Required")
-    max_players_allowed = fields.Integer(string="Max Players Allowed")
+    min_players_required = fields.Integer(
+        string="Min Players Required",
+        help="Minimum number of eligible active players the squad must contain before"
+        " this roster can be activated. Overrides the rule-set squad_min_size for"
+        " this specific roster. Leave 0 to use the rule-set default.",
+    )
+    max_players_allowed = fields.Integer(
+        string="Max Players Allowed",
+        help="Maximum number of players that may be registered on this roster."
+        " This is a season/competition squad registration cap, not a per-match"
+        " selection limit. Overrides the rule-set squad_max_size for this specific"
+        " roster. Leave 0 to use the rule-set default.",
+    )
     ready_for_activation = fields.Boolean(
         compute="_compute_readiness",
         string="Ready For Activation",
@@ -116,10 +127,13 @@ class FederationTeamRoster(models.Model):
         string="Audit Events",
     )
 
-    _unique_team_season_competition_name = models.Constraint(
-        "UNIQUE(team_id, season_id, competition_id, name)",
-        "A roster with this name already exists for this team, season, and competition.",
-    )
+    # NOTE (v19.0.1.5.0): The old UNIQUE(team_id, season_id, competition_id, name)
+    # constraint was dropped.  Multiple rosters per scope in non-active statuses
+    # (draft, closed) are valid — e.g. the "close old roster, create new one"
+    # workflow.  Only one ACTIVE roster per scope is allowed, enforced by:
+    #   1. _assert_unique_active_roster() Python check in write()
+    #   2. DB partial unique indexes from migration 19.0.1.4.0
+    #      (federation_team_roster_unique_active_no_comp / _with_comp)
 
     def _build_generated_name(self, team, season, competition=False):
         """Build generated name."""
@@ -169,31 +183,18 @@ class FederationTeamRoster(models.Model):
         return team, season, competition
 
     def _get_generated_name(self, vals=None, record=False):
-        """Return generated name."""
+        """Return a generated display name for this roster scope.
+
+        Since the scope uniqueness constraint (v19.0.1.5.0) prevents more than
+        one roster per (team, season, competition), a collision-avoidance loop
+        is no longer needed.  We simply return the base name for the scope.
+        """
         team, season, competition = self._resolve_scope_for_name(
             vals=vals, record=record
         )
         if not team or not season:
             return False
-
-        base_name = self._build_generated_name(team, season, competition)
-        scope_domain = [
-            ("team_id", "=", team.id),
-            ("season_id", "=", season.id),
-            ("competition_id", "=", competition.id if competition else False),
-        ]
-        if record and record.id:
-            scope_domain.append(("id", "!=", record.id))
-
-        name = base_name
-        suffix = 2
-        while self.search_count(scope_domain + [("name", "=", name)]):
-            name = _("%(base)s (%(suffix)s)") % {
-                "base": base_name,
-                "suffix": suffix,
-            }
-            suffix += 1
-        return name
+        return self._build_generated_name(team, season, competition)
 
     @api.onchange("team_id", "season_id", "competition_id")
     def _onchange_scope_fields(self):

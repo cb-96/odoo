@@ -55,13 +55,14 @@ Fields:
 
 - ``standing_id`` (Many2one): Parent standings.
 - ``participant_id`` (Many2one): The team.
-- ``position`` (Integer): Current rank.
-- ``matches_played`` (Integer): Total games.
-- ``wins`` / ``draws`` / ``losses`` (Integer): Results breakdown.
-- ``goals_for`` / ``goals_against`` (Integer): Goal statistics.
-- ``goal_difference`` (Integer, computed): ``goals_for - goals_against``.
+- ``rank`` (Integer): Position in the standings table (1 = first).
+- ``played`` (Integer): Total matches played.
+- ``won`` / ``drawn`` / ``lost`` (Integer): Results breakdown.
+- ``score_for`` / ``score_against`` (Integer): Goals/points scored and conceded.
+- ``score_diff`` (Integer, computed): ``score_for - score_against``.
 - ``points`` (Integer): Total points per rule set.
-- ``notes`` (Text): Remarks.
+- ``note`` (Char): Short free-text remark for this line.
+- ``tiebreak_notes`` (Text, readonly): Auto-generated explanation of the tie-break criterion used to order this participant.
 
 Key Behaviours
 --------------

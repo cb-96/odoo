@@ -37,7 +37,11 @@ class FederationDocumentRequirement(models.Model):
     )
     validity_days = fields.Integer(
         string="Validity (Days)",
-        help="Number of days the document is valid after issue date.",
+        help="Hard expiry window: the number of days a submitted document remains"
+        " valid after its issue date. When the submission's expiry_date is not"
+        " set manually, this value is used to compute it as"
+        " issue_date + validity_days. A document whose expiry_date has passed is"
+        " immediately non-compliant — there is no grace period.",
     )
 
     _code_target_model_unique = models.Constraint(

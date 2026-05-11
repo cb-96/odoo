@@ -114,3 +114,19 @@ class FederationPortalPrivilege(models.AbstractModel):
         if allowed_count != len(records):
             raise AccessError(access_message)
         return privileged_records
+
+    @api.model
+    def _assert_portal_owns(self, records, scope_domain, user=None):
+        """Assert the user's portal scope includes all supplied records.
+
+        Convenience wrapper around :meth:`portal_assert_in_domain` that
+        provides a consistent default access-denied message, so callers do not
+        need to craft their own message text.  Use this as the canonical
+        ownership assertion at every portal privilege boundary.
+        """
+        return self.portal_assert_in_domain(
+            records,
+            scope_domain,
+            _("You do not have access to this record."),
+            user=user,
+        )

@@ -11,6 +11,17 @@ class FederationPortalBase(CustomerPortal):
         """Raise the framework 404 exception for hidden portal resources."""
         raise request.not_found()
 
+    def _render_access_denied(self):
+        """Render a 403 Access Denied page for portal resources the user cannot access.
+
+        Shows a generic message without leaking record ownership or content.
+        """
+        return request.render(
+            "sports_federation_portal.portal_403_access_denied",
+            {},
+            status=403,
+        )
+
     def _prepare_portal_layout_values(self):
         """Populate shared portal personas with elevated reads for safe layout render.
 

@@ -901,3 +901,63 @@ class TestImportTools(TransactionCase):
         )
         self.assertTrue(participant)
         self.assertEqual(participant.seed, 4)
+
+    def test_import_wizard_live_success_returns_display_notification(self):
+        """A clean live import (no errors) should return a display_notification action."""
+        csv_content = "name;code\nNotification Club;NCLUB001"
+        wizard = self._approve_wizard_import(
+            self.env["federation.import.clubs.wizard"].create(
+                {
+                    "upload_file": self._create_csv_file(csv_content),
+                    "dry_run": False,
+                }
+            )
+        )
+
+        result = wizard.action_parse_and_import()
+
+        self.assertEqual(wizard.success_count, 1)
+        self.assertEqual(wizard.error_count, 0)
+        self.assertEqual(result.get("type"), "ir.actions.client")
+        self.assertEqual(result.get("tag"), "display_notification")
+        params = result.get("params", {})
+        self.assertEqual(params.get("type"), "success")
+        self.assertIn("1", params.get("message", ""))
+        self.assertIsNotNone(params.get("next"))
+
+    def test_import_wizard_dry_run_returns_reopen_wizard(self):
+        """A dry-run import should reopen the wizard form (not show a notification)."""
+        csv_content = "name;code\nDryRun Club;DRCLUB"
+        wizard = self.env["federation.import.clubs.wizard"].create(
+            {
+                "upload_file": self._create_csv_file(csv_content),
+                "dry_run": True,
+            }
+        )
+
+        result = wizard.action_parse_and_import()
+
+        self.assertEqual(result.get("type"), "ir.actions.act_window")
+        self.assertEqual(result.get("res_model"), "federation.import.clubs.wizard")
+
+    def test_import_wizard_live_with_errors_returns_reopen_wizard(self):
+        """A live import with row errors should reopen the wizard (not show success notification)."""
+        # Create a club that will cause a duplicate error
+        self.env["federation.club"].create({"name": "Existing Club", "code": "EXCLUB"})
+
+        csv_content = "name;code\nExisting Club;EXCLUB"
+        wizard = self._approve_wizard_import(
+            self.env["federation.import.clubs.wizard"].create(
+                {
+                    "upload_file": self._create_csv_file(csv_content),
+                    "dry_run": False,
+                }
+            )
+        )
+
+        result = wizard.action_parse_and_import()
+
+        self.assertEqual(wizard.error_count, 1)
+        self.assertEqual(wizard.success_count, 0)
+        self.assertEqual(result.get("type"), "ir.actions.act_window")
+        self.assertEqual(result.get("res_model"), "federation.import.clubs.wizard")

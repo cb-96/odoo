@@ -640,11 +640,13 @@ class TestPortalWorkflowHttpSmoke(HttpCase):
         self.authenticate(self.team_user.login, "ignored")
 
         foreign_roster_response = self.url_open(f"/my/rosters/{data['roster_id']}")
-        self.assertEqual(foreign_roster_response.status_code, 404)
+        # Cross-club access now returns 403 Access Denied (not a generic 404)
+        self.assertEqual(foreign_roster_response.status_code, 403)
 
         self.authenticate(self.season_user.login, "ignored")
 
         foreign_line_response = self.url_open(
             f"/my/rosters/{data['roster_id']}/lines/{data['foreign_line_id']}/edit"
         )
-        self.assertEqual(foreign_line_response.status_code, 404)
+        # Cross-club access now returns 403 Access Denied (not a generic 404)
+        self.assertEqual(foreign_line_response.status_code, 403)

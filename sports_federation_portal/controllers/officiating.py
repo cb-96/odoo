@@ -11,6 +11,14 @@ class FederationOfficiatingPortal(http.Controller):
         """Raise the framework 404 exception for hidden officiating resources."""
         raise request.not_found()
 
+    def _render_access_denied(self):
+        """Render a 403 Access Denied page for officiating resources the user cannot access."""
+        return request.render(
+            "sports_federation_portal.portal_403_access_denied",
+            {},
+            status=403,
+        )
+
     @http.route(
         ["/my/referee-assignments", "/my/referee-assignments/page/<int:page>"],
         type="http",
@@ -83,7 +91,7 @@ class FederationOfficiatingPortal(http.Controller):
                 self._raise_not_found()
             assignment._portal_assert_access(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
 
         values = {
             "assignment": assignment,
@@ -131,7 +139,7 @@ class FederationOfficiatingPortal(http.Controller):
             else:
                 raise ValidationError("Choose a valid response action.")
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return request.redirect(
                 "/my/referee-assignments/%s?error=%s"

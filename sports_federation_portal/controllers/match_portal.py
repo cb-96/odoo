@@ -61,7 +61,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
         try:
             sheet._portal_assert_review_access(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
 
         club = sheet.team_id.club_id
         Representative = request.env["federation.club.representative"].sudo()
@@ -151,7 +151,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
             if kw.get("submit_sheet"):
                 sheet._portal_action_submit(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/match-sheets/{sheet_id}",
@@ -184,7 +184,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
         try:
             sheet._portal_assert_review_access(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
 
         form = request.httprequest.form
         selected_player_ids = []
@@ -211,7 +211,7 @@ class FederationMatchPortal(FederationRosterPortalBase):
         try:
             sheet._portal_sync_squad(squad_data, user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/match-sheets/{sheet_id}",

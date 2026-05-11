@@ -1,463 +1,392 @@
-# ROADMAP — 2026-04-30 Improvement Program
+# ROADMAP — 2026-05-11 UX Improvement Program
 
-Last updated: 2026-04-30
+Last updated: 2026-05-11
 Owner: Federation Platform Team
-Last reviewed: 2026-04-30
+Last reviewed: 2026-05-11
 Review cadence: Every release
-Release train: 2026.05
+Release train: 2026.07
 
-The previous operating-period roadmap is archived in `ROADMAP_archive_2026-04-30.md`.
-This roadmap is driven by a full codebase scan on 2026-04-30 and shifts the focus from
-complexity extraction (previous cycle) to security closure, CI completeness, and
-test coverage in the highest-risk modules.
+The previous operating-period roadmap is archived in
+`ROADMAP_archive_2026-05-11.md`.
+This roadmap is driven by a full UX audit conducted on 2026-05-11. All 8 items
+from the 2026-05-10 cycle are closed. This cycle focuses on user experience —
+feedback clarity, form usability, navigation completeness, and portal polish —
+while preserving the strong security baseline already in place.
 
 ---
 
 ## State of the Codebase
 
-### What Has Gone Well
+### What Has Gone Well (2026-05-10 → 2026-05-11)
 
-The platform has made genuine, measurable progress since the April-17 review.
+**All 8 items from the previous roadmap are closed.** The May-10 cycle delivered:
+portal ownership guard (`_assert_portal_owns()`), club-rep URL guessing protection
+(HTTP 403 for wrong-owner access), roster uniqueness constraint corrected
+(removed ineffective name-based constraint, kept 19.0.1.4.0 partial indexes),
+name-generation race condition eliminated, O(n²) participant lookup in
+`_build_standing_table()` fixed with dict lookup, performance regression test
+(200 matches, ≤10 queries), and Phase 4 docs/UX polish (standings README
+corrected, `help=` added to 6 ambiguous fields).
 
-**Refactoring wins are real.** The largest hotspots from the previous review have
-been dramatically reduced. `report_operational.py` dropped from 968 → 202 lines.
-The portal `rosters.py` controller dropped from 575 → 6 lines (a router stub).
-This is active cleanup, not documentation housekeeping.
+**Security baseline is strong.** Token hashing, upload guardrails, exception
+sanitization, `_assert_portal_owns()` gate, partial unique indexes for active
+rosters, and no raw `IntegrityError` surfacing to users are all in place.
 
-**The competition engine is the cleanest code in the repository.** `round_robin.py`
-and `knockout.py` are well-factored `AbstractModel` services with zero `sudo()`
-calls, proper bye handling, home/away alternation, deterministic seeding, and
-aligned tests. This is the model other modules should follow.
+### Focus for This Cycle
 
-**Documentation culture is strong.** Ten workflow files, three ADRs,
-a `ROUTE_INVENTORY.md`, `STATE_AND_OWNERSHIP_MATRIX.md`, `INTEGRATION_CONTRACTS.md`,
-an OpenAPI spec for the partner API, and a full `PERFORMANCE_BASELINES.md` with
-enforced CI budgets — the information architecture of this project is above average
-for a custom Odoo build.
-
-**Test presence is 100%.** Every module has at least one test file. The portal
-module has the richest test surface: HTTP smoke tests, roster portal access tests,
-mobile/accessibility checks.
-
-**CI is real and multi-layered.** The CI pipeline runs lint, documentation freshness
-guards, dead-link detection, module-ownership validation, SQL EXPLAIN snapshot checks,
-migration review guards, and OpenAPI contract drift checks — in addition to three Odoo
-test suites. This is an unusually mature CI setup for this scale.
-
-**Security debt is being paid.** Query-string credential leaks are fixed. XSS vectors
-(`t-raw`) are gone. A migration discipline guard exists in CI. Eleven migration scripts
-are now in place (major improvement from the previous cycle's one).
-
-### Unresolved Findings
-
-#### Security
-
-| Severity | Finding | Location |
-|---|---|---|
-| HIGH | Partner API tokens stored and compared as plaintext `fields.Char` | `sports_federation_import_tools/models/integration_gateway.py` |
-| HIGH | No file-size or MIME-type guardrails on portal uploads | `sports_federation_compliance/models/document_submission.py`, `sports_federation_import_tools` |
-| MEDIUM | `except Exception` (9 occurrences) — some store raw exception text in notification logs (information disclosure risk) | `sports_federation_notifications/models/notification_service.py` and import_tools |
-| MEDIUM | 51 `with_user(user).sudo()` patterns — distributed ownership checks, hard to audit and easy to regress | Portal models, compliance models |
-
-Both HIGH items were flagged in the April-17 review and are still open. A database
-export still exposes live partner credentials. File upload endpoints still lack size
-and type enforcement.
-
-#### Test Coverage Gaps
-
-| Module | Model files | Test files | Risk |
-|---|---|---|---|
-| `reporting` | 18 | 4 | Highest risk — SQL view regressions go undetected |
-| `import_tools` | 12 + 10 wizards | 2 | High — complex import paths with few regression tests |
-| `discipline`, `governance`, `officiating` | 7–11 each | 1 each | Medium — minimal coverage for cross-module integration scenarios |
-
-#### CI Coverage Gaps
-
-Nine of 20 modules are **not covered in any named CI suite**:
-`discipline`, `governance`, `notifications`, `import_tools`, `officiating`,
-`people`, `rosters`, `rules`, `demo`. A regression in any of these modules is not
-caught by the standard CI matrix runs.
-
-#### Complexity Hotspots (Remaining)
-
-| File | Lines | Concern |
-|---|---|---|
-| `sports_federation_public_site/models/public_flags.py` | 813 | One model owns too many publication flag concerns |
-| `sports_federation_portal/models/federation_team_roster.py` | 597 | Portal helper mixes scope loading, validation, and write orchestration |
-| `sports_federation_rosters/models/team_roster.py` | 564 | Most-versioned module (v3); highest churn risk |
-| `sports_federation_public_site/controllers/public_competitions.py` | 560 | Wide public controller |
-| `sports_federation_reporting/services/report_schedule_builders.py` | 519 | Extraction helped but the builder registry is itself now large |
-| `sports_federation_standings/models/standing.py` | 482 | Standing logic and recompute triggers co-located |
-| `sports_federation_tournament/models/federation_match.py` | 453 | Bracket wiring and lifecycle in one file |
-
-#### Architectural Debt
-
-1. `sports_federation_public_site` depends on `sports_federation_portal` — a
-   read-only public website requires the full authenticated club-representative
-   portal to be installed. This prevents independent deployment and complicates
-   public-route testing.
-2. No formal event/signal bus — notification triggers and finance event hooks are
-   embedded in individual model methods. Tracing side effects grows harder as
-   modules accumulate.
-3. Public JSON feed contracts (`/api/v1/tournaments/<slug>/feed`,
-   `/tournaments/<slug>/schedule.ics`) are described as stable `v1` contracts in
-   `INTEGRATION_CONTRACTS.md` but have no machine-readable OpenAPI schema.
-4. `KnockoutService._apply_seeding` uses `random.shuffle` with no fixed seed,
-   making bracket-position tests for the random seeding mode non-reproducible.
-5. Black and Flake8 are still restricted to a `BLACK_PATHS`/`FLAKE8_PATHS`
-   allowlist, allowing style drift to accumulate in unlisted files.
-
-#### Documentation Gaps
-
-| Gap | Severity |
-|---|---|
-| No `WORKFLOW_ROSTER_MANAGEMENT.md` — rosters have audit events, locking state, and portal editing; inline coverage in the match-day workflow doc is insufficient | Medium |
-| No `WORKFLOW_OFFICIATING.md` — referee certification and assignment lifecycle is split across two workflow files | Low |
-| Player licensing state machine is undocumented (only mentioned in step 6 of season registration workflow) | Low |
-| Suspension notification is still a stub (acknowledged in TECHNICAL_NOTE.md) | Low |
-| `sports_federation_demo` has no README explaining what scenarios it seeds | Low |
-| Twilio/SMS integration env vars are declared but no workflow or README describes actual SMS usage | Low |
-| `CODE_REVIEW_REPORT.md` cites hotspot file sizes from April 17 that are now significantly smaller | Low |
+The codebase has good backend correctness. The user-facing layer — admin forms,
+wizards, portals, and notifications — still has friction that slows down federation
+administrators, club representatives, and end users. This cycle addresses the 22
+most impactful issues found in the audit.
 
 ---
 
-## Period Goal
+## Phase 1 — Weeks 1–2: Feedback & Notifications
 
-Close the two open HIGH security findings, expand CI to cover all 20 modules,
-and improve the test-to-risk ratio in the highest-gap modules.
-
-## Review Baseline
-
-- 20 custom addons, ~252 Python files, ~132 XML files, ~66 test files.
-- 159 `sudo()` calls, 51 `with_user(user).sudo()` patterns, 4 `csrf=False` routes.
-- Two HIGH security findings open from the previous cycle.
-- 9 of 20 modules not covered in any named CI suite.
-- `reporting` has the worst test-to-model ratio (4 test files : 18 model files).
-- 11 migration scripts now in place (major improvement from the previous cycle's 1).
-
-## Guiding Principles
-
-- Prioritize risk reduction over feature expansion.
-- Every security or schema change gets a focused regression test.
-- Prefer expanding existing infrastructure (CI suites, shared helpers) over
-  building new patterns.
-- Do not reopen previously closed refactoring work; consolidate gains.
-
----
-
-## Phase 1 — Weeks 1–2: Security Closure (Blockers)
-
-These two items have been open since April 17. They must not survive another release.
-
-### 1. ✅ Hash partner API tokens at rest
-
-Modules: `sports_federation_import_tools`
-
-Work:
-- [x] PBKDF2-SHA256 hashing (390 000 rounds, 16-byte salt) in `integration_partner_token_mixin.py`.
-- [x] Views expose only `auth_token_last4`; raw token revealed once via rotation wizard.
-- [x] `_migrate_plaintext_tokens()` wired into `_register_hook()` for runtime backfill.
-- [x] Versioned migration script: `migrations/19.0.1.2.0/post-hash-auth-tokens.py`.
-- [x] Module version bumped to `19.0.1.2.0`.
-- [x] Token rotation procedure documented in `RELEASE_RUNBOOK.md` ("Integration Partner Token Rotation" section).
-- [x] 51/51 CI tests pass (`sports_federation_import_tools`).
-
-Done when: `authenticate_partner()` compares a hash, no raw token survives in any
-field, rotation is documented in the operator runbook, and a migration script exists. ✅
-
-### 2. ✅ Enforce upload size and MIME-type guardrails
-
-Modules: `sports_federation_compliance`, `sports_federation_import_tools`;
-shared policy in `sports_federation_base`
-
-Work:
-- [x] `federation.attachment.policy` centralized in `sports_federation_base` with
-  `integration_inbound_csv` (5 MB, .csv) and `portal_document` (10 MB, PDF/JPEG/PNG) policies.
-- [x] `validate_upload()` wired in `integration_delivery_stage_mixin.py` (inbound API)
-  and `document_submission.py` (compliance portal).
-- [x] User-readable rejection messages include "MiB or smaller" and disallowed type.
-- [x] Tests: `test_inbound_delivery_rejects_oversized_payload` (import_tools),
-  `test_portal_submit_submission_rejects_oversized_attachment` (compliance),
-  `test_validate_upload_blocks_when_hook_reports_malware` (base).
-- [x] 17/17 CI tests pass (`sports_federation_compliance`), 51/51 pass (`import_tools`).
-
-Done when: no portal or partner upload path accepts an oversized or disallowed-type
-file without an explicit, user-readable rejection; automated tests cover both cases. ✅
-
----
-
-## Phase 2 — Weeks 3–4: CI Coverage for All Modules
-
-Nine modules are invisible to CI matrix runs today. Any of them can regress silently.
-
-### 3. ✅ Add CI suites for uncovered modules
-
-Modules: `discipline`, `governance`, `notifications`, `import_tools`,
-`officiating`, `people`, `rosters`, `rules`, `demo`
-
-Work:
-- [x] Added `people_rosters_rules` suite: `people`, `rosters`, `rules`, `officiating` — 86/86 tests pass.
-- [x] Added `ops_and_notifications` suite: `discipline`, `governance`, `notifications`,
-  `import_tools`, `demo` — 106/106 tests pass.
-- [x] Both suites registered in `ci/run_tests.sh` `list_suites()` and `resolve_suite_modules()`.
-- [x] All 20 modules now covered by at least one named CI suite.
-
-Done when: all 20 modules appear in at least one named CI suite. ✅
-
-### 4. ✅ Remove Black/Flake8 path allowlists
-
-Modules: Repository-wide, `ci/`
-
-Work:
-- [x] Ran full-repo Black and inventoried 20 files needing reformatting — auto-fixed with `black .`.
-- [x] Fixed all Flake8 issues: E741 ambiguous `l` variables (renamed to `ln`), F401 unused imports
-  (removed or marked `noqa` where retained for compatibility), F841 unused local variables,
-  F541 bare f-string, F402 loop-variable import shadowing, F821 undefined name (bug fix in standings).
-- [x] No allowlist variables were present; `ci/run_repo_lint.sh` already runs repo-wide.
-- [x] `bash ci/run_repo_lint.sh --strict` exits 0: Black exit 0, Flake8 exit 0.
-- [x] Regression CI: competition_core 183/183, portal_public_ops 239/239, people_rosters_rules 86/86.
-
-Done when: the CI lint job runs Black and Flake8 on all files without an allowlist. ✅
-
----
-
-## Phase 3 — Weeks 5–7: Test Coverage in High-Risk Modules
-
-### 5. ✅ Expand `reporting` test coverage
-
-Module: `sports_federation_reporting`
-
-Work:
-- [x] Audited all 19 model classes across 18 files; all 16 `_auto=False` SQL views have
-  at least one assertion with real content checks (not just `assertIsNotNone`).
-- [x] `test_operational_reporting.py` covers: operational KPIs, standing reconciliation,
-  finance reconciliation, notification exceptions, finance exceptions, workflow
-  exceptions (stalled result + override), compliance remediation, season checklist,
-  audit event report (portal + token families), operator checklist (failures + delivery),
-  snapshot capture + board pack, audit pack, and all 11 REPORT_SPECS builders via
-  the registry test.
-- [x] `TestYearFourReporting` covers: `federation.report.season.portfolio` (budget
-  rollup + delta + planning status), `federation.report.club.performance` (win/loss,
-  finance, compliance), `season_portfolio` and `club_performance` schedule builders,
-  ORM query-count budgets, and PostgreSQL plan watchpoints.
-- [x] `test_reporting.py` replaced 4 weak `assertIsNotNone` stubs with real column-presence
-  checks and aggregate assertions for participation, officiating, compliance, and finance views,
-  with proper seed data (active season, player, referee, compliance check, finance event).
-- [x] 53 tests / 19 models = ratio 2.79 (> 0.5). CI: **53/53 ✅** (57/57 with HTTP smoke tests).
-
-Done when: the reporting module test-to-model ratio is above 0.5 (currently ~0.22),
-and every SQL view has at least one assertion. ✅
-
-### 6. ✅ Add integration tests for `import_tools` wizard paths
-
-Module: `sports_federation_import_tools`
-
-Work:
-- [x] All 9 wizard classes have focused tests: `federation.import.clubs.wizard` (dry-run,
-  mapping guide, governance approval, file-change invalidation), `federation.import.teams.wizard`
-  (club-code resolution), `federation.import.players.wizard` (legacy name split),
-  `federation.import.seasons.wizard` (format errors, planning targets),
-  `federation.import.tournament.participants.wizard` (duplicate skip, seed),
-  `federation.import.wizard.mixin` (row-create flow, error taxonomy),
-  `federation.import.wizard.csv.mixin` (delimiter detection — comma and semicolon both
-  exercised across test suite), `federation.import.wizard.governance.mixin`
-  (approval gating, checksum invalidation), and
-  `federation.integration.partner.token.wizard` (token rotation + hash storage).
-- [x] Governance approval end-to-end: `test_inbound_delivery_links_to_governed_import_flow`
-  exercises staged → previewed → awaiting_approval → approved → processed, including
-  success_count and delivery state mirroring.
-- [x] CI: **51/51 ✅**.
-
-Done when: every import wizard class has at least one focused test, and the
-governance approval path is covered end-to-end. ✅
-
----
-
-## Phase 4 — Weeks 8–10: Architecture and Documentation Debt ✅
-
-### 7. Decouple `public_site` from `portal` ✅
-
-Modules: `sports_federation_public_site`, `sports_federation_portal`
-
-Work:
-- Remove the `sports_federation_portal` dependency from
-  `sports_federation_public_site/__manifest__.py`.
-- Guard the `_get_clubs_for_user()` call (and any similar portal-specific helpers
-  used in public controllers) with an authenticated-user branch that only runs
-  when a session is active.
-- Add a test verifying the public homepage loads without the portal module installed
-  (or mock its absence).
-
-Done when: `sports_federation_public_site` installs and serves anonymous visitors
-without `sports_federation_portal` in the dependency list.
-
-**Completion notes (2026-04-28):**
-- Replaced `sports_federation_portal` with `portal` (Odoo core) in `public_site/__manifest__.py`.
-- Added `menu_website_tournaments` directly to `public_site/views/website_menu.xml`
-  (self-owned top-level site menu); updated `menu_website_competitions` parent to the
-  local ref. Removed the competing `menu_website_tournaments` record from
-  `sports_federation_portal/views/website_menus.xml` (prevents duplicate menus
-  when both modules are installed).
-- Guarded `_get_request_user_clubs()` with `request.env.get("federation.club.representative")`
-  — returns empty recordset when portal module is absent.
-- Guarded `_portal_submit_registration_request()` call with `hasattr` — returns a
-  user-facing "not available" redirect when portal is absent.
-- CI: `portal_public_ops` suite — **197/197 ✅**.
-
-### 8. Narrow `except Exception` handlers ✅
-
-Modules: `sports_federation_notifications`, `sports_federation_import_tools`
-
-Work:
-- Replace bare `except Exception` with typed exception handling
-  (`except (ValidationError, UserError, ConnectionError)` etc.).
-- In `notification_service.py`, sanitize what is stored in notification log records
-  — store a typed failure category and a sanitized message, not a raw exception
-  string or stack trace.
-- Where a broad catch is genuinely needed (e.g., unknown mail server errors), log
-  via `_logger.exception` but store only a sanitized summary in user-visible fields.
-
-Done when: no user-visible field (notification log, import error row) stores raw
-Python exception text.
-
-**Completion notes (2026-04-28):**
-- `notification_service.py` and `notification_dispatcher.py` already used
-  `build_failure_feedback` correctly — no changes needed.
-- `integration_api.py` already used `_json_error_response` (which calls
-  `build_failure_feedback`) — no changes needed.
-- Fixed `import_wizard_csv_mixin.py` `_categorize_exception()`: the
-  `unexpected_error` fallback now passes `str(error)` through
-  `is_safe_operator_detail()` from `failure_feedback`; messages that fail the
-  safety check are replaced with a generic operator-safe string.
-- CI: `ops_and_notifications` suite — **106/106 ✅**.
-
-### 9. Add public feed OpenAPI schema ✅
-
-Module: `openapi/`
-
-Work:
-- Add a `public_feeds_v1.yaml` schema covering:
-  - `GET /api/v1/tournaments/<slug>/feed` → `tournament_feed` response shape
-  - `GET /tournaments/<slug>/schedule.ics` → documented as binary ICS response
-- Register the new file in `check_openapi_contracts.py` so CI catches drift.
-
-Done when: both public feed contracts have a machine-readable schema and a CI
-drift check.
-
-**Completion notes (2026-04-28):**
-- Created `addons/openapi/public_feeds_v1.yaml` (OpenAPI 3.1.0) with full schemas
-  for `TournamentFeedResponse`, `ParticipantEntry`, `MatchEntry`, `ScheduleSection`,
-  `BracketSection`, `StandingEntry`, `TournamentSummary`.
-- Added `PUBLIC_FEEDS_SPEC_PATH` and `PUBLIC_FEEDS_REQUIRED_PATHS` to
-  `check_openapi_contracts.py`; both specs validated successfully in Docker.
-
-### 10. Add missing workflow documentation ✅
-
-Modules: Repository docs (`_workflows/`)
-
-Work:
-- Write `_workflows/WORKFLOW_ROSTER_MANAGEMENT.md` covering: roster creation,
-  activation gating, match-day locking, audit events, substitution timing, portal
-  visibility, and dispute-triggered unlocking.
-- Write `_workflows/WORKFLOW_OFFICIATING.md` covering: referee certification states,
-  assignment creation, confirmation/decline, shortage detection, and the scheduled
-  notification scan.
-- Expand `_workflows/WORKFLOW_SEASON_REGISTRATION.md` steps 6+ to cover the player
-  licensing state machine.
-- Refresh `CODE_REVIEW_REPORT.md` — several line-count figures are significantly
-  out of date.
-
-Done when: roster, officiating, and licensing workflows have standalone documents;
-the code review report reflects current hotspot sizes.
-
-**Completion notes (2026-04-28):**
-- Created `_workflows/WORKFLOW_ROSTER_MANAGEMENT.md`: full lifecycle from draft
-  creation through eligibility check, activation, match sheet creation/approval,
-  match-day lock, and season close. Includes portal access section and audit trail
-  notes.
-- Created `_workflows/WORKFLOW_OFFICIATING.md`: referee registration, certification
-  records, match assignment, confirmation deadlines, overdue detection, and
-  completion/cancellation paths.
-- Expanded `WORKFLOW_SEASON_REGISTRATION.md` §6 with the full player license state
-  machine (`draft → active → expired / cancelled`), action buttons, uniqueness
-  constraint, and eligibility impact on rosters and match sheets.
-- Updated `CODE_REVIEW_REPORT.md` "Review Signals" with current counts: 328 Python
-  files, 138 XML files, 59 test files, 7 `except Exception` occurrences (all
-  sanitized), corrected complexity hotspot line counts.
-
----
-
-## Phase 5 — Weeks 11–14: Ongoing Complexity Reduction ✅
-
-### 11. Split `public_flags.py` ✅
-
-Module: `sports_federation_public_site`
-
-Work:
-- Separate `public_flags.py` (813 lines) into at least two focused files:
-  - `public_tournament_flags.py` — publication state, slug validation,
-    featured/live toggles
-  - `public_standings_flags.py` — standings publication and visibility rules
-- Keep each file under ~400 lines.
-
-Done: `public_flags.py` (1001 lines) split into three focused files —
-`public_tournament_flags.py` (380 lines), `public_tournament_content.py`
-(418 lines), `public_standings_flags.py` (214 lines). `public_editorial.py`
-import updated. CI: portal_public_ops 197/197 ✅
-
-### 12. Extract bracket wiring from `federation_match.py` ✅
-
-Module: `sports_federation_tournament`
-
-Work:
-- Move the bracket-linking fields (`source_match_1_id`, `source_match_2_id`,
-  `bracket_position`, `bracket_type`, `next_match_ids`) and
-  `_advance_bracket_teams()` into a dedicated `federation_match_bracket.py` mixin
-  or model extension.
-- `federation_match.py` should own match lifecycle and scoring; bracket wiring is
-  a separate concern.
-
-Done: Created `federation_match_bracket.py` (79 lines) with all bracket fields,
-`_compute_next_matches`, and `_advance_bracket_teams`. `federation_match.py`
-trimmed from 506 to 434 lines. CI: competition_core 153/153 ✅
-
-### 13. Make knockout seeding deterministic in tests ✅
+### 1. Wizard success notifications after schedule generation
 
 Module: `sports_federation_competition_engine`
 
-Work:
-- In `KnockoutService._apply_seeding`, accept an optional `seed` parameter and
-  pass it to `random.seed()` before shuffling when provided.
-- In all tests that exercise random seeding, pass a fixed seed so bracket positions
-  are reproducible.
+**Problem:** The round-robin and knockout schedule wizards close silently after
+execution. Users must navigate away to verify matches were actually created. The
+import wizards show a `result_message` field after import but no toast notification
+and no link to immediately view the created records.
 
-Done: `_apply_seeding` accepts `seed=None`; `generate()` passes `options.get("seed")`
-through. `_generate()` test helper updated to forward `seed`. Added
-`test_random_seeding_deterministic_with_seed` verifying identical bracket slots with
-same seed. CI: competition_core 153/153 ✅
+**Impact:** Administrators don't know if the wizard ran successfully. Silent closes
+cause double-execution ("nothing happened so I clicked again").
+
+Work:
+- [x] In `RoundRobinWizard.action_generate()` and `KnockoutWizard.action_generate()`,
+  return an `ir.actions.client` `display_notification` action with a match count
+  message and a `next` action opening the generated matches list.
+- [x] In the import wizards (`PlayerImportWizard`, etc.), add the same
+  `display_notification` result after a successful import, followed by an action
+  opening the newly created records.
+- [x] Tests: assert the wizard return value contains `display_notification` tag and
+  the correct match/record count in the message.
+
+Done when: every schedule/import wizard shows a count notification and offers a
+one-click link to the results.
+
+### 2. Styled readiness feedback on roster and match sheet forms
+
+Module: `sports_federation_rosters`
+
+**Problem:** `readiness_feedback` (roster) and `readiness_feedback` (match sheet)
+are plain readonly `<field>` elements. System-generated validation text is
+visually indistinguishable from user notes — no colour, no icon, no contrast.
+The boolean `ready_for_activation` / `ready_for_submission` indicator is a raw
+checkbox with no visual emphasis.
+
+**Impact:** Administrators miss blocking issues before attempting activation or
+submission.
+
+Work:
+- [x] Wrap each feedback field in a styled alert div
+  (`class="alert alert-warning mb-3"`) with a warning icon, shown only when
+  `readiness_feedback` is set.
+- [x] Replace the bare `ready_for_activation` / `ready_for_submission` booleans
+  with colour-coded badges: green "Ready" when true, amber "Not Ready" when false.
+- [x] Apply the same pattern to `match_day_lock_feedback` on the roster form.
+- [x] Tests: run CI — view XML changes are load-time validated by Odoo.
+
+Done when: feedback is visually distinct from user-editable notes and the ready
+state is clearly colour-coded.
+
+### 3. Portal access-denied page differentiated from 404
+
+Module: `sports_federation_portal`
+
+**Problem:** When a club representative accesses a roster or match-sheet URL
+belonging to another club, `_assert_portal_owns()` raises `AccessError`, which is
+caught and rendered as a generic 404. The user cannot distinguish "this record does
+not exist" from "you are not allowed to see it".
+
+This is a security-usability item: the 403 page should be helpful without leaking
+record existence or ownership.
+
+Work:
+- [x] In each portal controller, catch `AccessError` separately from `NotFound`/404.
+- [x] Render a dedicated `403_access_denied` template (extends
+  `portal.portal_layout`) with a plain message ("You don't have permission to view
+  this record.") and a "Go to my dashboard" button.
+- [x] The template must NOT reveal the record's owner, title, or content.
+- [x] Tests: assert that accessing another club's roster URL returns HTTP 200 with
+  the 403 template body (not a redirect to the generic 404 page).
+
+Done when: access-denied shows a helpful 403 page; 404 is only shown for truly
+missing records.
+
+---
+
+## Phase 2 — Weeks 3–4: Form Clarity
+
+### 4. Compliance document submission — target entity selection
+
+Module: `sports_federation_compliance`
+
+**Problem:** The document submission form shows 5 separate `Many2one` fields
+(`club_id`, `player_id`, `referee_id`, `venue_id`, `club_representative_id`) each
+gated by `invisible="target_model != '...'"`. In read mode, users see the one
+relevant field surrounded by blank labels for the 4 irrelevant ones.
+
+Work:
+- [ ] Add a computed `target_entity_label` char field that returns the
+  `display_name` of the resolved target record based on `target_model`.
+- [ ] In the form view, show `target_entity_label` (read-only) above the
+  conditional entity fields with a clear "Applies To:" label.
+- [ ] Keep the existing entity `Many2one` fields for draft editing, but move them
+  under a collapsible group visible only in draft state.
+- [ ] Tests: CI view validation; assert `target_entity_label` returns the correct
+  name for each `target_model` variant.
+
+Done when: in read mode, users see "Applies To: Player — João Silva" rather than
+4 empty dropdowns.
+
+### 5. Discipline case form — workflow guidance
+
+Module: `sports_federation_discipline`
+
+**Problem:** The disciplinary case form has 4–5 action buttons (Submit, Review,
+Decide, Appeal, Close) with no explanation of the workflow or when each is valid.
+Federation officers new to the system cannot self-serve.
+
+Work:
+- [ ] Add `title=` tooltip attributes to each action button explaining the
+  precondition and effect (e.g. "Submit this case for panel review. Only Draft
+  cases can be submitted.").
+- [ ] Add a final `<page string="Workflow Guide">` tab containing a brief plain-text
+  description of the 5 states and which roles can perform each transition.
+- [ ] Tests: CI view validation.
+
+Done when: hovering any action button shows an actionable tooltip; the guide tab
+is present and renders without errors.
+
+### 6. Result control — dual statusbar clarity
+
+Module: `sports_federation_result_control`
+
+**Problem:** The match form displays two statusbars side-by-side: one for
+`federation.match.state` (draft → done) and one for `result_status`
+(draft → submitted → verified → approved / contested). Managers see two parallel
+progress bars with no indication of their relationship or sequencing.
+
+Work:
+- [ ] Add a brief inline `<div class="alert alert-info py-1 px-2 small">` above the
+  result statusbar, shown only when `state == 'done'`:
+  "Match complete — use Result Status below to track the approval pipeline."
+- [ ] Add `readonly="state != 'done'"` to the `result_status` statusbar so it
+  cannot be changed before the match is complete.
+- [ ] Tests: CI view validation.
+
+Done when: the two statusbars are visually and textually connected; the result
+status cannot be advanced before the match is done.
+
+### 7. Override request form — conditional field discoverability
+
+Module: `sports_federation_governance`
+
+**Problem:** `implementation_note` only appears when `state` is `approved` or
+`implemented`. Users in `draft` or `submitted` don't know the field exists and
+may not notice it unlocked after approval.
+
+Work:
+- [ ] Show `implementation_note` at all times but with
+  `readonly="state not in ('approved', 'implemented')"` and
+  `placeholder="Add implementation notes once this request is approved."`.
+- [ ] Add a small `<p class="text-muted small">` note below the field in readonly
+  mode: "This field unlocks after the request is approved."
+- [ ] Tests: CI view validation.
+
+Done when: the field is always visible; its locked state is self-explanatory.
+
+---
+
+## Phase 3 — Weeks 5–6: Navigation & Smart Buttons
+
+### 8. Notification log — navigation to the triggering record
+
+Module: `sports_federation_notifications`
+
+**Problem:** The notification log form shows `target_model` and `target_res_id` as
+plain text. There is no way to jump to the tournament, match, or player that
+triggered the notification without copying the ID and navigating manually.
+
+Work:
+- [ ] Add a computed `target_display_name` char field on the log model that
+  resolves `env.get(target_model).sudo().browse(target_res_id).display_name`.
+  Guard `env.get()` for `None` (optional addons).
+- [ ] Add `action_view_target()` returning an `act_window` for the target model
+  filtered to `target_res_id`.
+- [ ] Add a smart button (`type="object"`, icon `fa-external-link`) showing the
+  display name, hidden when `target_res_id` is not set.
+- [ ] Tests: assert `action_view_target` returns a valid `act_window` for a log
+  whose `target_model` is `federation.match`.
+
+Done when: notification log records have a one-click link to the triggering record.
+
+### 9. Missing smart buttons — club representatives and season registration breakdown
+
+Modules: `sports_federation_base`, `sports_federation_portal`
+
+**Problem A:** The base club form has only a "Teams" smart button. Federation
+managers have no quick view of how many club representatives exist without leaving
+the club form.
+
+**Problem B:** The season form has a total `registration_count` smart button but no
+breakdown by state (confirmed vs. draft/pending). Planning for a new season
+requires knowing how many clubs are confirmed.
+
+Work (Club):
+- [ ] Add `representative_count` computed Integer field on `federation.club`.
+- [ ] Add smart button using `type="object"` backed by a Python method (see
+  `odoo-patterns.md` for the correct `_for_xml_id` pattern).
+
+Work (Season):
+- [ ] Add `confirmed_registration_count` and `pending_registration_count` computed
+  Integer fields on `federation.season`.
+- [ ] Add two state-specific smart buttons opening filtered list views.
+- [ ] Tests: assert each computed field returns the correct count after creating
+  registrations in different states.
+
+Done when: club form shows rep count; season form shows confirmed vs. pending
+registration counts as separate smart buttons.
+
+### 10. Standing form — default ordering and tournament breadcrumb
+
+Module: `sports_federation_standings`
+
+**Problem:** The standings list view has `_order = "name"` — with dozens of
+standings it appears as an unsorted flat list across tournaments. The form has no
+visual indication of the tournament → stage → group hierarchy.
+
+Work:
+- [ ] Change `_order` on `FederationStanding` to
+  `"tournament_id, stage_id, group_id, name"`.
+- [ ] Add a compact `<group string="Context">` at the top of the form view showing
+  `tournament_id` (readonly link), `stage_id`, and `group_id`.
+- [ ] Add default search filters to the standings list action context:
+  a "Group By Tournament" filter and a "My Tournaments" domain filter.
+- [ ] Tests: CI view validation; assert model `_order` value.
+
+Done when: the list is ordered by tournament by default; the form context is
+self-explanatory.
+
+---
+
+## Phase 4 — Weeks 7–8: Portal Polish & Demo Data
+
+### 11. Portal error messages — raw exception text replaced with guided messages
+
+Module: `sports_federation_portal`
+
+**Problem:** Portal templates render `<t t-esc="error"/>` directly, where `error`
+can be a raw Python `ValidationError` message (e.g. "Min players required: 15 not
+met"). Club representatives see technical language with no guidance.
+
+Work:
+- [ ] In portal controllers, translate caught `ValidationError` into a
+  user-friendly message and pass a separate `error_hint` to the template.
+- [ ] Update portal templates to render `error_hint` as a `<p class="small
+  text-muted mt-1">` below the error box.
+- [ ] Audit all portal controller `except` blocks for raw exception passthrough.
+- [ ] Tests: assert that submitting an invalid roster via portal renders the
+  expected `error_hint` text (not a raw Python string).
+
+Done when: portal error messages always end with an actionable suggestion; no raw
+Python exception strings reach club representatives.
+
+### 12. Portal menu — consistent naming and grouping
+
+Module: `sports_federation_portal`
+
+**Problem:** Portal navigation uses inconsistent terminology ("Tournament
+Workspace", "Season Registrations", "Match Day") with no grouping. Mobile users
+see a long flat list in arbitrary order.
+
+Work:
+- [ ] Audit all `portal_home_menuitem` entries and standardise into three groups:
+  "Your Season" (registrations, rosters), "Match Day" (sheets, results),
+  "Club Admin" (compliance, representatives).
+- [ ] Use `sequence` values to enforce group order.
+- [ ] Add `<hr/>` separators between groups in the portal home template.
+- [ ] Tests: `HttpCase` smoke test that portal home renders without errors.
+
+Done when: portal home groups related items with clear headings matching the user's
+workflow context.
+
+### 13. Demo data — realistic end-to-end scenario
+
+Module: `sports_federation_demo`
+
+**Problem:** Demo data includes only 3 clubs, 6 teams, and 1 season. There are no
+tournaments, matches, standings, rosters, or results. A fresh install looks empty
+and cannot be used for evaluation or onboarding.
+
+Work:
+- [ ] Expand `demo/` to include at minimum:
+  - 1 tournament with 2 stages (group + knockout) and 2 groups of 4.
+  - 16 players distributed across 6 teams.
+  - 1 active season-scoped roster per team.
+  - 6 completed matches (group stage) with scores.
+  - 2 computed standings (group A, group B).
+  - 2 document submissions per team (license + medical).
+  - 2 disciplinary cases (1 open, 1 closed).
+  - 1 notification rule and 3 log entries.
+- [ ] Keep records isolated under `sports_federation_demo` as source module.
+- [ ] Tests: assert that after installing `sports_federation_demo`, at least
+  1 tournament, 6 matches, and 2 standings exist.
+
+Done when: a fresh demo install shows a realistic federation with an ongoing season
+that can be explored without creating test records manually.
 
 ---
 
 ## Suggested Sequence
 
-1. Hash partner tokens and upload guardrails (security blockers — do first).
-2. Add CI suites for uncovered modules and remove lint allowlists.
-3. Reporting and import_tools test coverage expansion.
-4. Decouple public_site from portal; narrow exception handlers; OpenAPI feeds schema.
-5. Workflow documentation additions.
-6. Complexity reduction (public_flags split, bracket extraction, test seeding).
+1. Items 1–3 (Phase 1): no model changes; high visibility; can be developed in
+   parallel.
+2. Items 4–7 (Phase 2): form-only changes except Item 4 (new computed field).
+3. Items 8–10 (Phase 3): require new computed fields and methods.
+4. Items 11–13 (Phase 4): portal and demo; Item 13 is the largest scope.
+
+---
+
+## Security Invariants to Preserve
+
+The following properties must not be regressed during this cycle:
+
+- `_assert_portal_owns()` must remain the sole write gate for all portal
+  controllers.
+- Portal 403 pages (Item 3) must not reveal record ownership or content.
+- Notification log target navigation (Item 8) must use `sudo()` only for display
+  name resolution — never for write access.
+- Smart button actions (Item 9) must be guarded by the same group ACL as the
+  underlying model.
+- Import wizard improvements (Item 1) must not alter existing file-size or
+  MIME-type validation logic.
 
 ---
 
 ## Exit Criteria
 
-- No partner authentication path stores or compares a plaintext secret.
-- No portal or partner upload path accepts an oversized or disallowed-type file.
-- All 20 modules appear in at least one named CI suite.
-- Full-repo lint runs without a path allowlist.
-- `sports_federation_reporting` test-to-model ratio is above 0.5.
-- No user-visible field stores a raw Python exception string.
-- `sports_federation_public_site` does not require `sports_federation_portal`
-  as a manifest dependency.
-- `WORKFLOW_ROSTER_MANAGEMENT.md` and `WORKFLOW_OFFICIATING.md` exist and are
-  complete.
+- Every schedule/import wizard shows a success notification with a record count
+  and a direct link to the results.
+- Roster and match sheet readiness feedback is shown in a styled alert box;
+  the ready/not-ready state is colour-coded.
+- Accessing another club's portal URL returns a helpful 403 page, not a generic 404.
+- The compliance submission form shows "Applies To: [Entity]" in read mode with no
+  surplus empty dropdowns.
+- All discipline case action buttons have tooltip text; a workflow guide tab exists.
+- The result control dual statusbar includes an inline explanation of the two flows.
+- Override request `implementation_note` is always visible (readonly until approved).
+- Notification log records have a one-click jump to the triggering record.
+- Club form shows representative count smart button; season form shows
+  confirmed/pending registration breakdown.
+- Standings list has a meaningful default order; form shows tournament hierarchy
+  context.
+- Portal error messages always include an actionable hint; no raw exception text
+  reaches club representatives.
+- Portal home groups navigation by workflow phase with consistent naming.
+- Fresh demo install shows a realistic federation with a tournament, matches,
+  standings, rosters, and compliance records.

@@ -46,9 +46,29 @@
                         </group>
                     </group>
                     <group>
-                        <field name="ready_for_submission" readonly="1"/>
-                        <field name="readiness_feedback" readonly="1" invisible="not readiness_feedback"/>
+                        <field name="ready_for_submission" invisible="1" readonly="1"/>
+                        <field name="readiness_feedback" invisible="1" readonly="1"/>
                     </group>
+                    <!-- Readiness status badge -->
+                    <div class="mt-2 mb-3">
+                        <div invisible="not ready_for_submission"
+                             class="alert alert-success d-flex align-items-center gap-2 py-2 mb-0" role="status">
+                            <i class="fa fa-check-circle" title="Ready"/>
+                            <strong>Ready for Submission</strong>
+                        </div>
+                        <div invisible="ready_for_submission"
+                             class="alert alert-warning py-2 mb-0" role="alert">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa fa-exclamation-triangle" title="Not ready"/>
+                                <strong>Not Ready for Submission</strong>
+                            </div>
+                        </div>
+                        <div invisible="not readiness_feedback"
+                             class="alert alert-warning mt-2 mb-0" role="alert">
+                            <i class="fa fa-exclamation-triangle me-2" title="Readiness issue"/>
+                            <field name="readiness_feedback" readonly="1" nolabel="1"/>
+                        </div>
+                    </div>
                     <notebook>
                         <page string="Sheet Lines" name="sheet_lines">
                             <field name="line_ids">

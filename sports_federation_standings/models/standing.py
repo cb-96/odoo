@@ -40,6 +40,10 @@ class FederationStanding(models.Model):
         string="Rule Set",
         ondelete="set null",
         index=True,
+        help="Rule set used to calculate points (win/draw/loss values) and tie-break"
+        " order for this standing. When left empty, the rule set is inherited in"
+        " order from: stage → tournament → competition. Set explicitly here only"
+        " when this standing needs different scoring rules than its parent objects.",
     )
     state = fields.Selection(
         [
@@ -180,8 +184,9 @@ class FederationStanding(models.Model):
         matches = self._get_relevant_matches()
         points_values = self._get_points_values()
 
-        # Initialize stats for all participants
+        # Build a dict from team_id → participant for O(1) lookup in the match loop
         participants = self._get_participants()
+        participant_map = {p.team_id.id: p for p in participants}
         stats = {}
         for participant in participants:
             stats[participant.id] = {
@@ -195,13 +200,9 @@ class FederationStanding(models.Model):
 
         # Process matches
         for match in matches:
-            # Find participants for home and away teams
-            home_participant = participants.filtered(
-                lambda p: p.team_id == match.home_team_id
-            )
-            away_participant = participants.filtered(
-                lambda p: p.team_id == match.away_team_id
-            )
+            # O(1) lookup instead of O(m) filtered() scan
+            home_participant = participant_map.get(match.home_team_id.id)
+            away_participant = participant_map.get(match.away_team_id.id)
 
             if not home_participant or not away_participant:
                 continue

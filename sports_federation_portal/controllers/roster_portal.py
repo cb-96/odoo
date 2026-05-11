@@ -110,7 +110,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
         try:
             roster = self._get_portal_roster(roster_id)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
 
         can_manage_roster = False
         portal_manage_error = False
@@ -147,7 +147,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             roster = self._get_portal_roster(roster_id)
             roster._portal_assert_manage_access(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -183,7 +183,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
                 },
             )
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/rosters/{roster_id}/edit",
@@ -206,7 +206,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_activate(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -226,7 +226,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_set_draft(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -246,7 +246,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             roster = self._get_portal_roster(roster_id)
             roster._portal_action_close(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -274,7 +274,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
                 user=request.env.user,
             )
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -305,7 +305,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
                 user=request.env.user,
             )
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/rosters/{roster_id}/lines/new",
@@ -340,7 +340,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
                 player=line.player_id,
             )
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 
@@ -368,7 +368,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             line = self._get_portal_roster_line(roster, line_id)
             line._portal_update_line(values=kw, user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_with_query(
                 f"/my/rosters/{roster_id}/lines/{line_id}/edit",
@@ -392,7 +392,7 @@ class FederationRosterPortal(FederationRosterPortalBase):
             line = self._get_portal_roster_line(roster, line_id)
             line._portal_delete_line(user=request.env.user)
         except AccessError:
-            self._raise_not_found()
+            return self._render_access_denied()
         except ValidationError as exc:
             return self._redirect_roster(roster, error=str(exc))
 

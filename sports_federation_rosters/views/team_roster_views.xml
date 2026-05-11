@@ -61,14 +61,53 @@
                     </group>
                     <group>
                         <group>
-                            <field name="ready_for_activation" readonly="1"/>
-                            <field name="readiness_feedback" readonly="1" invisible="not readiness_feedback"/>
+                            <field name="ready_for_activation" invisible="1" readonly="1"/>
+                            <field name="readiness_feedback" invisible="1" readonly="1"/>
                         </group>
                         <group>
-                            <field name="match_day_locked" readonly="1"/>
-                            <field name="match_day_lock_feedback" readonly="1" invisible="not match_day_lock_feedback"/>
+                            <field name="match_day_locked" invisible="1" readonly="1"/>
+                            <field name="match_day_lock_feedback" invisible="1" readonly="1"/>
                         </group>
                     </group>
+                    <!-- Readiness status badges -->
+                    <div class="row mt-2 mb-3">
+                        <div class="col-md-6">
+                            <div invisible="not ready_for_activation"
+                                 class="alert alert-success d-flex align-items-center gap-2 py-2 mb-0" role="status">
+                                <i class="fa fa-check-circle" title="Ready"/>
+                                <strong>Ready for Activation</strong>
+                            </div>
+                            <div invisible="ready_for_activation"
+                                 class="alert alert-warning py-2 mb-0" role="alert">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-exclamation-triangle" title="Not ready"/>
+                                    <strong>Not Ready for Activation</strong>
+                                </div>
+                            </div>
+                            <div invisible="not readiness_feedback"
+                                 class="alert alert-warning mt-2 mb-0" role="alert">
+                                <i class="fa fa-exclamation-triangle me-2" title="Readiness issue"/>
+                                <field name="readiness_feedback" readonly="1" nolabel="1"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div invisible="not match_day_locked"
+                                 class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+                                <i class="fa fa-lock" title="Locked"/>
+                                <strong>Match Day Locked</strong>
+                            </div>
+                            <div invisible="match_day_locked"
+                                 class="alert alert-info d-flex align-items-center gap-2 py-2 mb-0" role="status">
+                                <i class="fa fa-unlock" title="Unlocked"/>
+                                <strong>Match Day Open</strong>
+                            </div>
+                            <div invisible="not match_day_lock_feedback"
+                                 class="alert alert-warning mt-2 mb-0" role="alert">
+                                <i class="fa fa-lock me-2" title="Lock reason"/>
+                                <field name="match_day_lock_feedback" readonly="1" nolabel="1"/>
+                            </div>
+                        </div>
+                    </div>
                     <notebook>
                         <page string="Roster Lines" name="roster_lines">
                             <field name="line_ids">
